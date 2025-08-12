@@ -620,3 +620,94 @@ input[type="checkbox"]:checked, input[type="radio"]:checked {
     box-shadow: 0 0 8px hsl(var(--neon-glow) / 0.3);
   }
 }
+/* Mobile-First Admin Panel Responsive Styles */
+.admin-mobile-responsive .admin-button {
+  min-height: 44px;
+  font-size: 14px;
+  padding: 10px 16px;
+}
+
+.admin-mobile-responsive .admin-input {
+  min-height: 44px;
+  font-size: 16px;
+  padding: 10px 16px;
+}
+
+@media (max-width: 768px) {
+  .admin-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -16px;
+    border-left: none;
+    border-right: none;
+  }
+  
+  .admin-button-group {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .admin-button-group .admin-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  [data-radix-dialog-content] {
+    width: calc(100vw - 32px) !important;
+    max-width: none !important;
+    margin: 16px !important;
+  }
+  
+  .mobile-stack {
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  
+  .mobile-full-width {
+    width: 100% !important;
+  }
+}
+
+.mobile-card-layout {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .desktop-table-layout .admin-table {
+    display: none;
+  }
+  
+  .mobile-card-layout {
+    display: block;
+  }
+  
+  .mobile-card-item {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .mobile-card-item .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  
+  .mobile-card-item .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .mobile-card-item .card-actions button {
+    flex: 1;
+    min-width: 100px;
+  }
+}
+

@@ -186,27 +186,30 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       {/* Main Content */}
       <div className="lg:pl-64">
         {/* Top Navigation */}
-        <header className="sticky top-0 z-30 h-16 admin-topbar">
-          <div className="flex h-full items-center justify-between px-6">
-            <div className="flex items-center space-x-4">
+        <header className="sticky top-0 z-30 h-14 lg:h-16 admin-topbar">
+          <div className="flex h-full items-center justify-between px-4 lg:px-6">
+            <div className="flex items-center gap-2 lg:gap-4 min-w-0 flex-1">
               {/* Mobile menu button */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="lg:hidden p-2 text-white hover:bg-primary/10 hover:text-primary"
+                className="lg:hidden p-2 h-8 w-8 text-white hover:bg-primary/10 hover:text-primary flex-shrink-0"
                 onClick={() => setSidebarOpen(true)}
               >
-                <Menu className="h-5 w-5" />
+                <Menu className="h-4 w-4" />
               </Button>
 
-              {/* Breadcrumb */}
-              <nav className="flex items-center space-x-2 text-sm">
+              {/* Page Title for Mobile */}
+              <h1 className="lg:hidden text-lg font-semibold text-white truncate">{title}</h1>
+
+              {/* Breadcrumb for Desktop */}
+              <nav className="hidden lg:flex items-center space-x-2 text-sm min-w-0">
                 {breadcrumbItems().map((item, index) => (
-                  <div key={item.href} className="flex items-center space-x-2">
-                    {index > 0 && <ChevronRight className="h-4 w-4 text-light-gray" />}
+                  <div key={item.href} className="flex items-center space-x-2 min-w-0">
+                    {index > 0 && <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0" />}
                     <Link href={item.href}>
                       <span className={`
-                        transition-colors duration-200 cursor-pointer
+                        transition-colors duration-200 cursor-pointer truncate
                         ${index === breadcrumbItems().length - 1 
                           ? 'text-white font-medium' 
                           : 'text-slate-400 hover:text-primary'
@@ -220,14 +223,20 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
               </nav>
             </div>
 
-            {/* Page Title */}
-            <div className="hidden md:block">
-              <h1 className="text-xl font-semibold text-white">{title}</h1>
+            {/* Page Title for Desktop */}
+            <div className="hidden lg:block flex-shrink-0">
+              <h1 className="text-xl font-semibold text-white truncate max-w-[200px]">{title}</h1>
             </div>
 
-            {/* Right side - could add notifications, profile menu, etc. */}
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/80 to-cyan-500/80 flex items-center justify-center neon-glow">
+            {/* Right side - User info */}
+            <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+              <div className="hidden md:flex flex-col items-end min-w-0">
+                <span className="text-sm font-medium text-white truncate max-w-[100px]">
+                  {user?.username || 'Admin'}
+                </span>
+                <span className="text-xs text-slate-400">Yönetici</span>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/80 to-cyan-500/80 flex items-center justify-center neon-glow flex-shrink-0">
                 <span className="text-white font-medium text-sm">
                   {user?.username?.charAt(0).toUpperCase() || 'A'}
                 </span>
@@ -237,7 +246,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 lg:p-6 min-h-[calc(100vh-3.5rem)] lg:min-h-[calc(100vh-4rem)]">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
