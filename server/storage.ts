@@ -690,6 +690,41 @@ export class DatabaseStorage implements IStorage {
     return ticket;
   }
 
+  async getUserTickets(userId: string): Promise<Ticket[]> {
+    return await db.select().from(tickets).where(eq(tickets.userId, userId)).orderBy(desc(tickets.createdAt));
+  }
+
+  async getTicketById(ticketId: string): Promise<Ticket | undefined> {
+    const [ticket] = await db.select().from(tickets).where(eq(tickets.id, ticketId));
+    return ticket;
+  }
+
+  async getTicketMessages(ticketId: string): Promise<TicketMessage[]> {
+    return await db.select().from(ticketMessages).where(eq(ticketMessages.ticketId, ticketId)).orderBy(ticketMessages.createdAt);
+  }
+
+  async createTicketMessage(messageData: InsertTicketMessage): Promise<TicketMessage> {
+    const [message] = await db.insert(ticketMessages).values(messageData).returning();
+    return message;
+  }
+
+  async updateTicketStatus(ticketId: string, status: string, assignedAdminId?: string): Promise<Ticket | undefined> {
+    const updateData: any = { status, updatedAt: new Date() };
+    if (assignedAdminId !== undefined) {
+      updateData.assignedAdminId = assignedAdminId;
+    }
+    
+    const [ticket] = await db.update(tickets)
+      .set(updateData)
+      .where(eq(tickets.id, ticketId))
+      .returning();
+    return ticket;
+  }
+
+  async getAllTickets(): Promise<Ticket[]> {
+    return await db.select().from(tickets).orderBy(desc(tickets.createdAt));
+  }
+
   async getTicketsByUserId(userId: string): Promise<Ticket[]> {
     return db.select().from(tickets).where(eq(tickets.userId, userId)).orderBy(desc(tickets.createdAt));
   }

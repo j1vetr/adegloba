@@ -35,12 +35,6 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
       active: location === "/destek" || location.startsWith("/destek/")
     },
     {
-      name: "Paketlerim",
-      href: "/paketlerim",
-      icon: Package,
-      active: location === "/paketlerim"
-    },
-    {
       name: "Profil",
       href: "/profil",
       icon: User,
@@ -48,9 +42,25 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
     }
   ];
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear server session
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      // Clear any local storage or session storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Redirect to homepage
+      window.location.href = "/";
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still redirect even if API call fails
+      window.location.href = "/";
+    }
   };
 
   return (

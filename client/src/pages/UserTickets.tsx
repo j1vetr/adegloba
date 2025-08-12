@@ -352,6 +352,7 @@ export default function UserTickets() {
                         variant="outline" 
                         size="sm"
                         className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"
+                        onClick={() => window.location.href = `/destek/${ticket.id}`}
                         data-testid={`button-view-ticket-${ticket.id}`}
                       >
                         <MessageCircle className="h-4 w-4 mr-2" />

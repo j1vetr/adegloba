@@ -34,6 +34,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+  // Logout endpoint for user panel
+  app.post('/api/logout', async (req, res) => {
+    try {
+      req.logout((err) => {
+        if (err) {
+          console.error('Logout error:', err);
+          return res.status(500).json({ message: 'Logout failed' });
+        }
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('Session destroy error:', err);
+          }
+          res.clearCookie('connect.sid');
+          res.status(200).json({ message: 'Logged out successfully' });
+        });
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ message: 'Logout failed' });
+    }
+  });
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
@@ -699,15 +721,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Ticket System Routes
-  app.get('/api/tickets', async (req, res) => {
+  // User Ticket System Routes
+  app.get('/api/tickets', isAuthenticated, async (req, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
-      const tickets = await storage.getTicketsByUserId(userId);
+      const tickets = await storage.getUserTickets(userId);
       res.json(tickets);
     } catch (error) {
       console.error('Error fetching tickets:', error);
@@ -715,9 +737,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/tickets', async (req, res) => {
+  app.get('/api/tickets/:ticketId', isAuthenticated, async (req, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user?.claims?.sub;
+      const { ticketId } = req.params;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const ticket = await storage.getTicketById(ticketId);
+      if (!ticket || ticket.userId !== userId) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+
+      const messages = await storage.getTicketMessages(ticketId);
+      res.json({ ticket, messages });
+    } catch (error) {
+      console.error('Error fetching ticket details:', error);
+      res.status(500).json({ message: 'Failed to fetch ticket details' });
+    }
+  });
+
+  app.post('/api/tickets', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
@@ -739,6 +783,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating ticket:', error);
       res.status(500).json({ message: 'Failed to create ticket' });
+    }
+  });
+
+  app.post('/api/tickets/:ticketId/messages', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { ticketId } = req.params;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      // Verify ticket belongs to user
+      const ticket = await storage.getTicketById(ticketId);
+      if (!ticket || ticket.userId !== userId) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+
+      const messageData = {
+        ticketId,
+        senderId: userId,
+        senderType: 'user' as const,
+        message: req.body.message
+      };
+
+      const message = await storage.createTicketMessage(messageData);
+      
+      // Update ticket status to show user replied
+      await storage.updateTicketStatus(ticketId, 'Beklemede', null);
+      
+      res.status(201).json(message);
+    } catch (error) {
+      console.error('Error creating user ticket message:', error);
+      res.status(500).json({ message: 'Failed to create message' });
     }
   });
 
