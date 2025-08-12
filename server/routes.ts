@@ -640,6 +640,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Ship-based packages API routes
+  app.get('/api/admin/ships/:shipId/plans', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { shipId } = req.params;
+      const plans = await storage.getPlansByShip(shipId);
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching ship plans:', error);
+      res.status(500).json({ message: 'Failed to fetch ship plans' });
+    }
+  });
+
   // Admin CRUD Routes for Coupons
   app.get('/api/admin/coupons', isAdminAuthenticated, async (req, res) => {
     try {

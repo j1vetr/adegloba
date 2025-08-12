@@ -398,6 +398,10 @@ export class DatabaseStorage implements IStorage {
       .orderBy(shipPlans.sortOrder, plans.title);
   }
 
+  async getPlansByShip(shipId: string): Promise<Plan[]> {
+    return db.select().from(plans).where(eq(plans.shipId, shipId)).orderBy(plans.sortOrder, plans.title);
+  }
+
   async createPlan(plan: InsertPlan): Promise<Plan> {
     const [newPlan] = await db.insert(plans).values(plan).returning();
     return newPlan;
