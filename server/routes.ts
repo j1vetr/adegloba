@@ -13,6 +13,15 @@ const orderService = new OrderService(storage);
 const couponService = new CouponService(storage);
 const expiryService = new ExpiryService(storage);
 
+// Helper function to generate slug from ship name
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/[\s_-]+/g, '-') // Replace spaces/underscores with hyphens
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Authentication Middleware
   const isAdminAuthenticated = (req: any, res: any, next: any) => {
@@ -416,7 +425,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/ships', isAdminAuthenticated, async (req, res) => {
     try {
       const shipData = insertShipSchema.parse(req.body);
-      const ship = await storage.createShip(shipData);
+      // Auto-generate slug from name
+      const shipWithSlug = {
+        ...shipData,
+        slug: generateSlug(shipData.name)
+      };
+      const ship = await storage.createShip(shipWithSlug);
       res.json(ship);
     } catch (error) {
       console.error('Error creating ship:', error);
@@ -428,7 +442,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const shipData = insertShipSchema.parse(req.body);
-      const ship = await storage.updateShip(id, shipData);
+      // Auto-generate slug from name if name is provided
+      const shipWithSlug = shipData.name ? {
+        ...shipData,
+        slug: generateSlug(shipData.name)
+      } : shipData;
+      const ship = await storage.updateShip(id, shipWithSlug);
       res.json(ship);
     } catch (error) {
       console.error('Error updating ship:', error);

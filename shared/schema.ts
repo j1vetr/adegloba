@@ -219,6 +219,7 @@ export const loginSchema = z.object({
 
 export const insertShipSchema = createInsertSchema(ships).omit({
   id: true,
+  slug: true, // Auto-generated from name
   createdAt: true,
   updatedAt: true,
 });

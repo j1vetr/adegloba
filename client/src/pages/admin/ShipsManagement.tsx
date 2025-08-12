@@ -54,8 +54,6 @@ export default function ShipsManagement() {
   
   const [formData, setFormData] = useState<ShipFormData>({
     name: "",
-    slug: "",
-    description: "",
     imageUrl: "",
     isActive: true,
   });
@@ -191,8 +189,6 @@ export default function ShipsManagement() {
   const resetForm = () => {
     setFormData({
       name: "",
-      slug: "",
-      description: "",
       imageUrl: "",
       isActive: true,
     });
@@ -232,8 +228,6 @@ export default function ShipsManagement() {
     setEditingShip(ship);
     setFormData({
       name: ship.name,
-      slug: ship.slug,
-      description: ship.description || "",
       imageUrl: ship.imageUrl || "",
       isActive: ship.isActive,
     });
@@ -483,48 +477,19 @@ export default function ShipsManagement() {
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-white">Gemi Adı *</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="Örn: Mavi Yıldız"
-                    required
-                    className="admin-input"
-                    data-testid="input-name"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="slug" className="text-white">Slug *</Label>
-                  <Input
-                    id="slug"
-                    name="slug"
-                    value={formData.slug}
-                    onChange={handleInputChange}
-                    placeholder="Örn: mavi-yildiz"
-                    required
-                    className="admin-input"
-                    data-testid="input-slug"
-                  />
-                </div>
-              </div>
-
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-white">Açıklama</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  value={formData.description || ""}
+                <Label htmlFor="name" className="text-white">Gemi Adı *</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="Gemi hakkında kısa açıklama..."
-                  rows={3}
-                  className="admin-input resize-none"
-                  data-testid="textarea-description"
+                  placeholder="Örn: Mavi Yıldız"
+                  required
+                  className="admin-input"
+                  data-testid="input-name"
                 />
+                <p className="text-xs text-slate-400">Slug otomatik olarak gemi adından oluşturulacak</p>
               </div>
 
               <div className="space-y-2">
@@ -540,17 +505,28 @@ export default function ShipsManagement() {
                 />
               </div>
 
-              <div className="flex items-center space-x-2 pt-2">
-                <Switch
-                  id="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={handleSwitchChange}
-                  className="data-[state=checked]:bg-primary"
-                  data-testid="switch-is-active"
-                />
-                <Label htmlFor="isActive" className="text-white">
-                  {formData.isActive ? "Aktif" : "Pasif"}
-                </Label>
+              <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                <div className="space-y-1">
+                  <Label htmlFor="isActive" className="text-white font-medium">Durum</Label>
+                  <p className="text-xs text-slate-400">
+                    {formData.isActive 
+                      ? "Gemi kayıt formunda görünür olacak" 
+                      : "Gemi kayıt formunda gizli olacak"
+                    }
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <span className={`text-sm ${formData.isActive ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {formData.isActive ? 'Aktif' : 'Pasif'}
+                  </span>
+                  <Switch
+                    id="isActive"
+                    checked={formData.isActive}
+                    onCheckedChange={handleSwitchChange}
+                    className="data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-slate-700"
+                    data-testid="switch-is-active"
+                  />
+                </div>
               </div>
 
               <DialogFooter className="gap-2 pt-4">
