@@ -319,6 +319,42 @@ html {
   color: #d9d9d9 !important;
 }
 
+/* Futuristic button class */
+.futuristic-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+}
+
+.futuristic-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 191, 255, 0.2);
+}
+
+/* Table styling for futuristic theme */
+.futuristic-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.futuristic-table th {
+  background: linear-gradient(90deg, rgba(0, 191, 255, 0.1) 0%, transparent 100%);
+  border-bottom: 2px solid rgba(0, 191, 255, 0.3);
+}
+
+.futuristic-table tr:hover {
+  background: rgba(0, 191, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+/* Enhanced glassmorphism */
+.glass-enhanced {
+  background: linear-gradient(135deg, rgba(15, 15, 15, 0.9) 0%, rgba(25, 25, 35, 0.85) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 191, 255, 0.2);
+  box-shadow: 0 12px 32px 0 rgba(0, 191, 255, 0.1), 0 8px 16px 0 rgba(0, 0, 0, 0.3);
+}
+
 /* Dark theme component overrides */
 input, textarea, select {
   background-color: #111111 !important;

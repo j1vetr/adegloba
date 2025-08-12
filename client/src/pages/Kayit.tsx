@@ -23,7 +23,7 @@ export default function Kayit() {
 
   // Fetch active ships for dropdown
   const { data: ships, isLoading: shipsLoading } = useQuery<Ship[]>({
-    queryKey: ["/api/ships"]
+    queryKey: ["/api/ships/active"]
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -101,15 +101,20 @@ export default function Kayit() {
         </div>
 
         {/* Registration Card */}
-        <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-700/50">
-          <CardHeader>
-            <CardTitle className="text-center text-white">Kayıt Ol</CardTitle>
+        <Card className="glass-enhanced border-primary/20">
+          <CardHeader className="pb-6">
+            <CardTitle className="text-center text-white text-xl">AdeGloba Sistemi Kayıt</CardTitle>
+            <p className="text-center text-slate-400 text-sm">
+              Özel müşteri sistemimize hoş geldiniz
+            </p>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-slate-300 flex items-center gap-2">
-                  <User className="h-4 w-4" />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="username" className="text-slate-300 flex items-center gap-2 font-medium">
+                  <div className="p-1 rounded bg-primary/10">
+                    <User className="h-4 w-4 text-primary" />
+                  </div>
                   Kullanıcı Adı
                 </Label>
                 <Input
@@ -119,15 +124,19 @@ export default function Kayit() {
                   value={formData.username}
                   onChange={handleChange}
                   required
-                  className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                  className="bg-slate-800/50 border-slate-600/50 text-white h-12 
+                    placeholder:text-slate-400 focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm"
                   placeholder="Kullanıcı adınızı girin"
                   data-testid="input-username"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-300 flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
+              <div className="space-y-3">
+                <Label htmlFor="email" className="text-slate-300 flex items-center gap-2 font-medium">
+                  <div className="p-1 rounded bg-primary/10">
+                    <Mail className="h-4 w-4 text-primary" />
+                  </div>
                   E-posta
                 </Label>
                 <Input
@@ -137,15 +146,19 @@ export default function Kayit() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                  className="bg-slate-800/50 border-slate-600/50 text-white h-12 
+                    placeholder:text-slate-400 focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm"
                   placeholder="E-posta adresinizi girin"
                   data-testid="input-email"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-300 flex items-center gap-2">
-                  <Lock className="h-4 w-4" />
+              <div className="space-y-3">
+                <Label htmlFor="password" className="text-slate-300 flex items-center gap-2 font-medium">
+                  <div className="p-1 rounded bg-primary/10">
+                    <Lock className="h-4 w-4 text-primary" />
+                  </div>
                   Şifre
                 </Label>
                 <Input
@@ -155,22 +168,28 @@ export default function Kayit() {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                  className="bg-slate-800/50 border-slate-600/50 text-white h-12 
+                    placeholder:text-slate-400 focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm"
                   placeholder="Şifrenizi girin (en az 6 karakter)"
                   data-testid="input-password"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="ship_id" className="text-slate-300 flex items-center gap-2">
-                  <ShipIcon className="h-4 w-4" />
+              <div className="space-y-3">
+                <Label htmlFor="ship_id" className="text-slate-300 flex items-center gap-2 font-medium">
+                  <div className="p-1 rounded bg-primary/10">
+                    <ShipIcon className="h-4 w-4 text-primary" />
+                  </div>
                   Gemi Seçin
                 </Label>
                 <Select onValueChange={handleShipChange} required>
-                  <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-blue-500" data-testid="select-ship">
+                  <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white h-12 
+                    focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm" data-testid="select-ship">
                     <SelectValue placeholder="Geminizi seçin" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectContent className="bg-slate-800/95 border-slate-600 backdrop-blur-xl">
                     {shipsLoading ? (
                       <SelectItem value="loading" disabled>
                         <div className="flex items-center gap-2">
@@ -189,9 +208,11 @@ export default function Kayit() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address" className="text-slate-300 flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
+              <div className="space-y-3">
+                <Label htmlFor="address" className="text-slate-300 flex items-center gap-2 font-medium">
+                  <div className="p-1 rounded bg-primary/10">
+                    <MapPin className="h-4 w-4 text-primary" />
+                  </div>
                   Adresiniz
                 </Label>
                 <Textarea
@@ -201,15 +222,17 @@ export default function Kayit() {
                   onChange={handleChange}
                   required
                   rows={3}
-                  className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 resize-none"
+                  className="bg-slate-800/50 border-slate-600/50 text-white min-h-[80px]
+                    placeholder:text-slate-400 focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm resize-none"
                   placeholder="Faturalama/kargo adresinizi girin..."
                   data-testid="textarea-address"
                 />
               </div>
 
               {error && (
-                <Alert className="border-red-500/50 bg-red-500/10">
-                  <AlertDescription className="text-red-400">
+                <Alert className="border-red-500/30 bg-red-500/10 backdrop-blur-sm">
+                  <AlertDescription className="text-red-400 font-medium">
                     {error}
                   </AlertDescription>
                 </Alert>
@@ -217,17 +240,20 @@ export default function Kayit() {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
+                className="w-full btn-neon h-12 text-lg font-medium"
                 disabled={isLoading}
                 data-testid="button-register"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Kayıt işlemi...
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Kayıt işlemi devam ediyor...
                   </>
                 ) : (
-                  "Kayıt Ol"
+                  <>
+                    <User className="mr-2 h-5 w-5" />
+                    Sisteme Kayıt Ol
+                  </>
                 )}
               </Button>
               

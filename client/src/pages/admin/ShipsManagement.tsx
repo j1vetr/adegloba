@@ -185,99 +185,123 @@ export default function ShipsManagement() {
   return (
     <AdminLayout title="Gemiler" showAddButton onAddClick={handleAdd}>
       <div className="space-y-6">
-        {/* Ships Grid */}
+        {/* Ships Table */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : ships?.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {ships.map((ship: Ship) => (
-              <Card key={ship.id} className="glass-card border-border/50 hover:border-primary/30 transition-all duration-300 card-hover">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Ship className="h-5 w-5 text-primary" />
-                      <CardTitle className="text-lg text-white">{ship.name}</CardTitle>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant={ship.isActive ? "default" : "secondary"}
-                        className={ship.isActive ? "bg-green-600 text-white" : "bg-gray-600 text-white"}
-                      >
-                        {ship.isActive ? (
-                          <><Eye className="h-3 w-3 mr-1" /> Aktif</>
-                        ) : (
-                          <><EyeOff className="h-3 w-3 mr-1" /> Pasif</>
-                        )}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="text-sm text-slate-400">Slug</div>
-                    <div className="text-sm font-mono text-primary">{ship.slug}</div>
-                  </div>
-                  
-                  {ship.description && (
-                    <div>
-                      <div className="text-sm text-slate-400">Açıklama</div>
-                      <div className="text-sm text-slate-300 line-clamp-2">{ship.description}</div>
-                    </div>
-                  )}
-                  
-                  {ship.imageUrl && (
-                    <div>
-                      <div className="text-sm text-slate-400 flex items-center gap-1">
-                        <Image className="h-3 w-3" />
-                        Resim URL
+          <div className="glass-card border-border/50 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+                    <th className="text-left px-6 py-4 font-semibold text-white">
+                      <div className="flex items-center gap-2">
+                        <Ship className="h-4 w-4 text-primary" />
+                        Gemi Adı
                       </div>
-                      <div className="text-sm text-primary truncate">{ship.imageUrl}</div>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <Calendar className="h-3 w-3" />
-                    Oluşturulma: {formatDate(ship.createdAt)}
-                  </div>
-                  
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleEdit(ship)}
-                      className="flex-1 text-primary hover:text-primary hover:bg-primary/20"
-                      data-testid={`edit-ship-${ship.id}`}
+                    </th>
+                    <th className="text-left px-6 py-4 font-semibold text-white">Slug</th>
+                    <th className="text-left px-6 py-4 font-semibold text-white">Durum</th>
+                    <th className="text-left px-6 py-4 font-semibold text-white">Oluşturulma Tarihi</th>
+                    <th className="text-center px-6 py-4 font-semibold text-white">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ships.map((ship: Ship, index: number) => (
+                    <tr 
+                      key={ship.id}
+                      className={`
+                        table-row-hover border-b border-slate-800/50 
+                        ${index % 2 === 0 ? 'bg-slate-900/20' : 'bg-slate-800/20'}
+                        hover:bg-primary/5 hover:border-primary/20
+                        transition-all duration-300
+                      `}
                     >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Düzenle
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setDeleteShip(ship)}
-                      className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                      data-testid={`delete-ship-${ship.id}`}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Sil
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                            <Ship className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-white">{ship.name}</div>
+                            {ship.description && (
+                              <div className="text-sm text-slate-400 truncate max-w-xs">
+                                {ship.description}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <code className="px-2 py-1 bg-slate-800 text-primary rounded text-sm font-mono">
+                          {ship.slug}
+                        </code>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge 
+                          className={`
+                            ${ship.isActive 
+                              ? "bg-green-600/20 text-green-400 border-green-500/30" 
+                              : "bg-gray-600/20 text-gray-400 border-gray-500/30"
+                            } backdrop-blur-sm
+                          `}
+                        >
+                          {ship.isActive ? (
+                            <><Eye className="h-3 w-3 mr-1" /> Aktif</>
+                          ) : (
+                            <><EyeOff className="h-3 w-3 mr-1" /> Pasif</>
+                          )}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-slate-300">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(ship.createdAt)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(ship)}
+                            className="futuristic-btn text-primary hover:text-primary hover:bg-primary/20 hover:scale-105"
+                            data-testid={`edit-ship-${ship.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setDeleteShip(ship)}
+                            className="futuristic-btn text-red-400 hover:text-red-300 hover:bg-red-500/20 hover:scale-105"
+                            data-testid={`delete-ship-${ship.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
-          <Card className="glass-card border-border/50">
-            <CardContent className="text-center py-12">
-              <Ship className="h-16 w-16 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">Henüz Gemi Yok</h3>
-              <p className="text-slate-400 mb-6">İlk geminizi oluşturmak için "Yeni Ekle" butonuna tıklayın.</p>
+          <Card className="glass-card border-border/50 text-center py-16">
+            <CardContent className="space-y-4">
+              <div className="mx-auto w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center">
+                <Ship className="h-8 w-8 text-slate-500" />
+              </div>
+              <h3 className="text-xl font-semibold text-white">Henüz Gemi Yok</h3>
+              <p className="text-slate-400 max-w-md mx-auto">
+                İlk geminizi oluşturmak için "Yeni Ekle" butonuna tıklayın ve gemi bilgilerini doldurun.
+              </p>
               <Button
                 onClick={handleAdd}
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                className="btn-neon mt-4"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 İlk Gemi Ekle
@@ -288,9 +312,12 @@ export default function ShipsManagement() {
 
         {/* Add/Edit Form Dialog */}
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogContent className="bg-slate-800 border-slate-700 max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="text-white">
+          <DialogContent className="glass-card border-primary/30 max-w-lg bg-slate-900/95 backdrop-blur-xl">
+            <DialogHeader className="pb-6">
+              <DialogTitle className="text-white text-xl flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                  <Ship className="h-5 w-5 text-primary" />
+                </div>
                 {editingShip ? "Gemi Düzenle" : "Yeni Gemi Ekle"}
               </DialogTitle>
               <DialogDescription className="text-slate-400">
@@ -298,9 +325,9 @@ export default function ShipsManagement() {
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-slate-300">
+                <Label htmlFor="name" className="text-slate-300 font-medium">
                   Gemi Adı *
                 </Label>
                 <Input
@@ -308,14 +335,16 @@ export default function ShipsManagement() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Örn: M/V Ocean Star"
-                  className="bg-slate-700 border-slate-600 text-white"
+                  className="bg-slate-800/50 border-slate-600/50 text-white h-12 
+                    focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm"
                   required
                   data-testid="ship-name-input"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="slug" className="text-slate-300">
+                <Label htmlFor="slug" className="text-slate-300 font-medium">
                   Slug
                 </Label>
                 <Input
@@ -323,7 +352,9 @@ export default function ShipsManagement() {
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                   placeholder="Boş bırakılırsa otomatik oluşturulur"
-                  className="bg-slate-700 border-slate-600 text-white"
+                  className="bg-slate-800/50 border-slate-600/50 text-white h-12 
+                    focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm font-mono"
                   data-testid="ship-slug-input"
                 />
                 <p className="text-xs text-slate-400">
@@ -332,7 +363,7 @@ export default function ShipsManagement() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-slate-300">
+                <Label htmlFor="description" className="text-slate-300 font-medium">
                   Açıklama
                 </Label>
                 <Textarea
@@ -340,14 +371,16 @@ export default function ShipsManagement() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Gemi hakkında kısa açıklama..."
-                  className="bg-slate-700 border-slate-600 text-white"
+                  className="bg-slate-800/50 border-slate-600/50 text-white min-h-[100px]
+                    focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm resize-none"
                   rows={3}
                   data-testid="ship-description-input"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="imageUrl" className="text-slate-300">
+                <Label htmlFor="imageUrl" className="text-slate-300 font-medium">
                   Resim URL
                 </Label>
                 <Input
@@ -356,7 +389,9 @@ export default function ShipsManagement() {
                   value={formData.imageUrl}
                   onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                   placeholder="https://example.com/ship.jpg"
-                  className="bg-slate-700 border-slate-600 text-white"
+                  className="bg-slate-800/50 border-slate-600/50 text-white h-12 
+                    focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm"
                   data-testid="ship-image-input"
                 />
               </div>
@@ -374,19 +409,20 @@ export default function ShipsManagement() {
               </div>
             </form>
 
-            <DialogFooter>
+            <DialogFooter className="pt-6 flex gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsFormOpen(false)}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500
+                  transition-all duration-200 hover:scale-105"
               >
                 İptal
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={createMutation.isPending || updateMutation.isPending}
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                className="btn-neon"
                 data-testid="ship-submit-button"
               >
                 {(createMutation.isPending || updateMutation.isPending) && (
@@ -400,25 +436,33 @@ export default function ShipsManagement() {
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={!!deleteShip} onOpenChange={() => setDeleteShip(null)}>
-          <DialogContent className="bg-slate-800 border-slate-700">
-            <DialogHeader>
-              <DialogTitle className="text-white">Gemi Sil</DialogTitle>
+          <DialogContent className="glass-card border-red-500/30 max-w-md bg-slate-900/95 backdrop-blur-xl">
+            <DialogHeader className="pb-6">
+              <DialogTitle className="text-white text-xl flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <Trash2 className="h-5 w-5 text-red-400" />
+                </div>
+                Gemi Sil
+              </DialogTitle>
               <DialogDescription className="text-slate-400">
-                "{deleteShip?.name}" gemisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                <span className="font-medium text-red-400">"{deleteShip?.name}"</span> gemisini silmek istediğinizden emin misiniz? 
+                Bu işlem geri alınamaz ve tüm ilişkili veriler kaybolacaktır.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
+            <DialogFooter className="pt-6 flex gap-3">
               <Button
                 variant="outline"
                 onClick={() => setDeleteShip(null)}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500
+                  transition-all duration-200 hover:scale-105"
               >
                 İptal
               </Button>
               <Button
                 onClick={() => deleteShip && deleteMutation.mutate(deleteShip.id)}
                 disabled={deleteMutation.isPending}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 
+                  text-white transition-all duration-200 hover:scale-105"
                 data-testid="confirm-delete-ship"
               >
                 {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

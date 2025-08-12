@@ -483,6 +483,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public routes for ships (registration form needs this)
+  app.get('/api/ships/active', async (req, res) => {
+    try {
+      const ships = await storage.getAllShips();
+      res.json(ships.filter(ship => ship.isActive));
+    } catch (error) {
+      console.error('Error fetching active ships:', error);
+      res.status(500).json({ error: 'Failed to fetch active ships' });
+    }
+  });
+
   // Admin CRUD Routes for Ships
   app.get('/api/admin/ships', isAdminAuthenticated, async (req, res) => {
     try {
