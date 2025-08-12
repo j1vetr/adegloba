@@ -9,8 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, Shield, HeadphonesIcon, Globe, Wifi, Eye, EyeOff } from 'lucide-react';
+import { Settings, Shield, HeadphonesIcon, Globe, Wifi, Eye, EyeOff, Save, Check } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import AdminLayout from '@/components/AdminLayout';
 
 interface Setting {
   id: string;
@@ -78,6 +79,8 @@ export default function SettingsManagement() {
   const [activeTab, setActiveTab] = useState('general');
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+  const [savingField, setSavingField] = useState<string | null>(null);
+  const [successField, setSuccessField] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -87,21 +90,21 @@ export default function SettingsManagement() {
 
   const updateSettingMutation = useMutation({
     mutationFn: async ({ key, value, category }: { key: string; value: string; category: string }) => {
+      setSavingField(key);
       const response = await apiRequest('POST', '/api/admin/settings', { key, value, category });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/settings'] });
-      toast({
-        title: 'Başarılı',
-        description: 'Ayarlar başarıyla kaydedildi',
-        variant: 'default',
-      });
+      setSavingField(null);
+      setSuccessField(variables.key);
+      setTimeout(() => setSuccessField(null), 2000);
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables) => {
+      setSavingField(null);
       toast({
         title: 'Hata',
-        description: error.message || 'Ayarlar kaydedilemedi',
+        description: error.message || 'Ayar kaydedilemedi',
         variant: 'destructive',
       });
     }
@@ -128,126 +131,193 @@ export default function SettingsManagement() {
 
   const renderField = (field: any, category: string) => {
     const value = settings[field.key] || '';
+    const isSaving = savingField === field.key;
+    const isSuccess = successField === field.key;
+
+    const getFieldIcon = () => {
+      if (isSaving) return <div className="animate-spin h-4 w-4 border-2 border-cyan-400 border-t-transparent rounded-full" />;
+      if (isSuccess) return <Check className="h-4 w-4 text-green-400" />;
+      return null;
+    };
 
     switch (field.type) {
       case 'password':
         const isVisible = showPasswords[field.key];
         return (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor={field.key} className="text-sm font-medium text-gray-200">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="lg:col-span-1">
+              <Label htmlFor={field.key} className="text-sm font-medium text-slate-300">
                 {field.label}
                 {field.required && <span className="text-red-400 ml-1">*</span>}
               </Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => togglePasswordVisibility(field.key)}
-                className="h-6 w-6 p-0"
-                data-testid={`toggle-password-${field.key}`}
-              >
-                {isVisible ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-              </Button>
             </div>
-            <Input
-              id={field.key}
-              type={isVisible ? 'text' : 'password'}
-              value={value}
-              onChange={(e) => handleSettingUpdate(field.key, e.target.value, category)}
-              disabled={field.disabled || updateSettingMutation.isPending}
-              className="bg-gray-900/50 border-gray-700 text-gray-100"
-              data-testid={`input-${field.key}`}
-            />
+            <div className="lg:col-span-2 space-y-2">
+              <div className="relative">
+                <Input
+                  id={field.key}
+                  type={isVisible ? 'text' : 'password'}
+                  value={value}
+                  onChange={(e) => handleSettingUpdate(field.key, e.target.value, category)}
+                  disabled={field.disabled || isSaving}
+                  className="bg-slate-900/50 border-slate-700/50 text-slate-100 h-11 pr-20 
+                    focus:border-cyan-500/50 focus:ring-cyan-500/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm"
+                  placeholder={field.placeholder}
+                  data-testid={`input-${field.key}`}
+                />
+                <div className="absolute right-2 top-2 flex items-center space-x-1">
+                  {getFieldIcon()}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => togglePasswordVisibility(field.key)}
+                    className="h-7 w-7 p-0 hover:bg-slate-800/50 text-slate-400 hover:text-slate-300"
+                    data-testid={`toggle-password-${field.key}`}
+                  >
+                    {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         );
 
       case 'textarea':
         return (
-          <div className="space-y-2">
-            <Label htmlFor={field.key} className="text-sm font-medium text-gray-200">
-              {field.label}
-              {field.required && <span className="text-red-400 ml-1">*</span>}
-            </Label>
-            <Textarea
-              id={field.key}
-              value={value}
-              onChange={(e) => handleSettingUpdate(field.key, e.target.value, category)}
-              disabled={field.disabled || updateSettingMutation.isPending}
-              className="bg-gray-900/50 border-gray-700 text-gray-100 min-h-[100px]"
-              placeholder={field.placeholder}
-              data-testid={`textarea-${field.key}`}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="lg:col-span-1">
+              <Label htmlFor={field.key} className="text-sm font-medium text-slate-300">
+                {field.label}
+                {field.required && <span className="text-red-400 ml-1">*</span>}
+              </Label>
+            </div>
+            <div className="lg:col-span-2 space-y-2">
+              <div className="relative">
+                <Textarea
+                  id={field.key}
+                  value={value}
+                  onChange={(e) => handleSettingUpdate(field.key, e.target.value, category)}
+                  disabled={field.disabled || isSaving}
+                  className="bg-slate-900/50 border-slate-700/50 text-slate-100 min-h-[100px]
+                    focus:border-cyan-500/50 focus:ring-cyan-500/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm resize-none"
+                  placeholder={field.placeholder}
+                  data-testid={`textarea-${field.key}`}
+                />
+                {getFieldIcon() && (
+                  <div className="absolute right-3 top-3">
+                    {getFieldIcon()}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         );
 
       case 'switch':
         return (
-          <div className="flex items-center space-x-3">
-            <Switch
-              id={field.key}
-              checked={value === 'on'}
-              onCheckedChange={(checked) => 
-                handleSettingUpdate(field.key, checked ? 'on' : 'off', category)
-              }
-              disabled={field.disabled || updateSettingMutation.isPending}
-              data-testid={`switch-${field.key}`}
-            />
-            <Label htmlFor={field.key} className="text-sm font-medium text-gray-200">
-              {field.label}
-              {field.required && <span className="text-red-400 ml-1">*</span>}
-            </Label>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+            <div className="lg:col-span-1">
+              <Label htmlFor={field.key} className="text-sm font-medium text-slate-300">
+                {field.label}
+                {field.required && <span className="text-red-400 ml-1">*</span>}
+              </Label>
+            </div>
+            <div className="lg:col-span-2 flex items-center space-x-3">
+              <Switch
+                id={field.key}
+                checked={value === 'on'}
+                onCheckedChange={(checked) => 
+                  handleSettingUpdate(field.key, checked ? 'on' : 'off', category)
+                }
+                disabled={field.disabled || isSaving}
+                className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-cyan-500 data-[state=checked]:to-blue-500"
+                data-testid={`switch-${field.key}`}
+              />
+              <span className="text-xs text-slate-400">
+                {value === 'on' ? 'Aktif' : 'Pasif'}
+              </span>
+              {getFieldIcon()}
+            </div>
           </div>
         );
 
       case 'select':
         return (
-          <div className="space-y-2">
-            <Label htmlFor={field.key} className="text-sm font-medium text-gray-200">
-              {field.label}
-              {field.required && <span className="text-red-400 ml-1">*</span>}
-            </Label>
-            <Select
-              value={value}
-              onValueChange={(newValue) => handleSettingUpdate(field.key, newValue, category)}
-              disabled={field.disabled || updateSettingMutation.isPending}
-              data-testid={`select-${field.key}`}
-            >
-              <SelectTrigger className="bg-gray-900/50 border-gray-700 text-gray-100">
-                <SelectValue placeholder="Seçiniz..." />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-gray-700">
-                {field.options?.map((option: any) => (
-                  <SelectItem 
-                    key={option.value} 
-                    value={option.value}
-                    className="text-gray-100 focus:bg-gray-800"
-                  >
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="lg:col-span-1">
+              <Label htmlFor={field.key} className="text-sm font-medium text-slate-300">
+                {field.label}
+                {field.required && <span className="text-red-400 ml-1">*</span>}
+              </Label>
+            </div>
+            <div className="lg:col-span-2 space-y-2">
+              <div className="relative">
+                <Select
+                  value={value}
+                  onValueChange={(newValue) => handleSettingUpdate(field.key, newValue, category)}
+                  disabled={field.disabled || isSaving}
+                  data-testid={`select-${field.key}`}
+                >
+                  <SelectTrigger className="bg-slate-900/50 border-slate-700/50 text-slate-100 h-11
+                    focus:border-cyan-500/50 focus:ring-cyan-500/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm">
+                    <SelectValue placeholder="Seçiniz..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900/95 border-slate-700/50 backdrop-blur-sm">
+                    {field.options?.map((option: any) => (
+                      <SelectItem 
+                        key={option.value} 
+                        value={option.value}
+                        className="text-slate-100 focus:bg-slate-800/50 focus:text-cyan-400"
+                      >
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {getFieldIcon() && (
+                  <div className="absolute right-12 top-3">
+                    {getFieldIcon()}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         );
 
       default:
         return (
-          <div className="space-y-2">
-            <Label htmlFor={field.key} className="text-sm font-medium text-gray-200">
-              {field.label}
-              {field.required && <span className="text-red-400 ml-1">*</span>}
-            </Label>
-            <Input
-              id={field.key}
-              type={field.type || 'text'}
-              value={value}
-              onChange={(e) => handleSettingUpdate(field.key, e.target.value, category)}
-              disabled={field.disabled || updateSettingMutation.isPending}
-              className="bg-gray-900/50 border-gray-700 text-gray-100"
-              placeholder={field.placeholder}
-              data-testid={`input-${field.key}`}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="lg:col-span-1">
+              <Label htmlFor={field.key} className="text-sm font-medium text-slate-300">
+                {field.label}
+                {field.required && <span className="text-red-400 ml-1">*</span>}
+              </Label>
+            </div>
+            <div className="lg:col-span-2 space-y-2">
+              <div className="relative">
+                <Input
+                  id={field.key}
+                  type={field.type || 'text'}
+                  value={value}
+                  onChange={(e) => handleSettingUpdate(field.key, e.target.value, category)}
+                  disabled={field.disabled || isSaving}
+                  className="bg-slate-900/50 border-slate-700/50 text-slate-100 h-11 pr-12
+                    focus:border-cyan-500/50 focus:ring-cyan-500/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder={field.placeholder}
+                  data-testid={`input-${field.key}`}
+                />
+                {getFieldIcon() && (
+                  <div className="absolute right-3 top-3">
+                    {getFieldIcon()}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         );
     }
@@ -255,63 +325,95 @@ export default function SettingsManagement() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400">Ayarlar yükleniyor...</div>
-      </div>
+      <AdminLayout title="Ayarlar">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin h-8 w-8 border-3 border-cyan-400 border-t-transparent rounded-full"></div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-3">
-        <Settings className="h-8 w-8 text-cyan-400" />
-        <h1 className="text-3xl font-bold text-white" data-testid="page-title">Ayarlar</h1>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-5 bg-gray-900/50 p-1 rounded-lg">
-          {Object.entries(categoryConfig).map(([key, config]) => {
-            const Icon = config.icon;
-            return (
-              <TabsTrigger
-                key={key}
-                value={key}
-                className="flex items-center space-x-2 data-[state=active]:bg-cyan-600/20 data-[state=active]:text-cyan-400 text-gray-400"
-                data-testid={`tab-${key}`}
-              >
-                <Icon className="h-4 w-4" />
-                <span className="hidden md:inline">{config.title}</span>
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-
-        {Object.entries(categoryConfig).map(([categoryKey, config]) => (
-          <TabsContent key={categoryKey} value={categoryKey}>
-            <Card className="bg-gray-900/30 border-gray-700 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center space-x-3 text-xl text-white">
-                  <config.icon className="h-6 w-6 text-cyan-400" />
-                  <span>{config.title}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {config.fields.map((field) => (
-                  <div key={field.key} className="bg-gray-800/30 p-4 rounded-lg border border-gray-700/50">
-                    {renderField(field, categoryKey)}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      {updateSettingMutation.isPending && (
-        <div className="fixed bottom-4 right-4 bg-cyan-600 text-white px-4 py-2 rounded-lg shadow-lg">
-          Kaydediliyor...
+    <AdminLayout title="Sistem Ayarları">
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 
+              border border-cyan-500/30 flex items-center justify-center backdrop-blur-sm">
+              <Settings className="h-6 w-6 text-cyan-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white" data-testid="page-title">
+                Sistem Ayarları
+              </h1>
+              <p className="text-slate-400 text-sm">
+                AdeGloba Starlink System yapılandırması
+              </p>
+            </div>
+          </div>
         </div>
-      )}
-    </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-slate-900/30 p-1 rounded-xl border border-slate-700/50 backdrop-blur-sm">
+            {Object.entries(categoryConfig).map(([key, config]) => {
+              const Icon = config.icon;
+              return (
+                <TabsTrigger
+                  key={key}
+                  value={key}
+                  className="flex items-center justify-center space-x-2 px-3 py-2 rounded-lg
+                    data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600/20 data-[state=active]:to-blue-600/20
+                    data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30
+                    text-slate-400 hover:text-slate-300 transition-all duration-200
+                    text-xs lg:text-sm font-medium"
+                  data-testid={`tab-${key}`}
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="hidden sm:inline truncate">{config.title}</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+
+          {/* Tab Contents */}
+          {Object.entries(categoryConfig).map(([categoryKey, config]) => (
+            <TabsContent key={categoryKey} value={categoryKey} className="space-y-6">
+              <Card className="bg-slate-900/20 border-slate-700/50 backdrop-blur-sm shadow-xl">
+                <CardHeader className="pb-6 border-b border-slate-700/50">
+                  <CardTitle className="flex items-center space-x-3 text-xl text-white">
+                    <config.icon className="h-6 w-6 text-cyan-400" />
+                    <span>{config.title}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-8">
+                  {config.fields.map((field) => (
+                    <div key={field.key} 
+                      className="bg-slate-800/20 p-6 rounded-xl border border-slate-700/30 
+                        backdrop-blur-sm hover:bg-slate-800/30 transition-all duration-200"
+                    >
+                      {renderField(field, categoryKey)}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ))}
+        </Tabs>
+
+        {/* Success notification */}
+        {successField && (
+          <div className="fixed top-4 right-4 bg-gradient-to-r from-green-600 to-emerald-600 
+            text-white px-6 py-3 rounded-xl shadow-2xl border border-green-500/30 backdrop-blur-sm
+            animate-in slide-in-from-right-full duration-300">
+            <div className="flex items-center space-x-2">
+              <Check className="h-5 w-5" />
+              <span className="font-medium">Ayar başarıyla kaydedildi</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </AdminLayout>
   );
 }

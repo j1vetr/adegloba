@@ -8,6 +8,16 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## Comprehensive Settings Management System (August 12, 2025)
+- Implemented complete Settings (Ayarlar) page with 5 categorized sections
+- Database schema with settings table (key, value, category, timestamps)
+- Advanced form controls: masked password fields with show/hide toggle, dropdown selectors, switches, text areas
+- Two-column responsive layout with labels on left, inputs on right (desktop) / single column (mobile)
+- Immediate save functionality with visual feedback (spinning icons, success checkmarks)
+- Default settings initialization on server startup for all categories
+- Perfect visual consistency with admin panel's dark futuristic theme and glassmorphism effects
+- Categories: Genel Ayarlar, Ödeme Ayarları, Destek Ayarları, Captive Portal Ayarları, RADIUS Ayarları
+
 ## Complete UI Rebranding to "AdeGloba Starlink System" (August 12, 2025)
 - Updated all page titles and headers across the application
 - Converted all labels to Turkish throughout the interface
