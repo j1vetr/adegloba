@@ -3,7 +3,7 @@ import {
   admin_users,
   ships,
   plans,
-  shipPlans,
+  credentialPools,
   coupons,
   orders,
   orderItems,
@@ -19,8 +19,8 @@ import {
   type InsertShip,
   type Plan,
   type InsertPlan,
-  type ShipPlan,
-  type InsertShipPlan,
+  type CredentialPool,
+  type InsertCredentialPool,
   type Coupon,
   type InsertCoupon,
   type Order,
@@ -80,10 +80,14 @@ export interface IStorage {
   updatePlan(id: string, plan: Partial<InsertPlan>): Promise<Plan | undefined>;
   deletePlan(id: string): Promise<void>;
 
-  // Ship-Plan relations
-  assignPlanToShip(shipId: string, planId: string, isActive?: boolean, sortOrder?: number): Promise<ShipPlan>;
-  updateShipPlan(shipId: string, planId: string, updates: Partial<InsertShipPlan>): Promise<void>;
-  removeShipPlan(shipId: string, planId: string): Promise<void>;
+  // Credential Pool operations
+  getCredentialPoolsByShip(shipId: string): Promise<CredentialPool[]>;
+  getAvailableCredentials(shipId: string): Promise<CredentialPool[]>;
+  createCredentialPool(credential: InsertCredentialPool): Promise<CredentialPool>;
+  createCredentialPoolBatch(credentials: InsertCredentialPool[]): Promise<CredentialPool[]>;
+  assignCredentialToOrder(orderId: string, shipId: string): Promise<CredentialPool | null>;
+  unassignCredential(credentialId: string): Promise<void>;
+  deleteCredential(id: string): Promise<void>;
 
   // Coupon operations
   getCoupons(): Promise<Coupon[]>;
@@ -192,12 +196,11 @@ export class DatabaseStorage implements IStorage {
   async getShipPlans(shipId: string): Promise<Plan[]> {
     const results = await db
       .select()
-      .from(shipPlans)
-      .innerJoin(plans, eq(shipPlans.planId, plans.id))
-      .where(and(eq(shipPlans.shipId, shipId), eq(shipPlans.isActive, true), eq(plans.isActive, true)))
-      .orderBy(shipPlans.sortOrder, plans.sortOrder);
+      .from(plans)
+      .where(and(eq(plans.shipId, shipId), eq(plans.isActive, true)))
+      .orderBy(plans.sortOrder);
     
-    return results.map(r => r.plans);
+    return results;
   }
 
   async getUserOrders(userId: string): Promise<any[]> {
@@ -824,6 +827,86 @@ export class DatabaseStorage implements IStorage {
         eq(tickets.status, 'Açık')
       ));
     return Number(result[0]?.count || 0);
+  }
+
+  // Credential Pool operations
+  async getCredentialPoolsByShip(shipId: string): Promise<CredentialPool[]> {
+    return db.select().from(credentialPools)
+      .where(eq(credentialPools.shipId, shipId))
+      .orderBy(credentialPools.createdAt);
+  }
+
+  async getAvailableCredentials(shipId: string): Promise<CredentialPool[]> {
+    return db.select().from(credentialPools)
+      .where(and(
+        eq(credentialPools.shipId, shipId),
+        eq(credentialPools.isAssigned, false)
+      ))
+      .orderBy(credentialPools.createdAt);
+  }
+
+  async createCredentialPool(credential: InsertCredentialPool): Promise<CredentialPool> {
+    const [result] = await db.insert(credentialPools).values(credential).returning();
+    return result;
+  }
+
+  async createCredentialPoolBatch(credentials: InsertCredentialPool[]): Promise<CredentialPool[]> {
+    return db.insert(credentialPools).values(credentials).returning();
+  }
+
+  async assignCredentialToOrder(orderId: string, shipId: string): Promise<CredentialPool | null> {
+    // Get the order to check its ship
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
+    if (!order) return null;
+
+    // Find an available credential for the ship
+    const [credential] = await db.select().from(credentialPools)
+      .where(and(
+        eq(credentialPools.shipId, shipId),
+        eq(credentialPools.isAssigned, false)
+      ))
+      .limit(1);
+
+    if (!credential) return null;
+
+    // Assign the credential
+    const [assignedCredential] = await db.update(credentialPools)
+      .set({
+        isAssigned: true,
+        assignedToOrderId: orderId,
+        assignedAt: new Date()
+      })
+      .where(eq(credentialPools.id, credential.id))
+      .returning();
+
+    // Update the order with the assigned credential
+    await db.update(orders)
+      .set({ assignedCredentialId: assignedCredential.id })
+      .where(eq(orders.id, orderId));
+
+    return assignedCredential;
+  }
+
+  async unassignCredential(credentialId: string): Promise<void> {
+    const [credential] = await db.update(credentialPools)
+      .set({
+        isAssigned: false,
+        assignedToOrderId: null,
+        assignedAt: null
+      })
+      .where(eq(credentialPools.id, credentialId))
+      .returning();
+
+    // Also update any orders that had this credential assigned
+    if (credential) {
+      await db.update(orders)
+        .set({ assignedCredentialId: null })
+        .where(eq(orders.assignedCredentialId, credentialId));
+    }
+  }
+
+  async deleteCredential(id: string): Promise<void> {
+    await db.delete(credentialPools).where(eq(credentialPools.id, id));
   }
 }
 

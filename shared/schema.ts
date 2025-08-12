@@ -59,6 +59,7 @@ export const ships = pgTable("ships", {
 
 export const plans = pgTable("plans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  shipId: varchar("ship_id").notNull().references(() => ships.id, { onDelete: "cascade" }),
   title: varchar("title").notNull(),
   gbAmount: integer("gb_amount").notNull(),
   speedNote: text("speed_note"),
@@ -70,15 +71,7 @@ export const plans = pgTable("plans", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const shipPlans = pgTable("ship_plans", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  shipId: varchar("ship_id").notNull().references(() => ships.id, { onDelete: "cascade" }),
-  planId: varchar("plan_id").notNull().references(() => plans.id, { onDelete: "cascade" }),
-  isActive: boolean("is_active").notNull().default(true),
-  sortOrder: integer("sort_order").notNull().default(0),
-}, (table) => [
-  unique().on(table.shipId, table.planId)
-]);
+// Removed shipPlans table - plans are now directly associated with ships
 
 export const coupons = pgTable("coupons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -95,9 +88,24 @@ export const coupons = pgTable("coupons", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Credential pool for captive portal access per ship
+export const credentialPools = pgTable("credential_pools", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  shipId: varchar("ship_id").notNull().references(() => ships.id, { onDelete: "cascade" }),
+  username: varchar("username").notNull(),
+  password: varchar("password").notNull(),
+  isAssigned: boolean("is_assigned").notNull().default(false),
+  assignedToOrderId: varchar("assigned_to_order_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  assignedAt: timestamp("assigned_at"),
+}, (table) => [
+  unique().on(table.shipId, table.username)
+]);
+
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  shipId: varchar("ship_id").notNull().references(() => ships.id, { onDelete: "cascade" }),
   status: varchar("status").notNull().default('pending'), // 'pending', 'paid', 'failed', 'refunded', 'expired'
   currency: varchar("currency").notNull().default('USD'),
   subtotalUsd: decimal("subtotal_usd", { precision: 10, scale: 2 }).notNull(),
@@ -105,6 +113,7 @@ export const orders = pgTable("orders", {
   totalUsd: decimal("total_usd", { precision: 10, scale: 2 }).notNull(),
   couponId: varchar("coupon_id").references(() => coupons.id),
   paypalOrderId: varchar("paypal_order_id"),
+  assignedCredentialId: varchar("assigned_credential_id"),
   createdAt: timestamp("created_at").defaultNow(),
   paidAt: timestamp("paid_at"),
   expiresAt: timestamp("expires_at"),
@@ -170,25 +179,30 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 }));
 
 export const shipsRelations = relations(ships, ({ many }) => ({
-  shipPlans: many(shipPlans),
+  plans: many(plans),
+  credentialPools: many(credentialPools),
   orderItems: many(orderItems),
+  orders: many(orders),
   coupons: many(coupons),
   users: many(users),
 }));
 
-export const plansRelations = relations(plans, ({ many }) => ({
-  shipPlans: many(shipPlans),
+export const plansRelations = relations(plans, ({ one, many }) => ({
+  ship: one(ships, {
+    fields: [plans.shipId],
+    references: [ships.id],
+  }),
   orderItems: many(orderItems),
 }));
 
-export const shipPlansRelations = relations(shipPlans, ({ one }) => ({
+export const credentialPoolsRelations = relations(credentialPools, ({ one }) => ({
   ship: one(ships, {
-    fields: [shipPlans.shipId],
+    fields: [credentialPools.shipId],
     references: [ships.id],
   }),
-  plan: one(plans, {
-    fields: [shipPlans.planId],
-    references: [plans.id],
+  assignedOrder: one(orders, {
+    fields: [credentialPools.assignedToOrderId],
+    references: [orders.id],
   }),
 }));
 
@@ -205,9 +219,17 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
     fields: [orders.userId],
     references: [users.id],
   }),
+  ship: one(ships, {
+    fields: [orders.shipId],
+    references: [ships.id],
+  }),
   coupon: one(coupons, {
     fields: [orders.couponId],
     references: [coupons.id],
+  }),
+  assignedCredential: one(credentialPools, {
+    fields: [orders.assignedCredentialId],
+    references: [credentialPools.id],
   }),
   orderItems: many(orderItems),
 }));
@@ -301,8 +323,12 @@ export const insertPlanSchema = createInsertSchema(plans).omit({
   updatedAt: true,
 });
 
-export const insertShipPlanSchema = createInsertSchema(shipPlans).omit({
+export const insertCredentialPoolSchema = createInsertSchema(credentialPools).omit({
   id: true,
+  isAssigned: true,
+  assignedToOrderId: true,
+  createdAt: true,
+  assignedAt: true,
 });
 
 export const insertCouponSchema = createInsertSchema(coupons).omit({
@@ -340,8 +366,8 @@ export type InsertShip = z.infer<typeof insertShipSchema>;
 export type Ship = typeof ships.$inferSelect;
 export type InsertPlan = z.infer<typeof insertPlanSchema>;
 export type Plan = typeof plans.$inferSelect;
-export type InsertShipPlan = z.infer<typeof insertShipPlanSchema>;
-export type ShipPlan = typeof shipPlans.$inferSelect;
+export type InsertCredentialPool = z.infer<typeof insertCredentialPoolSchema>;
+export type CredentialPool = typeof credentialPools.$inferSelect;
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 export type Coupon = typeof coupons.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;

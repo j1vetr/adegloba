@@ -16,7 +16,8 @@ import {
   ChevronDown,
   ChevronUp,
   HelpCircle,
-  FileText
+  FileText,
+  Key
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -39,7 +40,8 @@ const navigationCategories = [
     name: 'Operasyon',
     items: [
       { name: 'Gemiler', href: '/admin/ships', icon: Ship },
-      { name: 'Paketler', href: '/admin/plans', icon: Package },
+      { name: 'Paketler', href: '/admin/ship-packages', icon: Package },
+      { name: 'Kimlik Havuzu', href: '/admin/credential-pools', icon: Key },
       { name: 'Kuponlar', href: '/admin/coupons', icon: Gift },
       { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },
     ]

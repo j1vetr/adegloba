@@ -985,6 +985,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Ship-based Package Management API Routes
+  app.get('/api/admin/ship-plans/:shipId', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { shipId } = req.params;
+      const plans = await storage.getShipPlans(shipId);
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching ship plans:', error);
+      res.status(500).json({ message: 'Failed to fetch ship plans' });
+    }
+  });
+
+  // Credential Pool Management API Routes
+  app.get('/api/admin/credential-pools/:shipId', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { shipId } = req.params;
+      const credentials = await storage.getCredentialPoolsByShip(shipId);
+      res.json(credentials);
+    } catch (error) {
+      console.error('Error fetching credential pools:', error);
+      res.status(500).json({ message: 'Failed to fetch credential pools' });
+    }
+  });
+
+  app.get('/api/admin/credential-stats/:shipId', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { shipId } = req.params;
+      const credentials = await storage.getCredentialPoolsByShip(shipId);
+      const available = credentials.filter(c => !c.isAssigned).length;
+      const assigned = credentials.filter(c => c.isAssigned).length;
+      const total = credentials.length;
+      
+      res.json({ available, assigned, total });
+    } catch (error) {
+      console.error('Error fetching credential stats:', error);
+      res.status(500).json({ message: 'Failed to fetch credential stats' });
+    }
+  });
+
+  app.post('/api/admin/credential-pools', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { shipId, username, password } = req.body;
+      
+      if (!shipId || !username || !password) {
+        return res.status(400).json({ message: 'Ship ID, username, and password are required' });
+      }
+
+      const credential = await storage.createCredentialPool({
+        shipId,
+        username,
+        password,
+        isAssigned: false
+      });
+      
+      res.status(201).json(credential);
+    } catch (error) {
+      console.error('Error creating credential:', error);
+      res.status(500).json({ message: 'Failed to create credential' });
+    }
+  });
+
+  app.post('/api/admin/credential-pools/bulk', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { shipId, csvContent } = req.body;
+      
+      if (!shipId || !csvContent) {
+        return res.status(400).json({ message: 'Ship ID and CSV content are required' });
+      }
+
+      // Parse CSV content
+      const lines = csvContent.trim().split('\n');
+      const header = lines[0].toLowerCase().split(',').map(h => h.trim());
+      
+      if (!header.includes('username') || !header.includes('password')) {
+        return res.status(400).json({ message: 'CSV must contain username and password columns' });
+      }
+
+      const usernameIndex = header.indexOf('username');
+      const passwordIndex = header.indexOf('password');
+      
+      const credentials = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        if (values.length >= Math.max(usernameIndex + 1, passwordIndex + 1)) {
+          credentials.push({
+            shipId,
+            username: values[usernameIndex],
+            password: values[passwordIndex],
+            isAssigned: false
+          });
+        }
+      }
+
+      if (credentials.length === 0) {
+        return res.status(400).json({ message: 'No valid credentials found in CSV' });
+      }
+
+      const results = await storage.createCredentialPoolBatch(credentials);
+      res.status(201).json({ count: results.length, credentials: results });
+    } catch (error) {
+      console.error('Error bulk creating credentials:', error);
+      res.status(500).json({ message: 'Failed to bulk create credentials' });
+    }
+  });
+
+  app.delete('/api/admin/credential-pools/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCredential(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting credential:', error);
+      res.status(500).json({ message: 'Failed to delete credential' });
+    }
+  });
+
+  app.post('/api/admin/credential-pools/:id/unassign', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.unassignCredential(id);
+      res.status(200).json({ message: 'Credential unassigned successfully' });
+    } catch (error) {
+      console.error('Error unassigning credential:', error);
+      res.status(500).json({ message: 'Failed to unassign credential' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
