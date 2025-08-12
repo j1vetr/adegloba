@@ -379,6 +379,212 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Authentication Middleware
+  const isAdminAuthenticated = (req: any, res: any, next: any) => {
+    if (req.session && req.session.adminUser) {
+      return next();
+    }
+    return res.status(401).json({ message: 'Unauthorized' });
+  };
+
+  // Admin Authentication Routes
+  app.post('/api/admin/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      // Simple hardcoded authentication
+      if (username === 'emir' && password === 'test') {
+        req.session.adminUser = { username: 'emir' };
+        res.json({ success: true, user: { username: 'emir' } });
+      } else {
+        res.status(401).json({ message: 'Kullanıcı adı veya şifre hatalı' });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: 'Giriş işlemi başarısız' });
+    }
+  });
+
+  app.post('/api/admin/logout', (req: any, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        return res.status(500).json({ message: 'Çıkış işlemi başarısız' });
+      }
+      res.json({ success: true });
+    });
+  });
+
+  app.get('/api/admin/me', isAdminAuthenticated, (req: any, res) => {
+    res.json(req.session.adminUser);
+  });
+
+  // Admin Stats
+  app.get('/api/admin/stats', isAdminAuthenticated, async (req, res) => {
+    try {
+      const ships = await storage.getAllShips();
+      const plans = await storage.getAllPlans();
+      const orders = await storage.getAllOrders();
+      
+      const stats = {
+        totalShips: ships.length,
+        totalPlans: plans.length,
+        totalOrders: orders.length,
+        totalRevenue: orders.reduce((sum, order) => sum + order.totalAmount, 0)
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      res.status(500).json({ message: 'Failed to fetch stats' });
+    }
+  });
+
+  // Admin CRUD Routes for Ships
+  app.get('/api/admin/ships', isAdminAuthenticated, async (req, res) => {
+    try {
+      const ships = await storage.getAllShips();
+      res.json(ships);
+    } catch (error) {
+      console.error('Error fetching ships:', error);
+      res.status(500).json({ message: 'Failed to fetch ships' });
+    }
+  });
+
+  app.post('/api/admin/ships', isAdminAuthenticated, async (req, res) => {
+    try {
+      const shipData = insertShipSchema.parse(req.body);
+      const ship = await storage.createShip(shipData);
+      res.json(ship);
+    } catch (error) {
+      console.error('Error creating ship:', error);
+      res.status(500).json({ message: 'Failed to create ship' });
+    }
+  });
+
+  app.put('/api/admin/ships/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const shipData = insertShipSchema.parse(req.body);
+      const ship = await storage.updateShip(id, shipData);
+      res.json(ship);
+    } catch (error) {
+      console.error('Error updating ship:', error);
+      res.status(500).json({ message: 'Failed to update ship' });
+    }
+  });
+
+  app.delete('/api/admin/ships/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteShip(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting ship:', error);
+      res.status(500).json({ message: 'Failed to delete ship' });
+    }
+  });
+
+  // Admin CRUD Routes for Plans
+  app.get('/api/admin/plans', isAdminAuthenticated, async (req, res) => {
+    try {
+      const plans = await storage.getAllPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+      res.status(500).json({ message: 'Failed to fetch plans' });
+    }
+  });
+
+  app.post('/api/admin/plans', isAdminAuthenticated, async (req, res) => {
+    try {
+      const planData = insertPlanSchema.parse(req.body);
+      const plan = await storage.createPlan(planData);
+      res.json(plan);
+    } catch (error) {
+      console.error('Error creating plan:', error);
+      res.status(500).json({ message: 'Failed to create plan' });
+    }
+  });
+
+  app.put('/api/admin/plans/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const planData = insertPlanSchema.parse(req.body);
+      const plan = await storage.updatePlan(id, planData);
+      res.json(plan);
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      res.status(500).json({ message: 'Failed to update plan' });
+    }
+  });
+
+  app.delete('/api/admin/plans/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deletePlan(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting plan:', error);
+      res.status(500).json({ message: 'Failed to delete plan' });
+    }
+  });
+
+  // Admin CRUD Routes for Coupons
+  app.get('/api/admin/coupons', isAdminAuthenticated, async (req, res) => {
+    try {
+      const coupons = await storage.getAllCoupons();
+      res.json(coupons);
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+      res.status(500).json({ message: 'Failed to fetch coupons' });
+    }
+  });
+
+  app.post('/api/admin/coupons', isAdminAuthenticated, async (req, res) => {
+    try {
+      const couponData = insertCouponSchema.parse(req.body);
+      const coupon = await storage.createCoupon(couponData);
+      res.json(coupon);
+    } catch (error) {
+      console.error('Error creating coupon:', error);
+      res.status(500).json({ message: 'Failed to create coupon' });
+    }
+  });
+
+  app.put('/api/admin/coupons/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const couponData = insertCouponSchema.parse(req.body);
+      const coupon = await storage.updateCoupon(id, couponData);
+      res.json(coupon);
+    } catch (error) {
+      console.error('Error updating coupon:', error);
+      res.status(500).json({ message: 'Failed to update coupon' });
+    }
+  });
+
+  app.delete('/api/admin/coupons/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCoupon(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting coupon:', error);
+      res.status(500).json({ message: 'Failed to delete coupon' });
+    }
+  });
+
+  // Admin Orders
+  app.get('/api/admin/orders', isAdminAuthenticated, async (req, res) => {
+    try {
+      const orders = await storage.getAllOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      res.status(500).json({ message: 'Failed to fetch orders' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

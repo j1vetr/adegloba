@@ -13,14 +13,26 @@ import Cart from "@/pages/Cart";
 import Checkout from "@/pages/Checkout";
 import OrderSuccess from "@/pages/OrderSuccess";
 import Dashboard from "@/pages/Dashboard";
-import AdminPanel from "@/pages/admin/AdminPanel";
+import Login from "@/pages/Login";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
     <Switch>
-      {/* Public routes */}
+      {/* Admin Login Route - always accessible */}
+      <Route path="/login" component={Login} />
+      
+      {/* Admin Routes - protected */}
+      <Route path="/admin">
+        <AdminProtectedRoute>
+          <AdminDashboard />
+        </AdminProtectedRoute>
+      </Route>
+      
+      {/* Public/User routes */}
       {isLoading || !isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
@@ -28,7 +40,7 @@ function Router() {
         </>
       ) : (
         <>
-          {/* Protected routes */}
+          {/* Protected user routes */}
           <Route path="/" component={Home} />
           <Route path="/ships" component={Landing} />
           <Route path="/ships/:slug" component={ShipPlans} />
@@ -36,9 +48,6 @@ function Router() {
           <Route path="/checkout" component={Checkout} />
           <Route path="/order-success" component={OrderSuccess} />
           <Route path="/dashboard" component={Dashboard} />
-          
-          {/* Admin routes - additional protection is handled in AdminPanel component */}
-          <Route path="/admin" component={AdminPanel} />
         </>
       )}
       

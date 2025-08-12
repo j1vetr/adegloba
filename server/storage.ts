@@ -35,14 +35,16 @@ export interface IStorage {
 
   // Ship operations
   getShips(): Promise<Ship[]>;
+  getAllShips(): Promise<Ship[]>;
   getActiveShips(): Promise<Ship[]>;
   getShipBySlug(slug: string): Promise<Ship | undefined>;
   createShip(ship: InsertShip): Promise<Ship>;
-  updateShip(id: string, ship: Partial<InsertShip>): Promise<User | undefined>;
+  updateShip(id: string, ship: Partial<InsertShip>): Promise<Ship | undefined>;
   deleteShip(id: string): Promise<void>;
 
   // Plan operations
   getPlans(): Promise<Plan[]>;
+  getAllPlans(): Promise<Plan[]>;
   getActivePlans(): Promise<Plan[]>;
   getPlansForShip(shipId: string): Promise<Plan[]>;
   createPlan(plan: InsertPlan): Promise<Plan>;
@@ -56,6 +58,7 @@ export interface IStorage {
 
   // Coupon operations
   getCoupons(): Promise<Coupon[]>;
+  getAllCoupons(): Promise<Coupon[]>;
   getCouponByCode(code: string): Promise<Coupon | undefined>;
   createCoupon(coupon: InsertCoupon): Promise<Coupon>;
   updateCoupon(id: string, coupon: Partial<InsertCoupon>): Promise<Coupon | undefined>;
@@ -63,6 +66,7 @@ export interface IStorage {
 
   // Order operations
   getOrders(): Promise<Order[]>;
+  getAllOrders(): Promise<Order[]>;
   getOrdersByUser(userId: string): Promise<Order[]>;
   getOrderById(id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
@@ -107,6 +111,10 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(ships).orderBy(ships.name);
   }
 
+  async getAllShips(): Promise<Ship[]> {
+    return db.select().from(ships).orderBy(ships.name);
+  }
+
   async getActiveShips(): Promise<Ship[]> {
     return db.select().from(ships).where(eq(ships.isActive, true)).orderBy(ships.name);
   }
@@ -136,6 +144,10 @@ export class DatabaseStorage implements IStorage {
 
   // Plan operations
   async getPlans(): Promise<Plan[]> {
+    return db.select().from(plans).orderBy(plans.sortOrder, plans.title);
+  }
+
+  async getAllPlans(): Promise<Plan[]> {
     return db.select().from(plans).orderBy(plans.sortOrder, plans.title);
   }
 
@@ -212,6 +224,10 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(coupons).orderBy(desc(coupons.createdAt));
   }
 
+  async getAllCoupons(): Promise<Coupon[]> {
+    return db.select().from(coupons).orderBy(desc(coupons.createdAt));
+  }
+
   async getCouponByCode(code: string): Promise<Coupon | undefined> {
     const [coupon] = await db.select().from(coupons).where(eq(coupons.code, code));
     return coupon;
@@ -237,6 +253,10 @@ export class DatabaseStorage implements IStorage {
 
   // Order operations
   async getOrders(): Promise<Order[]> {
+    return db.select().from(orders).orderBy(desc(orders.createdAt));
+  }
+
+  async getAllOrders(): Promise<Order[]> {
     return db.select().from(orders).orderBy(desc(orders.createdAt));
   }
 
