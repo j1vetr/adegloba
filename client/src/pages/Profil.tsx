@@ -26,21 +26,23 @@ import { UserNavigation } from "@/components/UserNavigation";
 import type { User as UserType, Ship } from "@shared/schema";
 
 export default function Profil() {
-  const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
+    full_name: "",
     address: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: ""
   });
 
-  // Fetch ship data if user has a ship assigned
-  const { data: ship, isLoading: shipLoading } = useQuery({
-    queryKey: ['/api/ships', user?.ship_id],
-    enabled: !!user?.ship_id
+  // Fetch user profile with ship information
+  const { data: user, isLoading: authLoading } = useQuery({
+    queryKey: ['/api/user/me'],
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  // No need for separate ship query since user data includes ship info
 
   // Profile update mutation
   const updateProfileMutation = useMutation({
@@ -91,6 +93,7 @@ export default function Profil() {
   React.useEffect(() => {
     if (user) {
       setFormData({
+        full_name: user.full_name || "",
         address: user.address || "",
         currentPassword: "",
         newPassword: "",
@@ -112,6 +115,7 @@ export default function Profil() {
 
   const handleCancel = () => {
     setFormData({
+      full_name: user?.full_name || "",
       address: user?.address || "",
       currentPassword: "",
       newPassword: "",
@@ -204,13 +208,31 @@ export default function Profil() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                  <User className="h-5 w-5 text-cyan-400" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-300">İsim Soyisim</p>
+                    {isEditing ? (
+                      <Input
+                        value={formData.full_name}
+                        onChange={(e) => handleInputChange('full_name', e.target.value)}
+                        placeholder="Ad Soyad"
+                        className="bg-gray-900/50 border-cyan-500/30 text-white mt-1"
+                        data-testid="input-full-name"
+                      />
+                    ) : (
+                      <p className="text-white text-lg bg-gray-800/50 p-2 rounded border border-cyan-500/20">
+                        {user?.full_name || "Henüz girilmemiş"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
                   <ShipIcon className="h-5 w-5 text-cyan-400" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-300">Atanan Gemi</p>
                     <p className="text-white text-lg bg-gray-800/50 p-2 rounded border border-cyan-500/20">
-                      {shipLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin inline" />
-                      ) : ship?.name || "Henüz atanmamış"}
+                      {user?.ship?.name || "Henüz atanmamış"}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">Bu alan düzenlenemez</p>
                   </div>

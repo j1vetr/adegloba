@@ -137,6 +137,24 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserWithShip(userId: string): Promise<(User & { ship?: Ship }) | undefined> {
+    const [result] = await db
+      .select({
+        user: users,
+        ship: ships
+      })
+      .from(users)
+      .leftJoin(ships, eq(users.ship_id, ships.id))
+      .where(eq(users.id, userId));
+    
+    if (!result) return undefined;
+    
+    return {
+      ...result.user,
+      ship: result.ship || undefined
+    };
+  }
+
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;

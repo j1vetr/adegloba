@@ -32,6 +32,7 @@ export const users = pgTable("users", {
   username: varchar("username").notNull().unique(),
   email: varchar("email").notNull().unique(),
   password_hash: varchar("password_hash").notNull(),
+  full_name: varchar("full_name"), // İsim Soyisim field
   ship_id: varchar("ship_id").references(() => ships.id),
   address: text("address"),
   created_at: timestamp("created_at").defaultNow(),
