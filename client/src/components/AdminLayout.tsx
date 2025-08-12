@@ -92,32 +92,31 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="admin-dark-theme">
       {/* Sidebar Backdrop */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 z-50 h-full w-64 bg-card border-r border-border
+        fixed top-0 left-0 z-50 h-full w-64 admin-sidebar
         transform transition-transform duration-300 ease-in-out lg:translate-x-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        glass
       `}>
         <div className="flex h-full flex-col">
           {/* Sidebar Header */}
-          <div className="flex h-16 items-center justify-between px-6 border-b border-border">
+          <div className="flex h-16 items-center justify-between px-6 border-b border-primary/20">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-neon flex items-center justify-center neon-glow">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/80 to-cyan-500/80 flex items-center justify-center neon-glow">
                 <span className="text-white font-bold text-sm">AG</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground neon-text">AdeGloba</h1>
-                <p className="text-xs text-light-gray">Starlink System</p>
+                <h1 className="text-lg font-bold text-white">AdeGloba</h1>
+                <p className="text-xs text-slate-400">Starlink System</p>
               </div>
             </div>
             <Button
@@ -139,19 +138,16 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
               return (
                 <Link key={item.name} href={item.href}>
                   <div className={`
-                    group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 cursor-pointer
-                    ${isActive 
-                      ? 'bg-gradient-to-r from-primary/20 to-transparent text-primary border-l-3 border-primary active-item neon-glow' 
-                      : 'text-white hover:text-primary hover:bg-accent/10'
-                    }
+                    sidebar-item group flex items-center px-4 py-3 mx-2 text-sm font-medium transition-all duration-200 cursor-pointer
+                    ${isActive ? 'active text-primary' : 'text-slate-300 hover:text-white'}
                   `}>
                     <Icon className={`
                       mr-3 h-5 w-5 flex-shrink-0 transition-all duration-200
-                      ${isActive ? 'text-primary animate-glow-pulse' : 'group-hover:text-foreground'}
+                      ${isActive ? 'text-primary' : 'group-hover:text-primary'}
                     `} />
                     {item.name}
                     {isActive && (
-                      <div className="ml-auto w-2 h-2 rounded-full bg-primary animate-glow-pulse" />
+                      <div className="ml-auto w-2 h-2 rounded-full bg-primary neon-glow" />
                     )}
                   </div>
                 </Link>
@@ -160,25 +156,25 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           </nav>
 
           {/* User Info & Logout */}
-          <div className="border-t border-border p-4">
+          <div className="border-t border-primary/20 p-4">
             <div className="flex items-center space-x-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-neon flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/80 to-cyan-500/80 flex items-center justify-center neon-glow">
                 <span className="text-white font-medium text-sm">
                   {user?.username?.charAt(0).toUpperCase() || 'A'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
+                <p className="text-sm font-medium text-white truncate">
                   {user?.username || 'Admin'}
                 </p>
-                <p className="text-xs text-light-gray">Sistem Yöneticisi</p>
+                <p className="text-xs text-slate-400">Sistem Yöneticisi</p>
               </div>
             </div>
             <Button
               onClick={handleLogout}
               variant="ghost"
               size="sm"
-              className="w-full justify-start text-white hover:text-primary hover:bg-accent/10"
+              className="w-full justify-start text-slate-300 hover:text-white hover:bg-primary/10 transition-all"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Çıkış Yap
@@ -190,14 +186,14 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       {/* Main Content */}
       <div className="lg:pl-64">
         {/* Top Navigation */}
-        <header className="sticky top-0 z-30 h-16 bg-background/80 backdrop-blur-lg border-b border-border glass">
+        <header className="sticky top-0 z-30 h-16 admin-topbar">
           <div className="flex h-full items-center justify-between px-6">
             <div className="flex items-center space-x-4">
               {/* Mobile menu button */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="lg:hidden p-2 hover:bg-accent/10"
+                className="lg:hidden p-2 text-white hover:bg-primary/10 hover:text-primary"
                 onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="h-5 w-5" />
@@ -213,7 +209,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                         transition-colors duration-200 cursor-pointer
                         ${index === breadcrumbItems().length - 1 
                           ? 'text-white font-medium' 
-                          : 'text-light-gray hover:text-primary'
+                          : 'text-slate-400 hover:text-primary'
                         }
                       `}>
                         {item.name}
@@ -226,12 +222,12 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
 
             {/* Page Title */}
             <div className="hidden md:block">
-              <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+              <h1 className="text-xl font-semibold text-white">{title}</h1>
             </div>
 
             {/* Right side - could add notifications, profile menu, etc. */}
             <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 rounded-full bg-gradient-neon flex items-center justify-center neon-glow">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/80 to-cyan-500/80 flex items-center justify-center neon-glow">
                 <span className="text-white font-medium text-sm">
                   {user?.username?.charAt(0).toUpperCase() || 'A'}
                 </span>
@@ -241,7 +237,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6 animate-slide-up">
+        <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
