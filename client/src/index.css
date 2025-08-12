@@ -10,20 +10,20 @@
   --background: 0 0% 4%; /* Deep black #0a0a0a */
   --foreground: 0 0% 100%; /* Bright white #ffffff */
   --card: 0 0% 6.7%; /* Slightly lighter black #111111 */
-  --card-foreground: 0 0% 100%;
+  --card-foreground: 0 0% 100%; /* Bright white #ffffff */
   --popover: 0 0% 6.7%;
-  --popover-foreground: 0 0% 100%;
+  --popover-foreground: 0 0% 100%; /* Bright white #ffffff */
   --primary: 195 100% 50%; /* Neon blue #00bfff */
-  --primary-foreground: 0 0% 4%;
+  --primary-foreground: 0 0% 100%; /* White text on primary */
   --secondary: 0 0% 8%; /* Dark gray */
-  --secondary-foreground: 0 0% 75%; /* Light gray #c0c0c0 */
+  --secondary-foreground: 0 0% 100%; /* Bright white #ffffff */
   --muted: 0 0% 8%;
-  --muted-foreground: 0 0% 75%;
+  --muted-foreground: 0 0% 85%; /* Lighter gray #d9d9d9 */
   --accent: 195 100% 60%; /* Lighter blue #33ccff */
-  --accent-foreground: 0 0% 4%;
+  --accent-foreground: 0 0% 100%; /* White text on accent */
   --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 12%; /* Dark border */
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 15%; /* Lighter border for visibility */
   --input: 0 0% 8%;
   --ring: 195 100% 50%;
   --chart-1: 195 100% 50%;
@@ -41,33 +41,33 @@
   
   /* Sidebar colors */
   --sidebar: 0 0% 6.7%;
-  --sidebar-foreground: 0 0% 100%;
+  --sidebar-foreground: 0 0% 100%; /* Bright white #ffffff */
   --sidebar-primary: 195 100% 50%;
-  --sidebar-primary-foreground: 0 0% 4%;
+  --sidebar-primary-foreground: 0 0% 100%; /* White text on primary */
   --sidebar-accent: 0 0% 8%;
-  --sidebar-accent-foreground: 195 100% 60%;
-  --sidebar-border: 0 0% 12%;
+  --sidebar-accent-foreground: 0 0% 100%; /* Bright white #ffffff */
+  --sidebar-border: 0 0% 15%;
   --sidebar-ring: 195 100% 50%;
 }
 
 .dark {
   --background: 0 0% 4%;
-  --foreground: 0 0% 100%;
+  --foreground: 0 0% 100%; /* Bright white #ffffff */
   --card: 0 0% 6.7%;
-  --card-foreground: 0 0% 100%;
+  --card-foreground: 0 0% 100%; /* Bright white #ffffff */
   --popover: 0 0% 6.7%;
-  --popover-foreground: 0 0% 100%;
+  --popover-foreground: 0 0% 100%; /* Bright white #ffffff */
   --primary: 195 100% 50%;
-  --primary-foreground: 0 0% 4%;
+  --primary-foreground: 0 0% 100%; /* White text on primary */
   --secondary: 0 0% 8%;
-  --secondary-foreground: 0 0% 75%;
+  --secondary-foreground: 0 0% 100%; /* Bright white #ffffff */
   --muted: 0 0% 8%;
-  --muted-foreground: 0 0% 75%;
+  --muted-foreground: 0 0% 85%; /* Lighter gray #d9d9d9 */
   --accent: 195 100% 60%;
-  --accent-foreground: 0 0% 4%;
+  --accent-foreground: 0 0% 100%; /* White text on accent */
   --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 12%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 15%; /* Lighter border for visibility */
   --input: 0 0% 8%;
   --ring: 195 100% 50%;
   --chart-1: 195 100% 50%;
@@ -284,7 +284,11 @@ html {
 }
 
 .text-light-gray {
-  color: #c0c0c0;
+  color: #d9d9d9; /* Lighter gray for better visibility */
+}
+
+.text-bright-white {
+  color: #ffffff;
 }
 
 .border-neon-blue {
@@ -293,6 +297,15 @@ html {
 
 .border-neon-blue-light {
   border-color: #33ccff;
+}
+
+/* Text visibility overrides */
+.text-white-force {
+  color: #ffffff !important;
+}
+
+.text-light-gray-force {
+  color: #d9d9d9 !important;
 }
 
 /* Gradient backgrounds */

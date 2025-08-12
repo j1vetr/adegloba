@@ -117,7 +117,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-foreground neon-text">AdeGloba</h1>
-                <p className="text-xs text-muted-foreground">Starlink System</p>
+                <p className="text-xs text-light-gray">Starlink System</p>
               </div>
             </div>
             <Button
@@ -142,7 +142,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                     group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 cursor-pointer
                     ${isActive 
                       ? 'bg-gradient-to-r from-primary/20 to-transparent text-primary border-l-3 border-primary active-item neon-glow' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/10'
+                      : 'text-white hover:text-primary hover:bg-accent/10'
                     }
                   `}>
                     <Icon className={`
@@ -171,14 +171,14 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                 <p className="text-sm font-medium text-foreground truncate">
                   {user?.username || 'Admin'}
                 </p>
-                <p className="text-xs text-muted-foreground">Sistem Yöneticisi</p>
+                <p className="text-xs text-light-gray">Sistem Yöneticisi</p>
               </div>
             </div>
             <Button
               onClick={handleLogout}
               variant="ghost"
               size="sm"
-              className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/10"
+              className="w-full justify-start text-white hover:text-primary hover:bg-accent/10"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Çıkış Yap
@@ -207,13 +207,13 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
               <nav className="flex items-center space-x-2 text-sm">
                 {breadcrumbItems().map((item, index) => (
                   <div key={item.href} className="flex items-center space-x-2">
-                    {index > 0 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                    {index > 0 && <ChevronRight className="h-4 w-4 text-light-gray" />}
                     <Link href={item.href}>
                       <span className={`
                         transition-colors duration-200 cursor-pointer
                         ${index === breadcrumbItems().length - 1 
-                          ? 'text-foreground font-medium' 
-                          : 'text-muted-foreground hover:text-primary'
+                          ? 'text-white font-medium' 
+                          : 'text-light-gray hover:text-primary'
                         }
                       `}>
                         {item.name}

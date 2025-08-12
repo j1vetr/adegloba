@@ -52,8 +52,8 @@ export default function AdminDashboard() {
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
               <AlertCircle className="h-8 w-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-4">Erişim Reddedildi</h2>
-            <p className="text-muted-foreground mb-6">Bu sayfaya erişim için admin yetkisi gereklidir.</p>
+            <h2 className="text-2xl font-bold text-white mb-4">Erişim Reddedildi</h2>
+            <p className="text-light-gray mb-6">Bu sayfaya erişim için admin yetkisi gereklidir.</p>
             <a 
               href="/admin/login" 
               className="inline-flex items-center justify-center px-6 py-3 bg-gradient-neon text-white rounded-xl hover:scale-105 transition-all duration-300 neon-glow font-medium"
@@ -143,10 +143,10 @@ export default function AdminDashboard() {
         <div className="glass-card p-6 rounded-2xl border border-primary/20">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground neon-text mb-2">
+              <h1 className="text-3xl font-bold text-white neon-text mb-2">
                 Hoş Geldiniz, {user?.username || 'Admin'}
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-light-gray">
                 AdeGloba Starlink System yönetim panelindesiniz. Sistem durumu ve son aktivitelerinizi buradan takip edebilirsiniz.
               </p>
             </div>
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
                 <div className="w-12 h-12 rounded-full bg-gradient-neon flex items-center justify-center neon-glow mb-2">
                   <Activity className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-xs text-muted-foreground">Sistem Aktif</span>
+                <span className="text-xs text-light-gray">Sistem Aktif</span>
               </div>
             </div>
           </div>
@@ -168,7 +168,7 @@ export default function AdminDashboard() {
             return (
               <Card key={index} className="glass-card border-border/50 hover:border-primary/30 transition-all duration-300 card-hover">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-sm font-medium text-light-gray">
                     {stat.title}
                   </CardTitle>
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center">
@@ -176,8 +176,8 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground mb-1">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground mb-2">{stat.description}</p>
+                  <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
+                  <p className="text-xs text-light-gray mb-2">{stat.description}</p>
                   <div className={`flex items-center text-xs ${
                     stat.trendUp ? 'text-green-400' : 'text-red-400'
                   }`}>
@@ -195,11 +195,11 @@ export default function AdminDashboard() {
           {/* Recent Orders */}
           <Card className="glass-card border-border/50">
             <CardHeader>
-              <CardTitle className="flex items-center text-foreground">
+              <CardTitle className="flex items-center text-white">
                 <ShoppingCart className="mr-2 h-5 w-5 text-primary" />
                 Son Siparişler
               </CardTitle>
-              <CardDescription>En son gelen siparişlerin listesi</CardDescription>
+              <CardDescription className="text-light-gray">En son gelen siparişlerin listesi</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {ordersLoading ? (
@@ -214,16 +214,16 @@ export default function AdminDashboard() {
                         <span className="text-xs font-medium text-primary">#{order.id.slice(-3)}</span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-sm font-medium text-white">
                           {order.user?.username || 'Anonim Kullanıcı'}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-light-gray">
                           {formatDate(order.createdAt)}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-sm font-medium text-white">
                         {formatCurrency(order.totalAmount)}
                       </p>
                       {getStatusBadge(order.status)}
@@ -231,7 +231,7 @@ export default function AdminDashboard() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-light-gray">
                   <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-20" />
                   <p>Henüz sipariş bulunmuyor</p>
                 </div>
@@ -242,11 +242,11 @@ export default function AdminDashboard() {
           {/* Recent Users */}
           <Card className="glass-card border-border/50">
             <CardHeader>
-              <CardTitle className="flex items-center text-foreground">
+              <CardTitle className="flex items-center text-white">
                 <Users className="mr-2 h-5 w-5 text-primary" />
                 Yeni Kullanıcılar
               </CardTitle>
-              <CardDescription>Son kayıt olan kullanıcılar</CardDescription>
+              <CardDescription className="text-light-gray">Son kayıt olan kullanıcılar</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {usersLoading ? (
@@ -263,17 +263,17 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground">{user.username}</p>
+                        <p className="text-sm font-medium text-white">{user.username}</p>
                         <div className="flex items-center space-x-2">
-                          <Ship className="h-3 w-3 text-muted-foreground" />
-                          <p className="text-xs text-muted-foreground">
+                          <Ship className="h-3 w-3 text-light-gray" />
+                          <p className="text-xs text-light-gray">
                             {user.ship?.name || 'Gemi seçilmemiş'}
                           </p>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-light-gray">
                         {formatDate(user.createdAt)}
                       </p>
                       <Badge variant="outline" className="mt-1">
@@ -283,7 +283,7 @@ export default function AdminDashboard() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-light-gray">
                   <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
                   <p>Henüz kullanıcı bulunmuyor</p>
                 </div>
@@ -295,11 +295,11 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         <Card className="glass-card border-border/50">
           <CardHeader>
-            <CardTitle className="flex items-center text-foreground">
+            <CardTitle className="flex items-center text-white">
               <Star className="mr-2 h-5 w-5 text-primary" />
               Hızlı İşlemler
             </CardTitle>
-            <CardDescription>Sık kullanılan yönetim işlemleri</CardDescription>
+            <CardDescription className="text-light-gray">Sık kullanılan yönetim işlemleri</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -319,7 +319,7 @@ export default function AdminDashboard() {
                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}>
                       <Icon className="h-6 w-6 text-white" />
                     </div>
-                    <h3 className="font-medium text-foreground text-sm group-hover:text-primary transition-colors duration-200">
+                    <h3 className="font-medium text-white text-sm group-hover:text-primary transition-colors duration-200">
                       {action.name}
                     </h3>
                   </a>
