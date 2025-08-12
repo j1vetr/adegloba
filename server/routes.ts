@@ -828,7 +828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/tickets', isAdminAuthenticated, async (req, res) => {
     try {
-      const tickets = await storage.getAllTickets();
+      const tickets = await storage.getAllTicketsWithUserInfo();
       res.json(tickets);
     } catch (error) {
       console.error('Error fetching admin tickets:', error);
@@ -836,7 +836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/tickets/:ticketId/status', isAdminAuthenticated, async (req, res) => {
+  app.patch('/api/admin/tickets/:ticketId/status', isAdminAuthenticated, async (req, res) => {
     try {
       const { ticketId } = req.params;
       const { status } = req.body;
@@ -854,7 +854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/tickets/:ticketId/priority', isAdminAuthenticated, async (req, res) => {
+  app.patch('/api/admin/tickets/:ticketId/priority', isAdminAuthenticated, async (req, res) => {
     try {
       const { ticketId } = req.params;
       const { priority } = req.body;
@@ -875,6 +875,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/admin/tickets/:ticketId/messages', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { ticketId } = req.params;
+      
+      // Get ticket details with user info
+      const ticketDetails = await storage.getTicketWithUserInfo(ticketId);
+      if (!ticketDetails) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+
+      // Get messages
+      const messages = await storage.getTicketMessages(ticketId);
+      
+      res.json({ ticket: ticketDetails, messages });
+    } catch (error) {
+      console.error('Error fetching admin ticket details:', error);
+      res.status(500).json({ message: 'Failed to fetch ticket details' });
+    }
+  });
+
   app.post('/api/admin/tickets/:ticketId/messages', isAdminAuthenticated, async (req, res) => {
     try {
       const { ticketId } = req.params;
@@ -890,6 +910,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const message = await storage.createTicketMessage(messageData);
+      
+      // Update ticket status to show admin replied
+      await storage.updateTicketStatus(ticketId, 'Açık');
+      
       res.status(201).json(message);
     } catch (error) {
       console.error('Error creating admin ticket message:', error);

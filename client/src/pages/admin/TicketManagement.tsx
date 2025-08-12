@@ -13,6 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -20,10 +28,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { 
-  HelpCircle, 
   Search, 
   Filter, 
-  Eye,
+  ArrowLeft,
   MessageSquare,
   Clock,
   User,
@@ -32,7 +39,11 @@ import {
   XCircle,
   AlertTriangle,
   Send,
-  Paperclip
+  Paperclip,
+  SortAsc,
+  SortDesc,
+  Calendar,
+  Loader2
 } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -77,580 +88,610 @@ const priorityColors = {
 };
 
 const statusColors = {
-  'Açık': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  'Beklemede': 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-  'Kapalı': 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+  'Açık': 'bg-blue-600/20 text-blue-400 border-blue-500/30',
+  'Beklemede': 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30',
+  'Kapalı': 'bg-gray-600/20 text-gray-400 border-gray-500/30'
 };
 
 export default function TicketManagement() {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [replyMessage, setReplyMessage] = useState("");
-  const [showReplyDialog, setShowReplyDialog] = useState(false);
   const { toast } = useToast();
+  const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filterShip, setFilterShip] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<string>('updatedAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [replyMessage, setReplyMessage] = useState('');
 
-  // Fetch tickets with filters
-  const { data: tickets = [], isLoading } = useQuery({
-    queryKey: ['/api/admin/tickets', search, statusFilter, priorityFilter],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (search) params.append('search', search);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (priorityFilter !== 'all') params.append('priority', priorityFilter);
-      
-      const response = await apiRequest('GET', `/api/admin/tickets?${params}`);
-      return response.json();
-    }
+  // Fetch tickets
+  const { data: tickets = [], isLoading: ticketsLoading } = useQuery<Ticket[]>({
+    queryKey: ['/api/admin/tickets'],
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Fetch ticket messages
-  const { data: ticketMessages = [] } = useQuery({
-    queryKey: ['/api/admin/tickets', selectedTicket?.id, 'messages'],
-    queryFn: async () => {
-      if (!selectedTicket) return [];
-      const response = await apiRequest('GET', `/api/admin/tickets/${selectedTicket.id}/messages`);
-      return response.json();
-    },
-    enabled: !!selectedTicket
+  // Fetch ticket details and messages
+  const { data: ticketDetail, isLoading: detailLoading } = useQuery<{ticket: Ticket, messages: TicketMessage[]}>({
+    queryKey: ['/api/admin/tickets', selectedTicket, 'messages'],
+    enabled: !!selectedTicket,
+    refetchInterval: 5000, // Refresh every 5 seconds when viewing a ticket
   });
 
   // Send reply mutation
   const sendReplyMutation = useMutation({
-    mutationFn: async (data: { message: string; attachments?: string[] }) => {
-      if (!selectedTicket) throw new Error("No ticket selected");
-      return apiRequest('POST', `/api/admin/tickets/${selectedTicket.id}/messages`, data);
+    mutationFn: async (data: { ticketId: string; message: string }) => {
+      const response = await apiRequest('POST', `/api/admin/tickets/${data.ticketId}/messages`, {
+        message: data.message
+      });
+      return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
-      setReplyMessage("");
-      setShowReplyDialog(false);
+      setReplyMessage('');
       toast({
-        title: "Başarılı",
-        description: "Yanıt gönderildi",
+        title: "Yanıt Gönderildi",
+        description: "Yanıtınız başarıyla gönderildi.",
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets', selectedTicket, 'messages'] });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Hata",
-        description: "Yanıt gönderilemedi",
+        description: error.message || "Yanıt gönderilirken hata oluştu.",
         variant: "destructive",
       });
     }
   });
 
-  // Update ticket status
-  const updateStatusMutation = useMutation({
-    mutationFn: async (data: { ticketId: string; status: string }) => {
-      return apiRequest('PUT', `/api/admin/tickets/${data.ticketId}/status`, { status: data.status });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
-      toast({
-        title: "Başarılı",
-        description: "Durum güncellendi",
-      });
-    }
-  });
-
-  // Update ticket priority
+  // Update priority mutation
   const updatePriorityMutation = useMutation({
     mutationFn: async (data: { ticketId: string; priority: string }) => {
-      return apiRequest('PUT', `/api/admin/tickets/${data.ticketId}/priority`, { priority: data.priority });
+      const response = await apiRequest('PATCH', `/api/admin/tickets/${data.ticketId}/priority`, {
+        priority: data.priority
+      });
+      return response;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
-      if (selectedTicket) {
-        setSelectedTicket({ ...selectedTicket, priority: variables.priority as 'Düşük' | 'Orta' | 'Yüksek' });
-      }
+    onSuccess: () => {
       toast({
-        title: "Başarılı",
-        description: "Öncelik güncellendi",
+        title: "Öncelik Güncellendi",
+        description: "Ticket önceliği başarıyla güncellendi.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets', selectedTicket, 'messages'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Hata",
+        description: error.message || "Öncelik güncellenirken hata oluştu.",
+        variant: "destructive",
       });
     }
   });
 
-  // File upload handlers
-  const handleAttachmentUpload = async () => {
-    // Implementation for file upload
-    return {
-      method: "PUT" as const,
-      url: "placeholder-url"
-    };
+  // Update status mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async (data: { ticketId: string; status: string }) => {
+      const response = await apiRequest('PATCH', `/api/admin/tickets/${data.ticketId}/status`, {
+        status: data.status
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Durum Güncellendi",
+        description: "Ticket durumu başarıyla güncellendi.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets', selectedTicket, 'messages'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Hata",
+        description: error.message || "Durum güncellenirken hata oluştu.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Filter and sort tickets
+  const filteredTickets = tickets.filter((ticket: Ticket) => {
+    const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
+    const matchesPriority = filterPriority === 'all' || ticket.priority === filterPriority;
+    const matchesShip = filterShip === 'all' || ticket.shipName === filterShip;
+    const matchesSearch = searchTerm === '' || 
+      ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesStatus && matchesPriority && matchesShip && matchesSearch;
+  }).sort((a: Ticket, b: Ticket) => {
+    const aValue = a[sortBy as keyof Ticket] || '';
+    const bValue = b[sortBy as keyof Ticket] || '';
+    
+    if (sortOrder === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
+  // Get unique ships for filter
+  const uniqueShips = Array.from(new Set(tickets.map((ticket: Ticket) => ticket.shipName).filter(Boolean)));
+
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('desc');
+    }
   };
 
-  const handleAttachmentComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    // Handle completed upload
-    console.log("Upload completed:", result);
+  const handleSendReply = () => {
+    if (!selectedTicket || !replyMessage.trim()) return;
+    
+    sendReplyMutation.mutate({
+      ticketId: selectedTicket,
+      message: replyMessage.trim()
+    });
   };
 
   const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('tr-TR', {
+    return new Date(dateString).toLocaleString('tr-TR', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
-    }).format(new Date(dateString));
+    });
   };
 
-  const filteredTickets = tickets.filter((ticket: Ticket) => {
-    const matchesSearch = search === "" || 
-      ticket.subject.toLowerCase().includes(search.toLowerCase()) ||
-      ticket.userName.toLowerCase().includes(search.toLowerCase()) ||
-      ticket.userEmail.toLowerCase().includes(search.toLowerCase());
+  const formatRelativeTime = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
     
-    const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
-    const matchesPriority = priorityFilter === "all" || ticket.priority === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
+    if (diffInHours < 1) return 'Az önce';
+    if (diffInHours < 24) return `${diffInHours} saat önce`;
+    if (diffInHours < 48) return 'Dün';
+    return Math.floor(diffInHours / 24) + ' gün önce';
+  };
 
-  return (
-    <AdminLayout title="Destek Talepleri">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Destek Talepleri</h1>
-            <p className="text-slate-400 mt-1">Kullanıcı destek taleplerini yönetin</p>
-          </div>
-        </div>
+  if (selectedTicket && ticketDetail) {
+    const ticket = ticketDetail.ticket;
+    const messages = ticketDetail.messages;
 
-        {/* Filters */}
-        <Card className="admin-card">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label className="text-slate-300 text-sm">Arama</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    placeholder="Başlık, kullanıcı adı, e-posta..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="admin-input pl-10"
-                    data-testid="input-ticket-search"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label className="text-slate-300 text-sm">Durum</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="admin-input" data-testid="select-status-filter">
-                    <SelectValue placeholder="Tümü" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="all" className="text-white focus:bg-primary/20">Tümü</SelectItem>
-                    <SelectItem value="Açık" className="text-white focus:bg-primary/20">Açık</SelectItem>
-                    <SelectItem value="Beklemede" className="text-white focus:bg-primary/20">Beklemede</SelectItem>
-                    <SelectItem value="Kapalı" className="text-white focus:bg-primary/20">Kapalı</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label className="text-slate-300 text-sm">Öncelik</Label>
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="admin-input" data-testid="select-priority-filter">
-                    <SelectValue placeholder="Tümü" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="all" className="text-white focus:bg-primary/20">Tümü</SelectItem>
-                    <SelectItem value="Düşük" className="text-white focus:bg-primary/20">Düşük</SelectItem>
-                    <SelectItem value="Orta" className="text-white focus:bg-primary/20">Orta</SelectItem>
-                    <SelectItem value="Yüksek" className="text-white focus:bg-primary/20">Yüksek</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-end">
-                <span className="text-sm text-slate-400">
-                  {filteredTickets.length} talepte {filteredTickets.filter((t: Ticket) => t.status === 'Açık').length} açık
-                </span>
-              </div>
+    return (
+      <AdminLayout title="Ticket Detayı">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+          <div className="container mx-auto px-4 py-8">
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-8">
+              <Button
+                variant="ghost"
+                onClick={() => setSelectedTicket(null)}
+                className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                data-testid="button-back-to-list"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Ticket Listesine Dön
+              </Button>
+              <div className="h-6 w-px bg-cyan-500/30" />
+              <h1 className="text-3xl font-bold text-white">
+                Ticket Detayı - #{ticket.id.slice(0, 8)}
+              </h1>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Tickets List */}
-        <Card className="admin-card">
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
-              </div>
-            ) : filteredTickets.length === 0 ? (
-              <div className="text-center py-12">
-                <HelpCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-400">Destek talebi bulunamadı</p>
-              </div>
-            ) : (
-              <div className="overflow-hidden">
-                {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="admin-table-header">
-                      <tr>
-                        <th className="admin-table-cell text-left">Talep</th>
-                        <th className="admin-table-cell text-left">Kullanıcı</th>
-                        <th className="admin-table-cell text-left">Gemi</th>
-                        <th className="admin-table-cell text-left">Öncelik</th>
-                        <th className="admin-table-cell text-left">Durum</th>
-                        <th className="admin-table-cell text-left">Son Güncelleme</th>
-                        <th className="admin-table-cell text-left">İşlemler</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredTickets.map((ticket: Ticket) => (
-                        <tr key={ticket.id} className="admin-table-row">
-                          <td className="admin-table-cell">
-                            <div>
-                              <p className="font-medium text-white">{ticket.subject}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <MessageSquare className="h-4 w-4 text-slate-400" />
-                                <span className="text-sm text-slate-400">{ticket.messageCount} mesaj</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="admin-table-cell">
-                            <div>
-                              <p className="font-medium text-white">{ticket.userName}</p>
-                              <p className="text-sm text-slate-400">{ticket.userEmail}</p>
-                            </div>
-                          </td>
-                          <td className="admin-table-cell">
-                            <span className="text-slate-300">{ticket.shipName || '-'}</span>
-                          </td>
-                          <td className="admin-table-cell">
-                            <Badge className={priorityColors[ticket.priority]}>
-                              {ticket.priority}
-                            </Badge>
-                          </td>
-                          <td className="admin-table-cell">
-                            <Badge className={statusColors[ticket.status]}>
-                              {ticket.status}
-                            </Badge>
-                          </td>
-                          <td className="admin-table-cell">
-                            <span className="text-slate-300">{formatDate(ticket.updatedAt)}</span>
-                          </td>
-                          <td className="admin-table-cell">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setSelectedTicket(ticket)}
-                                className="admin-button-outline"
-                                data-testid={`button-view-ticket-${ticket.id}`}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {ticket.status !== 'Kapalı' && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedTicket(ticket);
-                                    setShowReplyDialog(true);
-                                  }}
-                                  className="admin-button"
-                                  data-testid={`button-reply-ticket-${ticket.id}`}
-                                >
-                                  <MessageSquare className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile Cards */}
-                <div className="md:hidden">
-                  {filteredTickets.map((ticket: Ticket) => (
-                    <div key={ticket.id} className="border-b border-slate-700 p-4">
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between">
-                          <h3 className="font-medium text-white pr-2">{ticket.subject}</h3>
-                          <div className="flex flex-col gap-1">
-                            <Badge className={priorityColors[ticket.priority]}>
-                              {ticket.priority}
-                            </Badge>
-                            <Badge className={statusColors[ticket.status]}>
-                              {ticket.status}
-                            </Badge>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-slate-400" />
-                            <span className="text-slate-300">{ticket.userName}</span>
-                          </div>
-                          {ticket.shipName && (
-                            <div className="flex items-center gap-2">
-                              <Ship className="h-4 w-4 text-slate-400" />
-                              <span className="text-slate-300">{ticket.shipName}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-slate-400" />
-                            <span className="text-slate-400">{formatDate(ticket.updatedAt)}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setSelectedTicket(ticket)}
-                            className="admin-button-outline flex-1"
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Görüntüle
-                          </Button>
-                          {ticket.status !== 'Kapalı' && (
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setSelectedTicket(ticket);
-                                setShowReplyDialog(true);
-                              }}
-                              className="admin-button flex-1"
-                            >
-                              <MessageSquare className="h-4 w-4 mr-2" />
-                              Yanıtla
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Ticket Detail Dialog */}
-        <Dialog open={!!selectedTicket && !showReplyDialog} onOpenChange={(open) => !open && setSelectedTicket(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh] admin-dialog">
-            <DialogHeader>
-              <DialogTitle className="text-xl text-white">
-                Talep Detayı - {selectedTicket?.subject}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-6">
-              {selectedTicket && (
-                <>
-                  {/* Ticket Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-800/50 rounded-lg">
-                    <div>
-                      <Label className="text-slate-400 text-sm">Kullanıcı</Label>
-                      <p className="text-white font-medium">{selectedTicket.userName}</p>
-                      <p className="text-slate-400 text-sm">{selectedTicket.userEmail}</p>
-                    </div>
-                    <div>
-                      <Label className="text-slate-400 text-sm">Öncelik & Durum</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge className={priorityColors[selectedTicket.priority]}>
-                          {selectedTicket.priority}
-                        </Badge>
-                        <Badge className={statusColors[selectedTicket.status]}>
-                          {selectedTicket.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-slate-400 text-sm">Gemi</Label>
-                      <p className="text-white">{selectedTicket.shipName || 'Atanmamış'}</p>
+            {/* Ticket Metadata */}
+            <Card className="bg-slate-800/80 border-cyan-500/30 shadow-2xl shadow-cyan-500/10 mb-8">
+              <CardHeader className="border-b border-cyan-500/20">
+                <CardTitle className="text-cyan-400 text-xl">Ticket Bilgileri</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-cyan-300 text-sm font-medium">Konu</Label>
+                    <p className="text-white font-medium" data-testid="text-ticket-subject">{ticket.subject}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-cyan-300 text-sm font-medium">Kullanıcı</Label>
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-cyan-400" />
+                      <span className="text-white" data-testid="text-username">{ticket.userName}</span>
                     </div>
                   </div>
-
-                  {/* Status & Priority Actions */}
-                  {selectedTicket.status !== 'Kapalı' && (
-                    <div className="space-y-4">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateStatusMutation.mutate({
-                            ticketId: selectedTicket.id,
-                            status: 'Beklemede'
-                          })}
-                          className="admin-button-outline"
-                        >
-                          <AlertTriangle className="h-4 w-4 mr-2" />
-                          Beklemeye Al
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => updateStatusMutation.mutate({
-                            ticketId: selectedTicket.id,
-                            status: 'Kapalı'
-                          })}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Kapat
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label className="text-slate-300 text-sm">Öncelik Değiştir</Label>
-                        <Select 
-                          value={selectedTicket.priority} 
-                          onValueChange={(value) => updatePriorityMutation.mutate({
-                            ticketId: selectedTicket.id,
-                            priority: value
-                          })}
-                        >
-                          <SelectTrigger className="admin-input">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-slate-800 border-slate-700">
-                            <SelectItem value="Düşük" className="text-white focus:bg-primary/20">Düşük</SelectItem>
-                            <SelectItem value="Orta" className="text-white focus:bg-primary/20">Orta</SelectItem>
-                            <SelectItem value="Yüksek" className="text-white focus:bg-primary/20">Yüksek</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                  <div className="space-y-2">
+                    <Label className="text-cyan-300 text-sm font-medium">Gemi</Label>
+                    <div className="flex items-center gap-2">
+                      <Ship className="h-4 w-4 text-cyan-400" />
+                      <span className="text-white" data-testid="text-ship-name">{ticket.shipName || 'Atanmamış'}</span>
                     </div>
-                  )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-cyan-300 text-sm font-medium">Öncelik</Label>
+                    <Select
+                      value={ticket.priority}
+                      onValueChange={(value) => updatePriorityMutation.mutate({ ticketId: ticket.id, priority: value })}
+                      data-testid="select-priority"
+                    >
+                      <SelectTrigger className="bg-slate-700 border-cyan-500/30 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Düşük">
+                          <Badge className={priorityColors['Düşük']}>Düşük</Badge>
+                        </SelectItem>
+                        <SelectItem value="Orta">
+                          <Badge className={priorityColors['Orta']}>Orta</Badge>
+                        </SelectItem>
+                        <SelectItem value="Yüksek">
+                          <Badge className={priorityColors['Yüksek']}>Yüksek</Badge>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-cyan-300 text-sm font-medium">Durum</Label>
+                    <Select
+                      value={ticket.status}
+                      onValueChange={(value) => updateStatusMutation.mutate({ ticketId: ticket.id, status: value })}
+                      data-testid="select-status"
+                    >
+                      <SelectTrigger className="bg-slate-700 border-cyan-500/30 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Açık">
+                          <Badge className={statusColors['Açık']}>Açık</Badge>
+                        </SelectItem>
+                        <SelectItem value="Beklemede">
+                          <Badge className={statusColors['Beklemede']}>Beklemede</Badge>
+                        </SelectItem>
+                        <SelectItem value="Kapalı">
+                          <Badge className={statusColors['Kapalı']}>Kapalı</Badge>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-cyan-300 text-sm font-medium">Oluşturulma Tarihi</Label>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-cyan-400" />
+                      <span className="text-white" data-testid="text-created-date">{formatDate(ticket.createdAt)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                  {/* Messages */}
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {ticketMessages.map((message: TicketMessage) => (
-                      <div
-                        key={message.id}
-                        className={`p-4 rounded-lg ${
-                          message.senderType === 'admin' 
-                            ? 'bg-primary/10 border-l-4 border-primary ml-8' 
-                            : 'bg-slate-800/50 border-l-4 border-slate-600 mr-8'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-white">
-                              {message.senderName}
-                            </span>
-                            <Badge variant="outline">
-                              {message.senderType === 'admin' ? 'Yönetici' : 'Kullanıcı'}
-                            </Badge>
-                          </div>
-                          <span className="text-sm text-slate-400">
+            {/* Conversation */}
+            <Card className="bg-slate-800/80 border-cyan-500/30 shadow-2xl shadow-cyan-500/10 mb-8">
+              <CardHeader className="border-b border-cyan-500/20">
+                <CardTitle className="text-cyan-400 text-xl">Konuşma Geçmişi</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-6 max-h-96 overflow-y-auto" data-testid="conversation-history">
+                  {messages.map((message: TicketMessage) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.senderType === 'admin' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`max-w-[70%] ${
+                        message.senderType === 'admin' 
+                          ? 'bg-cyan-600/20 border-cyan-500/30' 
+                          : 'bg-slate-700/50 border-slate-600/30'
+                      } border rounded-lg p-4`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`text-sm font-medium ${
+                            message.senderType === 'admin' ? 'text-cyan-400' : 'text-slate-300'
+                          }`}>
+                            {message.senderType === 'admin' ? 'Admin' : message.senderName}
+                          </span>
+                          <span className="text-xs text-slate-400">
                             {formatDate(message.createdAt)}
                           </span>
                         </div>
-                        <p className="text-slate-300 whitespace-pre-wrap">{message.message}</p>
-                        
+                        <p className="text-white whitespace-pre-wrap" data-testid={`message-${message.id}`}>
+                          {message.message}
+                        </p>
                         {message.attachments && message.attachments.length > 0 && (
-                          <div className="mt-3 space-y-1">
+                          <div className="mt-3 space-y-2">
                             {message.attachments.map((attachment) => (
-                              <a
-                                key={attachment.id}
-                                href={attachment.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 text-sm text-primary hover:underline"
-                              >
-                                <Paperclip className="h-4 w-4" />
-                                {attachment.filename}
-                              </a>
+                              <div key={attachment.id} className="flex items-center gap-2 text-sm">
+                                <Paperclip className="h-4 w-4 text-cyan-400" />
+                                <a 
+                                  href={attachment.fileUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-cyan-400 hover:text-cyan-300 underline"
+                                  data-testid={`attachment-${attachment.id}`}
+                                >
+                                  {attachment.filename}
+                                </a>
+                                <span className="text-slate-400">
+                                  ({Math.round(attachment.fileSize / 1024)} KB)
+                                </span>
+                              </div>
                             ))}
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-                  {/* Quick Reply Button */}
-                  {selectedTicket.status !== 'Kapalı' && (
-                    <Button
-                      onClick={() => setShowReplyDialog(true)}
-                      className="admin-button w-full"
+            {/* Reply Box */}
+            <Card className="bg-slate-800/80 border-cyan-500/30 shadow-2xl shadow-cyan-500/10">
+              <CardHeader className="border-b border-cyan-500/20">
+                <CardTitle className="text-cyan-400 text-xl">Yanıt Gönder</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <Textarea
+                    value={replyMessage}
+                    onChange={(e) => setReplyMessage(e.target.value)}
+                    placeholder="Yanıtınızı buraya yazın..."
+                    className="min-h-[120px] bg-slate-700 border-cyan-500/30 text-white placeholder:text-slate-400 resize-none"
+                    data-testid="textarea-reply"
+                  />
+                  <div className="flex justify-between items-center">
+                    <ObjectUploader
+                      maxNumberOfFiles={5}
+                      maxFileSize={10485760}
+                      onGetUploadParameters={async () => {
+                        try {
+                          const response = await apiRequest('POST', '/api/objects/upload');
+                          return {
+                            method: 'PUT' as const,
+                            url: (response as any).uploadURL,
+                          };
+                        } catch (error) {
+                          console.error('Upload error:', error);
+                          throw new Error('Failed to get upload URL');
+                        }
+                      }}
+                      onComplete={(result) => {
+                        // Handle attachment upload
+                      }}
+                      buttonClassName="bg-slate-700 border-cyan-500/30 text-cyan-400 hover:bg-cyan-400/10"
                     >
-                      <MessageSquare className="h-4 w-4 mr-2" />
+                      <Paperclip className="h-4 w-4 mr-2" />
+                      Dosya Ekle
+                    </ObjectUploader>
+                    
+                    <Button
+                      onClick={handleSendReply}
+                      disabled={!replyMessage.trim() || sendReplyMutation.isPending}
+                      className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                      data-testid="button-send-reply"
+                    >
+                      {sendReplyMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
                       Yanıt Gönder
                     </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout title="Destek Talepleri Yönetimi">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">
+                Destek Talepleri Yönetimi
+              </h1>
+              <p className="text-cyan-300">
+                Kullanıcı destek taleplerini görüntüleyin ve yönetin
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-6 w-6 text-cyan-400" />
+              <span className="text-xl font-semibold text-cyan-400" data-testid="text-ticket-count">
+                {Array.isArray(tickets) ? tickets.length : 0} Toplam Ticket
+              </span>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <Card className="bg-slate-800/80 border-cyan-500/30 shadow-2xl shadow-cyan-500/10 mb-8">
+            <CardHeader className="border-b border-cyan-500/20">
+              <CardTitle className="text-cyan-400 flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filtreler ve Arama
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div className="space-y-2">
+                  <Label className="text-cyan-300">Durum</Label>
+                  <Select value={filterStatus} onValueChange={setFilterStatus} data-testid="filter-status">
+                    <SelectTrigger className="bg-slate-700 border-cyan-500/30 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tümü</SelectItem>
+                      <SelectItem value="Açık">Açık</SelectItem>
+                      <SelectItem value="Beklemede">Beklemede</SelectItem>
+                      <SelectItem value="Kapalı">Kapalı</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-cyan-300">Öncelik</Label>
+                  <Select value={filterPriority} onValueChange={setFilterPriority} data-testid="filter-priority">
+                    <SelectTrigger className="bg-slate-700 border-cyan-500/30 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tümü</SelectItem>
+                      <SelectItem value="Düşük">Düşük</SelectItem>
+                      <SelectItem value="Orta">Orta</SelectItem>
+                      <SelectItem value="Yüksek">Yüksek</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-cyan-300">Gemi</Label>
+                  <Select value={filterShip} onValueChange={setFilterShip} data-testid="filter-ship">
+                    <SelectTrigger className="bg-slate-700 border-cyan-500/30 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tümü</SelectItem>
+                      {uniqueShips.map((ship) => (
+                        <SelectItem key={ship} value={ship!}>{ship}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-cyan-300">Arama</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-cyan-400" />
+                    <Input
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Ticket ID, konu veya kullanıcı..."
+                      className="pl-10 bg-slate-700 border-cyan-500/30 text-white placeholder:text-slate-400"
+                      data-testid="input-search"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tickets Table */}
+          <Card className="bg-slate-800/80 border-cyan-500/30 shadow-2xl shadow-cyan-500/10">
+            <CardHeader className="border-b border-cyan-500/20">
+              <CardTitle className="text-cyan-400 text-xl">Ticket Listesi</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {ticketsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+                  <span className="ml-2 text-cyan-300">Yükleniyor...</span>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-cyan-500/20 hover:bg-slate-700/50">
+                        <TableHead 
+                          className="text-cyan-300 cursor-pointer select-none"
+                          onClick={() => handleSort('id')}
+                          data-testid="sort-ticket-id"
+                        >
+                          <div className="flex items-center gap-2">
+                            Ticket ID
+                            {sortBy === 'id' && (
+                              sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead 
+                          className="text-cyan-300 cursor-pointer select-none"
+                          onClick={() => handleSort('subject')}
+                          data-testid="sort-subject"
+                        >
+                          <div className="flex items-center gap-2">
+                            Konu
+                            {sortBy === 'subject' && (
+                              sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-cyan-300">Öncelik</TableHead>
+                        <TableHead className="text-cyan-300">Durum</TableHead>
+                        <TableHead 
+                          className="text-cyan-300 cursor-pointer select-none"
+                          onClick={() => handleSort('userName')}
+                          data-testid="sort-username"
+                        >
+                          <div className="flex items-center gap-2">
+                            Kullanıcı
+                            {sortBy === 'userName' && (
+                              sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-cyan-300">Gemi</TableHead>
+                        <TableHead 
+                          className="text-cyan-300 cursor-pointer select-none"
+                          onClick={() => handleSort('updatedAt')}
+                          data-testid="sort-updated"
+                        >
+                          <div className="flex items-center gap-2">
+                            Son Güncelleme
+                            {sortBy === 'updatedAt' && (
+                              sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                            )}
+                          </div>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTickets.map((ticket: Ticket) => (
+                        <TableRow 
+                          key={ticket.id}
+                          className="border-cyan-500/20 hover:bg-slate-700/30 cursor-pointer transition-colors"
+                          onClick={() => setSelectedTicket(ticket.id)}
+                          data-testid={`ticket-row-${ticket.id}`}
+                        >
+                          <TableCell className="text-cyan-400 font-mono text-sm">
+                            #{ticket.id.slice(0, 8)}
+                          </TableCell>
+                          <TableCell className="text-white font-medium max-w-xs truncate">
+                            {ticket.subject}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`${priorityColors[ticket.priority]} border font-medium`}>
+                              {ticket.priority}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`${statusColors[ticket.status]} border font-medium`}>
+                              {ticket.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-white">{ticket.userName}</TableCell>
+                          <TableCell className="text-cyan-300">
+                            {ticket.shipName || (
+                              <span className="text-slate-400 italic">Atanmamış</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-slate-300">
+                            {formatRelativeTime(ticket.updatedAt)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {filteredTickets.length === 0 && (
+                    <div className="text-center py-12">
+                      <MessageSquare className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+                      <p className="text-slate-400">Filtre kriterlerine uygun ticket bulunamadı.</p>
+                    </div>
                   )}
-                </>
+                </div>
               )}
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Reply Dialog */}
-        <Dialog open={showReplyDialog} onOpenChange={setShowReplyDialog}>
-          <DialogContent className="max-w-2xl admin-dialog">
-            <DialogHeader>
-              <DialogTitle className="text-xl text-white">
-                Yanıt Gönder - {selectedTicket?.subject}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-slate-300">Mesaj</Label>
-                <Textarea
-                  value={replyMessage}
-                  onChange={(e) => setReplyMessage(e.target.value)}
-                  placeholder="Yanıtınızı yazın..."
-                  className="admin-input min-h-[120px]"
-                  data-testid="textarea-reply-message"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-slate-300">Dosya Ekle</Label>
-                <ObjectUploader
-                  maxNumberOfFiles={3}
-                  maxFileSize={10485760}
-                  onGetUploadParameters={handleAttachmentUpload}
-                  onComplete={handleAttachmentComplete}
-                  buttonClassName="admin-button-outline"
-                >
-                  <Paperclip className="h-4 w-4 mr-2" />
-                  Dosya Seç
-                </ObjectUploader>
-                <p className="text-xs text-slate-500">
-                  PDF, PNG, JPG dosyaları desteklenir. Max 10MB, 3 dosya.
-                </p>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowReplyDialog(false);
-                    setReplyMessage("");
-                  }}
-                  className="admin-button-outline"
-                >
-                  İptal
-                </Button>
-                <Button
-                  onClick={() => sendReplyMutation.mutate({ message: replyMessage })}
-                  disabled={!replyMessage.trim() || sendReplyMutation.isPending}
-                  className="admin-button"
-                  data-testid="button-send-reply"
-                >
-                  {sendReplyMutation.isPending ? (
-                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  ) : (
-                    <Send className="h-4 w-4 mr-2" />
-                  )}
-                  Gönder
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </AdminLayout>
   );

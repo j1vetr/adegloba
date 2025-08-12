@@ -713,8 +713,52 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(tickets).orderBy(desc(tickets.createdAt));
   }
 
+  async getAllTicketsWithUserInfo(): Promise<any[]> {
+    return db.select({
+      id: tickets.id,
+      subject: tickets.subject,
+      priority: tickets.priority,
+      status: tickets.status,
+      createdAt: tickets.createdAt,
+      updatedAt: tickets.updatedAt,
+      userId: tickets.userId,
+      shipId: tickets.shipId,
+      assignedAdminId: tickets.assignedAdminId,
+      userName: users.username,
+      userEmail: users.email,
+      shipName: ships.name,
+    })
+    .from(tickets)
+    .leftJoin(users, eq(tickets.userId, users.id))
+    .leftJoin(ships, eq(tickets.shipId, ships.id))
+    .orderBy(desc(tickets.updatedAt));
+  }
+
   async getTicketById(ticketId: string): Promise<Ticket | null> {
     const [ticket] = await db.select().from(tickets).where(eq(tickets.id, ticketId));
+    return ticket || null;
+  }
+
+  async getTicketWithUserInfo(ticketId: string): Promise<any | null> {
+    const [ticket] = await db.select({
+      id: tickets.id,
+      subject: tickets.subject,
+      priority: tickets.priority,
+      status: tickets.status,
+      createdAt: tickets.createdAt,
+      updatedAt: tickets.updatedAt,
+      userId: tickets.userId,
+      shipId: tickets.shipId,
+      assignedAdminId: tickets.assignedAdminId,
+      userName: users.username,
+      userEmail: users.email,
+      shipName: ships.name,
+    })
+    .from(tickets)
+    .leftJoin(users, eq(tickets.userId, users.id))
+    .leftJoin(ships, eq(tickets.shipId, ships.id))
+    .where(eq(tickets.id, ticketId));
+    
     return ticket || null;
   }
 
