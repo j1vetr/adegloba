@@ -42,6 +42,9 @@ export interface IStorage {
   getShipPlans(shipId: string): Promise<Plan[]>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<(User & { ship?: Ship })[]>;
+  getAllUsersWithShips(): Promise<any[]>;
+  updateUser(id: string, data: any): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
   getRecentUsers(limit: number): Promise<(User & { ship?: Ship })[]>;
   getRecentOrders(limit: number): Promise<(Order & { user?: User })[]>;
   
@@ -229,6 +232,64 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
+  }
+
+  async getAllUsersWithShips(): Promise<any[]> {
+    const results = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        shipId: users.ship_id,
+        created_at: users.createdAt,
+        updated_at: users.updatedAt,
+        ship: {
+          id: ships.id,
+          name: ships.name,
+          slug: ships.slug,
+        }
+      })
+      .from(users)
+      .leftJoin(ships, eq(users.ship_id, ships.id))
+      .orderBy(desc(users.createdAt));
+    
+    return results;
+  }
+
+  async updateUser(id: string, data: any): Promise<User | undefined> {
+    try {
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          username: data.username,
+          email: data.email,
+          ship_id: data.shipId,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, id))
+        .returning();
+      
+      return updatedUser;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return undefined;
+    }
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(users)
+        .where(eq(users.id, id));
+      
+      return result.changes > 0;
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      return false;
+    }
   }
 
   // Ship operations

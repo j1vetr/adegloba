@@ -376,27 +376,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Remove duplicate - this functionality is already handled above
-
-  // Admin users list
+  // Admin Users Management routes
   app.get('/api/admin/users', isAdminAuthenticated, async (req, res) => {
     try {
-      const users = await storage.getAllUsers();
+      const users = await storage.getAllUsersWithShips();
       res.json(users);
     } catch (error) {
-      console.error('Error fetching admin users:', error);
-      res.status(500).json({ message: 'Failed to fetch users' });
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
     }
   });
 
-  // Admin Recent Users  
-  app.get('/api/admin/recent-users', isAdminAuthenticated, async (req, res) => {
+  // Update user
+  app.put('/api/admin/users/:id', isAdminAuthenticated, async (req, res) => {
     try {
-      const users = await storage.getRecentUsers(10);
-      res.json(users);
+      const { id } = req.params;
+      const { username, email, ship_id } = req.body;
+
+      if (!username || !email) {
+        return res.status(400).json({ message: "Username and email are required" });
+      }
+
+      // Check if username is taken by another user
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser && existingUser.id !== id) {
+        return res.status(400).json({ message: "Username already taken by another user" });
+      }
+
+      // Check if email is taken by another user
+      const existingEmailUser = await storage.getUserByEmail(email);
+      if (existingEmailUser && existingEmailUser.id !== id) {
+        return res.status(400).json({ message: "Email already taken by another user" });
+      }
+
+      const updatedUser = await storage.updateUser(id, {
+        username,
+        email,
+        shipId: ship_id || null
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(updatedUser);
     } catch (error) {
-      console.error('Error fetching recent users:', error);
-      res.status(500).json({ message: 'Failed to fetch recent users' });
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Delete user
+  app.delete('/api/admin/users/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const success = await storage.deleteUser(id);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
     }
   });
 

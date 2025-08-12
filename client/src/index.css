@@ -523,6 +523,82 @@ button:hover {
   border-color: #00bfff !important;
 }
 
+/* Mobile-First Responsive Layouts */
+.desktop-table-layout {
+  display: none;
+}
+
+.mobile-card-layout {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .desktop-table-layout {
+    display: block;
+  }
+  
+  .mobile-card-layout {
+    display: none;
+  }
+}
+
+/* Mobile Card Components */
+.mobile-card-item {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.7) 100%);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 191, 255, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 191, 255, 0.1), 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.mobile-card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 191, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: rgba(0, 191, 255, 0.3);
+}
+
+.mobile-card-item .card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.mobile-card-item .card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 191, 255, 0.1);
+}
+
+.mobile-card-item .card-actions > * {
+  flex: 1;
+  min-height: 44px;
+}
+
+/* Admin Button Group Responsive */
+.admin-button-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .admin-button-group {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .admin-button-group > * {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
 /* Modal dark theme */
 .modal, .dialog {
   background-color: #0a0a0a !important;

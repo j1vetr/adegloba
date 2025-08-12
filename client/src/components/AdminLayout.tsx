@@ -137,10 +137,13 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
               
               return (
                 <Link key={item.name} href={item.href}>
-                  <div className={`
-                    sidebar-item group flex items-center px-4 py-3 mx-2 text-sm font-medium transition-all duration-200 cursor-pointer
-                    ${isActive ? 'active text-primary' : 'text-slate-300 hover:text-white'}
-                  `}>
+                  <div 
+                    className={`
+                      sidebar-item group flex items-center px-4 py-3 mx-2 text-sm font-medium transition-all duration-200 cursor-pointer
+                      ${isActive ? 'active text-primary' : 'text-slate-300 hover:text-white'}
+                    `}
+                    onClick={() => setSidebarOpen(false)}
+                  >
                     <Icon className={`
                       mr-3 h-5 w-5 flex-shrink-0 transition-all duration-200
                       ${isActive ? 'text-primary' : 'group-hover:text-primary'}
@@ -194,7 +197,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                 variant="ghost"
                 size="sm"
                 className="lg:hidden p-2 h-8 w-8 text-white hover:bg-primary/10 hover:text-primary flex-shrink-0"
-                onClick={() => setSidebarOpen(true)}
+                onClick={() => setSidebarOpen(!sidebarOpen)}
               >
                 <Menu className="h-4 w-4" />
               </Button>
