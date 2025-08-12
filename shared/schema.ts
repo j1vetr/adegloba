@@ -124,6 +124,8 @@ export const settings = pgTable("settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   key: varchar("key").notNull().unique(),
   value: text("value"),
+  category: varchar("category").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Relations
@@ -251,11 +253,14 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
 
 export const insertSettingSchema = createInsertSchema(settings).omit({
   id: true,
+  updatedAt: true,
 });
 
 // Types  
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type Setting = typeof settings.$inferSelect;
+export type InsertSetting = z.infer<typeof insertSettingSchema>;
 export type AdminUser = typeof admin_users.$inferSelect;
 export type InsertAdminUser = typeof admin_users.$inferInsert;
 export type LoginData = z.infer<typeof loginSchema>;
@@ -271,5 +276,3 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
-export type InsertSetting = z.infer<typeof insertSettingSchema>;
-export type Setting = typeof settings.$inferSelect;

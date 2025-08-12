@@ -526,6 +526,66 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(settings).orderBy(settings.key);
   }
 
+  async getSettingsByCategory(category: string): Promise<Setting[]> {
+    return db.select().from(settings).where(eq(settings.category, category)).orderBy(settings.key);
+  }
+
+  async getSetting(key: string): Promise<Setting | undefined> {
+    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
+    return setting;
+  }
+
+  async setSetting(key: string, value: string, category: string): Promise<Setting> {
+    const [setting] = await db
+      .insert(settings)
+      .values({ key, value, category })
+      .onConflictDoUpdate({
+        target: settings.key,
+        set: { value, category, updatedAt: new Date() }
+      })
+      .returning();
+    return setting;
+  }
+
+  async initializeDefaultSettings(): Promise<void> {
+    const defaultSettings = [
+      // General Settings
+      { key: 'SITE_NAME', value: 'AdeGloba Starlink System', category: 'general' },
+      { key: 'CONTACT_EMAIL', value: 'info@adegloba.com', category: 'general' },
+      { key: 'DEFAULT_LANGUAGE', value: 'tr', category: 'general' },
+      { key: 'TIMEZONE', value: 'Europe/Istanbul', category: 'general' },
+      { key: 'LOGO_URL', value: '', category: 'general' },
+      
+      // Payment Settings
+      { key: 'PAYPAL_CLIENT_ID', value: '', category: 'payment' },
+      { key: 'PAYPAL_CLIENT_SECRET', value: '', category: 'payment' },
+      { key: 'PAYPAL_ENV', value: 'sandbox', category: 'payment' },
+      
+      // Support Settings
+      { key: 'WHATSAPP_NUMBER', value: '', category: 'support' },
+      { key: 'SUPPORT_EMAIL', value: 'destek@adegloba.com', category: 'support' },
+      
+      // Captive Portal Settings
+      { key: 'CAPTIVE_LOGIN_URL', value: '', category: 'captive_portal' },
+      { key: 'CAPTIVE_PORTAL_MODE', value: 'off', category: 'captive_portal' },
+      { key: 'WALLED_GARDEN_HINT', value: '', category: 'captive_portal' },
+      
+      // RADIUS Settings
+      { key: 'RADIUS_DB_HOST', value: '', category: 'radius' },
+      { key: 'RADIUS_DB_PORT', value: '3306', category: 'radius' },
+      { key: 'RADIUS_DB_USER', value: '', category: 'radius' },
+      { key: 'RADIUS_DB_PASS', value: '', category: 'radius' },
+      { key: 'RADIUS_DB_NAME', value: '', category: 'radius' }
+    ];
+
+    for (const setting of defaultSettings) {
+      const existing = await this.getSetting(setting.key);
+      if (!existing) {
+        await db.insert(settings).values(setting);
+      }
+    }
+  }
+
   // Statistics
   async getOrderStats(): Promise<{ totalRevenue: number; activeOrders: number; totalOrders: number }> {
     const [stats] = await db

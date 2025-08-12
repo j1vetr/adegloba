@@ -14,6 +14,14 @@ const couponService = new CouponService(storage);
 const expiryService = new ExpiryService(storage);
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Admin Authentication Middleware
+  const isAdminAuthenticated = (req: any, res: any, next: any) => {
+    if (req.session && req.session.adminUser) {
+      return next();
+    }
+    return res.status(401).json({ message: 'Unauthorized' });
+  };
+
   // Auth middleware
   await setupAuth(app);
 
@@ -340,33 +348,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin - Settings
-  app.get('/api/admin/settings', isAuthenticated, adminMiddleware, async (req, res) => {
+  // Admin - Settings Routes (session-based)
+  app.get('/api/admin/settings', isAdminAuthenticated, async (req, res) => {
     try {
-      const { key } = req.query;
-      if (key) {
-        const setting = await storage.getSetting(key as string);
-        res.json(setting);
+      const { category } = req.query;
+      if (category) {
+        const settings = await storage.getSettingsByCategory(category as string);
+        res.json(settings);
       } else {
-        // Return all settings - implement if needed
-        res.json({});
+        const settings = await storage.getAllSettings();
+        res.json(settings);
       }
     } catch (error) {
-      console.error("Error fetching setting:", error);
-      res.status(500).json({ message: "Failed to fetch setting" });
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
     }
   });
 
-  app.post('/api/admin/settings', isAuthenticated, adminMiddleware, async (req, res) => {
+  app.post('/api/admin/settings', isAdminAuthenticated, async (req, res) => {
     try {
-      const { key, value } = req.body;
-      const setting = await storage.setSetting(key, value);
+      const { key, value, category } = req.body;
+      const setting = await storage.setSetting(key, value, category);
       res.json(setting);
     } catch (error) {
       console.error("Error setting value:", error);
       res.status(400).json({ message: error.message || "Failed to set value" });
     }
   });
+
+  // Initialize default settings on startup
+  storage.initializeDefaultSettings().catch(console.error);
+
+
 
   // Cron job endpoint for expiry processing
   app.post('/api/cron/process-expired-orders', async (req, res) => {
@@ -378,14 +391,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to process expired orders" });
     }
   });
-
-  // Admin Authentication Middleware
-  const isAdminAuthenticated = (req: any, res: any, next: any) => {
-    if (req.session && req.session.adminUser) {
-      return next();
-    }
-    return res.status(401).json({ message: 'Unauthorized' });
-  };
 
   // Admin Authentication Routes
   app.post('/api/admin/login', async (req, res) => {
