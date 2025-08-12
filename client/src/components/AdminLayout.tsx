@@ -40,8 +40,7 @@ const navigationCategories = [
     name: 'Operasyon',
     items: [
       { name: 'Gemiler', href: '/admin/ships', icon: Ship },
-      { name: 'Paketler', href: '/admin/ship-packages', icon: Package },
-      { name: 'Gemi Paketleri', href: '/admin/packages', icon: Package },
+      { name: 'Paketler', href: '/admin/packages', icon: Package },
       { name: 'Kimlik Havuzu', href: '/admin/credential-pools', icon: Key },
       { name: 'Kuponlar', href: '/admin/coupons', icon: Gift },
       { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },

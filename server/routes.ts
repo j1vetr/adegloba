@@ -509,63 +509,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize default settings on startup
   storage.initializeDefaultSettings().catch(console.error);
 
-  // Package-based Credential Management API Routes
-  app.get("/api/admin/ship-packages", isAdminAuthenticated, async (req, res) => {
-    try {
-      const plans = await storage.getAllPlans();
-      const ships = await storage.getAllShips();
-      
-      const plansWithDetails = await Promise.all(plans.map(async (plan) => {
-        const ship = ships.find(s => s.id === plan.shipId);
-        const planCredentials = await storage.getCredentialsForPlan(plan.id);
-        
-        return {
-          ...plan,
-          ship,
-          credentialStats: {
-            total: planCredentials.length,
-            available: planCredentials.filter(c => !c.isAssigned).length,
-            assigned: planCredentials.filter(c => c.isAssigned).length,
-          }
-        };
-      }));
 
-      res.json(plansWithDetails);
-    } catch (error: any) {
-      console.error("Error fetching ship packages:", error);
-      res.status(500).json({ message: error.message });
-    }
-  });
 
-  app.post("/api/admin/ship-packages", isAdminAuthenticated, async (req, res) => {
-    try {
-      const plan = await storage.createPlan(req.body);
-      res.json(plan);
-    } catch (error: any) {
-      console.error("Error creating ship package:", error);
-      res.status(500).json({ message: error.message });
-    }
-  });
 
-  app.put("/api/admin/ship-packages/:id", isAdminAuthenticated, async (req, res) => {
-    try {
-      const plan = await storage.updatePlan(req.params.id, req.body);
-      res.json(plan);
-    } catch (error: any) {
-      console.error("Error updating ship package:", error);
-      res.status(500).json({ message: error.message });
-    }
-  });
 
-  app.delete("/api/admin/ship-packages/:id", isAdminAuthenticated, async (req, res) => {
-    try {
-      await storage.deletePlan(req.params.id);
-      res.json({ message: "Package deleted successfully" });
-    } catch (error: any) {
-      console.error("Error deleting ship package:", error);
-      res.status(500).json({ message: error.message });
-    }
-  });
+
+
+
 
   app.get("/api/admin/credentials", isAdminAuthenticated, async (req, res) => {
     try {
