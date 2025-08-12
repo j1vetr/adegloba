@@ -3,23 +3,28 @@ import { Express, Request, Response } from "express";
 import { storage } from "./storage";
 import { registerSchema, loginSchema } from "@shared/schema";
 
-declare global {
-  namespace Express {
-    interface Session {
-      userId?: string;
-      isAuthenticated?: boolean;
-    }
+// Extend the session type to include our custom fields
+declare module "express-session" {
+  interface SessionData {
+    userId?: string;
+    isAuthenticated?: boolean;
   }
 }
 
 export function setupUserAuth(app: Express) {
   // User Registration
-  app.post("/api/auth/register", async (req: Request, res: Response) => {
+  app.post("/api/user/register", async (req: Request, res: Response) => {
     try {
+      // Map password to password_hash for validation
       const validatedData = registerSchema.parse({
-        ...req.body,
-        password_hash: req.body.password // Map password to password_hash for validation
+        username: req.body.username,
+        email: req.body.email,
+        password_hash: req.body.password,
+        ship_id: req.body.ship_id,
+        address: req.body.address
       });
+      
+      console.log("Validated registration data:", validatedData);
 
       // Check if user already exists
       const existingUserByUsername = await storage.getUserByUsername(validatedData.username);
