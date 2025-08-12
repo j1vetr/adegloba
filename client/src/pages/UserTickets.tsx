@@ -31,8 +31,8 @@ import {
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { ObjectUploader } from "@/components/ObjectUploader";
-import type { UploadResult } from "@uppy/core";
+import { UserNavigation } from "@/components/UserNavigation";
+import { useUserAuth } from "@/hooks/useUserAuth";
 
 interface UserTicket {
   id: string;
@@ -73,6 +73,8 @@ const statusColors = {
 };
 
 export default function UserTickets() {
+  const { user, isAuthenticated } = useUserAuth();
+  const { toast } = useToast();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showTicketDialog, setShowTicketDialog] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<UserTicket | null>(null);
@@ -82,23 +84,23 @@ export default function UserTickets() {
     priority: "Orta"
   });
   const [replyMessage, setReplyMessage] = useState("");
-  const { toast } = useToast();
 
   // Fetch user tickets
   const { data: tickets = [], isLoading } = useQuery({
-    queryKey: ['/api/user/tickets'],
+    queryKey: ['/api/tickets'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/user/tickets');
+      const response = await apiRequest('GET', '/api/tickets');
       return response.json();
-    }
+    },
+    enabled: isAuthenticated
   });
 
   // Fetch ticket messages
   const { data: ticketMessages = [] } = useQuery({
-    queryKey: ['/api/user/tickets', selectedTicket?.id, 'messages'],
+    queryKey: ['/api/tickets', selectedTicket?.id, 'messages'],
     queryFn: async () => {
       if (!selectedTicket) return [];
-      const response = await apiRequest('GET', `/api/user/tickets/${selectedTicket.id}/messages`);
+      const response = await apiRequest('GET', `/api/tickets/${selectedTicket.id}/messages`);
       return response.json();
     },
     enabled: !!selectedTicket
@@ -107,10 +109,11 @@ export default function UserTickets() {
   // Create ticket mutation
   const createTicketMutation = useMutation({
     mutationFn: async (data: typeof newTicket) => {
-      return apiRequest('POST', '/api/user/tickets', data);
+      const response = await apiRequest('POST', '/api/tickets', data);
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
       setNewTicket({ subject: "", message: "", priority: "Orta" });
       setShowCreateDialog(false);
       toast({
@@ -131,10 +134,12 @@ export default function UserTickets() {
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { message: string; attachments?: string[] }) => {
       if (!selectedTicket) throw new Error("No ticket selected");
-      return apiRequest('POST', `/api/user/tickets/${selectedTicket.id}/messages`, data);
+      const response = await apiRequest('POST', `/api/tickets/${selectedTicket.id}/messages`, data);
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tickets', selectedTicket?.id, 'messages'] });
       setReplyMessage("");
       toast({
         title: "Başarılı",
@@ -158,7 +163,7 @@ export default function UserTickets() {
     };
   };
 
-  const handleAttachmentComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+  const handleAttachmentComplete = (result: any) => {
     console.log("Upload completed:", result);
   };
 
@@ -179,7 +184,8 @@ export default function UserTickets() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <div className="container mx-auto p-6 space-y-6">
+      <UserNavigation />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>

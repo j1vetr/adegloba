@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import Layout from "@/components/Layout";
+import { UserNavigation } from "@/components/UserNavigation";
 import type { Plan } from "@shared/schema";
 
 export default function Paketler() {
@@ -44,8 +44,11 @@ export default function Paketler() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <UserNavigation />
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        </div>
       </div>
     );
   }
@@ -60,8 +63,9 @@ export default function Paketler() {
   };
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <UserNavigation />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-6 space-x-2">
@@ -226,6 +230,6 @@ export default function Paketler() {
           </Card>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 }

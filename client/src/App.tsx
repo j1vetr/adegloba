@@ -106,7 +106,7 @@ function Router() {
         </UserProtectedRoute>
       </Route>
       
-      <Route path="/tickets">
+      <Route path="/destek">
         <UserProtectedRoute>
           <UserTickets />
         </UserProtectedRoute>

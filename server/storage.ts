@@ -459,9 +459,7 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(orders).orderBy(desc(orders.createdAt));
   }
 
-  async getAllOrders(): Promise<Order[]> {
-    return db.select().from(orders).orderBy(desc(orders.createdAt));
-  }
+
 
   async getOrdersByUser(userId: string): Promise<Order[]> {
     return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
@@ -497,11 +495,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Settings operations
-  async getSetting(key: string): Promise<Setting | undefined> {
-    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
-    return setting;
-  }
-
   async setSetting(key: string, value: string): Promise<Setting> {
     const [setting] = await db
       .insert(settings)
@@ -671,23 +664,9 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  // Missing implementations for Settings
-  async getSetting(key: string): Promise<Setting | null> {
-    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
-    return setting || null;
-  }
 
-  async upsertSetting(key: string, value: string, category = 'general'): Promise<Setting> {
-    const [setting] = await db
-      .insert(settings)
-      .values({ key, value, category })
-      .onConflictDoUpdate({
-        target: settings.key,
-        set: { value, updatedAt: new Date() }
-      })
-      .returning();
-    return setting;
-  }
+
+
 
   // Ticket system implementation
   async createTicket(ticketData: InsertTicket): Promise<Ticket> {

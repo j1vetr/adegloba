@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import Layout from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,7 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
+import { UserNavigation } from "@/components/UserNavigation";
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading: authLoading } = useUserAuth();
@@ -72,11 +72,12 @@ export default function Dashboard() {
 
   if (authLoading || ordersLoading) {
     return (
-      <Layout>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <UserNavigation />
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-neon-cyan"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-cyan-400"></div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
@@ -86,8 +87,19 @@ export default function Dashboard() {
   const connectedShips = new Set(userOrders?.filter((order: any) => order.status === 'paid').flatMap((order: any) => order.items.map((item: any) => item.shipId))).size;
 
   return (
-    <Layout>
-      <section className="py-20 bg-gradient-to-r from-space-blue/30 to-space-dark/30">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <UserNavigation />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-6">
+          <header className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white">AdeGloba Starlink System - Kontrol Paneli</h1>
+              <p className="text-slate-400">Hoş geldiniz, {user?.firstName || 'Kullanıcı'}</p>
+            </div>
+          </header>
+
+          {/* Dashboard content */}
+          <section className="py-8">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
@@ -262,7 +274,9 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </section>
-    </Layout>
+        </section>
+        </div>
+      </div>
+    </div>
   );
 }

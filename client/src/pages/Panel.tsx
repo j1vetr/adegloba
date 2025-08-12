@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Package, History, BarChart3, Ship as ShipIcon, Calendar, CreditCard } from "lucide-react";
 import { Link } from "wouter";
-import Layout from "@/components/Layout";
+import { UserNavigation } from "@/components/UserNavigation";
 import type { Order, User } from "@shared/schema";
 
 export default function Panel() {
@@ -24,8 +24,11 @@ export default function Panel() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <UserNavigation />
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        </div>
       </div>
     );
   }
@@ -48,8 +51,9 @@ export default function Panel() {
   };
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <UserNavigation />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
           <div className="flex-1">
@@ -245,6 +249,6 @@ export default function Panel() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
+    </div>
   );
 }
