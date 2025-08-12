@@ -56,7 +56,7 @@ interface OrderWithDetails extends Order {
   plan: Plan;
 }
 
-export default function OrdersManagement() {
+export default function OrdersManagementNew() {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<OrderWithDetails | null>(null);
@@ -124,9 +124,9 @@ export default function OrdersManagement() {
   // Filter orders based on search and status
   const filteredOrders = orders?.filter((order: OrderWithDetails) => {
     const matchesSearch = !searchQuery || 
-      order.user?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.ship?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.ship.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.id.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
@@ -220,11 +220,11 @@ export default function OrdersManagement() {
   const handleEdit = (order: OrderWithDetails) => {
     setEditingOrder(order);
     setSelectedUser({ ...order.user, ship: order.ship });
-    setSelectedShip(order.shipId || '');
+    setSelectedShip(order.shipId);
     setFormData({
       userId: order.userId,
-      shipId: order.shipId || '',
-      planId: order.plan?.id || '',
+      shipId: order.shipId,
+      planId: order.orderItems?.[0]?.planId || '',
       status: order.status as any,
       subtotalUsd: order.subtotalUsd,
       discountUsd: order.discountUsd,
@@ -520,14 +520,14 @@ export default function OrdersManagement() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="text-white font-medium">{order.user?.full_name || order.user?.username}</span>
-                            <span className="text-gray-400 text-sm">{order.user?.email}</span>
+                            <span className="text-white font-medium">{order.user.full_name || order.user.username}</span>
+                            <span className="text-gray-400 text-sm">{order.user.email}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <ShipIcon className="h-4 w-4 text-blue-400" />
-                            <span className="text-white">{order.ship?.name}</span>
+                            <span className="text-white">{order.ship.name}</span>
                           </div>
                         </TableCell>
                         <TableCell>

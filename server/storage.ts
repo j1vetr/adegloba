@@ -270,6 +270,26 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getAllUsers(): Promise<any[]> {
+    return db
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        full_name: users.full_name,
+        ship_id: users.ship_id,
+        ship: {
+          id: ships.id,
+          name: ships.name,
+          slug: ships.slug,
+          kitNumber: ships.kitNumber,
+        }
+      })
+      .from(users)
+      .leftJoin(ships, eq(users.ship_id, ships.id))
+      .orderBy(users.username);
+  }
+
   async getAllUsersWithShips(): Promise<any[]> {
     const results = await db
       .select({
@@ -516,6 +536,15 @@ export class DatabaseStorage implements IStorage {
   async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
     const [newOrderItem] = await db.insert(orderItems).values(orderItem).returning();
     return newOrderItem;
+  }
+
+  async deleteOrderItemsByOrderId(orderId: string): Promise<void> {
+    await db.delete(orderItems).where(eq(orderItems.orderId, orderId));
+  }
+
+  async deleteOrder(id: string): Promise<boolean> {
+    const result = await db.delete(orders).where(eq(orders.id, id));
+    return result.rowCount > 0;
   }
 
   // Settings operations

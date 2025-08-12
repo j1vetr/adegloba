@@ -169,4 +169,42 @@ export class OrderService {
 
     return ordersWithDetails;
   }
+
+  async getOrderWithDetails(orderId: string) {
+    const order = await this.storage.getOrderById(orderId);
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    const [user, items] = await Promise.all([
+      this.storage.getUser(order.userId),
+      this.storage.getOrderItems(order.id)
+    ]);
+
+    const itemsWithDetails = await Promise.all(
+      items.map(async (item) => {
+        const [ships, plans] = await Promise.all([
+          this.storage.getShips(),
+          this.storage.getPlans()
+        ]);
+        
+        const ship = ships.find(s => s.id === item.shipId);
+        const plan = plans.find(p => p.id === item.planId);
+        
+        return {
+          ...item,
+          ship,
+          plan
+        };
+      })
+    );
+
+    return {
+      ...order,
+      user,
+      items: itemsWithDetails,
+      plan: itemsWithDetails[0]?.plan || null,
+      ship: itemsWithDetails[0]?.ship || null
+    };
+  }
 }

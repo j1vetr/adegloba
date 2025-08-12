@@ -275,13 +275,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin - Orders
-  app.get('/api/admin/orders', isAuthenticated, adminMiddleware, async (req, res) => {
+  app.get('/api/admin/orders', isAdminAuthenticated, async (req, res) => {
     try {
       const orders = await orderService.getAllOrdersWithDetails();
       res.json(orders);
     } catch (error) {
       console.error("Error fetching orders:", error);
       res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.post('/api/admin/orders', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { userId, shipId, planId, status, subtotalUsd, discountUsd, totalUsd, couponId } = req.body;
+      
+      // Validate required fields
+      if (!userId || !shipId || !planId) {
+        return res.status(400).json({ message: "User, ship, and plan are required" });
+      }
+
+      // Create order
+      const orderData = {
+        userId,
+        shipId,
+        status: status || 'pending',
+        currency: 'USD',
+        subtotalUsd,
+        discountUsd: discountUsd || '0.00',
+        totalUsd,
+        couponId: couponId || null,
+      };
+
+      const order = await storage.createOrder(orderData);
+
+      // Create order item
+      const orderItemData = {
+        orderId: order.id,
+        shipId,
+        planId,
+        quantity: 1,
+        priceUsd: subtotalUsd,
+      };
+
+      await storage.createOrderItem(orderItemData);
+
+      // Get the complete order with details
+      const completeOrder = await orderService.getOrderWithDetails(order.id);
+      res.json(completeOrder);
+    } catch (error) {
+      console.error("Error creating order:", error);
+      res.status(400).json({ message: error.message || "Failed to create order" });
+    }
+  });
+
+  app.put('/api/admin/orders/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, subtotalUsd, discountUsd, totalUsd } = req.body;
+      
+      const updateData = {
+        status,
+        subtotalUsd,
+        discountUsd,
+        totalUsd,
+      };
+
+      const order = await storage.updateOrder(id, updateData);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      const completeOrder = await orderService.getOrderWithDetails(order.id);
+      res.json(completeOrder);
+    } catch (error) {
+      console.error("Error updating order:", error);
+      res.status(400).json({ message: error.message || "Failed to update order" });
+    }
+  });
+
+  app.delete('/api/admin/orders/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // First delete order items
+      await storage.deleteOrderItemsByOrderId(id);
+      
+      // Then delete the order
+      const success = await storage.deleteOrder(id);
+      if (!success) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      res.json({ message: "Order deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      res.status(500).json({ message: "Failed to delete order" });
     }
   });
 
@@ -644,11 +732,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/ships/:shipId/plans', isAdminAuthenticated, async (req, res) => {
     try {
       const { shipId } = req.params;
-      const plans = await storage.getPlansByShip(shipId);
+      const plans = await storage.getPlansForShip(shipId);
       res.json(plans);
     } catch (error) {
       console.error('Error fetching ship plans:', error);
       res.status(500).json({ message: 'Failed to fetch ship plans' });
+    }
+  });
+
+  // Admin - Users for order assignment
+  app.get('/api/admin/users', isAdminAuthenticated, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Failed to fetch users' });
     }
   });
 
