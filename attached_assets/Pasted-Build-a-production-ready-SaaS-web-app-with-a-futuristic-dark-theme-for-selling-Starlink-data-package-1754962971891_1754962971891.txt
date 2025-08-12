@@ -1,0 +1,168 @@
+Build a production-ready SaaS web app with a futuristic dark theme for selling Starlink data packages to ships. Stack: Python 3, Flask (Blueprints), SQLAlchemy, Alembic, Jinja2, WTForms, Redis (sessions/rate-limit), Celery (emails/webhooks), SQLite for dev and Postgres-ready for prod. Use TailwindCSS + minimal Alpine.js for UI. Containerize with a simple Dockerfile. Provide README.md and seed data.
+
+Core Requirements
+Multi-module architecture
+
+Packages:
+
+app/core (config, db, mail, i18n)
+
+app/auth (register/login/logout, JWT for APIs, role=admin/user)
+
+app/ships (CRUD for ships)
+
+app/plans (CRUD for data packages)
+
+app/orders (cart/checkout, PayPal integration, coupons)
+
+app/admin (dashboard)
+
+app/support (WhatsApp link)
+
+Use Flask Blueprints and services; keep controllers thin, logic in services.
+
+Futuristic Dark UI
+
+Global dark theme (black/graphite + subtle neon accents), glassmorphism cards, smooth hover/blur/float animations.
+
+Pages: Home (Ship selection), Ship → Plans, Plan detail, Cart/Checkout, Order success, User dashboard (purchase history), Admin console.
+
+Mobile first, responsive.
+
+Localization & Currency
+
+Internationalization (i18n) with Flask-Babel: en, tr (easily extendable).
+
+All prices stored and displayed in USD. Server locale: Europe/Istanbul for date logic.
+
+Auth
+
+Email + password auth (register/login), email verification, password reset.
+
+Roles: admin, user. Protect admin routes.
+
+Ship Selection Flow
+
+Landing page: list of ships (cards). Data comes from DB; each ship has: name, slug, description, optional image, is_active.
+
+Click a ship → Plans page: list of available data packages for that ship.
+
+Data Packages (Plans)
+
+Plan fields: title, gb_amount, speed_note (text), validity_note (text), price_usd (decimal), is_active, sort_order.
+
+Admin can assign plans globally or per ship (via many-to-many table ship_plans with is_active).
+
+Monthly Expiry (End-of-Month logic)
+
+When a user purchases a plan on any date, the subscription expires at the end of the current calendar month (Europe/Istanbul timezone).
+
+Show in UI: “Expires on <last day of month>; <remaining days> left.”
+
+No live GB usage tracking (we use pfSense, no API). Do not show remaining GB. Instead show purchase details (plan, date, amount, status, expiry date).
+
+At month rollover, mark active orders as expired via a daily Celery task.
+
+Checkout & Payments
+
+PayPal Checkout (client + server integration). Use env vars: PAYPAL_CLIENT_ID, PAYPAL_SECRET, PAYPAL_ENV (sandbox/live).
+
+Order states: pending, paid, failed, refunded, expired.
+
+After successful payment, create an Order and an OrderItem (ship, plan, price, expiry_date).
+
+Webhook endpoint to verify/settle orders.
+
+Simple Cart (single ship context; prevent mixing ships in one cart).
+
+Coupons
+
+Coupon fields: code (unique), type (percent or fixed), value, max_uses, uses, starts_at, ends_at, is_active, optional ship_id filter.
+
+Apply at checkout; validate windows and usage; show discounted total; persist coupon_id on Order.
+
+User Dashboard
+
+Show Purchase History: order number, ship, plan, price, coupon (if any), order date, status, and expiry date.
+
+“Buy again” shortcuts that prefill cart for the same ship/plan.
+
+WhatsApp Support
+
+Replace live chat with a floating WhatsApp button linking to a configurable number (ENV: WHATSAPP_NUMBER). Open in new tab with a prefilled message including current ship/plan if present.
+
+Admin Panel (100% control)
+
+Dashboard (KPIs: total revenue, orders by status, top ships/plans).
+
+Ships CRUD (+ image upload).
+
+Plans CRUD (+ assignment to ships with toggles and sort order).
+
+Coupons CRUD (validation helpers and usage charts).
+
+Orders list/detail (filter by status/date/ship/plan; refund/manual mark).
+
+Users list/detail.
+
+Settings: site name/logo, WhatsApp number, PayPal keys, i18n default language, timezone, legal pages content (markdown).
+
+Everything translatable via Babel; store text content in DB and mark for translation where needed.
+
+Security & Quality
+
+CSRF protection, server-side validation, rate limiting on auth and checkout, XSS-safe templates.
+
+Centralized error pages (40x/50x).
+
+Logging (structured JSON) and basic request id.
+
+Unit tests for services (orders, coupons, expiry date calc).
+
+Database Schema (suggested)
+
+users(id, email, password_hash, role, is_verified, created_at)
+
+ships(id, name, slug, description, image_url, is_active, created_at, updated_at)
+
+plans(id, title, gb_amount, speed_note, validity_note, price_usd, is_active, sort_order, created_at, updated_at)
+
+ship_plans(id, ship_id, plan_id, is_active, sort_order)
+
+coupons(id, code, type, value, max_uses, uses, starts_at, ends_at, ship_id, is_active)
+
+orders(id, user_id, status, currency='USD', subtotal_usd, discount_usd, total_usd, coupon_id, created_at, paid_at, expires_at)
+
+order_items(id, order_id, ship_id, plan_id, qty, unit_price_usd, line_total_usd)
+
+settings(id, key, value)
+
+email_verifications, password_resets
+
+Expiry Calculation Helper
+
+Service function calculate_end_of_month_expiry(now_tz) → returns last day of current month 23:59:59 Europe/Istanbul.
+
+UI shows remaining days = (expiry_date - now).days.
+
+Routing Summary
+
+Public: / (ships), /ship/<slug> (plans), /plan/<id>, /cart, /checkout, /success
+
+Auth: /login, /register, /logout, /dashboard
+
+Webhooks: /webhooks/paypal
+
+Admin: /admin, /admin/ships, /admin/plans, /admin/coupons, /admin/orders, /admin/users, /admin/settings
+
+Dev Notes
+
+Provide .env.example with all keys (DB URL, secret key, Babel default locale, PayPal, WhatsApp).
+
+Include Tailwind build setup; preconfigured dark palette; basic neon accent utility classes.
+
+Seed script: create sample ships (AL-1, AL-2), plans (5/10/25/50 GB), a coupon, and an admin user.
+
+Add simple E2E happy path in README (register → select ship → select plan → coupon → PayPal sandbox → success → dashboard).
+
+Deliver clean, well-commented code ready to run on Replit. Start coding now.
