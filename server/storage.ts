@@ -670,7 +670,23 @@ export class DatabaseStorage implements IStorage {
 
   // Ticket system implementation
   async createTicket(ticketData: InsertTicket): Promise<Ticket> {
-    const [ticket] = await db.insert(tickets).values(ticketData).returning();
+    const [ticket] = await db.insert(tickets).values({
+      userId: ticketData.userId,
+      shipId: ticketData.shipId,
+      subject: ticketData.subject,
+      priority: ticketData.priority,
+      status: ticketData.status,
+      assignedAdminId: ticketData.assignedAdminId
+    }).returning();
+    
+    // Create initial message for the ticket
+    await db.insert(ticketMessages).values({
+      ticketId: ticket.id,
+      senderType: 'user',
+      senderId: ticketData.userId,
+      message: ticketData.message
+    });
+    
     return ticket;
   }
 

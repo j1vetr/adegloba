@@ -663,15 +663,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
-      const userData = {
-        username: req.body.username,
-        email: req.body.email,
+      const updateData: any = {
         address: req.body.address,
-        ship_id: req.body.ship_id || null,
         updated_at: new Date()
       };
 
-      const user = await storage.updateUser(userId, userData);
+      // Handle password update if provided
+      if (req.body.newPassword && req.body.currentPassword) {
+        const user = await storage.getUserById(userId);
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Verify current password
+        const bcrypt = require('bcrypt');
+        const isValid = await bcrypt.compare(req.body.currentPassword, user.password_hash);
+        if (!isValid) {
+          return res.status(400).json({ message: 'Current password is incorrect' });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(req.body.newPassword, 10);
+        updateData.password_hash = hashedPassword;
+      }
+
+      const user = await storage.updateUser(userId, updateData);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -706,12 +722,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
+      // Get user's ship_id for the ticket
+      const user = await storage.getUserById(userId);
+      
       const ticketData = {
         subject: req.body.subject,
         message: req.body.message,
         priority: req.body.priority || 'Orta',
         status: 'Açık',
         userId,
+        shipId: user?.ship_id || null,
       };
 
       const ticket = await storage.createTicket(ticketData);
