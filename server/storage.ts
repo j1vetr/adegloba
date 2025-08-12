@@ -725,9 +725,9 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(settings).where(eq(settings.category, category)).orderBy(settings.key);
   }
 
-  async getSetting(key: string): Promise<Setting | undefined> {
+  async getSetting(key: string): Promise<Setting | null> {
     const [setting] = await db.select().from(settings).where(eq(settings.key, key));
-    return setting;
+    return setting || null;
   }
 
   async setSetting(key: string, value: string, category: string): Promise<Setting> {
@@ -1009,6 +1009,63 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCredential(id: string): Promise<void> {
     await db.delete(credentialPools).where(eq(credentialPools.id, id));
+  }
+  // Enhanced User Management Methods
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async getUser(id: string): Promise<User | null> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || null;
+  }
+
+  async getAllCredentials(): Promise<CredentialPool[]> {
+    return db.select().from(credentialPools).orderBy(credentialPools.createdAt);
+  }
+
+  async getUsersWithOrderStats(): Promise<Array<User & { ship: Ship | undefined; orderStats: { totalOrders: number; totalAmountPaid: number; lastOrderDate: string | null } }>> {
+    const allUsers = await db.select().from(users).orderBy(users.created_at);
+    const allShips = await db.select().from(ships);
+    const allOrders = await db.select().from(orders);
+
+    return allUsers.map(user => {
+      const ship = allShips.find(s => s.id === user.ship_id);
+      const userOrders = allOrders.filter(o => o.userId === user.id && o.status === 'paid');
+      
+      const totalAmountPaid = userOrders.reduce((sum, order) => sum + parseFloat(order.totalAmount), 0);
+      const lastOrderDate = userOrders.length > 0 
+        ? userOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].createdAt
+        : null;
+
+      return {
+        ...user,
+        ship,
+        orderStats: {
+          totalOrders: userOrders.length,
+          totalAmountPaid,
+          lastOrderDate,
+        }
+      };
+    });
+  }
+
+  async getUserOrderHistory(userId: string): Promise<Array<Order & { orderItems: OrderItem[]; ship: Ship | undefined; totalAmount: number }>> {
+    const userOrders = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(orders.createdAt);
+    const allOrderItems = await db.select().from(orderItems);
+    const allShips = await db.select().from(ships);
+
+    return userOrders.map(order => {
+      const items = allOrderItems.filter(item => item.orderId === order.id);
+      const ship = allShips.find(s => s.id === order.shipId);
+      
+      return {
+        ...order,
+        orderItems: items,
+        ship,
+        totalAmount: parseFloat(order.totalAmount),
+      };
+    });
   }
 }
 

@@ -207,4 +207,8 @@ export class OrderService {
       ship: itemsWithDetails[0]?.ship || null
     };
   }
+
+  async getRecentOrders(limit: number) {
+    return this.storage.getRecentOrders(limit);
+  }
 }

@@ -648,6 +648,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced Users Management API Routes
+  app.get("/api/admin/users-with-stats", isAdminAuthenticated, async (req, res) => {
+    try {
+      const usersWithStats = await storage.getUsersWithOrderStats();
+      res.json(usersWithStats);
+    } catch (error: any) {
+      console.error("Error fetching users with stats:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/admin/users/:id/orders", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const orderHistory = await storage.getUserOrderHistory(id);
+      res.json(orderHistory);
+    } catch (error: any) {
+      console.error("Error fetching user order history:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteUser(id);
+      res.json({ message: "User deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Cron job endpoint for expiry processing
   app.post('/api/cron/process-expired-orders', async (req, res) => {
     try {

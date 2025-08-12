@@ -21,13 +21,13 @@ import Paketler from "@/pages/Paketler";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ShipsManagement from "@/pages/admin/ShipsManagement";
 import PlansManagement from "@/pages/admin/PlansManagement";
-import PackagesManagement from "@/pages/admin/PackagesManagement";
+
 import ShipPackages from "@/pages/admin/ShipPackages";
 import CredentialPoolsNew from "@/pages/admin/CredentialPoolsNew";
 import ShipPackagesNew from "@/pages/admin/ShipPackagesNew";
 import CouponsManagement from "@/pages/admin/CouponsManagement";
 import OrdersManagement from "@/pages/admin/OrdersManagement";
-import UsersManagement from "@/pages/admin/UsersManagement";
+import UsersManagementNew from "@/pages/admin/UsersManagementNew";
 import SettingsManagement from "@/pages/admin/SettingsManagement";
 import TicketManagement from "@/pages/admin/TicketManagement";
 import UserTickets from "@/pages/UserTickets";
@@ -67,11 +67,7 @@ function Router() {
         </AdminProtectedRoute>
       </Route>
       
-      <Route path="/admin/packages">
-        <AdminProtectedRoute>
-          <PackagesManagement />
-        </AdminProtectedRoute>
-      </Route>
+
       
       <Route path="/admin/ship-packages">
         <AdminProtectedRoute>
@@ -99,7 +95,7 @@ function Router() {
       
       <Route path="/admin/users">
         <AdminProtectedRoute>
-          <UsersManagement />
+          <UsersManagementNew />
         </AdminProtectedRoute>
       </Route>
       
