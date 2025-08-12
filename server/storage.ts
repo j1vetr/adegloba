@@ -441,25 +441,6 @@ export class DatabaseStorage implements IStorage {
 
   // User admin operations
   async getAllUsers(): Promise<(User & { ship?: Ship })[]> {
-    return db
-      .select({
-        id: users.id,
-        username: users.username,
-        email: users.email,
-        shipId: users.shipId,
-        created_at: users.createdAt,
-        ship: {
-          id: ships.id,
-          name: ships.name,
-          slug: ships.slug,
-        }
-      })
-      .from(users)
-      .leftJoin(ships, eq(users.shipId, ships.id))
-      .orderBy(desc(users.createdAt));
-  }
-
-  async getAllUsers(): Promise<(User & { ship?: Ship })[]> {
     const result = await db
       .select()
       .from(users)

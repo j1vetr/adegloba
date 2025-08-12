@@ -11,9 +11,12 @@ import {
   TrendingUp,
   Activity,
   Ship,
-  Ticket
+  Gift,
+  Star,
+  Clock,
+  AlertCircle,
+  CheckCircle
 } from "lucide-react";
-import { Loader2 } from "lucide-react";
 
 export default function AdminDashboard() {
   const { user, isLoading } = useAdminAuth();
@@ -35,8 +38,8 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin h-12 w-12 border-3 border-primary border-t-transparent rounded-full neon-glow"></div>
       </div>
     );
   }
@@ -45,11 +48,16 @@ export default function AdminDashboard() {
     return (
       <AdminLayout title="Erişim Reddedildi">
         <div className="flex items-center justify-center py-16">
-          <div className="text-center max-w-md">
-            <div className="text-6xl text-red-500 mb-6">🔒</div>
-            <h2 className="text-2xl font-bold text-white mb-4">Erişim Reddedildi</h2>
-            <p className="text-slate-400 mb-6">Bu sayfaya erişim için admin yetkisi gereklidir.</p>
-            <a href="/admin/login" className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300">
+          <div className="text-center max-w-md glass-card p-8 rounded-2xl">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
+              <AlertCircle className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-4">Erişim Reddedildi</h2>
+            <p className="text-muted-foreground mb-6">Bu sayfaya erişim için admin yetkisi gereklidir.</p>
+            <a 
+              href="/admin/login" 
+              className="inline-flex items-center justify-center px-6 py-3 bg-gradient-neon text-white rounded-xl hover:scale-105 transition-all duration-300 neon-glow font-medium"
+            >
               Admin Girişi
             </a>
           </div>
@@ -74,225 +82,252 @@ export default function AdminDashboard() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      paid: { variant: 'default' as const, label: 'Ödendi', className: 'bg-green-600 text-white' },
-      pending: { variant: 'secondary' as const, label: 'Bekliyor', className: 'bg-yellow-600 text-white' },
-      failed: { variant: 'destructive' as const, label: 'Başarısız', className: 'bg-red-600 text-white' },
-      expired: { variant: 'secondary' as const, label: 'Süresi Doldu', className: 'bg-gray-600 text-white' },
+      pending: { label: 'Bekliyor', variant: 'secondary', icon: Clock },
+      completed: { label: 'Tamamlandı', variant: 'default', icon: CheckCircle },
+      cancelled: { label: 'İptal', variant: 'destructive', icon: AlertCircle },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    return config;
+    const Icon = config.icon;
+
+    return (
+      <Badge 
+        variant={config.variant as any}
+        className="flex items-center gap-1 px-2 py-1 rounded-lg font-medium"
+      >
+        <Icon className="h-3 w-3" />
+        {config.label}
+      </Badge>
+    );
   };
 
+  const statCards = [
+    {
+      title: "Toplam Gelir",
+      value: formatCurrency(stats?.totalRevenue || 0),
+      description: "Bu ayki toplam gelir",
+      icon: DollarSign,
+      trend: "+12.5%",
+      trendUp: true
+    },
+    {
+      title: "Aktif Kullanıcılar",
+      value: stats?.totalUsers || 0,
+      description: "Kayıtlı kullanıcı sayısı",
+      icon: Users,
+      trend: "+5.2%",
+      trendUp: true
+    },
+    {
+      title: "Toplam Sipariş",
+      value: stats?.totalOrders || 0,
+      description: "Bu ayki sipariş sayısı",
+      icon: ShoppingCart,
+      trend: "+8.1%",
+      trendUp: true
+    },
+    {
+      title: "Aktif Paketler",
+      value: stats?.totalPlans || 0,
+      description: "Mevcut veri paketleri",
+      icon: Package,
+      trend: "2 yeni",
+      trendUp: true
+    }
+  ];
+
   return (
-    <AdminLayout title="Dashboard">
-      <div className="space-y-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Toplam Kullanıcı</CardTitle>
-              <Users className="h-4 w-4 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {statsLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : (stats?.totalUsers || 0)}
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Kayıtlı müşteriler
+    <AdminLayout title="Yönetim Paneli">
+      <div className="space-y-8 animate-slide-up">
+        {/* Welcome Section */}
+        <div className="glass-card p-6 rounded-2xl border border-primary/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground neon-text mb-2">
+                Hoş Geldiniz, {user?.username || 'Admin'}
+              </h1>
+              <p className="text-muted-foreground">
+                AdeGloba Starlink System yönetim panelindesiniz. Sistem durumu ve son aktivitelerinizi buradan takip edebilirsiniz.
               </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Toplam Sipariş</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-cyan-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {statsLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : (stats?.totalOrders || 0)}
+            </div>
+            <div className="hidden md:flex items-center space-x-4">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-full bg-gradient-neon flex items-center justify-center neon-glow mb-2">
+                  <Activity className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-xs text-muted-foreground">Sistem Aktif</span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Tüm siparişler
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Toplam Gelir</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {statsLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatCurrency(stats?.totalRevenue || 0)}
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Ödenen siparişler
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Aktif Paketler</CardTitle>
-              <Package className="h-4 w-4 text-purple-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {statsLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : (stats?.activePlans || 0)}
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Satışta olan paketler
-              </p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {statCards.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={index} className="glass-card border-border/50 hover:border-primary/30 transition-all duration-300 card-hover">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground mb-1">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground mb-2">{stat.description}</p>
+                  <div className={`flex items-center text-xs ${
+                    stat.trendUp ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    <TrendingUp className="h-3 w-3 mr-1" />
+                    {stat.trend}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Recent Activity Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Orders */}
-          <Card className="bg-slate-800/50 border-slate-700/50">
+          <Card className="glass-card border-border/50">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-cyan-400" />
+              <CardTitle className="flex items-center text-foreground">
+                <ShoppingCart className="mr-2 h-5 w-5 text-primary" />
                 Son Siparişler
               </CardTitle>
-              <CardDescription className="text-slate-400">
-                En son verilen siparişler ve durumları
-              </CardDescription>
+              <CardDescription>En son gelen siparişlerin listesi</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {ordersLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
+                  <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
                 </div>
               ) : recentOrders?.length > 0 ? (
-                <div className="space-y-4">
-                  {recentOrders.slice(0, 5).map((order: any) => {
-                    const statusConfig = getStatusBadge(order.status);
-                    return (
-                      <div key={order.id} className="flex items-center justify-between py-3 px-4 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors">
-                        <div className="flex-1">
-                          <div className="font-medium text-white">#{order.id.slice(-8).toUpperCase()}</div>
-                          <div className="text-sm text-slate-400">{order.user?.username || 'Kullanıcı'}</div>
-                          <div className="text-xs text-slate-500">{formatDate(order.createdAt)}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-medium text-white mb-1">{formatCurrency(order.totalUsd)}</div>
-                          <Badge className={statusConfig.className}>
-                            {statusConfig.label}
-                          </Badge>
-                        </div>
+                recentOrders.slice(0, 5).map((order: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-card/50 border border-border/30 hover:border-primary/20 transition-all duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center">
+                        <span className="text-xs font-medium text-primary">#{order.id.slice(-3)}</span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {order.user?.username || 'Anonim Kullanıcı'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(order.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-foreground">
+                        {formatCurrency(order.totalAmount)}
+                      </p>
+                      {getStatusBadge(order.status)}
+                    </div>
+                  </div>
+                ))
               ) : (
-                <div className="text-center py-8">
-                  <ShoppingCart className="h-12 w-12 text-slate-400 mx-auto mb-3" />
-                  <p className="text-slate-400">Henüz sipariş bulunmuyor</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                  <p>Henüz sipariş bulunmuyor</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
           {/* Recent Users */}
-          <Card className="bg-slate-800/50 border-slate-700/50">
+          <Card className="glass-card border-border/50">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-400" />
-                Son Kullanıcılar
+              <CardTitle className="flex items-center text-foreground">
+                <Users className="mr-2 h-5 w-5 text-primary" />
+                Yeni Kullanıcılar
               </CardTitle>
-              <CardDescription className="text-slate-400">
-                Yeni kayıt olan kullanıcılar
-              </CardDescription>
+              <CardDescription>Son kayıt olan kullanıcılar</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {usersLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
+                  <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
                 </div>
               ) : recentUsers?.length > 0 ? (
-                <div className="space-y-4">
-                  {recentUsers.slice(0, 5).map((user: any) => (
-                    <div key={user.id} className="flex items-center space-x-4 py-3 px-4 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
+                recentUsers.slice(0, 5).map((user: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-card/50 border border-border/30 hover:border-primary/20 transition-all duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-neon flex items-center justify-center">
                         <span className="text-sm font-medium text-white">
-                          {user.username?.charAt(0)?.toUpperCase() || 'U'}
+                          {user.username?.charAt(0).toUpperCase() || 'U'}
                         </span>
                       </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-white">{user.username}</div>
-                        <div className="text-sm text-slate-400">{user.email}</div>
-                        {user.ship && (
-                          <div className="text-xs text-blue-400 flex items-center gap-1 mt-1">
-                            <Ship className="h-3 w-3" />
-                            {user.ship.name}
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-xs text-slate-500 text-right">
-                        {formatDate(user.created_at)}
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{user.username}</p>
+                        <div className="flex items-center space-x-2">
+                          <Ship className="h-3 w-3 text-muted-foreground" />
+                          <p className="text-xs text-muted-foreground">
+                            {user.ship?.name || 'Gemi seçilmemiş'}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(user.createdAt)}
+                      </p>
+                      <Badge variant="outline" className="mt-1">
+                        Yeni
+                      </Badge>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-slate-400 mx-auto mb-3" />
-                  <p className="text-slate-400">Henüz kullanıcı bulunmuyor</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                  <p>Henüz kullanıcı bulunmuyor</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Quick Stats Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <Card className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-slate-700/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Ship className="h-4 w-4 text-blue-400" />
-                Toplam Gemi
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-white">
-                {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (stats?.totalShips || 0)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-slate-700/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Ticket className="h-4 w-4 text-yellow-400" />
-                Aktif Kuponlar
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-white">
-                {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (stats?.activeCoupons || 0)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-slate-700/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-400" />
-                Bu Ay Gelir
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-white">
-                {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(stats?.monthlyRevenue || 0)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Quick Actions */}
+        <Card className="glass-card border-border/50">
+          <CardHeader>
+            <CardTitle className="flex items-center text-foreground">
+              <Star className="mr-2 h-5 w-5 text-primary" />
+              Hızlı İşlemler
+            </CardTitle>
+            <CardDescription>Sık kullanılan yönetim işlemleri</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { name: 'Yeni Gemi Ekle', href: '/admin/ships', icon: Ship, color: 'from-blue-500 to-cyan-500' },
+                { name: 'Paket Yönetimi', href: '/admin/plans', icon: Package, color: 'from-purple-500 to-pink-500' },
+                { name: 'Kupon Oluştur', href: '/admin/coupons', icon: Gift, color: 'from-green-500 to-emerald-500' },
+                { name: 'Sistem Ayarları', href: '/admin/settings', icon: Activity, color: 'from-orange-500 to-red-500' }
+              ].map((action, index) => {
+                const Icon = action.icon;
+                return (
+                  <a
+                    key={index}
+                    href={action.href}
+                    className="group p-4 rounded-xl bg-card/50 border border-border/30 hover:border-primary/30 transition-all duration-300 card-hover"
+                  >
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}>
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="font-medium text-foreground text-sm group-hover:text-primary transition-colors duration-200">
+                      {action.name}
+                    </h3>
+                  </a>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );

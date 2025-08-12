@@ -1,0 +1,34 @@
+Redesign the entire AdeGloba Starlink System admin panel with a futuristic, modern UI using a black and blue color scheme.
+
+1. Theme & Colors:
+- Primary background: deep black (#0a0a0a).
+- Primary accent: neon blue (#00bfff to #1e90ff gradient for highlights).
+- Secondary accent: lighter blue tones for hover states (#33ccff).
+- Text: bright white (#ffffff) for primary text, light gray (#c0c0c0) for secondary text.
+- Neon glow effects for buttons, active menu items, and form focus states.
+
+2. Layout:
+- Sidebar: fixed on desktop, collapsible on mobile. Background: slightly lighter black (#111111) with neon blue active item highlight.
+- Top navigation bar: semi-transparent black with subtle blue glow at bottom edge.
+- Content area: consistent padding, clean card-based sections with glassmorphism effect (blurred background with semi-transparent overlay).
+
+3. Components:
+- Tables: alternating dark row backgrounds, neon blue highlight on hover, rounded corners.
+- Forms: rounded input fields, neon blue outline on focus, consistent spacing between elements.
+- Buttons: gradient blue background with neon glow, smooth hover transition to brighter tone, subtle scale-up animation.
+- Tabs: neon blue underline for active tab, smooth slide animation between tabs.
+- Modals: dark background with blue border glow, drop shadow, centered.
+
+4. UX Improvements:
+- Smooth transitions for sidebar collapse/expand.
+- Highlight active page in the sidebar with a bright blue bar on the left.
+- Breadcrumb navigation under top bar for easy orientation.
+- All pages must be 100% responsive with no horizontal scrolling or layout breaks.
+
+5. Branding:
+- Keep AdeGloba Starlink System branding visible in sidebar header and login screen.
+- Use consistent typography across all pages; modern sans-serif font (e.g., Poppins, Inter).
+
+6. General:
+- All UI text remains in Turkish.
+- Apply the same theme to every admin page: Dashboard, Ships, Packages, Coupons, Orders, Users, Settings.
