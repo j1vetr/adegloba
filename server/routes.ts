@@ -848,6 +848,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/admin/tickets/:ticketId/priority', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { ticketId } = req.params;
+      const { priority } = req.body;
+      
+      if (!['Düşük', 'Orta', 'Yüksek'].includes(priority)) {
+        return res.status(400).json({ message: 'Invalid priority' });
+      }
+
+      const ticket = await storage.updateTicketPriority(ticketId, priority);
+      if (!ticket) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+
+      res.json(ticket);
+    } catch (error) {
+      console.error('Error updating ticket priority:', error);
+      res.status(500).json({ message: 'Failed to update ticket priority' });
+    }
+  });
+
   app.post('/api/admin/tickets/:ticketId/messages', isAdminAuthenticated, async (req, res) => {
     try {
       const { ticketId } = req.params;

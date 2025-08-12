@@ -71,9 +71,9 @@ interface TicketMessage {
 }
 
 const priorityColors = {
-  'Düşük': 'bg-green-500/10 text-green-400 border-green-500/20',
-  'Orta': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  'Yüksek': 'bg-red-500/10 text-red-400 border-red-500/20'
+  'Düşük': 'bg-green-600/20 text-green-400 border-green-500/30',
+  'Orta': 'bg-orange-600/20 text-orange-400 border-orange-500/30',
+  'Yüksek': 'bg-red-600/20 text-red-400 border-red-500/30'
 };
 
 const statusColors = {
@@ -150,6 +150,23 @@ export default function TicketManagement() {
       toast({
         title: "Başarılı",
         description: "Durum güncellendi",
+      });
+    }
+  });
+
+  // Update ticket priority
+  const updatePriorityMutation = useMutation({
+    mutationFn: async (data: { ticketId: string; priority: string }) => {
+      return apiRequest('PUT', `/api/admin/tickets/${data.ticketId}/priority`, { priority: data.priority });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
+      if (selectedTicket) {
+        setSelectedTicket({ ...selectedTicket, priority: variables.priority as 'Düşük' | 'Orta' | 'Yüksek' });
+      }
+      toast({
+        title: "Başarılı",
+        description: "Öncelik güncellendi",
       });
     }
   });
@@ -455,32 +472,54 @@ export default function TicketManagement() {
                     </div>
                   </div>
 
-                  {/* Status Actions */}
+                  {/* Status & Priority Actions */}
                   {selectedTicket.status !== 'Kapalı' && (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateStatusMutation.mutate({
-                          ticketId: selectedTicket.id,
-                          status: 'Beklemede'
-                        })}
-                        className="admin-button-outline"
-                      >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Beklemeye Al
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => updateStatusMutation.mutate({
-                          ticketId: selectedTicket.id,
-                          status: 'Kapalı'
-                        })}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Kapat
-                      </Button>
+                    <div className="space-y-4">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateStatusMutation.mutate({
+                            ticketId: selectedTicket.id,
+                            status: 'Beklemede'
+                          })}
+                          className="admin-button-outline"
+                        >
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          Beklemeye Al
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => updateStatusMutation.mutate({
+                            ticketId: selectedTicket.id,
+                            status: 'Kapalı'
+                          })}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Kapat
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-slate-300 text-sm">Öncelik Değiştir</Label>
+                        <Select 
+                          value={selectedTicket.priority} 
+                          onValueChange={(value) => updatePriorityMutation.mutate({
+                            ticketId: selectedTicket.id,
+                            priority: value
+                          })}
+                        >
+                          <SelectTrigger className="admin-input">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-slate-700">
+                            <SelectItem value="Düşük" className="text-white focus:bg-primary/20">Düşük</SelectItem>
+                            <SelectItem value="Orta" className="text-white focus:bg-primary/20">Orta</SelectItem>
+                            <SelectItem value="Yüksek" className="text-white focus:bg-primary/20">Yüksek</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   )}
 

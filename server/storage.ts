@@ -116,6 +116,7 @@ export interface IStorage {
   getAllTickets(): Promise<Ticket[]>;
   getTicketById(ticketId: string): Promise<Ticket | null>;
   updateTicketStatus(ticketId: string, status: string, adminId?: string): Promise<Ticket | null>;
+  updateTicketPriority(ticketId: string, priority: string): Promise<Ticket | null>;
   createTicketMessage(message: InsertTicketMessage): Promise<TicketMessage>;
   getTicketMessages(ticketId: string): Promise<TicketMessage[]>;
   getUnreadTicketCount(userId: string): Promise<number>;
@@ -507,6 +508,18 @@ export class DatabaseStorage implements IStorage {
     return setting;
   }
 
+  async upsertSetting(key: string, value: string, category: string = 'general'): Promise<Setting> {
+    const [setting] = await db
+      .insert(settings)
+      .values({ key, value, category })
+      .onConflictDoUpdate({
+        target: settings.key,
+        set: { value, category, updatedAt: new Date() }
+      })
+      .returning();
+    return setting;
+  }
+
   // User admin operations
   async getAllUsers(): Promise<(User & { ship?: Ship })[]> {
     const result = await db
@@ -747,6 +760,16 @@ export class DatabaseStorage implements IStorage {
     const [ticket] = await db
       .update(tickets)
       .set(updateData)
+      .where(eq(tickets.id, ticketId))
+      .returning();
+    
+    return ticket || null;
+  }
+
+  async updateTicketPriority(ticketId: string, priority: string): Promise<Ticket | null> {
+    const [ticket] = await db
+      .update(tickets)
+      .set({ priority, updatedAt: new Date() })
       .where(eq(tickets.id, ticketId))
       .returning();
     
