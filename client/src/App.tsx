@@ -20,7 +20,7 @@ import Panel from "@/pages/Panel";
 import Paketler from "@/pages/Paketler";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ShipsManagement from "@/pages/admin/ShipsManagement";
-import PlansManagement from "@/pages/admin/PlansManagement";
+import PackagesManagement from "@/pages/admin/PackagesManagement";
 
 import ShipPackages from "@/pages/admin/ShipPackages";
 import CredentialPoolsNew from "@/pages/admin/CredentialPoolsNew";
@@ -61,9 +61,9 @@ function Router() {
         </AdminProtectedRoute>
       </Route>
       
-      <Route path="/admin/plans">
+      <Route path="/admin/packages">
         <AdminProtectedRoute>
-          <PlansManagement />
+          <PackagesManagement />
         </AdminProtectedRoute>
       </Route>
       

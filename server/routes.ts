@@ -806,8 +806,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin CRUD Routes for Plans
   app.get('/api/admin/plans', isAdminAuthenticated, async (req, res) => {
     try {
-      const plans = await storage.getAllPlans();
-      res.json(plans);
+      const plans = await storage.getPlans();
+      const ships = await storage.getShips();
+      
+      const plansWithDetails = await Promise.all(plans.map(async (plan) => {
+        const ship = ships.find(s => s.id === plan.shipId);
+        const planCredentials = await storage.getCredentialsForPlan(plan.id);
+        
+        return {
+          ...plan,
+          ship,
+          credentialStats: {
+            total: planCredentials.length,
+            available: planCredentials.filter(c => !c.isAssigned).length,
+            assigned: planCredentials.filter(c => c.isAssigned).length,
+          }
+        };
+      }));
+
+      res.json(plansWithDetails);
     } catch (error) {
       console.error('Error fetching plans:', error);
       res.status(500).json({ message: 'Failed to fetch plans' });

@@ -1024,6 +1024,10 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(credentialPools).orderBy(credentialPools.createdAt);
   }
 
+  async getCredentialsForPlan(planId: string): Promise<CredentialPool[]> {
+    return db.select().from(credentialPools).where(eq(credentialPools.planId, planId));
+  }
+
   async getUsersWithOrderStats(): Promise<Array<User & { ship: Ship | undefined; orderStats: { totalOrders: number; totalAmountPaid: number; lastOrderDate: string | null } }>> {
     const allUsers = await db.select().from(users).orderBy(users.created_at);
     const allShips = await db.select().from(ships);
