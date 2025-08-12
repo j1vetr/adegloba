@@ -1,188 +1,177 @@
-import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { useState } from "react";
-import type { Ship } from "@shared/schema";
+import { Satellite, Waves, LogIn, ArrowRight, Shield, Zap, Globe, Anchor, Navigation, Activity } from "lucide-react";
+import { useUserAuth } from "@/hooks/useUserAuth";
+import { Loader2 } from "lucide-react";
 
 export default function Landing() {
-  const { data: ships, isLoading } = useQuery<Ship[]>({
-    queryKey: ["/api/ships"]
-  });
-
-  const [selectedShip, setSelectedShip] = useState<string>("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Redirect to Replit Auth login
-    window.location.href = '/api/login';
-  };
-
-  const handleShipSelect = (shipSlug: string) => {
-    setSelectedShip(shipSlug);
-    if (shipSlug) {
-      // Redirect to ship plans page
-      window.location.href = `/ships/${shipSlug}`;
-    }
-  };
+  const { isAuthenticated, isLoading } = useUserAuth();
+  
+  // Redirect authenticated users to dashboard
+  if (!isLoading && isAuthenticated) {
+    window.location.href = '/panel';
+    return null;
+  }
 
   if (isLoading) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-neon-cyan"></div>
-        </div>
-      </Layout>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+      </div>
     );
   }
 
   return (
-    <Layout>
-      {/* Stellar background with animated particles */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-20 left-10 w-2 h-2 bg-neon-cyan rounded-full animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-1 h-1 bg-neon-purple rounded-full animate-ping"></div>
-        <div className="absolute bottom-20 left-1/4 w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse"></div>
-        <div className="absolute top-1/2 right-1/3 w-1 h-1 bg-neon-cyan rounded-full animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-10 w-1.5 h-1.5 bg-neon-purple rounded-full animate-ping"></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 w-60 h-60 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-2000" />
+        
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20" />
       </div>
 
-      {/* Main Content */}
-      <section className="relative py-20 min-h-screen flex items-center">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+      <div className="relative z-10">
+        {/* Hero Section */}
+        <section className="min-h-screen flex items-center justify-center px-4">
+          <div className="max-w-6xl mx-auto text-center space-y-12">
             
-            {/* Left Column - Ship Selection */}
-            <div className="space-y-8">
-              <Card className="glassmorphism rounded-2xl p-8 border-transparent">
-                <div className="space-y-6">
-                  <div className="text-center mb-6">
-                    <i className="fas fa-ship text-4xl text-neon-cyan mb-4"></i>
-                    <h2 className="text-2xl font-bold text-white mb-2">Gemi Seçin</h2>
-                    <p className="text-slate-300">Veri paketlerini görüntülemek için geminizi seçin</p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <Label htmlFor="ship-select" className="text-lg font-semibold text-white">
-                      Gemi
-                    </Label>
-                    <Select onValueChange={handleShipSelect} value={selectedShip}>
-                      <SelectTrigger 
-                        className="w-full h-14 text-lg glassmorphism border-slate-600 hover:border-neon-cyan transition-colors focus:border-neon-cyan focus:ring-neon-cyan/20"
-                        data-testid="ship-select"
-                      >
-                        <SelectValue placeholder="Gemi seçiniz..." />
-                      </SelectTrigger>
-                      <SelectContent className="glassmorphism border-slate-600">
-                        {ships && ships.length > 0 ? (
-                          ships.map((ship) => (
-                            <SelectItem 
-                              key={ship.id} 
-                              value={ship.slug}
-                              className="hover:bg-neon-cyan/10 focus:bg-neon-cyan/10 text-white"
-                              data-testid={`ship-option-${ship.slug}`}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <i className="fas fa-ship text-neon-cyan"></i>
-                                <span>{ship.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="no-ships" disabled className="text-slate-400">
-                            Kayıtlı gemi bulunmamaktadır
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    
-                    {ships && ships.length === 0 && (
-                      <div className="text-center py-8">
-                        <i className="fas fa-exclamation-triangle text-3xl text-amber-500 mb-3"></i>
-                        <p className="text-slate-400">Kayıtlı gemi bulunmamaktadır</p>
-                        <p className="text-sm text-slate-500 mt-2">
-                          Gemi kaydı için destek ile iletişime geçin
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
+            {/* Header with Logo */}
+            <div className="flex items-center justify-center mb-8 space-x-3">
+              <div className="relative">
+                <Satellite className="h-12 w-12 text-blue-400" />
+                <Waves className="h-6 w-6 text-cyan-400 absolute -bottom-1 -right-1" />
+              </div>
+              <span className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                Maritime Starlink
+              </span>
             </div>
 
-            {/* Right Column - Login Form */}
-            <div className="space-y-8">
-              <Card className="glassmorphism rounded-2xl p-8 border-transparent">
-                <form onSubmit={handleLogin} className="space-y-6">
-                  <div className="text-center mb-6">
-                    <i className="fas fa-user-circle text-4xl text-neon-purple mb-4"></i>
-                    <h2 className="text-2xl font-bold text-white mb-2">Giriş Yap</h2>
-                    <p className="text-slate-300">Hesabınıza erişim sağlayın</p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="email" className="text-lg font-semibold text-white">
-                        E-posta
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="ornek@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="h-14 text-lg glassmorphism border-slate-600 hover:border-neon-purple transition-colors focus:border-neon-purple focus:ring-neon-purple/20"
-                        data-testid="email-input"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="password" className="text-lg font-semibold text-white">
-                        Şifre
-                      </Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="h-14 text-lg glassmorphism border-slate-600 hover:border-neon-purple transition-colors focus:border-neon-purple focus:ring-neon-purple/20"
-                        data-testid="password-input"
-                      />
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    type="submit"
-                    className="w-full h-14 text-lg rounded-xl bg-gradient-to-r from-neon-purple to-neon-cyan text-white font-semibold hover:shadow-xl hover:shadow-neon-purple/25 transition-all transform hover:scale-105"
-                    data-testid="login-submit-button"
-                  >
-                    <i className="fas fa-sign-in-alt mr-2"></i>
-                    Giriş Yap
-                  </Button>
-                  
-                  <div className="text-center pt-4">
-                    <button
-                      type="button"
-                      onClick={() => window.location.href = '/api/login'}
-                      className="text-neon-cyan hover:text-neon-purple transition-colors underline"
-                      data-testid="register-link"
-                    >
-                      Hesabınız yok mu? Kayıt Olun
-                    </button>
-                  </div>
-                </form>
+            {/* Main Heading */}
+            <div className="space-y-6">
+              <h1 className="text-6xl md:text-7xl font-bold leading-tight">
+                <div className="bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                  Denizde Sınırsız
+                </div>
+                <div className="text-white mt-2">
+                  İnternet Bağlantısı
+                </div>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
+                Maritime sektörü için özel olarak tasarlanmış Starlink veri paketleri ile 
+                okyanusta kesintisiz, yüksek hızlı internet erişimi sağlayın.
+              </p>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+              <Link to="/kayit" data-testid="link-register">
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-12 py-6 text-xl font-semibold shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 transform hover:scale-105"
+                  data-testid="button-register"
+                >
+                  <Waves className="mr-3 h-6 w-6" />
+                  Hemen Başla
+                  <ArrowRight className="ml-3 h-6 w-6" />
+                </Button>
+              </Link>
+              
+              <Link to="/giris" data-testid="link-login">
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  className="border-2 border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-12 py-6 text-xl font-semibold transition-all duration-300 transform hover:scale-105"
+                  data-testid="button-login"
+                >
+                  <LogIn className="mr-3 h-6 w-6" />
+                  Giriş Yap
+                </Button>
+              </Link>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="flex flex-wrap gap-4 justify-center mt-12">
+              <Badge variant="secondary" className="bg-slate-800/50 text-slate-300 px-4 py-2 text-sm">
+                <Shield className="mr-2 h-4 w-4" />
+                Güvenli Ödeme
+              </Badge>
+              <Badge variant="secondary" className="bg-slate-800/50 text-slate-300 px-4 py-2 text-sm">
+                <Zap className="mr-2 h-4 w-4" />
+                Anında Aktivasyon
+              </Badge>
+              <Badge variant="secondary" className="bg-slate-800/50 text-slate-300 px-4 py-2 text-sm">
+                <Globe className="mr-2 h-4 w-4" />
+                Dünya Çapında Kapsama
+              </Badge>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-20 px-4 bg-slate-900/30 backdrop-blur-sm">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              Neden Maritime Starlink?
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <Card className="bg-slate-800/50 backdrop-blur-sm border-slate-700/50 hover:border-blue-500/50 transition-all duration-300">
+                <CardContent className="p-8 text-center space-y-4">
+                  <Anchor className="h-12 w-12 text-blue-400 mx-auto" />
+                  <h3 className="text-xl font-semibold text-white">Maritime Odaklı</h3>
+                  <p className="text-slate-300">
+                    Gemiler ve deniz araçları için özel olarak optimize edilmiş çözümler
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800/50 backdrop-blur-sm border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300">
+                <CardContent className="p-8 text-center space-y-4">
+                  <Navigation className="h-12 w-12 text-cyan-400 mx-auto" />
+                  <h3 className="text-xl font-semibold text-white">Kolay Yönetim</h3>
+                  <p className="text-slate-300">
+                    Kullanıcı dostu panel ile veri paketlerinizi kolayca yönetin
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800/50 backdrop-blur-sm border-slate-700/50 hover:border-purple-500/50 transition-all duration-300">
+                <CardContent className="p-8 text-center space-y-4">
+                  <Activity className="h-12 w-12 text-purple-400 mx-auto" />
+                  <h3 className="text-xl font-semibold text-white">7/24 Destek</h3>
+                  <p className="text-slate-300">
+                    Teknik destek ekibimiz her zaman hizmetinizde
+                  </p>
+                </CardContent>
               </Card>
             </div>
           </div>
-        </div>
-      </section>
-    </Layout>
+        </section>
+
+        {/* Footer */}
+        <footer className="py-8 px-4 border-t border-slate-800">
+          <div className="max-w-6xl mx-auto text-center">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <div className="relative">
+                <Satellite className="h-8 w-8 text-blue-400" />
+                <Waves className="h-4 w-4 text-cyan-400 absolute -bottom-1 -right-1" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                Maritime Starlink
+              </span>
+            </div>
+            <p className="text-slate-400">
+              © 2025 Maritime Starlink. Tüm hakları saklıdır.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </div>
   );
 }

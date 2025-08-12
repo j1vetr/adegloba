@@ -1,18 +1,29 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Satellite, Waves, User, Mail, Lock } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Satellite, Waves, User, Mail, Lock, Ship as ShipIcon, MapPin } from "lucide-react";
+import type { Ship } from "@shared/schema";
 
 export default function Kayit() {
   const [, setLocation] = useLocation();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    password: ""
+    password: "",
+    ship_id: "",
+    address: ""
+  });
+
+  // Fetch active ships for dropdown
+  const { data: ships, isLoading: shipsLoading } = useQuery<Ship[]>({
+    queryKey: ["/api/ships"]
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +34,7 @@ export default function Kayit() {
     setError("");
 
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch("/api/user/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -34,7 +45,8 @@ export default function Kayit() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setLocation("/giris?registered=true");
+        // Redirect to user dashboard after successful registration
+        setLocation("/panel");
       } else {
         setError(data.message || "Kayıt işlemi başarısız");
       }
@@ -45,10 +57,17 @@ export default function Kayit() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleShipChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      ship_id: value
     }));
   };
 
@@ -139,6 +158,52 @@ export default function Kayit() {
                   className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
                   placeholder="Şifrenizi girin (en az 6 karakter)"
                   data-testid="input-password"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ship_id" className="text-slate-300 flex items-center gap-2">
+                  <ShipIcon className="h-4 w-4" />
+                  Gemi
+                </Label>
+                <Select onValueChange={handleShipChange} required>
+                  <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-blue-500" data-testid="select-ship">
+                    <SelectValue placeholder="Geminizi seçin" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    {shipsLoading ? (
+                      <SelectItem value="loading" disabled>
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Gemiler yükleniyor...
+                        </div>
+                      </SelectItem>
+                    ) : (
+                      ships?.map((ship) => (
+                        <SelectItem key={ship.id} value={ship.id} className="text-white hover:bg-slate-700">
+                          {ship.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address" className="text-slate-300 flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Adres
+                </Label>
+                <Textarea
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  required
+                  rows={3}
+                  className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 resize-none"
+                  placeholder="Faturalama/kargo adresinizi girin..."
+                  data-testid="textarea-address"
                 />
               </div>
 

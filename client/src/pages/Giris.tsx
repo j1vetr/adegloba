@@ -43,8 +43,8 @@ export default function Giris() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Redirect to home page
-        setLocation("/");
+        // Redirect to user dashboard
+        setLocation("/panel");
       } else {
         setError(data.message || "Giriş işlemi başarısız");
       }

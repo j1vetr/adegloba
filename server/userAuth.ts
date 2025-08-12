@@ -47,11 +47,17 @@ export function setupUserAuth(app: Express) {
         username: validatedData.username,
         email: validatedData.email,
         password_hash: hashedPassword,
+        ship_id: validatedData.ship_id,
+        address: validatedData.address,
       });
+
+      // Automatically log in the user after successful registration
+      req.session.userId = user.id;
+      req.session.isAuthenticated = true;
 
       res.status(201).json({ 
         success: true, 
-        message: "Kayıt başarılı! Giriş yapabilirsiniz." 
+        message: "Kayıt başarılı! Panele yönlendiriliyorsunuz." 
       });
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -91,7 +97,7 @@ export function setupUserAuth(app: Express) {
         });
       }
 
-      // Set session
+      // Set session  
       req.session.userId = user.id;
       req.session.isAuthenticated = true;
 
@@ -133,26 +139,72 @@ export function setupUserAuth(app: Express) {
     });
   });
 
-  // Get Current User
+  // Get Current User with Ship Information
   app.get("/api/user/me", async (req: Request, res: Response) => {
     if (!req.session.userId || !req.session.isAuthenticated) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     try {
-      const user = await storage.getUserById(req.session.userId);
+      const user = await storage.getUserWithShip(req.session.userId);
       if (!user) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      res.json({
-        id: user.id,
-        username: user.username,
-        email: user.email
-      });
+      res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get user's ship plans
+  app.get('/api/user/ship-plans', async (req: any, res) => {
+    if (!req.session.userId || !req.session.isAuthenticated) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const user = await storage.getUserById(req.session.userId);
+      if (!user || !user.ship_id) {
+        return res.status(400).json({ message: 'User has no assigned ship' });
+      }
+
+      const shipPlans = await storage.getShipPlans(user.ship_id);
+      res.json(shipPlans);
+    } catch (error) {
+      console.error('Error fetching ship plans:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Get user's orders
+  app.get('/api/user/orders', async (req: any, res) => {
+    if (!req.session.userId || !req.session.isAuthenticated) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const orders = await storage.getUserOrders(req.session.userId);
+      res.json(orders);
+    } catch (error) {
+      console.error('Error fetching user orders:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Get user's active packages  
+  app.get('/api/user/active-packages', async (req: any, res) => {
+    if (!req.session.userId || !req.session.isAuthenticated) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const activePackages = await storage.getUserActivePackages(req.session.userId);
+      res.json(activePackages);
+    } catch (error) {
+      console.error('Error fetching active packages:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   });
 }

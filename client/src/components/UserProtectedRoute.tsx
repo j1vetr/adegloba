@@ -1,12 +1,13 @@
+import { ReactNode } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { Loader2 } from "lucide-react";
 
 interface UserProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function UserProtectedRoute({ children }: UserProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useUserAuth();
+  const { user, isLoading } = useUserAuth();
 
   if (isLoading) {
     return (
@@ -16,7 +17,7 @@ export default function UserProtectedRoute({ children }: UserProtectedRouteProps
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     // Redirect to login page
     window.location.href = '/giris';
     return null;

@@ -1,0 +1,54 @@
+Implement a user authentication and dashboard system with the following flow:
+
+1. Login/Registration Gate:
+- When a visitor enters the site, they must first see the login form ("/giris").
+- If they don't have an account, they can click "Kayıt Ol" to go to the registration page ("/kayit").
+- Registration fields (all labels in Turkish):
+  - "Kullanıcı Adı"
+  - "E-posta"
+  - "Şifre"
+  - "Gemi" (dropdown, populated from the "ships" table in admin panel)
+  - "Adres" (textarea for full billing/shipping address)
+- The "Gemi" dropdown must be populated from the "ships" table, which is managed via the admin panel (CRUD).
+- Each registered user will be linked to one ship (ship_id in the users table).
+
+2. Initial Ship Data:
+- On first run, seed the "ships" table with the following active ships:
+  LBC_OYKU
+  NERMIN KARABEKIR
+  TAMREY S
+  LadyBerna
+  MONA
+  LBC_TUGCE
+  AJOS
+  HAVVA KARABEKIR
+  BUNDU
+  FORTUNATE
+  FERTILE
+  YUKSEL KARABEKIR
+  NIKSAR
+  GITO
+
+3. User Dashboard:
+- After login, redirect the user to their dashboard ("/panel").
+- Dashboard sections:
+  - "Paketlerim": Show current active packages for the user, including expiry dates.
+  - "Geçmiş Satın Alımlar": List all previous purchases with package details and dates.
+  - "Kullanım Bilgileri": Placeholder for future usage stats.
+- Menu item: "Data Paketi Al" → goes to a page listing available packages for the user's ship.
+
+4. Data Package Purchase Page:
+- Display all packages assigned to the user's ship, fetched from the database.
+- Package cards must have a futuristic design with animations (dark theme + neon accents + hover effects).
+- Each card shows: package name, GB amount, price, speed note, validity note, and a "Satın Al" button.
+
+5. Admin Panel Changes:
+- Admin can manage ships (add/edit/delete).
+- Admin can manage packages and assign them to ships.
+- Admin can view users and see which ship they belong to, along with their address.
+- Admin can view orders filtered by ship.
+
+6. General:
+- All UI text in Turkish.
+- Fully responsive design.
+- Passwords stored hashed (bcrypt).

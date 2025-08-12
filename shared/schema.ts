@@ -32,6 +32,8 @@ export const users = pgTable("users", {
   username: varchar("username").notNull().unique(),
   email: varchar("email").notNull().unique(),
   password_hash: varchar("password_hash").notNull(),
+  ship_id: varchar("ship_id").references(() => ships.id),
+  address: text("address"),
   created_at: timestamp("created_at").defaultNow(),
 });
 
@@ -125,7 +127,11 @@ export const settings = pgTable("settings", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
+  ship: one(ships, {
+    fields: [users.ship_id],
+    references: [ships.id],
+  }),
   orders: many(orders),
 }));
 
@@ -133,6 +139,7 @@ export const shipsRelations = relations(ships, ({ many }) => ({
   shipPlans: many(shipPlans),
   orderItems: many(orderItems),
   coupons: many(coupons),
+  users: many(users),
 }));
 
 export const plansRelations = relations(plans, ({ many }) => ({
@@ -196,6 +203,8 @@ export const registerSchema = createInsertSchema(users, {
   username: z.string().min(3, "Kullanıcı adı en az 3 karakter olmalı"),
   email: z.string().email("Geçerli bir e-posta adresi girin"),
   password_hash: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+  ship_id: z.string().min(1, "Gemi seçimi gerekli"),
+  address: z.string().min(10, "Adres en az 10 karakter olmalı"),
 }).omit({
   id: true,
   created_at: true,

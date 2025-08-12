@@ -28,14 +28,18 @@ import {
   type InsertSetting,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
-  // User operations (internal authentication)
+  // User operations (internal authentication)  
   getUserById(id: string): Promise<User | undefined>;
+  getUserWithShip(id: string): Promise<(User & { ship?: Ship }) | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserOrders(userId: string): Promise<(Order & { items: OrderItem[] })[]>;
+  getUserActivePackages(userId: string): Promise<any[]>;
+  getShipPlans(shipId: string): Promise<Plan[]>;
   createUser(user: InsertUser): Promise<User>;
   
   // Admin User operations
@@ -119,6 +123,81 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserWithShip(id: string): Promise<any> {
+    const [result] = await db
+      .select()
+      .from(users)
+      .leftJoin(ships, eq(users.ship_id, ships.id))
+      .where(eq(users.id, id));
+    
+    if (!result) return undefined;
+    
+    return {
+      ...result.users,
+      ship: result.ships
+    };
+  }
+
+  async getShipPlans(shipId: string): Promise<Plan[]> {
+    const results = await db
+      .select()
+      .from(shipPlans)
+      .innerJoin(plans, eq(shipPlans.planId, plans.id))
+      .where(and(eq(shipPlans.shipId, shipId), eq(shipPlans.isActive, true), eq(plans.isActive, true)))
+      .orderBy(shipPlans.sortOrder, plans.sortOrder);
+    
+    return results.map(r => r.plans);
+  }
+
+  async getUserOrders(userId: string): Promise<any[]> {
+    const results = await db
+      .select()
+      .from(orders)
+      .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+      .leftJoin(plans, eq(orderItems.planId, plans.id))
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt));
+    
+    // Group order items by order
+    const ordersMap = new Map();
+    results.forEach(r => {
+      if (!ordersMap.has(r.orders.id)) {
+        ordersMap.set(r.orders.id, {
+          ...r.orders,
+          orderItems: []
+        });
+      }
+      if (r.order_items) {
+        ordersMap.get(r.orders.id).orderItems.push({
+          ...r.order_items,
+          plan: r.plans
+        });
+      }
+    });
+    
+    return Array.from(ordersMap.values());
+  }
+
+  async getUserActivePackages(userId: string): Promise<any[]> {
+    const now = new Date();
+    const results = await db
+      .select()
+      .from(orders)
+      .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+      .innerJoin(plans, eq(orderItems.planId, plans.id))
+      .where(and(
+        eq(orders.userId, userId),
+        isNotNull(orders.paidAt),
+        gt(orders.expiresAt, now)
+      ))
+      .orderBy(desc(orders.expiresAt));
+    
+    return results.map(r => ({
+      ...r.plans,
+      expiresAt: r.orders.expiresAt
+    }));
+  }
+
   async getAdminUser(id: string): Promise<AdminUser | undefined> {
     const [user] = await db.select().from(admin_users).where(eq(admin_users.id, id));
     return user;
@@ -156,7 +235,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createShip(ship: InsertShip): Promise<Ship> {
-    const [newShip] = await db.insert(ships).values(ship).returning();
+    const [newShip] = await db.insert(ships).values({
+      ...ship,
+      sortOrder: ship.sortOrder || 0
+    }).returning();
     return newShip;
   }
 

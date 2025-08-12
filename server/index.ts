@@ -65,8 +65,11 @@ app.use((req, res, next) => {
   const { setupUserAuth } = await import('./userAuth');
   setupUserAuth(app);
   
-  // Seed default admin user
+  // Seed default admin user and initial ships
   await seedDefaultAdmin();
+  
+  const { seedInitialShips } = await import('./shipSeed');
+  await seedInitialShips();
   
   const server = await registerRoutes(app);
 

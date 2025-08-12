@@ -16,8 +16,11 @@ import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import Kayit from "@/pages/Kayit";
 import Giris from "@/pages/Giris";
+import Panel from "@/pages/Panel";
+import Paketler from "@/pages/Paketler";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
+import UserProtectedRoute from "@/components/UserProtectedRoute";
 
 function Router() {
   const { isAuthenticated, isLoading } = useUserAuth();
@@ -38,24 +41,20 @@ function Router() {
         </AdminProtectedRoute>
       </Route>
       
-      {/* Public/User routes */}
-      {isLoading || !isAuthenticated ? (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/ships/:slug" component={ShipPlans} />
-        </>
-      ) : (
-        <>
-          {/* Protected user routes */}
-          <Route path="/" component={Home} />
-          <Route path="/ships" component={Landing} />
-          <Route path="/ships/:slug" component={ShipPlans} />
-          <Route path="/cart" component={Cart} />
-          <Route path="/checkout" component={Checkout} />
-          <Route path="/order-success" component={OrderSuccess} />
-          <Route path="/dashboard" component={Dashboard} />
-        </>
-      )}
+      {/* Main Application Routes */}
+      <Route path="/" component={Landing} />
+      
+      {/* Protected user routes */}
+      <Route path="/panel">
+        <UserProtectedRoute>
+          <Panel />
+        </UserProtectedRoute>
+      </Route>
+      <Route path="/paketler">
+        <UserProtectedRoute>
+          <Paketler />
+        </UserProtectedRoute>
+      </Route>
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
