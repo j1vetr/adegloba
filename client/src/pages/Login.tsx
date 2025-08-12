@@ -1,130 +1,176 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { Loader2, Satellite, Waves } from "lucide-react";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
-
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: { username: string; password: string }) => {
-      return await apiRequest("/api/admin/login", {
-        method: "POST",
-        body: JSON.stringify(credentials),
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Başarılı",
-        description: "Giriş başarılı! Admin paneline yönlendiriliyorsunuz.",
-      });
-      setLocation("/admin");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Hata",
-        description: error.message || "Giriş başarısız. Kullanıcı adı ve şifrenizi kontrol edin.",
-        variant: "destructive",
-      });
-    },
+  const [formData, setFormData] = useState({
+    username: "",
+    password: ""
   });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { isAuthenticated, isLoading: authLoading } = useAdminAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect if already authenticated
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    setTimeout(() => setLocation("/admin"), 0);
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
-      toast({
-        title: "Hata",
-        description: "Lütfen kullanıcı adı ve şifrenizi girin.",
-        variant: "destructive",
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
-      return;
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setLocation("/admin");
+      } else {
+        setError(data.message || "Giriş işlemi başarısız");
+      }
+    } catch (error) {
+      setError("Bağlantı hatası oluştu");
+    } finally {
+      setIsLoading(false);
     }
-    loginMutation.mutate({ username, password });
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-space-blue via-space-dark to-space-blue text-slate-200 flex items-center justify-center">
-      {/* Stellar background with animated particles */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-20 left-10 w-2 h-2 bg-neon-cyan rounded-full animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-1 h-1 bg-neon-purple rounded-full animate-ping"></div>
-        <div className="absolute bottom-20 left-1/4 w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse"></div>
-        <div className="absolute top-1/2 right-1/3 w-1 h-1 bg-neon-cyan rounded-full animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-10 w-1.5 h-1.5 bg-neon-purple rounded-full animate-ping"></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center p-4">
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-md mx-auto">
-          <Card className="glassmorphism rounded-2xl p-8 border-transparent">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-neon-cyan to-neon-purple flex items-center justify-center mx-auto mb-4">
-                  <i className="fas fa-satellite text-white text-2xl"></i>
-                </div>
-                <h1 className="text-2xl font-bold text-white mb-2">Admin Giriş</h1>
-                <p className="text-slate-300">StarLink Marine Yönetim Paneli</p>
+      <div className="relative z-10 w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4 space-x-2">
+            <div className="relative">
+              <Satellite className="h-8 w-8 text-blue-400" />
+              <Waves className="h-4 w-4 text-cyan-400 absolute -bottom-1 -right-1" />
+            </div>
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              Starlink Veri Paketleri
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Yönetici Girişi
+          </h1>
+          <p className="text-slate-400">
+            Sistem yönetimine erişmek için giriş yapın
+          </p>
+        </div>
+
+        {/* Login Card */}
+        <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-700/50">
+          <CardHeader>
+            <CardTitle className="text-center text-white">Giriş Yap</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-slate-300">
+                  Kullanıcı Adı
+                </Label>
+                <Input
+                  id="username"
+                  name="username"
+                  type="text"
+                  value={formData.username}
+                  onChange={handleChange}
+                  required
+                  className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                  placeholder="Kullanıcı adınızı girin"
+                  data-testid="input-username"
+                />
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="username" className="text-lg font-semibold text-white">
-                    Kullanıcı Adı
-                  </Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="Kullanıcı adınızı girin"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="h-12 text-lg glassmorphism border-slate-600 hover:border-neon-cyan transition-colors focus:border-neon-cyan focus:ring-neon-cyan/20"
-                    data-testid="username-input"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="password" className="text-lg font-semibold text-white">
-                    Şifre
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Şifrenizi girin"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 text-lg glassmorphism border-slate-600 hover:border-neon-cyan transition-colors focus:border-neon-cyan focus:ring-neon-cyan/20"
-                    data-testid="password-input"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-slate-300">
+                  Şifre
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                  placeholder="Şifrenizi girin"
+                  data-testid="input-password"
+                />
               </div>
+
+              {error && (
+                <Alert className="border-red-500/50 bg-red-500/10">
+                  <AlertDescription className="text-red-400">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <Button
                 type="submit"
-                disabled={loginMutation.isPending}
-                className="w-full h-12 text-lg rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple text-white font-semibold hover:shadow-xl hover:shadow-neon-cyan/25 transition-all transform hover:scale-105 disabled:opacity-50"
-                data-testid="login-button"
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
+                disabled={isLoading}
+                data-testid="button-login"
               >
-                {loginMutation.isPending ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Giriş yapılıyor...
-                  </div>
-                ) : (
+                {isLoading ? (
                   <>
-                    <i className="fas fa-sign-in-alt mr-2"></i>
-                    Giriş Yap
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Giriş yapılıyor...
                   </>
+                ) : (
+                  "Giriş Yap"
                 )}
               </Button>
             </form>
-          </Card>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center mt-8 text-slate-400 text-sm">
+          <p>© 2024 Starlink Veri Paketleri</p>
         </div>
       </div>
     </div>

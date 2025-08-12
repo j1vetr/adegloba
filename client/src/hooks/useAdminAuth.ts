@@ -1,26 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { useLocation } from "wouter";
+import { User } from "@shared/schema";
 
 export function useAdminAuth() {
-  const [, setLocation] = useLocation();
-  
-  const { data: adminUser, isLoading, error } = useQuery({
-    queryKey: ["/api/admin/me"],
+  const { data: user, isLoading } = useQuery<User>({
+    queryKey: ["/api/auth/me"],
     retry: false,
   });
 
-  const isAuthenticated = !!adminUser;
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && error) {
-      setLocation("/login");
-    }
-  }, [isAuthenticated, isLoading, error, setLocation]);
-
   return {
-    adminUser,
+    user,
     isLoading,
-    isAuthenticated,
+    isAuthenticated: !!user && user.role === 'admin',
   };
 }

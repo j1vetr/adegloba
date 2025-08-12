@@ -18,9 +18,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/admin/logout", {
-        method: "POST",
-      });
+      return await apiRequest("POST", "/api/auth/logout");
     },
     onSuccess: () => {
       toast({

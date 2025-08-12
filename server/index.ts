@@ -1,10 +1,31 @@
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { setupAuth, seedDefaultAdmin } from "./auth";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Session configuration
+const PgStore = connectPgSimple(session);
+app.use(session({
+  store: new PgStore({
+    pool: pool,
+    tableName: 'sessions',
+    createTableIfMissing: true
+  }),
+  secret: process.env.SESSION_SECRET || 'starlink-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    secure: process.env.NODE_ENV === 'production'
+  }
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -37,6 +58,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Setup authentication
+  setupAuth(app);
+  
+  // Seed default admin user
+  await seedDefaultAdmin();
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
