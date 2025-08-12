@@ -1046,47 +1046,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/credential-pools/bulk', isAdminAuthenticated, async (req, res) => {
+  app.post('/api/admin/credential-pools/bulk-import', isAdminAuthenticated, async (req, res) => {
     try {
-      const { shipId, csvContent } = req.body;
+      const { shipId, credentialText } = req.body;
       
-      if (!shipId || !csvContent) {
-        return res.status(400).json({ message: 'Ship ID and CSV content are required' });
+      if (!shipId || !credentialText) {
+        return res.status(400).json({ message: 'Ship ID and credential text are required' });
       }
 
-      // Parse CSV content
-      const lines = csvContent.trim().split('\n');
-      const header = lines[0].toLowerCase().split(',').map(h => h.trim());
-      
-      if (!header.includes('username') || !header.includes('password')) {
-        return res.status(400).json({ message: 'CSV must contain username and password columns' });
-      }
-
-      const usernameIndex = header.indexOf('username');
-      const passwordIndex = header.indexOf('password');
-      
+      // Parse credential text (username,password per line)
+      const lines = credentialText.trim().split('\n');
       const credentials = [];
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-        if (values.length >= Math.max(usernameIndex + 1, passwordIndex + 1)) {
-          credentials.push({
-            shipId,
-            username: values[usernameIndex],
-            password: values[passwordIndex],
-            isAssigned: false
-          });
+      const errors = [];
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue; // Skip empty lines
+        
+        const parts = line.split(',');
+        if (parts.length !== 2) {
+          errors.push(`Line ${i + 1}: Invalid format. Expected "username,password"`);
+          continue;
         }
+        
+        const username = parts[0].trim();
+        const password = parts[1].trim();
+        
+        if (!username || !password) {
+          errors.push(`Line ${i + 1}: Username and password cannot be empty`);
+          continue;
+        }
+        
+        credentials.push({
+          shipId,
+          username,
+          password,
+          isAssigned: false
+        });
       }
 
       if (credentials.length === 0) {
-        return res.status(400).json({ message: 'No valid credentials found in CSV' });
+        return res.status(400).json({ message: 'No valid credentials found', errors });
       }
 
       const results = await storage.createCredentialPoolBatch(credentials);
-      res.status(201).json({ count: results.length, credentials: results });
+      res.status(201).json({ 
+        success: results.length, 
+        errors,
+        credentials: results 
+      });
     } catch (error) {
-      console.error('Error bulk creating credentials:', error);
-      res.status(500).json({ message: 'Failed to bulk create credentials' });
+      console.error('Error bulk importing credentials:', error);
+      res.status(500).json({ message: 'Failed to bulk import credentials' });
     }
   });
 

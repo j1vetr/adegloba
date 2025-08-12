@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Package, Ship as ShipIcon, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Ship, Plan } from '@/../shared/schema';
+import type { Ship, Plan } from '../../../shared/schema';
 
 export default function ShipPackages() {
   const [selectedShip, setSelectedShip] = useState<string>('');

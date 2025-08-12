@@ -5,19 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Upload, Trash2, Key, Ship as ShipIcon, Download, X } from 'lucide-react';
+import { Plus, Upload, Trash2, Key, Ship as ShipIcon, Download, X, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Ship, CredentialPool } from '@/../shared/schema';
+import type { Ship, CredentialPool } from '../../../shared/schema';
 
 export default function CredentialPools() {
   const [selectedShip, setSelectedShip] = useState<string>('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [csvContent, setCsvContent] = useState('');
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [credentialText, setCredentialText] = useState('');
+  const [importResults, setImportResults] = useState<{success: number, errors: string[]} | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -52,23 +53,28 @@ export default function CredentialPools() {
     }
   });
 
-  const bulkUploadMutation = useMutation({
-    mutationFn: (data: { shipId: string; csvContent: string }) => 
-      apiRequest('POST', '/api/admin/credential-pools/bulk', data),
+  const bulkImportMutation = useMutation({
+    mutationFn: (data: { shipId: string; credentialText: string }) => 
+      apiRequest('POST', '/api/admin/credential-pools/bulk-import', data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/credential-pools'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/credential-stats'] });
-      setIsBulkUploadOpen(false);
-      setCsvContent('');
+      setImportResults({ success: data.success, errors: data.errors || [] });
+      setCredentialText('');
+      if (data.errors?.length > 0) {
+        setIsBulkImportOpen(true); // Keep dialog open to show errors
+      } else {
+        setIsBulkImportOpen(false);
+      }
       toast({ 
-        title: "Toplu yükleme tamamlandı", 
-        description: `${data.count} kimlik başarıyla eklendi.` 
+        title: "İçe aktarma tamamlandı", 
+        description: `${data.success} kimlik eklendi.${data.errors?.length ? ` ${data.errors.length} hata.` : ''}` 
       });
     },
     onError: (error: any) => {
       toast({ 
         title: "Hata", 
-        description: error?.message || "Toplu yükleme sırasında bir hata oluştu.", 
+        description: error?.message || "İçe aktarma sırasında bir hata oluştu.", 
         variant: "destructive" 
       });
     }
@@ -111,25 +117,32 @@ export default function CredentialPools() {
     createCredentialMutation.mutate(credentialData);
   };
 
-  const handleBulkUpload = () => {
-    if (!csvContent.trim()) {
-      toast({ title: "Hata", description: "CSV içeriği boş olamaz.", variant: "destructive" });
+  const handleBulkImport = () => {
+    if (!credentialText.trim()) {
+      toast({ title: "Hata", description: "Kimlik bilgileri boş olamaz.", variant: "destructive" });
       return;
     }
 
-    bulkUploadMutation.mutate({ shipId: selectedShip, csvContent });
+    // Validate format (each line should be username,password)
+    const lines = credentialText.trim().split('\n');
+    const invalidLines = lines.filter((line, index) => {
+      const parts = line.split(',');
+      return parts.length !== 2 || !parts[0].trim() || !parts[1].trim();
+    });
+
+    if (invalidLines.length > 0) {
+      toast({ 
+        title: "Format Hatası", 
+        description: "Her satır 'kullanıcıadı,şifre' formatında olmalıdır.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    bulkImportMutation.mutate({ shipId: selectedShip, credentialText });
   };
 
-  const downloadTemplate = () => {
-    const csv = "username,password\nuser1,pass123\nuser2,pass456\nuser3,pass789";
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'credential_template.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
+
 
   return (
     <div className="space-y-6">
@@ -239,57 +252,78 @@ export default function CredentialPools() {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+              <Dialog open={isBulkImportOpen} onOpenChange={setIsBulkImportOpen}>
                 <DialogTrigger asChild>
-                  <Button data-testid="button-bulk-upload">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Toplu Yükle
+                  <Button data-testid="button-bulk-import">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Toplu İçe Aktar
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-gray-900 border-gray-700 max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-white">Toplu Kimlik Yükleme</DialogTitle>
+                    <DialogTitle className="text-white">Toplu Kimlik İçe Aktarma</DialogTitle>
+                    <DialogDescription className="text-gray-400">
+                      Her satırda bir kimlik bilgisi, virgülle ayrılmış: kullanıcıadı,şifre
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-gray-300 text-sm">
-                        CSV formatında kimlik bilgilerini yapıştırın
+                    <div className="space-y-2">
+                      <Label htmlFor="credential-text" className="text-sm text-gray-300">
+                        Kimlik Bilgileri (her satır: kullanıcıadı,şifre)
+                      </Label>
+                      <Textarea
+                        id="credential-text"
+                        placeholder="user1,pass123&#10;user2,pass456&#10;user3,pass789"
+                        value={credentialText}
+                        onChange={(e) => setCredentialText(e.target.value)}
+                        rows={12}
+                        className="font-mono text-sm bg-gray-800 border-gray-600"
+                        data-testid="textarea-credential-text"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Örnek: user1,pass123 (her satırda bir kimlik)
                       </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={downloadTemplate}
-                        data-testid="button-download-template"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Şablon İndir
-                      </Button>
                     </div>
-                    <Textarea
-                      placeholder="username,password&#10;user1,pass123&#10;user2,pass456"
-                      value={csvContent}
-                      onChange={(e) => setCsvContent(e.target.value)}
-                      rows={10}
-                      className="font-mono text-sm"
-                      data-testid="textarea-csv-content"
-                    />
+
+                    {importResults && (
+                      <div className="p-4 bg-gray-800 border border-gray-600 rounded-lg">
+                        <h4 className="font-semibold text-white mb-2">İçe Aktarma Sonuçları</h4>
+                        <div className="flex gap-4 mb-2">
+                          <span className="text-green-400">✓ Başarılı: {importResults.success}</span>
+                          {importResults.errors.length > 0 && (
+                            <span className="text-red-400">✗ Hata: {importResults.errors.length}</span>
+                          )}
+                        </div>
+                        {importResults.errors.length > 0 && (
+                          <div className="text-red-400 text-sm max-h-32 overflow-y-auto">
+                            {importResults.errors.map((error, index) => (
+                              <div key={index}>• {error}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex justify-end space-x-2">
                       <Button
                         variant="outline"
                         onClick={() => {
-                          setIsBulkUploadOpen(false);
-                          setCsvContent('');
+                          setIsBulkImportOpen(false);
+                          setCredentialText('');
+                          setImportResults(null);
                         }}
                       >
-                        İptal
+                        {importResults ? 'Kapat' : 'İptal'}
                       </Button>
-                      <Button
-                        onClick={handleBulkUpload}
-                        disabled={bulkUploadMutation.isPending || !csvContent.trim()}
-                        data-testid="button-upload-csv"
-                      >
-                        {bulkUploadMutation.isPending ? 'Yükleniyor...' : 'Yükle'}
-                      </Button>
+                      {!importResults && (
+                        <Button
+                          onClick={handleBulkImport}
+                          disabled={bulkImportMutation.isPending || !credentialText.trim()}
+                          data-testid="button-import-credentials"
+                        >
+                          {bulkImportMutation.isPending ? 'İçe Aktarılıyor...' : 'İçe Aktar'}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </DialogContent>
