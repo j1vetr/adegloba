@@ -509,7 +509,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize default settings on startup
   storage.initializeDefaultSettings().catch(console.error);
 
+  // Package-based Credential Management API Routes
+  app.get("/api/admin/ship-packages", isAdminAuthenticated, async (req, res) => {
+    try {
+      const plans = await storage.getAllPlans();
+      const ships = await storage.getAllShips();
+      
+      const plansWithDetails = await Promise.all(plans.map(async (plan) => {
+        const ship = ships.find(s => s.id === plan.shipId);
+        const planCredentials = await storage.getCredentialsForPlan(plan.id);
+        
+        return {
+          ...plan,
+          ship,
+          credentialStats: {
+            total: planCredentials.length,
+            available: planCredentials.filter(c => !c.isAssigned).length,
+            assigned: planCredentials.filter(c => c.isAssigned).length,
+          }
+        };
+      }));
 
+      res.json(plansWithDetails);
+    } catch (error: any) {
+      console.error("Error fetching ship packages:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/admin/ship-packages", isAdminAuthenticated, async (req, res) => {
+    try {
+      const plan = await storage.createPlan(req.body);
+      res.json(plan);
+    } catch (error: any) {
+      console.error("Error creating ship package:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/admin/ship-packages/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const plan = await storage.updatePlan(req.params.id, req.body);
+      res.json(plan);
+    } catch (error: any) {
+      console.error("Error updating ship package:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/admin/ship-packages/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      await storage.deletePlan(req.params.id);
+      res.json({ message: "Package deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting ship package:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/admin/credentials", isAdminAuthenticated, async (req, res) => {
+    try {
+      const credentials = await storage.getAllCredentials();
+      const plans = await storage.getAllPlans();
+      const ships = await storage.getAllShips();
+      
+      const credentialsWithDetails = credentials.map(credential => {
+        const plan = plans.find(p => p.id === credential.planId);
+        const ship = ships.find(s => s.id === plan?.shipId);
+        return {
+          ...credential,
+          plan,
+          ship
+        };
+      });
+      
+      res.json(credentialsWithDetails);
+    } catch (error: any) {
+      console.error("Error fetching credentials:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/admin/credentials", isAdminAuthenticated, async (req, res) => {
+    try {
+      const credential = await storage.createCredentialForPlan(req.body);
+      res.json(credential);
+    } catch (error: any) {
+      console.error("Error creating credential:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/admin/credentials/import", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { planId, credentials } = req.body;
+      let created = 0;
+      
+      for (const cred of credentials) {
+        try {
+          await storage.createCredentialForPlan({
+            planId,
+            username: cred.username,
+            password: cred.password
+          });
+          created++;
+        } catch (error) {
+          console.warn(`Failed to create credential ${cred.username}:`, error);
+        }
+      }
+      
+      res.json({ created, total: credentials.length });
+    } catch (error: any) {
+      console.error("Error importing credentials:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/admin/credentials/bulk", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      for (const id of ids) {
+        await storage.deleteCredential(id);
+      }
+      res.json({ message: `${ids.length} credentials deleted successfully` });
+    } catch (error: any) {
+      console.error("Error deleting credentials:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/admin/credentials/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteCredential(req.params.id);
+      res.json({ message: "Credential deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting credential:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   // Cron job endpoint for expiry processing
   app.post('/api/cron/process-expired-orders', async (req, res) => {

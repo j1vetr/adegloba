@@ -23,7 +23,8 @@ import ShipsManagement from "@/pages/admin/ShipsManagement";
 import PlansManagement from "@/pages/admin/PlansManagement";
 import PackagesManagement from "@/pages/admin/PackagesManagement";
 import ShipPackages from "@/pages/admin/ShipPackages";
-import CredentialPools from "@/pages/admin/CredentialPools";
+import CredentialPoolsNew from "@/pages/admin/CredentialPoolsNew";
+import ShipPackagesNew from "@/pages/admin/ShipPackagesNew";
 import CouponsManagement from "@/pages/admin/CouponsManagement";
 import OrdersManagement from "@/pages/admin/OrdersManagement";
 import UsersManagement from "@/pages/admin/UsersManagement";
@@ -74,13 +75,13 @@ function Router() {
       
       <Route path="/admin/ship-packages">
         <AdminProtectedRoute>
-          <ShipPackages />
+          <ShipPackagesNew />
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/credential-pools">
         <AdminProtectedRoute>
-          <CredentialPools />
+          <CredentialPoolsNew />
         </AdminProtectedRoute>
       </Route>
       

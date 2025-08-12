@@ -7,6 +7,7 @@ import {
   coupons,
   orders,
   orderItems,
+  orderCredentials,
   settings,
   tickets,
   ticketMessages,
@@ -27,6 +28,8 @@ import {
   type InsertOrder,
   type OrderItem,
   type InsertOrderItem,
+  type OrderCredential,
+  type InsertOrderCredential,
   type Setting,
   type InsertSetting,
   type Ticket,
@@ -400,22 +403,10 @@ export class DatabaseStorage implements IStorage {
 
   async getPlansForShip(shipId: string): Promise<Plan[]> {
     return db
-      .select({
-        id: plans.id,
-        title: plans.title,
-        gbAmount: plans.gbAmount,
-        speedNote: plans.speedNote,
-        validityNote: plans.validityNote,
-        priceUsd: plans.priceUsd,
-        isActive: plans.isActive,
-        sortOrder: plans.sortOrder,
-        createdAt: plans.createdAt,
-        updatedAt: plans.updatedAt,
-      })
+      .select()
       .from(plans)
-      .innerJoin(shipPlans, eq(plans.id, shipPlans.planId))
-      .where(and(eq(shipPlans.shipId, shipId), eq(shipPlans.isActive, true)))
-      .orderBy(shipPlans.sortOrder, plans.title);
+      .where(and(eq(plans.shipId, shipId), eq(plans.isActive, true)))
+      .orderBy(plans.sortOrder, plans.title);
   }
 
   async getPlansByShip(shipId: string): Promise<Plan[]> {
@@ -440,17 +431,95 @@ export class DatabaseStorage implements IStorage {
     await db.delete(plans).where(eq(plans.id, id));
   }
 
-  // Ship-Plan relations
-  async assignPlanToShip(shipId: string, planId: string, isActive: boolean = true, sortOrder: number = 0): Promise<ShipPlan> {
-    const [shipPlan] = await db
-      .insert(shipPlans)
-      .values({ shipId, planId, isActive, sortOrder })
-      .onConflictDoUpdate({
-        target: [shipPlans.shipId, shipPlans.planId],
-        set: { isActive, sortOrder }
+  // Package-specific credential operations
+  async getCredentialsForPlan(planId: string): Promise<CredentialPool[]> {
+    return db.select().from(credentialPools).where(eq(credentialPools.planId, planId)).orderBy(credentialPools.createdAt);
+  }
+
+  async getAvailableCredentialsForPlan(planId: string): Promise<CredentialPool[]> {
+    return db.select().from(credentialPools)
+      .where(and(eq(credentialPools.planId, planId), eq(credentialPools.isAssigned, false)))
+      .orderBy(credentialPools.createdAt);
+  }
+
+  async createCredentialForPlan(credential: InsertCredentialPool): Promise<CredentialPool> {
+    const [newCredential] = await db.insert(credentialPools).values(credential).returning();
+    return newCredential;
+  }
+
+  async assignCredentialToOrder(credentialId: string, orderId: string, userId: string): Promise<CredentialPool | undefined> {
+    const [updatedCredential] = await db
+      .update(credentialPools)
+      .set({
+        isAssigned: true,
+        assignedToOrderId: orderId,
+        assignedToUserId: userId,
+        assignedAt: new Date(),
+        updatedAt: new Date(),
       })
+      .where(and(eq(credentialPools.id, credentialId), eq(credentialPools.isAssigned, false)))
       .returning();
-    return shipPlan;
+    return updatedCredential;
+  }
+
+  async deliverCredentialsForOrder(orderId: string, planId: string, quantity: number): Promise<CredentialPool[]> {
+    // Get available credentials for the plan
+    const availableCredentials = await this.getAvailableCredentialsForPlan(planId);
+    
+    if (availableCredentials.length < quantity) {
+      throw new Error(`Not enough credentials available for plan. Need ${quantity}, have ${availableCredentials.length}`);
+    }
+
+    const credentialsToDeliver = availableCredentials.slice(0, quantity);
+    const deliveredCredentials: CredentialPool[] = [];
+
+    // Get order details to get user ID
+    const order = await this.getOrderById(orderId);
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    for (const credential of credentialsToDeliver) {
+      // Assign credential to order
+      const assignedCredential = await this.assignCredentialToOrder(credential.id, orderId, order.userId);
+      if (assignedCredential) {
+        deliveredCredentials.push(assignedCredential);
+        
+        // Create delivery record
+        await db.insert(orderCredentials).values({
+          orderId,
+          credentialId: credential.id,
+        });
+      }
+    }
+
+    return deliveredCredentials;
+  }
+
+  async getOrderCredentials(orderId: string): Promise<Array<CredentialPool & { deliveredAt: Date }>> {
+    const results = await db
+      .select({
+        id: credentialPools.id,
+        planId: credentialPools.planId,
+        username: credentialPools.username,
+        password: credentialPools.password,
+        isAssigned: credentialPools.isAssigned,
+        assignedToOrderId: credentialPools.assignedToOrderId,
+        assignedToUserId: credentialPools.assignedToUserId,
+        assignedAt: credentialPools.assignedAt,
+        createdAt: credentialPools.createdAt,
+        updatedAt: credentialPools.updatedAt,
+        deliveredAt: orderCredentials.deliveredAt,
+      })
+      .from(orderCredentials)
+      .innerJoin(credentialPools, eq(orderCredentials.credentialId, credentialPools.id))
+      .where(eq(orderCredentials.orderId, orderId))
+      .orderBy(orderCredentials.deliveredAt);
+
+    return results.map(r => ({
+      ...r,
+      deliveredAt: r.deliveredAt!,
+    }));
   }
 
   async updateShipPlan(shipId: string, planId: string, updates: Partial<InsertShipPlan>): Promise<void> {

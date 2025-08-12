@@ -8,6 +8,17 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## Package-Based Credential Management System Implementation (August 12, 2025)
+- Redesigned database schema from ship-based to package-based credential management
+- Updated credentialPools table to reference planId instead of shipId with proper foreign keys
+- Created orderCredentials table for tracking credential delivery per order unit
+- Implemented comprehensive credential-to-package assignment system with 1:1 delivery ratio
+- Built new integrated admin pages: CredentialPoolsNew.tsx and ShipPackagesNew.tsx
+- Added full AdminLayout integration with sidebar, topbar, breadcrumbs for consistency
+- Features: package-specific credential import, bulk management, statistics dashboards
+- Updated storage layer with new methods: getCredentialsForPlan, deliverCredentialsForOrder
+- Comprehensive API endpoints for package-credential operations and order fulfillment
+
 ## Complete Credential Pool Page Redesign (August 12, 2025)
 - Redesigned Credential Pool page with full AdminLayout integration (sidebar, topbar, breadcrumbs)
 - Implemented textarea-based credential import system replacing CSV upload

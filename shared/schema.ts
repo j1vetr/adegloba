@@ -89,18 +89,30 @@ export const coupons = pgTable("coupons", {
 });
 
 // Credential pool for captive portal access per ship
+// Credential Pools table - now package-specific
 export const credentialPools = pgTable("credential_pools", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  shipId: varchar("ship_id").notNull().references(() => ships.id, { onDelete: "cascade" }),
+  planId: varchar("plan_id").notNull().references(() => plans.id, { onDelete: "cascade" }),
   username: varchar("username").notNull(),
   password: varchar("password").notNull(),
   isAssigned: boolean("is_assigned").notNull().default(false),
-  assignedToOrderId: varchar("assigned_to_order_id"),
-  createdAt: timestamp("created_at").defaultNow(),
+  assignedToOrderId: varchar("assigned_to_order_id").references(() => orders.id, { onDelete: "set null" }),
+  assignedToUserId: varchar("assigned_to_user_id").references(() => users.id, { onDelete: "set null" }),
   assignedAt: timestamp("assigned_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
-  unique().on(table.shipId, table.username)
+  unique().on(table.planId, table.username)
 ]);
+
+// Order Credentials table - tracks delivered credentials per order
+export const orderCredentials = pgTable("order_credentials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  credentialId: varchar("credential_id").notNull().references(() => credentialPools.id, { onDelete: "cascade" }),
+  deliveredAt: timestamp("delivered_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -180,7 +192,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 
 export const shipsRelations = relations(ships, ({ many }) => ({
   plans: many(plans),
-  credentialPools: many(credentialPools),
   orderItems: many(orderItems),
   orders: many(orders),
   coupons: many(coupons),
@@ -193,16 +204,32 @@ export const plansRelations = relations(plans, ({ one, many }) => ({
     references: [ships.id],
   }),
   orderItems: many(orderItems),
+  credentialPools: many(credentialPools),
 }));
 
 export const credentialPoolsRelations = relations(credentialPools, ({ one }) => ({
-  ship: one(ships, {
-    fields: [credentialPools.shipId],
-    references: [ships.id],
+  plan: one(plans, {
+    fields: [credentialPools.planId],
+    references: [plans.id],
   }),
   assignedOrder: one(orders, {
     fields: [credentialPools.assignedToOrderId],
     references: [orders.id],
+  }),
+  assignedUser: one(users, {
+    fields: [credentialPools.assignedToUserId],
+    references: [users.id],
+  }),
+}));
+
+export const orderCredentialsRelations = relations(orderCredentials, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderCredentials.orderId],
+    references: [orders.id],
+  }),
+  credential: one(credentialPools, {
+    fields: [orderCredentials.credentialId],
+    references: [credentialPools.id],
   }),
 }));
 
@@ -223,6 +250,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
     fields: [orders.shipId],
     references: [ships.id],
   }),
+  credentials: many(orderCredentials),
   coupon: one(coupons, {
     fields: [orders.couponId],
     references: [coupons.id],
@@ -327,8 +355,16 @@ export const insertCredentialPoolSchema = createInsertSchema(credentialPools).om
   id: true,
   isAssigned: true,
   assignedToOrderId: true,
-  createdAt: true,
+  assignedToUserId: true,
   assignedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertOrderCredentialSchema = createInsertSchema(orderCredentials).omit({
+  id: true,
+  deliveredAt: true,
+  createdAt: true,
 });
 
 export const insertCouponSchema = createInsertSchema(coupons).omit({
@@ -374,6 +410,8 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderCredential = z.infer<typeof insertOrderCredentialSchema>;
+export type OrderCredential = typeof orderCredentials.$inferSelect;
 // Ticket system schemas and types
 export const insertTicketSchema = createInsertSchema(tickets).omit({
   id: true,
