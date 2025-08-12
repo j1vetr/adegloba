@@ -89,14 +89,14 @@ export default function Kayit() {
               <Waves className="h-4 w-4 text-cyan-400 absolute -bottom-1 -right-1" />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Starlink Veri Paketleri
+              AdeGloba Starlink System
             </span>
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">
-            Hesap Oluştur
+            AdeGloba Starlink System - Kayıt
           </h1>
           <p className="text-slate-400">
-            Starlink veri paketlerine erişim için kayıt olun
+            Özel müşteri sistemine kayıt olun
           </p>
         </div>
 
@@ -164,7 +164,7 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="ship_id" className="text-slate-300 flex items-center gap-2">
                   <ShipIcon className="h-4 w-4" />
-                  Gemi
+                  Gemi Seçin
                 </Label>
                 <Select onValueChange={handleShipChange} required>
                   <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-blue-500" data-testid="select-ship">
@@ -192,7 +192,7 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="address" className="text-slate-300 flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Adres
+                  Adresiniz
                 </Label>
                 <Textarea
                   id="address"
@@ -230,6 +230,11 @@ export default function Kayit() {
                   "Kayıt Ol"
                 )}
               </Button>
+              
+              {/* Private system notice */}
+              <p className="text-xs text-slate-500 text-center mt-3">
+                Bu sistem AdeGloba Starlink System müşterilerine özeldir.
+              </p>
             </form>
 
             {/* Login Link */}
@@ -250,7 +255,7 @@ export default function Kayit() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-slate-400 text-sm">
-          <p>© 2024 Starlink Veri Paketleri</p>
+          <p>© 2025 AdeGloba Starlink System</p>
           <p className="mt-1">Güvenli ve hızlı deniz internet bağlantısı</p>
         </div>
       </div>

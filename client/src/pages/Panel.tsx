@@ -54,16 +54,19 @@ export default function Panel() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white">
-              Kullanıcı Paneli
+              AdeGloba Starlink System - Kontrol Paneli
             </h1>
             <p className="text-slate-400 mt-2">
-              Hoş geldiniz, {user.username} • {user.ship?.name}
+              Hoş geldiniz, {user.username}
+              {user.ship_id && (
+                <> • <span className="text-blue-400">Gemi: {user.ship_id}</span></>
+              )}
             </p>
           </div>
           <Link href="/paketler">
             <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700" data-testid="button-buy-packages">
               <Package className="mr-2 h-4 w-4" />
-              Data Paketi Al
+              Data Paketi Satın Al
             </Button>
           </Link>
         </div>
@@ -110,9 +113,9 @@ export default function Panel() {
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
                   </div>
-                ) : activePackages?.length ? (
+                ) : (activePackages as any)?.length ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {activePackages.map((pkg: any) => (
+                    {(activePackages as any[]).map((pkg: any) => (
                       <Card key={pkg.id} className="bg-slate-800/50 border-slate-600" data-testid={`package-card-${pkg.id}`}>
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between mb-3">
@@ -130,7 +133,7 @@ export default function Panel() {
                             </div>
                             <div className="flex items-center gap-2">
                               <ShipIcon className="h-4 w-4" />
-                              {user.ship?.name}
+                              Gemi ID: {user.ship_id || 'Belirtilmemiş'}
                             </div>
                           </div>
                         </CardContent>

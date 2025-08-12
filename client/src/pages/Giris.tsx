@@ -80,14 +80,14 @@ export default function Giris() {
               <Waves className="h-4 w-4 text-cyan-400 absolute -bottom-1 -right-1" />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Starlink Veri Paketleri
+              AdeGloba Starlink System
             </span>
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">
-            Giriş Yap
+            AdeGloba Starlink System - Giriş
           </h1>
           <p className="text-slate-400">
-            Hesabınıza giriş yaparak veri paketlerinizi yönetin
+            Özel müşteri paneline giriş yapın
           </p>
         </div>
 

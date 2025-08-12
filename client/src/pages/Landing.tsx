@@ -47,7 +47,7 @@ export default function Landing() {
                 <Waves className="h-6 w-6 text-cyan-400 absolute -bottom-1 -right-1" />
               </div>
               <span className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                Maritime Starlink
+                AdeGloba Starlink System
               </span>
             </div>
 
@@ -117,7 +117,7 @@ export default function Landing() {
         <section className="py-20 px-4 bg-slate-900/30 backdrop-blur-sm">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Neden Maritime Starlink?
+              Neden AdeGloba Starlink System?
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -163,11 +163,11 @@ export default function Landing() {
                 <Waves className="h-4 w-4 text-cyan-400 absolute -bottom-1 -right-1" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                Maritime Starlink
+                AdeGloba Starlink System
               </span>
             </div>
             <p className="text-slate-400">
-              © 2025 Maritime Starlink. Tüm hakları saklıdır.
+              © 2025 AdeGloba Starlink System. Tüm hakları saklıdır.
             </p>
           </div>
         </footer>

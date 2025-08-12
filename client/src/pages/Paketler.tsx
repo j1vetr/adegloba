@@ -75,14 +75,14 @@ export default function Paketler() {
           </div>
           <div className="text-center">
             <h1 className="text-4xl font-bold text-white mb-4">
-              {user.ship?.name} için Paketler
+              AdeGloba Starlink System - Data Paketleri
             </h1>
             <p className="text-slate-400 text-lg">
               Geminiz için özel olarak tasarlanmış Starlink data paketlerini keşfedin
             </p>
             <div className="flex items-center justify-center mt-4 text-slate-300">
               <ShipIcon className="h-5 w-5 mr-2" />
-              <span>Seçili Gemi: {user.ship?.name}</span>
+              <span>Gemi ID: {user.ship_id || 'Belirtilmemiş'}</span>
             </div>
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function Paketler() {
               Henüz Paket Bulunamadı
             </h3>
             <p className="text-slate-400 mb-6">
-              {user.ship?.name} gemisi için henüz aktif paket bulunmamaktadır.
+              Seçili gemi için henüz aktif paket bulunmamaktadır.
             </p>
             <p className="text-sm text-slate-500">
               Lütfen admin ile iletişime geçin.

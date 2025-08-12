@@ -62,13 +62,13 @@ export default function AdminPanel() {
   }
 
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'fas fa-chart-bar' },
-    { id: 'ships', label: 'Ships', icon: 'fas fa-ship' },
-    { id: 'plans', label: 'Plans', icon: 'fas fa-wifi' },
-    { id: 'orders', label: 'Orders', icon: 'fas fa-shopping-bag' },
-    { id: 'users', label: 'Users', icon: 'fas fa-users' },
-    { id: 'coupons', label: 'Coupons', icon: 'fas fa-ticket-alt' },
-    { id: 'settings', label: 'Settings', icon: 'fas fa-cog' }
+    { id: 'dashboard', label: 'Kontrol Paneli', icon: 'fas fa-chart-bar' },
+    { id: 'ships', label: 'Gemiler', icon: 'fas fa-ship' },
+    { id: 'plans', label: 'Paketler', icon: 'fas fa-wifi' },
+    { id: 'orders', label: 'Siparişler', icon: 'fas fa-shopping-bag' },
+    { id: 'users', label: 'Kullanıcılar', icon: 'fas fa-users' },
+    { id: 'coupons', label: 'Kuponlar', icon: 'fas fa-ticket-alt' },
+    { id: 'settings', label: 'Ayarlar', icon: 'fas fa-cog' }
   ];
 
   const renderTabContent = () => {
@@ -93,9 +93,9 @@ export default function AdminPanel() {
               <Card className="glassmorphism rounded-xl p-6 border-transparent" data-testid="stat-revenue">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-slate-400">Total Revenue</div>
-                    <div className="text-2xl font-bold text-neon-green">${stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
-                    <div className="text-xs text-neon-green">This month</div>
+                    <div className="text-sm text-slate-400">Toplam Gelir</div>
+                    <div className="text-2xl font-bold text-neon-green">${(stats as any)?.totalRevenue?.toFixed(2) || '0.00'}</div>
+                    <div className="text-xs text-neon-green">Bu ay</div>
                   </div>
                   <i className="fas fa-dollar-sign text-neon-green text-2xl"></i>
                 </div>
@@ -104,9 +104,9 @@ export default function AdminPanel() {
               <Card className="glassmorphism rounded-xl p-6 border-transparent" data-testid="stat-active-orders">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-slate-400">Active Orders</div>
-                    <div className="text-2xl font-bold text-neon-cyan">{stats?.activeOrders || 0}</div>
-                    <div className="text-xs text-neon-cyan">Currently active</div>
+                    <div className="text-sm text-slate-400">Aktif Siparişler</div>
+                    <div className="text-2xl font-bold text-neon-cyan">{(stats as any)?.activeOrders || 0}</div>
+                    <div className="text-xs text-neon-cyan">Şu anda aktif</div>
                   </div>
                   <i className="fas fa-shopping-cart text-neon-cyan text-2xl"></i>
                 </div>
@@ -115,9 +115,9 @@ export default function AdminPanel() {
               <Card className="glassmorphism rounded-xl p-6 border-transparent" data-testid="stat-total-orders">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-slate-400">Total Orders</div>
-                    <div className="text-2xl font-bold text-neon-purple">{stats?.totalOrders || 0}</div>
-                    <div className="text-xs text-slate-400">All time</div>
+                    <div className="text-sm text-slate-400">Toplam Sipariş</div>
+                    <div className="text-2xl font-bold text-neon-purple">{(stats as any)?.totalOrders || 0}</div>
+                    <div className="text-xs text-slate-400">Tüm zamanlar</div>
                   </div>
                   <i className="fas fa-chart-line text-neon-purple text-2xl"></i>
                 </div>
@@ -126,9 +126,9 @@ export default function AdminPanel() {
               <Card className="glassmorphism rounded-xl p-6 border-transparent" data-testid="stat-support">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-slate-400">System Status</div>
-                    <div className="text-2xl font-bold text-neon-green">Online</div>
-                    <div className="text-xs text-neon-green">All systems operational</div>
+                    <div className="text-sm text-slate-400">Sistem Durumu</div>
+                    <div className="text-2xl font-bold text-neon-green">Çevrimiçi</div>
+                    <div className="text-xs text-neon-green">Tüm sistemler çalışıyor</div>
                   </div>
                   <i className="fas fa-check-circle text-neon-green text-2xl"></i>
                 </div>
@@ -142,10 +142,10 @@ export default function AdminPanel() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-neon-cyan to-neon-purple flex items-center justify-center">
                     <i className="fas fa-ship text-white text-2xl"></i>
                   </div>
-                  <h4 className="text-lg font-semibold text-white mb-2">Ships Management</h4>
-                  <p className="text-slate-400 text-sm mb-4">Add, edit, or manage ship configurations and their assigned data plans.</p>
+                  <h4 className="text-lg font-semibold text-white mb-2">Gemi Yönetimi</h4>
+                  <p className="text-slate-400 text-sm mb-4">Gemi konfigürasyonları ve veri planlarını ekle, düzenle veya yönet.</p>
                   <Button className="w-full bg-neon-cyan/20 text-neon-cyan hover:bg-neon-cyan/30 transition-colors border-transparent">
-                    Manage Ships
+                    Gemileri Yönet
                   </Button>
                 </div>
               </Card>
@@ -155,10 +155,10 @@ export default function AdminPanel() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-neon-purple to-pink-500 flex items-center justify-center">
                     <i className="fas fa-wifi text-white text-2xl"></i>
                   </div>
-                  <h4 className="text-lg font-semibold text-white mb-2">Data Plans</h4>
-                  <p className="text-slate-400 text-sm mb-4">Create and configure data packages with pricing and availability settings.</p>
+                  <h4 className="text-lg font-semibold text-white mb-2">Data Paketleri</h4>
+                  <p className="text-slate-400 text-sm mb-4">Fiyatlandırma ve müsaitlik ayarları ile veri paketleri oluştur ve yapılandır.</p>
                   <Button className="w-full bg-neon-purple/20 text-neon-purple hover:bg-neon-purple/30 transition-colors border-transparent">
-                    Manage Plans
+                    Paketleri Yönet
                   </Button>
                 </div>
               </Card>
@@ -168,10 +168,10 @@ export default function AdminPanel() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-neon-green to-emerald-500 flex items-center justify-center">
                     <i className="fas fa-cog text-white text-2xl"></i>
                   </div>
-                  <h4 className="text-lg font-semibold text-white mb-2">System Settings</h4>
-                  <p className="text-slate-400 text-sm mb-4">Configure PayPal integration, WhatsApp support, and global system settings.</p>
+                  <h4 className="text-lg font-semibold text-white mb-2">Sistem Ayarları</h4>
+                  <p className="text-slate-400 text-sm mb-4">PayPal entegrasyonu, WhatsApp desteği ve genel sistem ayarlarını yapılandır.</p>
                   <Button className="w-full bg-neon-green/20 text-neon-green hover:bg-neon-green/30 transition-colors border-transparent">
-                    System Settings
+                    Sistem Ayarları
                   </Button>
                 </div>
               </Card>
@@ -188,9 +188,9 @@ export default function AdminPanel() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
               <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent" data-testid="admin-title">
-                Admin Panel
+                AdeGloba Starlink System - Yönetim Paneli
               </h1>
-              <p className="text-xl text-slate-300">Manage ships, plans, orders, and system settings</p>
+              <p className="text-xl text-slate-300">Gemiler, paketler, siparişler ve sistem ayarlarını yönetin</p>
             </div>
 
             {/* Admin Navigation Tabs */}

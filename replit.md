@@ -6,6 +6,19 @@ This is a production-ready SaaS web application for selling Starlink data packag
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes
+
+## Complete UI Rebranding to "AdeGloba Starlink System" (August 12, 2025)
+- Updated all page titles and headers across the application
+- Converted all labels to Turkish throughout the interface
+- Added private system messaging for AdeGloba customers
+- Landing page: Complete rebrand with Turkish content
+- Authentication pages: Turkish labels (Giriş, Kayıt, form fields)
+- Dashboard: "AdeGloba Starlink System - Kontrol Paneli" with Turkish sections
+- Admin Panel: "AdeGloba Starlink System - Yönetim Paneli" with Turkish interface
+- Data packages page: Turkish branding and descriptions
+- Mobile responsive design maintained across all pages
+
 # System Architecture
 
 ## Frontend Architecture
