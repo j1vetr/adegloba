@@ -50,8 +50,7 @@ export const ships = pgTable("ships", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   slug: varchar("slug").notNull().unique(),
-  description: text("description"),
-  imageUrl: varchar("image_url"),
+  kitNumber: varchar("kit_number"), // Admin-only KIT Numarası field
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -222,6 +221,8 @@ export const insertShipSchema = createInsertSchema(ships).omit({
   slug: true, // Auto-generated from name
   createdAt: true,
   updatedAt: true,
+}).extend({
+  kitNumber: z.string().optional(),
 });
 
 export const insertPlanSchema = createInsertSchema(plans).omit({

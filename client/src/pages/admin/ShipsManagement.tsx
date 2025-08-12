@@ -35,8 +35,7 @@ type Ship = {
   id: string;
   name: string;
   slug: string;
-  description: string | null;
-  imageUrl: string | null;
+  kitNumber: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -54,7 +53,7 @@ export default function ShipsManagement() {
   
   const [formData, setFormData] = useState<ShipFormData>({
     name: "",
-    imageUrl: "",
+    kitNumber: "",
     isActive: true,
   });
 
@@ -189,7 +188,7 @@ export default function ShipsManagement() {
   const resetForm = () => {
     setFormData({
       name: "",
-      imageUrl: "",
+      kitNumber: "",
       isActive: true,
     });
     setEditingShip(null);
@@ -228,7 +227,7 @@ export default function ShipsManagement() {
     setEditingShip(ship);
     setFormData({
       name: ship.name,
-      imageUrl: ship.imageUrl || "",
+      kitNumber: ship.kitNumber || "",
       isActive: ship.isActive,
     });
     setIsFormOpen(true);
@@ -342,6 +341,7 @@ export default function ShipsManagement() {
                     <TableRow>
                       <TableHead className="text-white font-semibold">Gemi Adı</TableHead>
                       <TableHead className="text-white font-semibold">Slug</TableHead>
+                      <TableHead className="text-white font-semibold">KIT Numarası</TableHead>
                       <TableHead className="text-white font-semibold">Durum</TableHead>
                       <TableHead className="text-white font-semibold">Oluşturulma Tarihi</TableHead>
                       <TableHead className="text-white font-semibold text-right">İşlemler</TableHead>
@@ -350,7 +350,7 @@ export default function ShipsManagement() {
                   <TableBody>
                     {filteredShips.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12">
+                        <TableCell colSpan={6} className="text-center py-12">
                           <div className="flex flex-col items-center gap-2">
                             <Ship className="h-12 w-12 text-slate-500" />
                             <p className="text-slate-400 font-medium">
@@ -373,18 +373,20 @@ export default function ShipsManagement() {
                               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-cyan-500/20 flex items-center justify-center">
                                 <Ship className="h-5 w-5 text-primary" />
                               </div>
-                              <div>
-                                <div className="font-medium text-white">{ship.name}</div>
-                                {ship.description && (
-                                  <div className="text-sm text-slate-400 max-w-xs truncate">{ship.description}</div>
-                                )}
-                              </div>
+                              <div className="font-medium text-white">{ship.name}</div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <code className="text-sm bg-slate-800/50 px-2 py-1 rounded text-slate-300 font-mono">
                               {ship.slug}
                             </code>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-slate-300 text-sm">
+                              {ship.kitNumber || (
+                                <span className="text-slate-500 italic">Atanmamış</span>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -477,32 +479,35 @@ export default function ShipsManagement() {
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-white">Gemi Adı *</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Örn: Mavi Yıldız"
-                  required
-                  className="admin-input"
-                  data-testid="input-name"
-                />
-                <p className="text-xs text-slate-400">Slug otomatik olarak gemi adından oluşturulacak</p>
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-white">Gemi Adı *</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Örn: Mavi Yıldız"
+                    required
+                    className="admin-input"
+                    data-testid="input-name"
+                  />
+                  <p className="text-xs text-slate-400">Slug otomatik olarak gemi adından oluşturulacak</p>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="imageUrl" className="text-white">Resim URL'si</Label>
-                <Input
-                  id="imageUrl"
-                  name="imageUrl"
-                  value={formData.imageUrl || ""}
-                  onChange={handleInputChange}
-                  placeholder="https://example.com/ship-image.jpg"
-                  className="admin-input"
-                  data-testid="input-image-url"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="kitNumber" className="text-white">KIT Numarası</Label>
+                  <Input
+                    id="kitNumber"
+                    name="kitNumber"
+                    value={formData.kitNumber || ""}
+                    onChange={handleInputChange}
+                    placeholder="Örn: KIT-2024-001"
+                    className="admin-input"
+                    data-testid="input-kit-number"
+                  />
+                  <p className="text-xs text-slate-400">Admin panelinde görüntülenen KIT numarası</p>
+                </div>
               </div>
 
               <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
