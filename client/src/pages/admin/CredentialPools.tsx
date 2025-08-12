@@ -17,7 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { Plus, Upload, Trash2, Key, Ship as ShipIcon, Download, X, FileText, Search, Filter, MoreHorizontal, Calendar, Users, CheckCircle, XCircle, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import type { Ship, CredentialPool } from '../../../shared/schema';
+import type { Ship, CredentialPool } from '@/../shared/schema';
 
 export default function CredentialPools() {
   const [selectedShip, setSelectedShip] = useState<string>('');

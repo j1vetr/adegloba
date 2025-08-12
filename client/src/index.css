@@ -124,6 +124,61 @@ html {
                0 0 20px hsl(var(--neon-glow) / 0.3);
 }
 
+/* Admin Panel Dropdown Styling - Consistent Text Colors */
+@layer components {
+  /* Select dropdown content with proper contrast */
+  [data-radix-select-content] {
+    @apply bg-gray-900 border border-gray-700 text-white shadow-2xl;
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Select items with proper hover states */
+  [data-radix-select-item] {
+    @apply text-gray-100 hover:bg-gray-800 hover:text-white focus:bg-gray-800 focus:text-white;
+    @apply cursor-pointer px-3 py-2 text-sm transition-colors;
+  }
+  
+  /* Selected item styling */
+  [data-radix-select-item][data-state="checked"] {
+    @apply bg-blue-600/20 text-blue-300 hover:bg-blue-600/30;
+  }
+  
+  /* Disabled item styling */
+  [data-radix-select-item][data-disabled] {
+    @apply text-gray-500 hover:bg-transparent cursor-not-allowed;
+  }
+  
+  /* Dropdown menu content */
+  [data-radix-dropdown-menu-content] {
+    @apply bg-gray-900 border border-gray-700 text-white shadow-2xl;
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Dropdown menu items */
+  [data-radix-dropdown-menu-item] {
+    @apply text-gray-100 hover:bg-gray-800 hover:text-white focus:bg-gray-800 focus:text-white;
+    @apply cursor-pointer px-3 py-2 text-sm transition-colors;
+  }
+  
+  /* Dialog content styling */
+  [data-radix-dialog-content] {
+    @apply bg-gray-900 border border-gray-700 text-white shadow-2xl;
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Popover content */
+  [data-radix-popover-content] {
+    @apply bg-gray-900 border border-gray-700 text-white shadow-2xl;
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Toast styling */
+  [data-radix-toast-root] {
+    @apply bg-gray-900 border border-gray-700 text-white shadow-2xl;
+    backdrop-filter: blur(10px);
+  }
+}
+
 /* Glassmorphism effects */
 .glass {
   background: rgba(17, 17, 17, 0.6);
