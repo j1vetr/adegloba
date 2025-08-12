@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuth } from "@/hooks/useAuth";
+import { useUserAuth } from "@/hooks/useUserAuth";
 
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
@@ -14,16 +14,22 @@ import Checkout from "@/pages/Checkout";
 import OrderSuccess from "@/pages/OrderSuccess";
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
+import Kayit from "@/pages/Kayit";
+import Giris from "@/pages/Giris";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useUserAuth();
 
   return (
     <Switch>
       {/* Admin Login Route - always accessible */}
       <Route path="/login" component={Login} />
+      
+      {/* User Auth Routes - Turkish */}
+      <Route path="/kayit" component={Kayit} />
+      <Route path="/giris" component={Giris} />
       
       {/* Admin Routes - protected */}
       <Route path="/admin">

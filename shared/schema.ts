@@ -26,13 +26,22 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// Internal user authentication table
+// Regular users table for customer authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: varchar("username").notNull().unique(),
-  passwordHash: varchar("password_hash").notNull(),
-  role: varchar("role").notNull().default('user'), // 'admin' or 'user'
-  createdAt: timestamp("created_at").defaultNow(),
+  email: varchar("email").notNull().unique(),
+  password_hash: varchar("password_hash").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+// Admin users table for admin panel access
+export const admin_users = pgTable("admin_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: varchar("username").notNull().unique(),
+  password_hash: varchar("password_hash").notNull(),
+  role: varchar("role").notNull().default('admin'),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 export const ships = pgTable("ships", {
@@ -183,6 +192,15 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
 });
 
+export const registerSchema = createInsertSchema(users, {
+  username: z.string().min(3, "Kullanıcı adı en az 3 karakter olmalı"),
+  email: z.string().email("Geçerli bir e-posta adresi girin"),
+  password_hash: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+}).omit({
+  id: true,
+  created_at: true,
+});
+
 export const loginSchema = z.object({
   username: z.string().min(1, "Kullanıcı adı gerekli"),
   password: z.string().min(1, "Şifre gerekli"),
@@ -226,9 +244,11 @@ export const insertSettingSchema = createInsertSchema(settings).omit({
   id: true,
 });
 
-// Types
+// Types  
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type AdminUser = typeof admin_users.$inferSelect;
+export type InsertAdminUser = typeof admin_users.$inferInsert;
 export type LoginData = z.infer<typeof loginSchema>;
 export type InsertShip = z.infer<typeof insertShipSchema>;
 export type Ship = typeof ships.$inferSelect;

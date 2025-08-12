@@ -4,11 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
+import { useUserAuth } from "@/hooks/useUserAuth";
 import type { Ship } from "@shared/schema";
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user } = useUserAuth();
   const { data: ships, isLoading } = useQuery<Ship[]>({
     queryKey: ["/api/ships"]
   });

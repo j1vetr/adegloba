@@ -1,5 +1,6 @@
 import {
   users,
+  admin_users,
   ships,
   plans,
   shipPlans,
@@ -9,6 +10,8 @@ import {
   settings,
   type User,
   type InsertUser,
+  type AdminUser,
+  type InsertAdminUser,
   type Ship,
   type InsertShip,
   type Plan,
@@ -32,7 +35,13 @@ export interface IStorage {
   // User operations (internal authentication)
   getUserById(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  
+  // Admin User operations
+  getAdminUser(id: string): Promise<AdminUser | undefined>;
+  getAdminUserByUsername(username: string): Promise<AdminUser | undefined>;
+  createAdminUser(user: InsertAdminUser): Promise<AdminUser>;
 
   // Ship operations
   getShips(): Promise<Ship[]>;
@@ -97,10 +106,33 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
   async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(userData)
+      .returning();
+    return user;
+  }
+
+  async getAdminUser(id: string): Promise<AdminUser | undefined> {
+    const [user] = await db.select().from(admin_users).where(eq(admin_users.id, id));
+    return user;
+  }
+
+  async getAdminUserByUsername(username: string): Promise<AdminUser | undefined> {
+    const [user] = await db.select().from(admin_users).where(eq(admin_users.username, username));
+    return user;
+  }
+
+  async createAdminUser(insertUser: InsertAdminUser): Promise<AdminUser> {
+    const [user] = await db
+      .insert(admin_users)
+      .values(insertUser)
       .returning();
     return user;
   }

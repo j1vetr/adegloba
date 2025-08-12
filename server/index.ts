@@ -58,8 +58,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Setup authentication
-  setupAuth(app);
+  // Setup authentication systems
+  setupAuth(app); // Admin authentication
+  
+  // Setup user authentication (separate from admin)  
+  const { setupUserAuth } = await import('./userAuth');
+  setupUserAuth(app);
   
   // Seed default admin user
   await seedDefaultAdmin();

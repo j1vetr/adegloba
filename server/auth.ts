@@ -36,20 +36,20 @@ export function setupAuth(app: Express) {
     try {
       const { username, password } = loginSchema.parse(req.body);
       
-      // Find user by username
-      const user = await storage.getUserByUsername(username);
+      // Find admin user by username
+      const user = await storage.getAdminUserByUsername(username);
       if (!user) {
         return res.status(401).json({ message: 'Geçersiz kullanıcı adı veya şifre' });
       }
 
       // Verify password
-      const isValidPassword = await comparePasswords(password, user.passwordHash);
+      const isValidPassword = await comparePasswords(password, user.password_hash);
       if (!isValidPassword) {
         return res.status(401).json({ message: 'Geçersiz kullanıcı adı veya şifre' });
       }
 
       // Create session
-      req.session.user = {
+      req.session.adminUser = {
         id: user.id,
         username: user.username,
         role: user.role
@@ -76,19 +76,12 @@ export function setupAuth(app: Express) {
     });
   });
 
-  // Get current user
-  app.get('/api/auth/me', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUserById(req.session.user.id);
-      if (!user) {
-        return res.status(401).json({ message: 'User not found' });
-      }
-
-      const { passwordHash, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
-    } catch (error) {
-      console.error('Get user error:', error);
-      res.status(500).json({ message: 'Failed to get user' });
+  // Get current admin user
+  app.get('/api/auth/me', (req: any, res) => {
+    if (req.session?.adminUser) {
+      res.json(req.session.adminUser);
+    } else {
+      res.status(401).json({ message: 'Unauthorized' });
     }
   });
 }
@@ -97,7 +90,7 @@ export function setupAuth(app: Express) {
 export async function seedDefaultAdmin() {
   try {
     // Check if admin user already exists
-    const existingAdmin = await storage.getUserByUsername('emir');
+    const existingAdmin = await storage.getAdminUserByUsername('emir');
     if (existingAdmin) {
       console.log('Admin user already exists');
       return;
@@ -105,9 +98,9 @@ export async function seedDefaultAdmin() {
 
     // Create default admin user
     const passwordHash = await hashPassword('test');
-    await storage.createUser({
+    await storage.createAdminUser({
       username: 'emir',
-      passwordHash,
+      password_hash: passwordHash,
       role: 'admin'
     });
 
