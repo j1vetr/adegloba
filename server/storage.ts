@@ -8,6 +8,9 @@ import {
   orders,
   orderItems,
   settings,
+  tickets,
+  ticketMessages,
+  ticketAttachments,
   type User,
   type InsertUser,
   type AdminUser,
@@ -26,6 +29,12 @@ import {
   type InsertOrderItem,
   type Setting,
   type InsertSetting,
+  type Ticket,
+  type InsertTicket,
+  type TicketMessage,
+  type InsertTicketMessage,
+  type TicketAttachment,
+  type InsertTicketAttachment,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt } from "drizzle-orm";
@@ -97,20 +106,19 @@ export interface IStorage {
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
 
   // Settings operations
-  getSetting(key: string): Promise<Setting | undefined>;
-  setSetting(key: string, value: string): Promise<Setting>;
-  
-  // User admin operations
-  getAllUsers(): Promise<(User & { ship?: Ship })[]>;
-  getRecentUsers(limit: number): Promise<(User & { ship?: Ship })[]>;
-  getRecentOrders(limit: number): Promise<(Order & { user?: User })[]>;
-  
-  // Order admin operations
-  getAllOrders(): Promise<(Order & { user?: User })[]>;
-  updateOrderStatus(orderId: string, status: string): Promise<void>;
-
-  // Settings operations
   getAllSettings(): Promise<Setting[]>;
+  getSetting(key: string): Promise<Setting | null>;
+  upsertSetting(key: string, value: string, category?: string): Promise<Setting>;
+
+  // Ticket operations
+  createTicket(ticket: InsertTicket): Promise<Ticket>;
+  getTicketsByUserId(userId: string): Promise<Ticket[]>;
+  getAllTickets(): Promise<Ticket[]>;
+  getTicketById(ticketId: string): Promise<Ticket | null>;
+  updateTicketStatus(ticketId: string, status: string, adminId?: string): Promise<Ticket | null>;
+  createTicketMessage(message: InsertTicketMessage): Promise<TicketMessage>;
+  getTicketMessages(ticketId: string): Promise<TicketMessage[]>;
+  getUnreadTicketCount(userId: string): Promise<number>;
 
   // Statistics
   getOrderStats(): Promise<{ totalRevenue: number; activeOrders: number; totalOrders: number }>;
@@ -661,6 +669,79 @@ export class DatabaseStorage implements IStorage {
       activeOrders: Number(stats.activeOrders) || 0,
       totalOrders: Number(stats.totalOrders) || 0
     };
+  }
+
+  // Missing implementations for Settings
+  async getSetting(key: string): Promise<Setting | null> {
+    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
+    return setting || null;
+  }
+
+  async upsertSetting(key: string, value: string, category = 'general'): Promise<Setting> {
+    const [setting] = await db
+      .insert(settings)
+      .values({ key, value, category })
+      .onConflictDoUpdate({
+        target: settings.key,
+        set: { value, updatedAt: new Date() }
+      })
+      .returning();
+    return setting;
+  }
+
+  // Ticket system implementation
+  async createTicket(ticketData: InsertTicket): Promise<Ticket> {
+    const [ticket] = await db.insert(tickets).values(ticketData).returning();
+    return ticket;
+  }
+
+  async getTicketsByUserId(userId: string): Promise<Ticket[]> {
+    return db.select().from(tickets).where(eq(tickets.userId, userId)).orderBy(desc(tickets.createdAt));
+  }
+
+  async getAllTickets(): Promise<Ticket[]> {
+    return db.select().from(tickets).orderBy(desc(tickets.createdAt));
+  }
+
+  async getTicketById(ticketId: string): Promise<Ticket | null> {
+    const [ticket] = await db.select().from(tickets).where(eq(tickets.id, ticketId));
+    return ticket || null;
+  }
+
+  async updateTicketStatus(ticketId: string, status: string, adminId?: string): Promise<Ticket | null> {
+    const updateData: any = { status, updatedAt: new Date() };
+    if (adminId) {
+      updateData.assignedAdminId = adminId;
+    }
+
+    const [ticket] = await db
+      .update(tickets)
+      .set(updateData)
+      .where(eq(tickets.id, ticketId))
+      .returning();
+    
+    return ticket || null;
+  }
+
+  async createTicketMessage(messageData: InsertTicketMessage): Promise<TicketMessage> {
+    const [message] = await db.insert(ticketMessages).values(messageData).returning();
+    return message;
+  }
+
+  async getTicketMessages(ticketId: string): Promise<TicketMessage[]> {
+    return db.select().from(ticketMessages)
+      .where(eq(ticketMessages.ticketId, ticketId))
+      .orderBy(ticketMessages.createdAt);
+  }
+
+  async getUnreadTicketCount(userId: string): Promise<number> {
+    const result = await db.select({ count: sql`count(*)` })
+      .from(tickets)
+      .where(and(
+        eq(tickets.userId, userId),
+        eq(tickets.status, 'Açık')
+      ));
+    return Number(result[0]?.count || 0);
   }
 }
 

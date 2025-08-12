@@ -646,12 +646,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/settings', isAdminAuthenticated, async (req, res) => {
     try {
-      const { key, value, description } = req.body;
-      await storage.setSetting(key, value);
-      res.json({ success: true });
+      const { key, value } = req.body;
+      const setting = await storage.upsertSetting(key, value);
+      res.json(setting);
     } catch (error) {
       console.error('Error saving setting:', error);
       res.status(500).json({ message: 'Failed to save setting' });
+    }
+  });
+
+  // Ticket System Routes
+  app.get('/api/tickets', async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const tickets = await storage.getTicketsByUserId(userId);
+      res.json(tickets);
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+      res.status(500).json({ message: 'Failed to fetch tickets' });
+    }
+  });
+
+  app.post('/api/tickets', async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const ticketData = {
+        ...req.body,
+        userId,
+      };
+
+      const ticket = await storage.createTicket(ticketData);
+      res.status(201).json(ticket);
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      res.status(500).json({ message: 'Failed to create ticket' });
+    }
+  });
+
+  app.get('/api/admin/tickets', isAdminAuthenticated, async (req, res) => {
+    try {
+      const tickets = await storage.getAllTickets();
+      res.json(tickets);
+    } catch (error) {
+      console.error('Error fetching admin tickets:', error);
+      res.status(500).json({ message: 'Failed to fetch tickets' });
+    }
+  });
+
+  app.put('/api/admin/tickets/:ticketId/status', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { ticketId } = req.params;
+      const { status } = req.body;
+      const adminId = req.session.adminUser.id;
+
+      const ticket = await storage.updateTicketStatus(ticketId, status, adminId);
+      if (!ticket) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+
+      res.json(ticket);
+    } catch (error) {
+      console.error('Error updating ticket status:', error);
+      res.status(500).json({ message: 'Failed to update ticket status' });
+    }
+  });
+
+  app.post('/api/admin/tickets/:ticketId/messages', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { ticketId } = req.params;
+      const adminId = req.session.adminUser.id;
+      const adminUsername = req.session.adminUser.username;
+
+      const messageData = {
+        ...req.body,
+        ticketId,
+        senderId: adminId,
+        senderType: 'admin',
+        senderName: adminUsername,
+      };
+
+      const message = await storage.createTicketMessage(messageData);
+      res.status(201).json(message);
+    } catch (error) {
+      console.error('Error creating admin ticket message:', error);
+      res.status(500).json({ message: 'Failed to create message' });
     }
   });
 

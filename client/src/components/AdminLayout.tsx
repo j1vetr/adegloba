@@ -12,7 +12,11 @@ import {
   X,
   LogOut,
   ChevronRight,
-  Home
+  Home,
+  ChevronDown,
+  ChevronUp,
+  HelpCircle,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -24,18 +28,46 @@ interface AdminLayoutProps {
   title: string;
 }
 
-const navigation = [
-  { name: 'Panel', href: '/admin', icon: LayoutDashboard },
-  { name: 'Gemiler', href: '/admin/ships', icon: Ship },
-  { name: 'Paketler', href: '/admin/plans', icon: Package },
-  { name: 'Kuponlar', href: '/admin/coupons', icon: Gift },
-  { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },
-  { name: 'Kullanıcılar', href: '/admin/users', icon: Users },
-  { name: 'Ayarlar', href: '/admin/settings', icon: Settings },
+const navigationCategories = [
+  {
+    name: 'Genel',
+    items: [
+      { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+    ]
+  },
+  {
+    name: 'Operasyon',
+    items: [
+      { name: 'Gemiler', href: '/admin/ships', icon: Ship },
+      { name: 'Paketler', href: '/admin/plans', icon: Package },
+      { name: 'Kuponlar', href: '/admin/coupons', icon: Gift },
+      { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },
+    ]
+  },
+  {
+    name: 'Kullanıcı Yönetimi',
+    items: [
+      { name: 'Kullanıcılar', href: '/admin/users', icon: Users },
+    ]
+  },
+  {
+    name: 'Destek',
+    items: [
+      { name: 'Destek Talepleri', href: '/admin/tickets', icon: HelpCircle },
+    ]
+  },
+  {
+    name: 'Sistem',
+    items: [
+      { name: 'Ayarlar', href: '/admin/settings', icon: Settings },
+      { name: 'Loglar', href: '/admin/logs', icon: FileText },
+    ]
+  }
 ];
 
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsedCategories, setCollapsedCategories] = useState<string[]>([]);
   const [location] = useLocation();
   const { user, isLoading } = useAdminAuth();
   const { toast } = useToast();
@@ -58,6 +90,14 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     }
   };
 
+  const toggleCategory = (categoryName: string) => {
+    setCollapsedCategories(prev => 
+      prev.includes(categoryName) 
+        ? prev.filter(name => name !== categoryName)
+        : [...prev, categoryName]
+    );
+  };
+
   const breadcrumbItems = () => {
     const pathSegments = location.split('/').filter(Boolean);
     const items = [{ name: 'Ana Sayfa', href: '/' }];
@@ -67,7 +107,9 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     }
     
     if (pathSegments.length > 1) {
-      const currentPage = navigation.find(nav => nav.href === location);
+      const currentPage = navigationCategories
+        .flatMap(category => category.items)
+        .find(nav => nav.href === location);
       if (currentPage) {
         items.push({ name: currentPage.name, href: location });
       }
@@ -130,32 +172,52 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 p-4">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const isActive = isActivePath(item.href);
-              
-              return (
-                <Link key={item.name} href={item.href}>
-                  <div 
-                    className={`
-                      sidebar-item group flex items-center px-4 py-3 mx-2 text-sm font-medium transition-all duration-200 cursor-pointer
-                      ${isActive ? 'active text-primary' : 'text-slate-300 hover:text-white'}
-                    `}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <Icon className={`
-                      mr-3 h-5 w-5 flex-shrink-0 transition-all duration-200
-                      ${isActive ? 'text-primary' : 'group-hover:text-primary'}
-                    `} />
-                    {item.name}
-                    {isActive && (
-                      <div className="ml-auto w-2 h-2 rounded-full bg-primary neon-glow" />
-                    )}
+          <nav className="flex-1 space-y-2 p-4 overflow-y-auto">
+            {navigationCategories.map((category) => (
+              <div key={category.name} className="mb-4">
+                <button
+                  onClick={() => toggleCategory(category.name)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-300 transition-colors"
+                >
+                  {category.name}
+                  {collapsedCategories.includes(category.name) ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronUp className="h-4 w-4" />
+                  )}
+                </button>
+                
+                {!collapsedCategories.includes(category.name) && (
+                  <div className="mt-1 space-y-1">
+                    {category.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = isActivePath(item.href);
+                      
+                      return (
+                        <Link key={item.name} href={item.href}>
+                          <div 
+                            className={`
+                              sidebar-item group flex items-center px-4 py-3 mx-2 text-sm font-medium transition-all duration-200 cursor-pointer
+                              ${isActive ? 'active text-primary' : 'text-slate-300 hover:text-white'}
+                            `}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <Icon className={`
+                              mr-3 h-5 w-5 flex-shrink-0 transition-all duration-200
+                              ${isActive ? 'text-primary' : 'group-hover:text-primary'}
+                            `} />
+                            {item.name}
+                            {isActive && (
+                              <div className="ml-auto w-2 h-2 rounded-full bg-primary neon-glow" />
+                            )}
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
-                </Link>
-              );
-            })}
+                )}
+              </div>
+            ))}
           </nav>
 
           {/* User Info & Logout */}

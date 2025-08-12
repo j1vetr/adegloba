@@ -1,0 +1,32 @@
+Implement the following updates for AdeGloba Starlink System:
+
+1) Brand & Login
+- Make the login page brand fully managed from Admin > Ayarlar: upload logo (SVG/PNG), set width/height (px) and max-width%, remove all static text/placeholder branding.
+- Render only the configured logo on the login screen; logo is clickable to "/".
+- Ensure responsive scaling on mobile; no overflow.
+
+2) Admin Menu Categorization
+- In Admin panel sidebar, group items into categories:
+  • Genel: Dashboard
+  • Operasyon: Gemiler, Paketler, Kuponlar, Siparişler
+  • Kullanıcı Yönetimi: Kullanıcılar
+  • Sistem: Ayarlar, Loglar (opsiyonel)
+- Collapsible category headers; preserve dark futuristic maritime theme.
+
+3) User Panel Header Cleanup
+- In the user panel top nav show only: "Ana Sayfa" (dashboard) and "Destek" (ticket sistemi).
+- Remove all unused links/pages from header and routes.
+
+4) Ticket Sistemi (User–Admin)
+- Build a full two-way ticket system (Turkish UI) accessible in:
+  • User panel: "Destek" (list, create, view, reply, close)
+  • Admin panel: "Destek" (list all, filter by durum/öncelik/kullanıcı/gemi, assign to admin, reply, close)
+- DB: tickets(id, user_id, ship_id, subject, priority[Dusuk/Orta/Yuksek], status[Açık/Beklemede/Kapalı], created_at, updated_at), ticket_messages(id, ticket_id, sender_type[user/admin], message, created_at), ticket_attachments(id, ticket_id, message_id, file_url, filename, size).
+- Features: file upload (images/pdf ≤10MB), rich-text (basic), statuses & priorities, search + filters, pagination, unread counters, timestamps TR format.
+- Permissions: users see only their own tickets; admins see all; audit-log minimal.
+- Notifications: show in-app toasts/badges for new replies; optional email hooks (stub).
+- Design: dark neon blue theme, responsive, no layout overflow; mobile-friendly message thread view.
+
+5) General
+- All text in Turkish; keep theme consistent (black + neon blue).
+- Fully responsive; fix any overflow/alignment issues introduced by changes.

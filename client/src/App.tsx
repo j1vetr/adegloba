@@ -25,6 +25,8 @@ import CouponsManagement from "@/pages/admin/CouponsManagement";
 import OrdersManagement from "@/pages/admin/OrdersManagement";
 import UsersManagement from "@/pages/admin/UsersManagement";
 import SettingsManagement from "@/pages/admin/SettingsManagement";
+import TicketManagement from "@/pages/admin/TicketManagement";
+import UserTickets from "@/pages/UserTickets";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
 
@@ -83,6 +85,12 @@ function Router() {
         </AdminProtectedRoute>
       </Route>
       
+      <Route path="/admin/tickets">
+        <AdminProtectedRoute>
+          <TicketManagement />
+        </AdminProtectedRoute>
+      </Route>
+      
       {/* Main Application Routes */}
       <Route path="/" component={Landing} />
       
@@ -95,6 +103,12 @@ function Router() {
       <Route path="/paketler">
         <UserProtectedRoute>
           <Paketler />
+        </UserProtectedRoute>
+      </Route>
+      
+      <Route path="/tickets">
+        <UserProtectedRoute>
+          <UserTickets />
         </UserProtectedRoute>
       </Route>
       

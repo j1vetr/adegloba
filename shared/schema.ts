@@ -127,6 +127,38 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Ticket system tables
+export const tickets = pgTable("tickets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  shipId: varchar("ship_id").references(() => ships.id),
+  subject: varchar("subject").notNull(),
+  priority: varchar("priority").notNull().default('Orta'), // 'Düşük', 'Orta', 'Yüksek'
+  status: varchar("status").notNull().default('Açık'), // 'Açık', 'Beklemede', 'Kapalı'
+  assignedAdminId: varchar("assigned_admin_id").references(() => admin_users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const ticketMessages = pgTable("ticket_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ticketId: varchar("ticket_id").notNull().references(() => tickets.id, { onDelete: "cascade" }),
+  senderType: varchar("sender_type").notNull(), // 'user' | 'admin'
+  senderId: varchar("sender_id").notNull(), // user_id or admin_user_id
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const ticketAttachments = pgTable("ticket_attachments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ticketId: varchar("ticket_id").notNull().references(() => tickets.id, { onDelete: "cascade" }),
+  messageId: varchar("message_id").references(() => ticketMessages.id, { onDelete: "cascade" }),
+  fileUrl: varchar("file_url").notNull(),
+  filename: varchar("filename").notNull(),
+  fileSize: integer("file_size").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   ship: one(ships, {
@@ -191,6 +223,42 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   plan: one(plans, {
     fields: [orderItems.planId],
     references: [plans.id],
+  }),
+}));
+
+export const ticketsRelations = relations(tickets, ({ one, many }) => ({
+  user: one(users, {
+    fields: [tickets.userId],
+    references: [users.id],
+  }),
+  ship: one(ships, {
+    fields: [tickets.shipId],
+    references: [ships.id],
+  }),
+  assignedAdmin: one(admin_users, {
+    fields: [tickets.assignedAdminId],
+    references: [admin_users.id],
+  }),
+  messages: many(ticketMessages),
+  attachments: many(ticketAttachments),
+}));
+
+export const ticketMessagesRelations = relations(ticketMessages, ({ one, many }) => ({
+  ticket: one(tickets, {
+    fields: [ticketMessages.ticketId],
+    references: [tickets.id],
+  }),
+  attachments: many(ticketAttachments),
+}));
+
+export const ticketAttachmentsRelations = relations(ticketAttachments, ({ one }) => ({
+  ticket: one(tickets, {
+    fields: [ticketAttachments.ticketId],
+    references: [tickets.id],
+  }),
+  message: one(ticketMessages, {
+    fields: [ticketAttachments.messageId],
+    references: [ticketMessages.id],
   }),
 }));
 
@@ -278,3 +346,27 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
+
+// Ticket system schemas and types
+export const insertTicketSchema = createInsertSchema(tickets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTicketMessageSchema = createInsertSchema(ticketMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTicketAttachmentSchema = createInsertSchema(ticketAttachments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Ticket = typeof tickets.$inferSelect;
+export type InsertTicket = z.infer<typeof insertTicketSchema>;
+export type TicketMessage = typeof ticketMessages.$inferSelect;
+export type InsertTicketMessage = z.infer<typeof insertTicketMessageSchema>;
+export type TicketAttachment = typeof ticketAttachments.$inferSelect;
+export type InsertTicketAttachment = z.infer<typeof insertTicketAttachmentSchema>;

@@ -1,300 +1,271 @@
-import { Link, useLocation } from "wouter";
-import { useUserAuth } from "@/hooks/useUserAuth";
-import WhatsAppButton from "./WhatsAppButton";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, ReactNode } from 'react';
+import { Link, useLocation } from 'wouter';
+import { 
+  Home, 
+  HelpCircle, 
+  Menu, 
+  X,
+  LogOut,
+  User,
+  Bell
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useUserAuth } from '@/hooks/useUserAuth';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  title?: string;
 }
 
-export default function Layout({ children }: LayoutProps) {
-  const { user, isLoading, isAuthenticated } = useUserAuth();
+// Simplified user navigation - only Ana Sayfa and Destek
+const userNavigation = [
+  { name: 'Ana Sayfa', href: '/dashboard', icon: Home },
+  { name: 'Destek', href: '/tickets', icon: HelpCircle },
+];
+
+export default function Layout({ children, title }: LayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [location] = useLocation();
-  const [cartCount] = useState(0); // TODO: Implement cart state management
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, isAuthenticated } = useUserAuth();
+  const { toast } = useToast();
+
+  // Get unread ticket count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['/api/user/tickets/unread-count'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/user/tickets/unread-count');
+      return response.json();
+    },
+    enabled: isAuthenticated
+  });
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest('POST', '/api/auth/logout');
+      window.location.href = '/';
+    } catch (error) {
+      toast({
+        title: 'Hata',
+        description: 'Çıkış yapılırken bir hata oluştu',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const isActivePath = (path: string) => {
+    if (path === '/dashboard') {
+      return location === '/dashboard' || location === '/';
+    }
+    return location.startsWith(path);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-space-blue via-space-dark to-space-blue text-slate-200">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 glassmorphism">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-neon-cyan to-neon-purple flex items-center justify-center">
-                <i className="fas fa-satellite text-white text-lg"></i>
-              </div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                AdeGloba Starlink System
-              </h1>
-            </Link>
-            
-            <div className="hidden lg:flex items-center space-x-6">
-              <Link href="/#ships" className="hover:text-blue-400 transition-colors text-slate-300">Gemiler</Link>
-              <Link href="/#plans" className="hover:text-blue-400 transition-colors text-slate-300">Paketler</Link>
-              <Link href="/#support" className="hover:text-blue-400 transition-colors text-slate-300">Destek</Link>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Header */}
+      <header className="bg-slate-900/80 backdrop-blur border-b border-slate-800 sticky top-0 z-30">
+        <div className="px-4 sm:px-6">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo and Navigation */}
+            <div className="flex items-center space-x-8">
+              <Link href="/">
+                <div className="flex items-center space-x-3 cursor-pointer">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center neon-glow">
+                    <span className="text-white font-bold text-sm">AG</span>
+                  </div>
+                  <div>
+                    <h1 className="text-lg font-bold text-white">AdeGloba</h1>
+                    <p className="text-xs text-slate-400">Starlink System</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Desktop Navigation */}
               {isAuthenticated && (
-                <Link href="/panel" className="hover:text-blue-400 transition-colors text-slate-300">Panel</Link>
+                <nav className="hidden md:flex space-x-6">
+                  {userNavigation.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = isActivePath(item.href);
+                    
+                    return (
+                      <Link key={item.name} href={item.href}>
+                        <div className={`
+                          flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer
+                          ${isActive 
+                            ? 'text-primary bg-primary/10 border border-primary/20' 
+                            : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                          }
+                        `}>
+                          <Icon className="h-4 w-4" />
+                          <span>{item.name}</span>
+                          {item.name === 'Destek' && unreadCount > 0 && (
+                            <Badge className="bg-red-500 text-white text-xs px-1.5 py-0.5 min-w-[20px] h-5">
+                              {unreadCount}
+                            </Badge>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </nav>
               )}
             </div>
 
-            <div className="flex items-center space-x-3">
-              {/* Mobile Menu Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="lg:hidden glassmorphism hover:bg-slate-700/50"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                data-testid="mobile-menu-button"
-              >
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
+            {/* User menu */}
+            <div className="flex items-center space-x-4">
+              {isAuthenticated ? (
+                <>
+                  {/* Mobile menu button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="md:hidden text-slate-300 hover:text-white"
+                    onClick={() => setSidebarOpen(true)}
+                  >
+                    <Menu className="h-5 w-5" />
+                  </Button>
 
-              {/* Desktop Navigation Actions */}
-              <div className="hidden lg:flex items-center space-x-3">
-                {isAuthenticated && (
-                  <Link href="/sepet" className="relative p-2 rounded-lg glassmorphism hover:bg-slate-700/50 transition-all" data-testid="cart-button">
-                    <i className="fas fa-shopping-cart text-slate-300"></i>
-                    {cartCount > 0 && (
-                      <Badge className="absolute -top-1 -right-1 bg-blue-600 text-white min-w-5 h-5 flex items-center justify-center p-1 text-xs" data-testid="cart-count">
-                        {cartCount}
-                      </Badge>
-                    )}
-                  </Link>
-                )}
-                
-                {!isLoading && !isAuthenticated ? (
-                  <>
-                    <Link href="/giris">
-                      <Button 
-                        variant="ghost" 
-                        className="glassmorphism hover:bg-slate-700/50 text-slate-300 hover:text-white"
-                        data-testid="login-button"
-                      >
-                        <i className="fas fa-user mr-2"></i>Giriş Yap
-                      </Button>
-                    </Link>
-                    
-                    <Link href="/kayit">
-                      <Button 
-                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
-                        data-testid="register-button"
-                      >
-                        Kayıt Ol
-                      </Button>
-                    </Link>
-                  </>
-                ) : isAuthenticated ? (
-                  <div className="flex items-center space-x-3">
-                    <div className="text-sm text-right">
-                      <div className="text-white font-medium">
+                  {/* User info */}
+                  <div className="hidden md:flex items-center space-x-3">
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-white">
                         {user?.username}
-                        {user?.ship && (
-                          <span className="text-blue-400"> - {user.ship.name}</span>
-                        )}
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        AdeGloba Müşteri Sistemi
-                      </div>
+                      </p>
+                      <p className="text-xs text-slate-400">Kullanıcı</p>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="glassmorphism hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-300"
-                      onClick={() => {
-                        fetch('/api/user/logout', { method: 'POST' })
-                          .then(() => window.location.href = '/')
-                          .catch(() => window.location.href = '/');
-                      }}
-                      data-testid="logout-button"
-                    >
-                      <i className="fas fa-sign-out-alt mr-2"></i>
-                      Çıkış
-                    </Button>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center">
+                      <span className="text-white font-medium text-sm">
+                        {user?.username?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
                   </div>
-                ) : null}
-              </div>
 
-              {/* Mobile User Info */}
-              <div className="lg:hidden flex items-center space-x-2">
-                {isAuthenticated && (
-                  <div className="text-sm text-right">
-                    <div className="text-white font-medium">{user?.username}</div>
-                    {user?.ship && (
-                      <div className="text-xs text-blue-400">{user.ship.name}</div>
-                    )}
-                  </div>
-                )}
-              </div>
+                  {/* Logout button */}
+                  <Button
+                    onClick={handleLogout}
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-300 hover:text-white hidden md:flex"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Çıkış
+                  </Button>
+                </>
+              ) : (
+                <Link href="/login">
+                  <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white">
+                    Giriş Yap
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
+      </header>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-slate-900/95 backdrop-blur-sm border-t border-slate-700/50">
-            <div className="container mx-auto px-4 py-4 space-y-4">
-              <div className="space-y-3">
-                <Link 
-                  href="/#ships" 
-                  className="block text-slate-300 hover:text-blue-400 transition-colors py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Gemiler
-                </Link>
-                <Link 
-                  href="/#plans" 
-                  className="block text-slate-300 hover:text-blue-400 transition-colors py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Paketler
-                </Link>
-                <Link 
-                  href="/#support" 
-                  className="block text-slate-300 hover:text-blue-400 transition-colors py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Destek
-                </Link>
-                {isAuthenticated && (
-                  <>
-                    <Link 
-                      href="/panel" 
-                      className="block text-slate-300 hover:text-blue-400 transition-colors py-2"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Panel
-                    </Link>
-                    <Link 
-                      href="/sepet" 
-                      className="block text-slate-300 hover:text-blue-400 transition-colors py-2"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Sepet {cartCount > 0 && `(${cartCount})`}
-                    </Link>
-                  </>
-                )}
+      {/* Mobile Sidebar */}
+      <aside className={`
+        fixed top-0 left-0 z-50 h-full w-64 bg-slate-900 border-r border-slate-800
+        transform transition-transform duration-300 ease-in-out lg:hidden
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex h-full flex-col">
+          {/* Mobile sidebar header */}
+          <div className="flex h-16 items-center justify-between px-6 border-b border-slate-800">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center">
+                <span className="text-white font-bold text-xs">AG</span>
               </div>
-              
-              {!isAuthenticated ? (
-                <div className="pt-4 border-t border-slate-700/50 space-y-3">
-                  <Link href="/giris" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start glassmorphism hover:bg-slate-700/50 text-slate-300 hover:text-white"
-                      data-testid="mobile-login-button"
-                    >
-                      <i className="fas fa-user mr-2"></i>Giriş Yap
-                    </Button>
-                  </Link>
-                  
-                  <Link href="/kayit" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
-                      data-testid="mobile-register-button"
-                    >
-                      Kayıt Ol
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="pt-4 border-t border-slate-700/50">
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start glassmorphism hover:bg-red-500/20 text-red-400 hover:text-red-300"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      fetch('/api/user/logout', { method: 'POST' })
-                        .then(() => window.location.href = '/')
-                        .catch(() => window.location.href = '/');
-                    }}
-                    data-testid="mobile-logout-button"
-                  >
-                    <i className="fas fa-sign-out-alt mr-2"></i>
-                    Çıkış Yap
-                  </Button>
-                </div>
-              )}
+              <div>
+                <h1 className="text-lg font-bold text-white">AdeGloba</h1>
+                <p className="text-xs text-slate-400">Starlink System</p>
+              </div>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-2 hover:bg-slate-800"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X className="h-5 w-5 text-slate-300" />
+            </Button>
           </div>
-        )}
-      </nav>
 
-      {/* Main Content */}
+          {/* Mobile Navigation */}
+          {isAuthenticated && (
+            <nav className="flex-1 space-y-2 p-4">
+              {userNavigation.map((item) => {
+                const Icon = item.icon;
+                const isActive = isActivePath(item.href);
+                
+                return (
+                  <Link key={item.name} href={item.href}>
+                    <div 
+                      className={`
+                        flex items-center px-4 py-3 text-sm font-medium transition-all duration-200 cursor-pointer rounded-lg
+                        ${isActive ? 'text-primary bg-primary/10 border border-primary/20' : 'text-slate-300 hover:text-white hover:bg-slate-800'}
+                      `}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <Icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                      {item.name === 'Destek' && unreadCount > 0 && (
+                        <Badge className="ml-auto bg-red-500 text-white">
+                          {unreadCount}
+                        </Badge>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
+
+          {/* Mobile user section */}
+          {isAuthenticated && (
+            <div className="border-t border-slate-800 p-4">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center">
+                  <span className="text-white font-medium text-sm">
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">
+                    {user?.username}
+                  </p>
+                  <p className="text-xs text-slate-400">Kullanıcı</p>
+                </div>
+              </div>
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Çıkış Yap
+              </Button>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Main content */}
       <main className="flex-1">
         {children}
       </main>
-
-      {/* WhatsApp Support */}
-      <WhatsAppButton />
-
-      {/* Footer */}
-      <footer className="py-16 border-t border-slate-700/50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-neon-cyan to-neon-purple flex items-center justify-center">
-                  <i className="fas fa-satellite text-white text-lg"></i>
-                </div>
-                <h3 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  AdeGloba Starlink System
-                </h3>
-              </div>
-              <p className="text-slate-400 mb-4">
-                Providing reliable satellite internet connectivity for maritime operations worldwide.
-              </p>
-              <div className="flex space-x-4">
-                <a href="#" className="text-slate-400 hover:text-neon-cyan transition-colors" data-testid="social-twitter">
-                  <i className="fab fa-twitter"></i>
-                </a>
-                <a href="#" className="text-slate-400 hover:text-neon-cyan transition-colors" data-testid="social-linkedin">
-                  <i className="fab fa-linkedin"></i>
-                </a>
-                <a href="#" className="text-slate-400 hover:text-neon-cyan transition-colors" data-testid="social-facebook">
-                  <i className="fab fa-facebook"></i>
-                </a>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold text-white mb-4">Services</h4>
-              <ul className="space-y-2 text-slate-400">
-                <li><Link href="/#ships" className="hover:text-neon-cyan transition-colors">Data Packages</Link></li>
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">Ship Management</a></li>
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">24/7 Support</a></li>
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">Custom Solutions</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold text-white mb-4">Support</h4>
-              <ul className="space-y-2 text-slate-400">
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">API Documentation</a></li>
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">Status Page</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold text-white mb-4">Legal</h4>
-              <ul className="space-y-2 text-slate-400">
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">Cookie Policy</a></li>
-                <li><a href="#" className="hover:text-neon-cyan transition-colors">Compliance</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-700/50 mt-12 pt-8 text-center text-slate-400">
-            <p>&copy; 2024 StarLink Marine. All rights reserved. Built with cutting-edge satellite technology.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
