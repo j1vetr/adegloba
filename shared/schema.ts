@@ -266,7 +266,7 @@ export const ticketAttachmentsRelations = relations(ticketAttachments, ({ one })
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
-  createdAt: true,
+  created_at: true,
 });
 
 export const registerSchema = createInsertSchema(users, {
@@ -348,13 +348,6 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
-export type InsertTicket = typeof tickets.$inferInsert & { message: string };
-export type Ticket = typeof tickets.$inferSelect;
-export type InsertTicketMessage = typeof ticketMessages.$inferInsert;
-export type TicketMessage = typeof ticketMessages.$inferSelect;
-export type InsertTicketAttachment = typeof ticketAttachments.$inferInsert;
-export type TicketAttachment = typeof ticketAttachments.$inferSelect;
-
 // Ticket system schemas and types
 export const insertTicketSchema = createInsertSchema(tickets).omit({
   id: true,
@@ -372,9 +365,9 @@ export const insertTicketAttachmentSchema = createInsertSchema(ticketAttachments
   createdAt: true,
 });
 
+export type InsertTicket = z.infer<typeof insertTicketSchema> & { message: string };
 export type Ticket = typeof tickets.$inferSelect;
-export type InsertTicket = z.infer<typeof insertTicketSchema>;
-export type TicketMessage = typeof ticketMessages.$inferSelect;
 export type InsertTicketMessage = z.infer<typeof insertTicketMessageSchema>;
-export type TicketAttachment = typeof ticketAttachments.$inferSelect;
+export type TicketMessage = typeof ticketMessages.$inferSelect;
 export type InsertTicketAttachment = z.infer<typeof insertTicketAttachmentSchema>;
+export type TicketAttachment = typeof ticketAttachments.$inferSelect;
