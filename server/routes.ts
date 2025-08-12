@@ -722,14 +722,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User Ticket System Routes
-  app.get('/api/tickets', isAuthenticated, async (req, res) => {
+  app.get('/api/tickets', (req: any, res: any, next: any) => {
+    if (req.session && req.session.userId) {
+      return next();
+    }
+    return res.status(401).json({ message: 'Unauthorized' });
+  }, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
-      if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
-
-      const tickets = await storage.getUserTickets(userId);
+      const userId = req.session.userId;
+      
+      const tickets = await storage.getTicketsByUserId(userId);
       res.json(tickets);
     } catch (error) {
       console.error('Error fetching tickets:', error);
@@ -737,14 +739,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/tickets/:ticketId', isAuthenticated, async (req, res) => {
+  app.get('/api/tickets/:ticketId', (req: any, res: any, next: any) => {
+    if (req.session && req.session.userId) {
+      return next();
+    }
+    return res.status(401).json({ message: 'Unauthorized' });
+  }, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.session.userId;
       const { ticketId } = req.params;
-      
-      if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
 
       const ticket = await storage.getTicketById(ticketId);
       if (!ticket || ticket.userId !== userId) {
@@ -759,12 +762,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/tickets', isAuthenticated, async (req, res) => {
+  app.post('/api/tickets', (req: any, res: any, next: any) => {
+    if (req.session && req.session.userId) {
+      return next();
+    }
+    return res.status(401).json({ message: 'Unauthorized' });
+  }, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
-      if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
+      const userId = req.session.userId;
 
       // Get user's ship_id for the ticket
       const user = await storage.getUserById(userId);
@@ -786,14 +791,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/tickets/:ticketId/messages', isAuthenticated, async (req, res) => {
+  app.post('/api/tickets/:ticketId/messages', (req: any, res: any, next: any) => {
+    if (req.session && req.session.userId) {
+      return next();
+    }
+    return res.status(401).json({ message: 'Unauthorized' });
+  }, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.session.userId;
       const { ticketId } = req.params;
-      
-      if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
 
       // Verify ticket belongs to user
       const ticket = await storage.getTicketById(ticketId);
@@ -811,7 +817,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await storage.createTicketMessage(messageData);
       
       // Update ticket status to show user replied
-      await storage.updateTicketStatus(ticketId, 'Beklemede', null);
+      await storage.updateTicketStatus(ticketId, 'Beklemede');
       
       res.status(201).json(message);
     } catch (error) {
