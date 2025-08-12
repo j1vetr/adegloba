@@ -8,6 +8,17 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## Complete Credential Pool Page Redesign (August 12, 2025)
+- Redesigned Credential Pool page with full AdminLayout integration (sidebar, topbar, breadcrumbs)
+- Implemented textarea-based credential import system replacing CSV upload
+- Added comprehensive searchable and paginated credential table with filters
+- Features: username search, status filters (assigned/available), bulk actions, responsive design
+- Enhanced UI with dark futuristic maritime theme and glassmorphism effects
+- Included credential stats dashboard showing available/assigned/total counts
+- Added bulk delete functionality with checkbox selection system
+- Implemented proper admin permissions and mobile-responsive design
+- Format: each line as "username,password" with validation and error reporting
+
 ## Comprehensive Settings Management System (August 12, 2025)
 - Implemented complete Settings (Ayarlar) page with 5 categorized sections
 - Database schema with settings table (key, value, category, timestamps)
