@@ -146,6 +146,28 @@ export default function ShipsManagement() {
     },
   });
 
+  const toggleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const ship = ships?.find((s: Ship) => s.id === id);
+      if (!ship) return;
+      return await apiRequest("PUT", `/api/admin/ships/${id}`, { isActive: !ship.isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/ships"] });
+      toast({
+        title: "Başarılı",
+        description: "Gemi durumu güncellendi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
       return await apiRequest("PUT", `/api/admin/ships/${id}`, { isActive });
@@ -241,6 +263,21 @@ export default function ShipsManagement() {
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Gemiler</h1>
             <p className="text-slate-400">Sisteme kayıtlı gemileri yönetin</p>
+            {ships && (
+              <div className="flex items-center gap-4 mt-2 text-sm text-slate-300">
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-400" />
+                  Aktif: {ships.filter((ship: Ship) => ship.isActive).length}
+                </span>
+                <span className="flex items-center gap-2">
+                  <XCircle className="h-4 w-4 text-red-400" />
+                  Pasif: {ships.filter((ship: Ship) => !ship.isActive).length}
+                </span>
+                <span className="text-slate-500">
+                  Toplam: {ships.length}
+                </span>
+              </div>
+            )}
           </div>
           <Button 
             onClick={openCreateModal} 
@@ -357,66 +394,68 @@ export default function ShipsManagement() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Badge 
-                                variant={ship.isActive ? "default" : "secondary"}
-                                className={ship.isActive 
-                                  ? "bg-green-500/20 text-green-400 border-green-500/30" 
-                                  : "bg-slate-500/20 text-slate-400 border-slate-500/30"
-                                }
-                              >
-                                {ship.isActive ? (
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                ) : (
-                                  <XCircle className="h-3 w-3 mr-1" />
-                                )}
-                                {ship.isActive ? "Aktif" : "Pasif"}
-                              </Badge>
-                              <Switch
-                                checked={ship.isActive}
-                                onCheckedChange={(checked) => 
-                                  toggleStatusMutation.mutate({ id: ship.id, isActive: checked })
-                                }
-                                disabled={toggleStatusMutation.isPending}
-                                className="data-[state=checked]:bg-primary"
-                              />
+                              {ship.isActive ? (
+                                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3" />
+                                  Aktif (Kayıt'ta Görünür)
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 flex items-center gap-1">
+                                  <XCircle className="h-3 w-3" />
+                                  Pasif (Kayıt'ta Gizli)
+                                </Badge>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2 text-slate-400">
-                              <Calendar className="h-4 w-4" />
-                              <span className="text-sm">{formatDate(ship.createdAt)}</span>
+                            <div className="text-slate-300 text-sm">
+                              {formatDate(ship.createdAt)}
                             </div>
                           </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-primary/10"
-                                  data-testid={`button-actions-${ship.id}`}
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="bg-slate-800/95 border-slate-700">
-                                <DropdownMenuItem 
-                                  onClick={() => openEditModal(ship)}
-                                  className="text-white hover:bg-primary/10 cursor-pointer"
-                                  data-testid={`button-edit-${ship.id}`}
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Düzenle
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  onClick={() => setDeleteShip(ship)}
-                                  className="text-red-400 hover:bg-red-500/10 cursor-pointer"
-                                  data-testid={`button-delete-${ship.id}`}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Sil
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                          <TableCell>
+                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleMutation.mutate(ship.id)}
+                                disabled={toggleMutation.isPending}
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-slate-700/50"
+                                data-testid={`button-toggle-${ship.id}`}
+                              >
+                                {ship.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </Button>
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-slate-700/50"
+                                    data-testid={`button-menu-${ship.id}`}
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="bg-slate-800/95 border-slate-600 backdrop-blur-xl">
+                                  <DropdownMenuItem
+                                    onClick={() => openEditModal(ship)}
+                                    className="flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50"
+                                    data-testid={`menu-edit-${ship.id}`}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                    Düzenle
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setDeleteShip(ship)}
+                                    className="flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                    data-testid={`menu-delete-${ship.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    Sil
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
