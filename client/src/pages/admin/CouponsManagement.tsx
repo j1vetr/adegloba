@@ -1,134 +1,130 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import AdminLayout from "@/components/AdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import type { Coupon } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { insertCouponSchema } from "@shared/schema";
+import { z } from "zod";
+import {
+  Ticket,
+  Edit,
+  Trash2,
+  Plus,
+  Eye,
+  EyeOff,
+  Loader2,
+  Percent,
+  Calendar,
+  Users,
+  DollarSign
+} from "lucide-react";
+
+type Coupon = {
+  id: string;
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minOrderAmount: number | null;
+  maxUses: number | null;
+  usedCount: number;
+  validFrom: string | null;
+  validUntil: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type CouponFormData = z.infer<typeof insertCouponSchema>;
 
 export default function CouponsManagement() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({
-    code: '',
-    type: 'percent',
-    value: '',
-    maxUses: '',
-    startsAt: '',
-    endsAt: '',
-    shipId: '',
-    isActive: true
+  const [deleteCoupon, setDeleteCoupon] = useState<Coupon | null>(null);
+  const [formData, setFormData] = useState<CouponFormData>({
+    code: "",
+    discountType: 'percentage',
+    discountValue: 10,
+    minOrderAmount: null,
+    maxUses: null,
+    validFrom: null,
+    validUntil: null,
+    isActive: true,
   });
 
-  const { data: coupons, isLoading } = useQuery<Coupon[]>({
-    queryKey: ["/api/admin/coupons"]
+  const { data: coupons, isLoading } = useQuery({
+    queryKey: ["/api/admin/coupons"],
   });
 
-  const { data: ships } = useQuery({
-    queryKey: ["/api/admin/ships"]
-  });
-
-  const createCouponMutation = useMutation({
-    mutationFn: async (couponData: any) => {
-      const response = await apiRequest('POST', '/api/admin/coupons', couponData);
-      return response.json();
+  const createMutation = useMutation({
+    mutationFn: async (data: CouponFormData) => {
+      return await apiRequest("POST", "/api/admin/coupons", data);
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Coupon created successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
-      setIsCreating(false);
+      setIsFormOpen(false);
       resetForm();
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
       toast({
-        title: "Error",
-        description: error.message || "Failed to create coupon",
+        title: "Başarılı",
+        description: "Kupon başarıyla oluşturuldu.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const updateCouponMutation = useMutation({
-    mutationFn: async ({ id, couponData }: { id: string; couponData: any }) => {
-      const response = await apiRequest('PUT', `/api/admin/coupons/${id}`, couponData);
-      return response.json();
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CouponFormData> }) => {
+      return await apiRequest("PUT", `/api/admin/coupons/${id}`, data);
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Coupon updated successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
+      setIsFormOpen(false);
       setEditingCoupon(null);
       resetForm();
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
       toast({
-        title: "Error",
-        description: error.message || "Failed to update coupon",
+        title: "Başarılı",
+        description: "Kupon başarıyla güncellendi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const deleteCouponMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest('DELETE', `/api/admin/coupons/${id}`);
-      return response.json();
+      return await apiRequest("DELETE", `/api/admin/coupons/${id}`);
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Coupon deleted successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
+      setDeleteCoupon(null);
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete coupon",
+        title: "Başarılı",
+        description: "Kupon başarıyla silindi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -136,298 +132,411 @@ export default function CouponsManagement() {
 
   const resetForm = () => {
     setFormData({
-      code: '',
-      type: 'percent',
-      value: '',
-      maxUses: '',
-      startsAt: '',
-      endsAt: '',
-      shipId: '',
-      isActive: true
+      code: "",
+      discountType: 'percentage',
+      discountValue: 10,
+      minOrderAmount: null,
+      maxUses: null,
+      validFrom: null,
+      validUntil: null,
+      isActive: true,
     });
   };
 
+  const handleAdd = () => {
+    resetForm();
+    setEditingCoupon(null);
+    setIsFormOpen(true);
+  };
+
   const handleEdit = (coupon: Coupon) => {
-    setEditingCoupon(coupon);
     setFormData({
       code: coupon.code,
-      type: coupon.type,
-      value: coupon.value,
-      maxUses: coupon.maxUses?.toString() || '',
-      startsAt: coupon.startsAt ? new Date(coupon.startsAt).toISOString().slice(0, 16) : '',
-      endsAt: coupon.endsAt ? new Date(coupon.endsAt).toISOString().slice(0, 16) : '',
-      shipId: coupon.shipId || '',
-      isActive: coupon.isActive
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      minOrderAmount: coupon.minOrderAmount,
+      maxUses: coupon.maxUses,
+      validFrom: coupon.validFrom ? new Date(coupon.validFrom).toISOString().split('T')[0] : null,
+      validUntil: coupon.validUntil ? new Date(coupon.validUntil).toISOString().split('T')[0] : null,
+      isActive: coupon.isActive,
     });
-    setIsCreating(true);
+    setEditingCoupon(coupon);
+    setIsFormOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const couponData = {
-      ...formData,
-      maxUses: formData.maxUses ? parseInt(formData.maxUses) : null,
-      startsAt: formData.startsAt ? new Date(formData.startsAt).toISOString() : null,
-      endsAt: formData.endsAt ? new Date(formData.endsAt).toISOString() : null,
-      shipId: formData.shipId || null
-    };
-    
+
+    // Auto-generate coupon code if empty
+    if (!formData.code) {
+      const randomCode = 'SAVE' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      formData.code = randomCode;
+    }
+
     if (editingCoupon) {
-      updateCouponMutation.mutate({ id: editingCoupon.id, couponData });
+      updateMutation.mutate({ id: editingCoupon.id, data: formData });
     } else {
-      createCouponMutation.mutate(couponData);
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this coupon?')) {
-      deleteCouponMutation.mutate(id);
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatDiscount = (type: string, value: number) => {
+    if (type === 'percentage') {
+      return `%${value}`;
     }
+    return `$${value}`;
   };
 
-  const getUsagePercentage = (coupon: Coupon) => {
-    if (!coupon.maxUses) return 0;
-    return (coupon.uses / coupon.maxUses) * 100;
+  const getStatusColor = (coupon: Coupon) => {
+    if (!coupon.isActive) return "bg-gray-600 text-white";
+    
+    const now = new Date();
+    const validUntil = coupon.validUntil ? new Date(coupon.validUntil) : null;
+    
+    if (validUntil && now > validUntil) return "bg-red-600 text-white";
+    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) return "bg-orange-600 text-white";
+    
+    return "bg-green-600 text-white";
   };
 
-  if (isLoading) {
-    return <div className="text-center">Loading coupons...</div>;
-  }
+  const getStatusText = (coupon: Coupon) => {
+    if (!coupon.isActive) return "Pasif";
+    
+    const now = new Date();
+    const validUntil = coupon.validUntil ? new Date(coupon.validUntil) : null;
+    
+    if (validUntil && now > validUntil) return "Süresi Doldu";
+    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) return "Kullanım Tükendi";
+    
+    return "Aktif";
+  };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-white">Coupons Management</h3>
-        <Button
-          onClick={() => setIsCreating(true)}
-          className="bg-neon-cyan text-white hover:bg-neon-cyan/80"
-          data-testid="create-coupon-button"
-        >
-          <i className="fas fa-plus mr-2"></i>Add Coupon
-        </Button>
-      </div>
+    <AdminLayout title="Kuponlar" showAddButton onAddClick={handleAdd}>
+      <div className="space-y-6">
+        {/* Coupons Grid */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          </div>
+        ) : coupons?.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {coupons.map((coupon: Coupon) => (
+              <Card key={coupon.id} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Ticket className="h-5 w-5 text-yellow-400" />
+                      <CardTitle className="text-lg text-white font-mono">{coupon.code}</CardTitle>
+                    </div>
+                    <Badge className={getStatusColor(coupon)}>
+                      {getStatusText(coupon) === "Aktif" ? (
+                        <><Eye className="h-3 w-3 mr-1" /> Aktif</>
+                      ) : (
+                        <><EyeOff className="h-3 w-3 mr-1" /> {getStatusText(coupon)}</>
+                      )}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  {/* Discount */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-slate-400">İndirim</div>
+                    <div className="text-xl font-bold text-green-400 flex items-center gap-1">
+                      {coupon.discountType === 'percentage' ? (
+                        <><Percent className="h-4 w-4" /> {coupon.discountValue}%</>
+                      ) : (
+                        <><DollarSign className="h-4 w-4" /> ${coupon.discountValue}</>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Usage Stats */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-slate-400">Kullanım</div>
+                    <div className="text-sm font-semibold text-cyan-400 flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      {coupon.usedCount}{coupon.maxUses ? ` / ${coupon.maxUses}` : ''}
+                    </div>
+                  </div>
+                  
+                  {/* Min Order Amount */}
+                  {coupon.minOrderAmount && (
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-slate-400">Min. Sipariş</div>
+                      <div className="text-sm text-slate-300">${coupon.minOrderAmount}</div>
+                    </div>
+                  )}
+                  
+                  {/* Validity Period */}
+                  {(coupon.validFrom || coupon.validUntil) && (
+                    <div>
+                      <div className="text-sm text-slate-400">Geçerlilik</div>
+                      <div className="text-sm text-slate-300">
+                        {coupon.validFrom && formatDate(coupon.validFrom)}
+                        {coupon.validFrom && coupon.validUntil && ' - '}
+                        {coupon.validUntil && formatDate(coupon.validUntil)}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Calendar className="h-3 w-3" />
+                    Oluşturulma: {formatDate(coupon.createdAt)}
+                  </div>
+                  
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleEdit(coupon)}
+                      className="flex-1 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                      data-testid={`edit-coupon-${coupon.id}`}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Düzenle
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDeleteCoupon(coupon)}
+                      className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                      data-testid={`delete-coupon-${coupon.id}`}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Sil
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-slate-800/50 border-slate-700/50">
+            <CardContent className="text-center py-12">
+              <Ticket className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">Henüz Kupon Yok</h3>
+              <p className="text-slate-400 mb-6">İlk indirim kuponunuzu oluşturmak için "Yeni Ekle" butonuna tıklayın.</p>
+              <Button
+                onClick={handleAdd}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                İlk Kupon Ekle
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-      {isCreating && (
-        <Card className="glassmorphism rounded-xl p-6 mb-6 border-transparent" data-testid="coupon-form">
-          <h4 className="text-lg font-semibold text-white mb-4">
-            {editingCoupon ? 'Edit Coupon' : 'Create New Coupon'}
-          </h4>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-slate-300">Coupon Code</Label>
-                <Input
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  className="glassmorphism border-slate-600 text-white"
-                  placeholder="e.g., SAVE20"
-                  required
-                  data-testid="coupon-code-input"
-                />
-              </div>
-              
-              <div>
-                <Label className="text-slate-300">Type</Label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg glassmorphism border border-slate-600 text-white bg-transparent"
-                  data-testid="coupon-type-select"
-                >
-                  <option value="percent">Percentage</option>
-                  <option value="fixed">Fixed Amount</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-slate-300">
-                  Value {formData.type === 'percent' ? '(%)' : '($)'}
+        {/* Add/Edit Form Dialog */}
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogContent className="bg-slate-800 border-slate-700 max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-white">
+                {editingCoupon ? "Kupon Düzenle" : "Yeni Kupon Ekle"}
+              </DialogTitle>
+              <DialogDescription className="text-slate-400">
+                {editingCoupon ? "Mevcut kupon bilgilerini güncelleyin." : "Yeni bir indirim kuponu oluşturun."}
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="code" className="text-slate-300">
+                  Kupon Kodu
                 </Label>
                 <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.value}
-                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                  className="glassmorphism border-slate-600 text-white"
-                  placeholder={formData.type === 'percent' ? '20' : '50.00'}
-                  required
-                  data-testid="coupon-value-input"
+                  id="code"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                  placeholder="Boş bırakılırsa otomatik oluşturulur"
+                  className="bg-slate-700 border-slate-600 text-white font-mono"
+                  data-testid="coupon-code-input"
                 />
+                <p className="text-xs text-slate-400">
+                  Örn: SAVE20, WELCOME10 (boş bırakılırsa otomatik oluşturulur)
+                </p>
               </div>
-              
-              <div>
-                <Label className="text-slate-300">Max Uses</Label>
-                <Input
-                  type="number"
-                  value={formData.maxUses}
-                  onChange={(e) => setFormData({ ...formData, maxUses: e.target.value })}
-                  className="glassmorphism border-slate-600 text-white"
-                  placeholder="Leave empty for unlimited"
-                  data-testid="coupon-max-uses-input"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-slate-300">Start Date</Label>
-                <Input
-                  type="datetime-local"
-                  value={formData.startsAt}
-                  onChange={(e) => setFormData({ ...formData, startsAt: e.target.value })}
-                  className="glassmorphism border-slate-600 text-white"
-                  data-testid="coupon-start-date-input"
-                />
-              </div>
-              
-              <div>
-                <Label className="text-slate-300">End Date</Label>
-                <Input
-                  type="datetime-local"
-                  value={formData.endsAt}
-                  onChange={(e) => setFormData({ ...formData, endsAt: e.target.value })}
-                  className="glassmorphism border-slate-600 text-white"
-                  data-testid="coupon-end-date-input"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label className="text-slate-300">Ship Restriction (Optional)</Label>
-              <select
-                value={formData.shipId}
-                onChange={(e) => setFormData({ ...formData, shipId: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg glassmorphism border border-slate-600 text-white bg-transparent"
-                data-testid="coupon-ship-select"
-              >
-                <option value="">All Ships</option>
-                {ships?.map((ship: any) => (
-                  <option key={ship.id} value={ship.id}>{ship.name}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isActive"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="rounded"
-                data-testid="coupon-active-checkbox"
-              />
-              <Label htmlFor="isActive" className="text-slate-300">Active</Label>
-            </div>
-            
-            <div className="flex space-x-3">
-              <Button 
-                type="submit" 
-                disabled={createCouponMutation.isPending || updateCouponMutation.isPending}
-                className="bg-neon-cyan text-white hover:bg-neon-cyan/80"
-                data-testid="save-coupon-button"
-              >
-                {createCouponMutation.isPending || updateCouponMutation.isPending 
-                  ? 'Saving...' 
-                  : editingCoupon ? 'Update Coupon' : 'Create Coupon'
-                }
-              </Button>
-              <Button 
-                type="button" 
-                variant="ghost"
-                onClick={() => {
-                  setIsCreating(false);
-                  setEditingCoupon(null);
-                  resetForm();
-                }}
-                data-testid="cancel-coupon-button"
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
 
-      {/* Coupons List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {coupons?.map((coupon) => (
-          <Card key={coupon.id} className="glassmorphism rounded-xl p-6 border-transparent" data-testid={`coupon-card-${coupon.id}`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="font-mono text-lg font-bold text-neon-cyan" data-testid={`coupon-code-${coupon.id}`}>
-                {coupon.code}
-              </div>
-              <Badge 
-                className={`${
-                  coupon.isActive 
-                    ? 'bg-neon-green/20 text-neon-green' 
-                    : 'bg-slate-500/20 text-slate-400'
-                } border-transparent`}
-                data-testid={`coupon-status-${coupon.id}`}
-              >
-                {coupon.isActive ? 'Active' : 'Inactive'}
-              </Badge>
-            </div>
-            
-            <div className="space-y-2 mb-4">
-              <div className="text-2xl font-bold text-white" data-testid={`coupon-value-${coupon.id}`}>
-                {coupon.type === 'percent' ? `${coupon.value}% OFF` : `$${coupon.value} OFF`}
-              </div>
-              
-              <div className="text-sm text-slate-400">
-                <i className="fas fa-calendar mr-2"></i>
-                {coupon.startsAt ? new Date(coupon.startsAt).toLocaleDateString() : 'No start date'} - 
-                {coupon.endsAt ? new Date(coupon.endsAt).toLocaleDateString() : 'No end date'}
-              </div>
-              
-              {coupon.maxUses && (
-                <div className="text-sm text-slate-400" data-testid={`coupon-usage-${coupon.id}`}>
-                  <i className="fas fa-chart-bar mr-2"></i>
-                  Used: {coupon.uses} / {coupon.maxUses} ({getUsagePercentage(coupon).toFixed(0)}%)
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="discountType" className="text-slate-300">
+                    İndirim Türü *
+                  </Label>
+                  <Select
+                    value={formData.discountType}
+                    onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, discountType: value })}
+                  >
+                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white" data-testid="coupon-type-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-700 border-slate-600">
+                      <SelectItem value="percentage">Yüzde (%)</SelectItem>
+                      <SelectItem value="fixed">Sabit Tutar ($)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-              
-              {coupon.shipId && (
-                <div className="text-sm text-slate-400">
-                  <i className="fas fa-ship mr-2"></i>
-                  Ship-specific coupon
+
+                <div className="space-y-2">
+                  <Label htmlFor="discountValue" className="text-slate-300">
+                    İndirim Miktarı *
+                  </Label>
+                  <Input
+                    id="discountValue"
+                    type="number"
+                    step={formData.discountType === 'percentage' ? "1" : "0.01"}
+                    min="0"
+                    max={formData.discountType === 'percentage' ? "100" : undefined}
+                    value={formData.discountValue}
+                    onChange={(e) => setFormData({ ...formData, discountValue: parseFloat(e.target.value) || 0 })}
+                    className="bg-slate-700 border-slate-600 text-white"
+                    required
+                    data-testid="coupon-value-input"
+                  />
                 </div>
-              )}
-            </div>
-            
-            <div className="flex space-x-2">
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="minOrderAmount" className="text-slate-300">
+                    Min. Sipariş Tutarı ($)
+                  </Label>
+                  <Input
+                    id="minOrderAmount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.minOrderAmount || ''}
+                    onChange={(e) => setFormData({ ...formData, minOrderAmount: parseFloat(e.target.value) || null })}
+                    placeholder="Sınır yok"
+                    className="bg-slate-700 border-slate-600 text-white"
+                    data-testid="coupon-min-amount-input"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maxUses" className="text-slate-300">
+                    Max. Kullanım Sayısı
+                  </Label>
+                  <Input
+                    id="maxUses"
+                    type="number"
+                    min="1"
+                    value={formData.maxUses || ''}
+                    onChange={(e) => setFormData({ ...formData, maxUses: parseInt(e.target.value) || null })}
+                    placeholder="Sınırsız"
+                    className="bg-slate-700 border-slate-600 text-white"
+                    data-testid="coupon-max-uses-input"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="validFrom" className="text-slate-300">
+                    Geçerli Başlangıç
+                  </Label>
+                  <Input
+                    id="validFrom"
+                    type="date"
+                    value={formData.validFrom || ''}
+                    onChange={(e) => setFormData({ ...formData, validFrom: e.target.value || null })}
+                    className="bg-slate-700 border-slate-600 text-white"
+                    data-testid="coupon-valid-from-input"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="validUntil" className="text-slate-300">
+                    Geçerli Bitiş
+                  </Label>
+                  <Input
+                    id="validUntil"
+                    type="date"
+                    value={formData.validUntil || ''}
+                    onChange={(e) => setFormData({ ...formData, validUntil: e.target.value || null })}
+                    className="bg-slate-700 border-slate-600 text-white"
+                    data-testid="coupon-valid-until-input"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isActive"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                  data-testid="coupon-active-switch"
+                />
+                <Label htmlFor="isActive" className="text-slate-300">
+                  Aktif durumda
+                </Label>
+              </div>
+            </form>
+
+            <DialogFooter>
               <Button
-                size="sm"
-                onClick={() => handleEdit(coupon)}
-                className="bg-neon-purple/20 text-neon-purple hover:bg-neon-purple/30 border-transparent"
-                data-testid={`edit-coupon-${coupon.id}`}
+                type="button"
+                variant="outline"
+                onClick={() => setIsFormOpen(false)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
               >
-                <i className="fas fa-edit mr-1"></i>Edit
+                İptal
               </Button>
               <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => handleDelete(coupon.id)}
-                className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                data-testid={`delete-coupon-${coupon.id}`}
+                onClick={handleSubmit}
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                data-testid="coupon-submit-button"
               >
-                <i className="fas fa-trash mr-1"></i>Delete
+                {(createMutation.isPending || updateMutation.isPending) && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
+                {editingCoupon ? "Güncelle" : "Oluştur"}
               </Button>
-            </div>
-          </Card>
-        ))}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!deleteCoupon} onOpenChange={() => setDeleteCoupon(null)}>
+          <DialogContent className="bg-slate-800 border-slate-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">Kupon Sil</DialogTitle>
+              <DialogDescription className="text-slate-400">
+                "{deleteCoupon?.code}" kuponunu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteCoupon(null)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                İptal
+              </Button>
+              <Button
+                onClick={() => deleteCoupon && deleteMutation.mutate(deleteCoupon.id)}
+                disabled={deleteMutation.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                data-testid="confirm-delete-coupon"
+              >
+                {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Sil
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {coupons?.length === 0 && (
-        <div className="text-center py-12" data-testid="no-coupons">
-          <i className="fas fa-ticket-alt text-6xl text-slate-500 mb-4"></i>
-          <h3 className="text-xl font-semibold text-slate-400 mb-2">No coupons found</h3>
-          <p className="text-slate-500">Create your first coupon to get started.</p>
-        </div>
-      )}
-    </div>
+    </AdminLayout>
   );
 }

@@ -41,6 +41,9 @@ export interface IStorage {
   getUserActivePackages(userId: string): Promise<any[]>;
   getShipPlans(shipId: string): Promise<Plan[]>;
   createUser(user: InsertUser): Promise<User>;
+  getAllUsers(): Promise<(User & { ship?: Ship })[]>;
+  getRecentUsers(limit: number): Promise<(User & { ship?: Ship })[]>;
+  getRecentOrders(limit: number): Promise<(Order & { user?: User })[]>;
   
   // Admin User operations
   getAdminUser(id: string): Promise<AdminUser | undefined>;
@@ -94,6 +97,18 @@ export interface IStorage {
   getSetting(key: string): Promise<Setting | undefined>;
   setSetting(key: string, value: string): Promise<Setting>;
   
+  // User admin operations
+  getAllUsers(): Promise<(User & { ship?: Ship })[]>;
+  getRecentUsers(limit: number): Promise<(User & { ship?: Ship })[]>;
+  getRecentOrders(limit: number): Promise<(Order & { user?: User })[]>;
+  
+  // Order admin operations
+  getAllOrders(): Promise<(Order & { user?: User })[]>;
+  updateOrderStatus(orderId: string, status: string): Promise<void>;
+
+  // Settings operations
+  getAllSettings(): Promise<Setting[]>;
+
   // Statistics
   getOrderStats(): Promise<{ totalRevenue: number; activeOrders: number; totalOrders: number }>;
 }
@@ -422,6 +437,93 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return setting;
+  }
+
+  // User admin operations
+  async getAllUsers(): Promise<(User & { ship?: Ship })[]> {
+    return db
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        shipId: users.shipId,
+        created_at: users.createdAt,
+        ship: {
+          id: ships.id,
+          name: ships.name,
+          slug: ships.slug,
+        }
+      })
+      .from(users)
+      .leftJoin(ships, eq(users.shipId, ships.id))
+      .orderBy(desc(users.createdAt));
+  }
+
+  async getAllUsers(): Promise<(User & { ship?: Ship })[]> {
+    const result = await db
+      .select()
+      .from(users)
+      .leftJoin(ships, eq(users.shipId, ships.id))
+      .orderBy(desc(users.createdAt));
+      
+    return result.map(row => ({
+      ...row.users,
+      ship: row.ships || undefined
+    }));
+  }
+
+  async getRecentUsers(limit: number): Promise<(User & { ship?: Ship })[]> {
+    const result = await db
+      .select()
+      .from(users)
+      .leftJoin(ships, eq(users.shipId, ships.id))
+      .orderBy(desc(users.createdAt))
+      .limit(limit);
+      
+    return result.map(row => ({
+      ...row.users,
+      ship: row.ships || undefined
+    }));
+  }
+
+  async getRecentOrders(limit: number): Promise<(Order & { user?: User })[]> {
+    const result = await db
+      .select()
+      .from(orders)
+      .leftJoin(users, eq(orders.userId, users.id))
+      .orderBy(desc(orders.createdAt))
+      .limit(limit);
+      
+    return result.map(row => ({
+      ...row.orders,
+      user: row.users || undefined
+    }));
+  }
+
+  // Order admin operations
+  async getAllOrders(): Promise<(Order & { user?: User })[]> {
+    const result = await db
+      .select()
+      .from(orders)
+      .leftJoin(users, eq(orders.userId, users.id))
+      .orderBy(desc(orders.createdAt));
+      
+    return result.map(row => ({
+      ...row.orders,
+      user: row.users || undefined
+    }));
+  }
+
+  async updateOrderStatus(orderId: string, status: string): Promise<void> {
+    await db
+      .update(orders)
+      .set({ status: status as 'pending' | 'paid' | 'expired' | 'cancelled' })
+      .where(eq(orders.id, orderId));
+  }
+
+  // Settings operations
+  async getAllSettings(): Promise<Setting[]> {
+    return db.select().from(settings).orderBy(settings.key);
   }
 
   // Statistics

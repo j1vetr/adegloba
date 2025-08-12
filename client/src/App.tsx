@@ -19,6 +19,12 @@ import Giris from "@/pages/Giris";
 import Panel from "@/pages/Panel";
 import Paketler from "@/pages/Paketler";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import ShipsManagement from "@/pages/admin/ShipsManagement";
+import PlansManagement from "@/pages/admin/PlansManagement";
+import CouponsManagement from "@/pages/admin/CouponsManagement";
+import OrdersManagement from "@/pages/admin/OrdersManagement";
+import UsersManagement from "@/pages/admin/UsersManagement";
+import SettingsManagement from "@/pages/admin/SettingsManagement";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
 
@@ -38,6 +44,42 @@ function Router() {
       <Route path="/admin">
         <AdminProtectedRoute>
           <AdminDashboard />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/ships">
+        <AdminProtectedRoute>
+          <ShipsManagement />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/plans">
+        <AdminProtectedRoute>
+          <PlansManagement />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/coupons">
+        <AdminProtectedRoute>
+          <CouponsManagement />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/orders">
+        <AdminProtectedRoute>
+          <OrdersManagement />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/users">
+        <AdminProtectedRoute>
+          <UsersManagement />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/settings">
+        <AdminProtectedRoute>
+          <SettingsManagement />
         </AdminProtectedRoute>
       </Route>
       

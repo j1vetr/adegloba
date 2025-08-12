@@ -1,128 +1,121 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import AdminLayout from "@/components/AdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import type { Ship } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { insertShipSchema } from "@shared/schema";
+import { z } from "zod";
+import {
+  Ship,
+  Edit,
+  Trash2,
+  Plus,
+  Eye,
+  EyeOff,
+  Loader2,
+  Image,
+  Calendar
+} from "lucide-react";
+
+type Ship = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  imageUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type ShipFormData = z.infer<typeof insertShipSchema>;
 
 export default function ShipsManagement() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingShip, setEditingShip] = useState<Ship | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-    description: '',
-    imageUrl: '',
-    isActive: true
+  const [deleteShip, setDeleteShip] = useState<Ship | null>(null);
+  const [formData, setFormData] = useState<ShipFormData>({
+    name: "",
+    slug: "",
+    description: "",
+    imageUrl: "",
+    isActive: true,
   });
 
-  const { data: ships, isLoading } = useQuery<Ship[]>({
-    queryKey: ["/api/admin/ships"]
+  const { data: ships, isLoading } = useQuery({
+    queryKey: ["/api/admin/ships"],
   });
 
-  const createShipMutation = useMutation({
-    mutationFn: async (shipData: any) => {
-      const response = await apiRequest('POST', '/api/admin/ships', shipData);
-      return response.json();
+  const createMutation = useMutation({
+    mutationFn: async (data: ShipFormData) => {
+      return await apiRequest("POST", "/api/admin/ships", data);
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Ship created successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/ships"] });
-      setIsCreating(false);
+      setIsFormOpen(false);
       resetForm();
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
       toast({
-        title: "Error",
-        description: error.message || "Failed to create ship",
+        title: "Başarılı",
+        description: "Gemi başarıyla oluşturuldu.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const updateShipMutation = useMutation({
-    mutationFn: async ({ id, shipData }: { id: string; shipData: any }) => {
-      const response = await apiRequest('PUT', `/api/admin/ships/${id}`, shipData);
-      return response.json();
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ShipFormData> }) => {
+      return await apiRequest("PUT", `/api/admin/ships/${id}`, data);
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Ship updated successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/ships"] });
+      setIsFormOpen(false);
       setEditingShip(null);
       resetForm();
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
       toast({
-        title: "Error",
-        description: error.message || "Failed to update ship",
+        title: "Başarılı",
+        description: "Gemi başarıyla güncellendi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const deleteShipMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest('DELETE', `/api/admin/ships/${id}`);
-      return response.json();
+      return await apiRequest("DELETE", `/api/admin/ships/${id}`);
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Ship deleted successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/ships"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
+      setDeleteShip(null);
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete ship",
+        title: "Başarılı",
+        description: "Gemi başarıyla silindi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -130,223 +123,311 @@ export default function ShipsManagement() {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      slug: '',
-      description: '',
-      imageUrl: '',
-      isActive: true
+      name: "",
+      slug: "",
+      description: "",
+      imageUrl: "",
+      isActive: true,
     });
   };
 
+  const handleAdd = () => {
+    resetForm();
+    setEditingShip(null);
+    setIsFormOpen(true);
+  };
+
   const handleEdit = (ship: Ship) => {
-    setEditingShip(ship);
     setFormData({
       name: ship.name,
       slug: ship.slug,
-      description: ship.description || '',
-      imageUrl: ship.imageUrl || '',
-      isActive: ship.isActive
+      description: ship.description || "",
+      imageUrl: ship.imageUrl || "",
+      isActive: ship.isActive,
     });
-    setIsCreating(true);
+    setEditingShip(ship);
+    setIsFormOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Auto-generate slug from name if empty
+    if (!formData.slug && formData.name) {
+      formData.slug = formData.name
+        .toLowerCase()
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ş/g, 's')
+        .replace(/ı/g, 'i')
+        .replace(/ö/g, 'o')
+        .replace(/ç/g, 'c')
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    }
+
     if (editingShip) {
-      updateShipMutation.mutate({ id: editingShip.id, shipData: formData });
+      updateMutation.mutate({ id: editingShip.id, data: formData });
     } else {
-      createShipMutation.mutate(formData);
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this ship?')) {
-      deleteShipMutation.mutate(id);
-    }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
-
-  if (isLoading) {
-    return <div className="text-center">Loading ships...</div>;
-  }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-white">Ships Management</h3>
-        <Button
-          onClick={() => setIsCreating(true)}
-          className="bg-neon-cyan text-white hover:bg-neon-cyan/80"
-          data-testid="create-ship-button"
-        >
-          <i className="fas fa-plus mr-2"></i>Add Ship
-        </Button>
-      </div>
+    <AdminLayout title="Gemiler" showAddButton onAddClick={handleAdd}>
+      <div className="space-y-6">
+        {/* Ships Grid */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          </div>
+        ) : ships?.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {ships.map((ship: Ship) => (
+              <Card key={ship.id} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Ship className="h-5 w-5 text-blue-400" />
+                      <CardTitle className="text-lg text-white">{ship.name}</CardTitle>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={ship.isActive ? "default" : "secondary"}
+                        className={ship.isActive ? "bg-green-600 text-white" : "bg-gray-600 text-white"}
+                      >
+                        {ship.isActive ? (
+                          <><Eye className="h-3 w-3 mr-1" /> Aktif</>
+                        ) : (
+                          <><EyeOff className="h-3 w-3 mr-1" /> Pasif</>
+                        )}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  <div>
+                    <div className="text-sm text-slate-400">Slug</div>
+                    <div className="text-sm font-mono text-blue-400">{ship.slug}</div>
+                  </div>
+                  
+                  {ship.description && (
+                    <div>
+                      <div className="text-sm text-slate-400">Açıklama</div>
+                      <div className="text-sm text-slate-300 line-clamp-2">{ship.description}</div>
+                    </div>
+                  )}
+                  
+                  {ship.imageUrl && (
+                    <div>
+                      <div className="text-sm text-slate-400 flex items-center gap-1">
+                        <Image className="h-3 w-3" />
+                        Resim URL
+                      </div>
+                      <div className="text-sm text-blue-400 truncate">{ship.imageUrl}</div>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Calendar className="h-3 w-3" />
+                    Oluşturulma: {formatDate(ship.createdAt)}
+                  </div>
+                  
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleEdit(ship)}
+                      className="flex-1 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                      data-testid={`edit-ship-${ship.id}`}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Düzenle
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDeleteShip(ship)}
+                      className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                      data-testid={`delete-ship-${ship.id}`}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Sil
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-slate-800/50 border-slate-700/50">
+            <CardContent className="text-center py-12">
+              <Ship className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">Henüz Gemi Yok</h3>
+              <p className="text-slate-400 mb-6">İlk geminizi oluşturmak için "Yeni Ekle" butonuna tıklayın.</p>
+              <Button
+                onClick={handleAdd}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                İlk Gemi Ekle
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-      {isCreating && (
-        <Card className="glassmorphism rounded-xl p-6 mb-6 border-transparent" data-testid="ship-form">
-          <h4 className="text-lg font-semibold text-white mb-4">
-            {editingShip ? 'Edit Ship' : 'Create New Ship'}
-          </h4>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-slate-300">Ship Name</Label>
+        {/* Add/Edit Form Dialog */}
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogContent className="bg-slate-800 border-slate-700 max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-white">
+                {editingShip ? "Gemi Düzenle" : "Yeni Gemi Ekle"}
+              </DialogTitle>
+              <DialogDescription className="text-slate-400">
+                {editingShip ? "Mevcut gemi bilgilerini güncelleyin." : "Yeni bir gemi oluşturun."}
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-slate-300">
+                  Gemi Adı *
+                </Label>
                 <Input
+                  id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="glassmorphism border-slate-600 text-white"
-                  placeholder="e.g., AL-1 Atlantis"
+                  placeholder="Örn: M/V Ocean Star"
+                  className="bg-slate-700 border-slate-600 text-white"
                   required
                   data-testid="ship-name-input"
                 />
               </div>
-              
-              <div>
-                <Label className="text-slate-300">Slug</Label>
+
+              <div className="space-y-2">
+                <Label htmlFor="slug" className="text-slate-300">
+                  Slug
+                </Label>
                 <Input
+                  id="slug"
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="glassmorphism border-slate-600 text-white"
-                  placeholder="e.g., al-1-atlantis"
-                  required
+                  placeholder="Boş bırakılırsa otomatik oluşturulur"
+                  className="bg-slate-700 border-slate-600 text-white"
                   data-testid="ship-slug-input"
                 />
+                <p className="text-xs text-slate-400">
+                  URL'de kullanılacak benzersiz kod (örn: ocean-star)
+                </p>
               </div>
-            </div>
-            
-            <div>
-              <Label className="text-slate-300">Description</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="glassmorphism border-slate-600 text-white"
-                placeholder="Ship description..."
-                data-testid="ship-description-input"
-              />
-            </div>
-            
-            <div>
-              <Label className="text-slate-300">Image URL</Label>
-              <Input
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                className="glassmorphism border-slate-600 text-white"
-                placeholder="https://..."
-                data-testid="ship-image-input"
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isActive"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="rounded"
-                data-testid="ship-active-checkbox"
-              />
-              <Label htmlFor="isActive" className="text-slate-300">Active</Label>
-            </div>
-            
-            <div className="flex space-x-3">
-              <Button 
-                type="submit" 
-                disabled={createShipMutation.isPending || updateShipMutation.isPending}
-                className="bg-neon-cyan text-white hover:bg-neon-cyan/80"
-                data-testid="save-ship-button"
-              >
-                {createShipMutation.isPending || updateShipMutation.isPending 
-                  ? 'Saving...' 
-                  : editingShip ? 'Update Ship' : 'Create Ship'
-                }
-              </Button>
-              <Button 
-                type="button" 
-                variant="ghost"
-                onClick={() => {
-                  setIsCreating(false);
-                  setEditingShip(null);
-                  resetForm();
-                }}
-                data-testid="cancel-ship-button"
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
 
-      {/* Ships List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {ships?.map((ship) => (
-          <Card key={ship.id} className="glassmorphism rounded-xl p-6 border-transparent" data-testid={`ship-card-${ship.id}`}>
-            {ship.imageUrl && (
-              <img 
-                src={ship.imageUrl} 
-                alt={ship.name} 
-                className="w-full h-32 object-cover rounded-lg mb-4"
-              />
-            )}
-            
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-lg font-semibold text-white" data-testid={`ship-name-${ship.id}`}>
-                {ship.name}
-              </h4>
-              <Badge 
-                className={`${
-                  ship.isActive 
-                    ? 'bg-neon-green/20 text-neon-green' 
-                    : 'bg-slate-500/20 text-slate-400'
-                } border-transparent`}
-                data-testid={`ship-status-${ship.id}`}
-              >
-                {ship.isActive ? 'Active' : 'Inactive'}
-              </Badge>
-            </div>
-            
-            <p className="text-slate-400 text-sm mb-2" data-testid={`ship-slug-${ship.id}`}>
-              Slug: {ship.slug}
-            </p>
-            
-            {ship.description && (
-              <p className="text-slate-300 text-sm mb-4" data-testid={`ship-description-${ship.id}`}>
-                {ship.description.slice(0, 100)}...
-              </p>
-            )}
-            
-            <div className="flex space-x-2">
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-slate-300">
+                  Açıklama
+                </Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Gemi hakkında kısa açıklama..."
+                  className="bg-slate-700 border-slate-600 text-white"
+                  rows={3}
+                  data-testid="ship-description-input"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="imageUrl" className="text-slate-300">
+                  Resim URL
+                </Label>
+                <Input
+                  id="imageUrl"
+                  type="url"
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  placeholder="https://example.com/ship.jpg"
+                  className="bg-slate-700 border-slate-600 text-white"
+                  data-testid="ship-image-input"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isActive"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                  data-testid="ship-active-switch"
+                />
+                <Label htmlFor="isActive" className="text-slate-300">
+                  Aktif durumda
+                </Label>
+              </div>
+            </form>
+
+            <DialogFooter>
               <Button
-                size="sm"
-                onClick={() => handleEdit(ship)}
-                className="bg-neon-purple/20 text-neon-purple hover:bg-neon-purple/30 border-transparent"
-                data-testid={`edit-ship-${ship.id}`}
+                type="button"
+                variant="outline"
+                onClick={() => setIsFormOpen(false)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
               >
-                <i className="fas fa-edit mr-1"></i>Edit
+                İptal
               </Button>
               <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => handleDelete(ship.id)}
-                className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                data-testid={`delete-ship-${ship.id}`}
+                onClick={handleSubmit}
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                data-testid="ship-submit-button"
               >
-                <i className="fas fa-trash mr-1"></i>Delete
+                {(createMutation.isPending || updateMutation.isPending) && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
+                {editingShip ? "Güncelle" : "Oluştur"}
               </Button>
-            </div>
-          </Card>
-        ))}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!deleteShip} onOpenChange={() => setDeleteShip(null)}>
+          <DialogContent className="bg-slate-800 border-slate-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">Gemi Sil</DialogTitle>
+              <DialogDescription className="text-slate-400">
+                "{deleteShip?.name}" gemisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteShip(null)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                İptal
+              </Button>
+              <Button
+                onClick={() => deleteShip && deleteMutation.mutate(deleteShip.id)}
+                disabled={deleteMutation.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                data-testid="confirm-delete-ship"
+              >
+                {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Sil
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {ships?.length === 0 && (
-        <div className="text-center py-12" data-testid="no-ships">
-          <i className="fas fa-ship text-6xl text-slate-500 mb-4"></i>
-          <h3 className="text-xl font-semibold text-slate-400 mb-2">No ships found</h3>
-          <p className="text-slate-500">Create your first ship to get started.</p>
-        </div>
-      )}
-    </div>
+    </AdminLayout>
   );
 }

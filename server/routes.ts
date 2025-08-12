@@ -424,18 +424,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ships = await storage.getAllShips();
       const plans = await storage.getAllPlans();
       const orders = await storage.getAllOrders();
+      const users = await storage.getAllUsers();
+      const coupons = await storage.getAllCoupons();
+      
+      const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.totalUsd.toString()), 0);
+      const paidOrders = orders.filter(order => order.status === 'paid');
+      const monthlyRevenue = paidOrders
+        .filter(order => {
+          const orderDate = new Date(order.createdAt);
+          const currentMonth = new Date();
+          return orderDate.getMonth() === currentMonth.getMonth() && 
+                 orderDate.getFullYear() === currentMonth.getFullYear();
+        })
+        .reduce((sum, order) => sum + parseFloat(order.totalUsd.toString()), 0);
       
       const stats = {
         totalShips: ships.length,
+        totalUsers: users.length,
         totalPlans: plans.length,
+        activePlans: plans.filter(plan => plan.isActive).length,
         totalOrders: orders.length,
-        totalRevenue: orders.reduce((sum, order) => sum + order.totalAmount, 0)
+        totalRevenue: totalRevenue,
+        monthlyRevenue: monthlyRevenue,
+        activeCoupons: coupons.filter(coupon => coupon.isActive).length,
       };
       
       res.json(stats);
     } catch (error) {
       console.error('Error fetching admin stats:', error);
       res.status(500).json({ message: 'Failed to fetch stats' });
+    }
+  });
+
+  // Admin Recent Orders
+  app.get('/api/admin/recent-orders', isAdminAuthenticated, async (req, res) => {
+    try {
+      const orders = await storage.getRecentOrders(10);
+      res.json(orders);
+    } catch (error) {
+      console.error('Error fetching recent orders:', error);
+      res.status(500).json({ message: 'Failed to fetch recent orders' });
+    }
+  });
+
+  // Admin Recent Users  
+  app.get('/api/admin/recent-users', isAdminAuthenticated, async (req, res) => {
+    try {
+      const users = await storage.getRecentUsers(10);
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching recent users:', error);
+      res.status(500).json({ message: 'Failed to fetch recent users' });
     }
   });
 
@@ -582,6 +621,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching orders:', error);
       res.status(500).json({ message: 'Failed to fetch orders' });
+    }
+  });
+
+  app.put('/api/admin/orders/:id/status', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      await storage.updateOrderStatus(id, status);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      res.status(500).json({ message: 'Failed to update order status' });
+    }
+  });
+
+  // Admin Users
+  app.get('/api/admin/users', isAdminAuthenticated, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
+  // Admin Settings
+  app.get('/api/admin/settings', isAdminAuthenticated, async (req, res) => {
+    try {
+      const settings = await storage.getAllSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      res.status(500).json({ message: 'Failed to fetch settings' });
+    }
+  });
+
+  app.post('/api/admin/settings', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { key, value, description } = req.body;
+      await storage.setSetting(key, value);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error saving setting:', error);
+      res.status(500).json({ message: 'Failed to save setting' });
     }
   });
 

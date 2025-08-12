@@ -1,196 +1,358 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import AdminLayout from "@/components/AdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  ShoppingCart,
+  Eye,
+  Loader2,
+  DollarSign,
+  Calendar,
+  User,
+  CheckCircle,
+  Clock,
+  XCircle,
+  AlertCircle,
+  Ship
+} from "lucide-react";
+
+type Order = {
+  id: string;
+  userId: string;
+  totalUsd: number;
+  status: 'pending' | 'paid' | 'expired' | 'cancelled';
+  createdAt: string;
+  expiresAt: string | null;
+  user?: {
+    id: string;
+    username: string;
+    email: string;
+  };
+  items?: Array<{
+    id: string;
+    planTitle: string;
+    gbAmount: number;
+    priceUsd: number;
+  }>;
+};
 
 export default function OrdersManagement() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const { data: orders, isLoading } = useQuery({
-    queryKey: ["/api/admin/orders"]
+    queryKey: ["/api/admin/orders"],
   });
 
-  const updateOrderStatusMutation = useMutation({
+  const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const response = await apiRequest('PUT', `/api/admin/orders/${id}/status`, { status });
-      return response.json();
+      return await apiRequest("PUT", `/api/admin/orders/${id}/status`, { status });
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Order status updated successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
       toast({
-        title: "Error",
-        description: error.message || "Failed to update order status",
+        title: "Başarılı",
+        description: "Sipariş durumu güncellendi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const getStatusBadge = (status: string) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('tr-TR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatPrice = (price: number) => {
+    return `$${price.toFixed(2)}`;
+  };
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'paid':
-        return <Badge className="bg-neon-green/20 text-neon-green border-transparent">Paid</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-500/20 text-yellow-500 border-transparent">Pending</Badge>;
-      case 'failed':
-        return <Badge className="bg-red-500/20 text-red-500 border-transparent">Failed</Badge>;
-      case 'refunded':
-        return <Badge className="bg-blue-500/20 text-blue-500 border-transparent">Refunded</Badge>;
-      case 'expired':
-        return <Badge className="bg-slate-500/20 text-slate-400 border-transparent">Expired</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
+      case 'paid': return "bg-green-600 text-white";
+      case 'pending': return "bg-yellow-600 text-white";
+      case 'expired': return "bg-red-600 text-white";
+      case 'cancelled': return "bg-gray-600 text-white";
+      default: return "bg-blue-600 text-white";
     }
   };
 
-  const filteredOrders = orders?.filter((order: any) => 
-    filterStatus === 'all' || order.status === filterStatus
-  ) || [];
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'paid': return <CheckCircle className="h-3 w-3 mr-1" />;
+      case 'pending': return <Clock className="h-3 w-3 mr-1" />;
+      case 'expired': return <XCircle className="h-3 w-3 mr-1" />;
+      case 'cancelled': return <XCircle className="h-3 w-3 mr-1" />;
+      default: return <AlertCircle className="h-3 w-3 mr-1" />;
+    }
+  };
 
-  if (isLoading) {
-    return <div className="text-center">Loading orders...</div>;
-  }
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'paid': return "Ödendi";
+      case 'pending': return "Bekliyor";
+      case 'expired': return "Süresi Doldu";
+      case 'cancelled': return "İptal Edildi";
+      default: return status;
+    }
+  };
+
+  const filteredOrders = orders?.filter((order: Order) => {
+    if (statusFilter === "all") return true;
+    return order.status === statusFilter;
+  }) || [];
+
+  const handleStatusChange = (orderId: string, newStatus: string) => {
+    updateStatusMutation.mutate({ id: orderId, status: newStatus });
+  };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-white">Orders Management</h3>
-        <div className="flex space-x-2">
-          <select 
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 rounded-lg glassmorphism border border-slate-600 text-white text-sm bg-transparent"
-            data-testid="filter-status-select"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="paid">Paid</option>
-            <option value="failed">Failed</option>
-            <option value="refunded">Refunded</option>
-            <option value="expired">Expired</option>
-          </select>
-        </div>
-      </div>
-
-      {filteredOrders.length > 0 ? (
-        <Card className="glassmorphism rounded-xl border-transparent overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-600">
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Order ID</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Customer</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Ship</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Plan</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Amount</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Date</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.map((order: any) => (
-                  <tr key={order.id} className="border-b border-slate-700/50" data-testid={`order-row-${order.id}`}>
-                    <td className="py-4 px-4">
-                      <span className="font-mono text-neon-cyan text-sm" data-testid={`order-id-${order.id}`}>
-                        #{order.id.slice(0, 8)}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="text-white" data-testid={`order-customer-${order.id}`}>
-                        {order.user?.firstName || 'N/A'} {order.user?.lastName || ''}
-                      </div>
-                      <div className="text-sm text-slate-400">{order.user?.email}</div>
-                    </td>
-                    <td className="py-4 px-4 text-slate-300" data-testid={`order-ship-${order.id}`}>
-                      {order.items?.[0]?.ship?.name || 'N/A'}
-                    </td>
-                    <td className="py-4 px-4 text-slate-300" data-testid={`order-plan-${order.id}`}>
-                      {order.items?.[0]?.plan?.title || 'N/A'}
-                    </td>
-                    <td className="py-4 px-4 text-white font-semibold" data-testid={`order-amount-${order.id}`}>
-                      ${Number(order.totalUsd).toFixed(2)}
-                    </td>
-                    <td className="py-4 px-4" data-testid={`order-status-${order.id}`}>
-                      {getStatusBadge(order.status)}
-                    </td>
-                    <td className="py-4 px-4 text-slate-400" data-testid={`order-date-${order.id}`}>
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex space-x-2">
-                        {order.status === 'pending' && (
-                          <Button
-                            size="sm"
-                            onClick={() => updateOrderStatusMutation.mutate({ id: order.id, status: 'paid' })}
-                            className="bg-neon-green/20 text-neon-green hover:bg-neon-green/30 border-transparent"
-                            disabled={updateOrderStatusMutation.isPending}
-                            data-testid={`mark-paid-${order.id}`}
-                          >
-                            <i className="fas fa-check mr-1"></i>Mark Paid
-                          </Button>
-                        )}
-                        {order.status === 'paid' && (
-                          <Button
-                            size="sm"
-                            onClick={() => updateOrderStatusMutation.mutate({ id: order.id, status: 'refunded' })}
-                            className="bg-blue-500/20 text-blue-500 hover:bg-blue-500/30 border-transparent"
-                            disabled={updateOrderStatusMutation.isPending}
-                            data-testid={`refund-${order.id}`}
-                          >
-                            <i className="fas fa-undo mr-1"></i>Refund
-                          </Button>
-                        )}
-                        {order.status === 'pending' && (
-                          <Button
-                            size="sm"
-                            onClick={() => updateOrderStatusMutation.mutate({ id: order.id, status: 'failed' })}
-                            className="bg-red-500/20 text-red-500 hover:bg-red-500/30 border-transparent"
-                            disabled={updateOrderStatusMutation.isPending}
-                            data-testid={`mark-failed-${order.id}`}
-                          >
-                            <i className="fas fa-times mr-1"></i>Mark Failed
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+    <AdminLayout title="Siparişler">
+      <div className="space-y-6">
+        {/* Filter Controls */}
+        <div className="flex items-center gap-4">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48 bg-slate-700 border-slate-600 text-white">
+              <SelectValue placeholder="Durum filtresi" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-700 border-slate-600">
+              <SelectItem value="all">Tüm Siparişler</SelectItem>
+              <SelectItem value="pending">Bekleyen</SelectItem>
+              <SelectItem value="paid">Ödenen</SelectItem>
+              <SelectItem value="expired">Süresi Dolan</SelectItem>
+              <SelectItem value="cancelled">İptal Edilen</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <div className="text-sm text-slate-400">
+            {filteredOrders.length} sipariş gösteriliyor
           </div>
-        </Card>
-      ) : (
-        <div className="text-center py-12" data-testid="no-orders">
-          <i className="fas fa-shopping-bag text-6xl text-slate-500 mb-4"></i>
-          <h3 className="text-xl font-semibold text-slate-400 mb-2">No orders found</h3>
-          <p className="text-slate-500">
-            {filterStatus === 'all' ? 'No orders have been placed yet.' : `No ${filterStatus} orders found.`}
-          </p>
         </div>
-      )}
-    </div>
+
+        {/* Orders List */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          </div>
+        ) : filteredOrders.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredOrders.map((order: Order) => (
+              <Card key={order.id} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <ShoppingCart className="h-5 w-5 text-blue-400" />
+                        <div>
+                          <div className="font-medium text-white">#{order.id.slice(0, 8)}</div>
+                          <div className="text-sm text-slate-400">
+                            {formatDate(order.createdAt)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {order.user && (
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-slate-400" />
+                          <div>
+                            <div className="text-sm font-medium text-white">{order.user.username}</div>
+                            <div className="text-xs text-slate-400">{order.user.email}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-1 text-lg font-bold text-green-400">
+                        <DollarSign className="h-4 w-4" />
+                        {formatPrice(order.totalUsd)}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <Badge className={getStatusColor(order.status)}>
+                        {getStatusIcon(order.status)}
+                        {getStatusText(order.status)}
+                      </Badge>
+
+                      {order.expiresAt && order.status === 'pending' && (
+                        <div className="text-xs text-slate-400">
+                          <Calendar className="h-3 w-3 inline mr-1" />
+                          Bitiş: {formatDate(order.expiresAt)}
+                        </div>
+                      )}
+
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelectedOrder(order)}
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                        data-testid={`view-order-${order.id}`}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Detay
+                      </Button>
+
+                      {order.status === 'pending' && (
+                        <Select
+                          value={order.status}
+                          onValueChange={(value) => handleStatusChange(order.id, value)}
+                          disabled={updateStatusMutation.isPending}
+                        >
+                          <SelectTrigger className="w-32 h-8 bg-slate-700 border-slate-600 text-white text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-700 border-slate-600">
+                            <SelectItem value="pending">Bekliyor</SelectItem>
+                            <SelectItem value="paid">Ödendi</SelectItem>
+                            <SelectItem value="cancelled">İptal Et</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-slate-800/50 border-slate-700/50">
+            <CardContent className="text-center py-12">
+              <ShoppingCart className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {statusFilter === "all" ? "Henüz Sipariş Yok" : "Bu Durumda Sipariş Yok"}
+              </h3>
+              <p className="text-slate-400">
+                {statusFilter === "all" 
+                  ? "Henüz hiç sipariş oluşturulmamış."
+                  : `${getStatusText(statusFilter)} durumunda sipariş bulunmuyor.`
+                }
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Order Details Dialog */}
+        <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+          <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">
+                Sipariş Detayları - #{selectedOrder?.id.slice(0, 8)}
+              </DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Sipariş bilgileri ve içeriği
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedOrder && (
+              <div className="space-y-6">
+                {/* Order Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm text-slate-400">Sipariş ID</div>
+                    <div className="font-mono text-white">{selectedOrder.id}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-400">Durum</div>
+                    <Badge className={getStatusColor(selectedOrder.status)}>
+                      {getStatusIcon(selectedOrder.status)}
+                      {getStatusText(selectedOrder.status)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-400">Oluşturulma</div>
+                    <div className="text-white">{formatDate(selectedOrder.createdAt)}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-400">Toplam Tutar</div>
+                    <div className="text-lg font-bold text-green-400">{formatPrice(selectedOrder.totalUsd)}</div>
+                  </div>
+                  {selectedOrder.expiresAt && (
+                    <>
+                      <div>
+                        <div className="text-sm text-slate-400">Bitiş Tarihi</div>
+                        <div className="text-white">{formatDate(selectedOrder.expiresAt)}</div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* User Info */}
+                {selectedOrder.user && (
+                  <div className="p-4 bg-slate-700/50 rounded-lg">
+                    <h4 className="font-semibold text-white mb-2 flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Kullanıcı Bilgileri
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-sm text-slate-400">Kullanıcı Adı</div>
+                        <div className="text-white">{selectedOrder.user.username}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-slate-400">E-posta</div>
+                        <div className="text-white">{selectedOrder.user.email}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Order Items */}
+                {selectedOrder.items && selectedOrder.items.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                      <ShoppingCart className="h-4 w-4" />
+                      Sipariş İçeriği
+                    </h4>
+                    <div className="space-y-2">
+                      {selectedOrder.items.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <Ship className="h-5 w-5 text-blue-400" />
+                            <div>
+                              <div className="font-medium text-white">{item.planTitle}</div>
+                              <div className="text-sm text-slate-400">{item.gbAmount} GB veri paketi</div>
+                            </div>
+                          </div>
+                          <div className="text-lg font-bold text-green-400">
+                            {formatPrice(item.priceUsd)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setSelectedOrder(null)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                Kapat
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </AdminLayout>
   );
 }

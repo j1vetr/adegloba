@@ -1,130 +1,126 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import AdminLayout from "@/components/AdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import type { Plan } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { insertPlanSchema } from "@shared/schema";
+import { z } from "zod";
+import {
+  Package,
+  Edit,
+  Trash2,
+  Plus,
+  Eye,
+  EyeOff,
+  Loader2,
+  DollarSign,
+  Calendar,
+  Wifi
+} from "lucide-react";
+
+type Plan = {
+  id: string;
+  title: string;
+  gbAmount: number;
+  speedNote: string | null;
+  validityNote: string | null;
+  priceUsd: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type PlanFormData = z.infer<typeof insertPlanSchema>;
 
 export default function PlansManagement() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    gbAmount: 0,
-    speedNote: '',
-    validityNote: '',
-    priceUsd: '',
+  const [deletePlan, setDeletePlan] = useState<Plan | null>(null);
+  const [formData, setFormData] = useState<PlanFormData>({
+    title: "",
+    gbAmount: 1,
+    speedNote: "",
+    validityNote: "",
+    priceUsd: "0.00",
     isActive: true,
-    sortOrder: 0
+    sortOrder: 0,
   });
 
-  const { data: plans, isLoading } = useQuery<Plan[]>({
-    queryKey: ["/api/admin/plans"]
+  const { data: plans, isLoading } = useQuery({
+    queryKey: ["/api/admin/plans"],
   });
 
-  const createPlanMutation = useMutation({
-    mutationFn: async (planData: any) => {
-      const response = await apiRequest('POST', '/api/admin/plans', planData);
-      return response.json();
+  const createMutation = useMutation({
+    mutationFn: async (data: PlanFormData) => {
+      return await apiRequest("POST", "/api/admin/plans", data);
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Plan created successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
-      setIsCreating(false);
+      setIsFormOpen(false);
       resetForm();
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
       toast({
-        title: "Error",
-        description: error.message || "Failed to create plan",
+        title: "Başarılı",
+        description: "Paket başarıyla oluşturuldu.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const updatePlanMutation = useMutation({
-    mutationFn: async ({ id, planData }: { id: string; planData: any }) => {
-      const response = await apiRequest('PUT', `/api/admin/plans/${id}`, planData);
-      return response.json();
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<PlanFormData> }) => {
+      return await apiRequest("PUT", `/api/admin/plans/${id}`, data);
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Plan updated successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      setIsFormOpen(false);
       setEditingPlan(null);
       resetForm();
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
       toast({
-        title: "Error",
-        description: error.message || "Failed to update plan",
+        title: "Başarılı",
+        description: "Paket başarıyla güncellendi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const deletePlanMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest('DELETE', `/api/admin/plans/${id}`);
-      return response.json();
+      return await apiRequest("DELETE", `/api/admin/plans/${id}`);
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Plan deleted successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
+      setDeletePlan(null);
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete plan",
+        title: "Başarılı",
+        description: "Paket başarıyla silindi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -132,261 +128,355 @@ export default function PlansManagement() {
 
   const resetForm = () => {
     setFormData({
-      title: '',
-      gbAmount: 0,
-      speedNote: '',
-      validityNote: '',
-      priceUsd: '',
+      title: "",
+      gbAmount: 1,
+      speedNote: "",
+      validityNote: "",
+      priceUsd: "0.00",
       isActive: true,
-      sortOrder: 0
+      sortOrder: 0,
     });
   };
 
+  const handleAdd = () => {
+    resetForm();
+    setEditingPlan(null);
+    setIsFormOpen(true);
+  };
+
   const handleEdit = (plan: Plan) => {
-    setEditingPlan(plan);
     setFormData({
       title: plan.title,
       gbAmount: plan.gbAmount,
-      speedNote: plan.speedNote || '',
-      validityNote: plan.validityNote || '',
+      speedNote: plan.speedNote || "",
+      validityNote: plan.validityNote || "",
       priceUsd: plan.priceUsd,
       isActive: plan.isActive,
-      sortOrder: plan.sortOrder
+      sortOrder: plan.sortOrder,
     });
-    setIsCreating(true);
+    setEditingPlan(plan);
+    setIsFormOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (editingPlan) {
-      updatePlanMutation.mutate({ id: editingPlan.id, planData: formData });
+      updateMutation.mutate({ id: editingPlan.id, data: formData });
     } else {
-      createPlanMutation.mutate(formData);
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this plan?')) {
-      deletePlanMutation.mutate(id);
-    }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
-  if (isLoading) {
-    return <div className="text-center">Loading plans...</div>;
-  }
+  const formatPrice = (price: string | number) => {
+    return `$${parseFloat(price.toString()).toFixed(2)}`;
+  };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-white">Plans Management</h3>
-        <Button
-          onClick={() => setIsCreating(true)}
-          className="bg-neon-cyan text-white hover:bg-neon-cyan/80"
-          data-testid="create-plan-button"
-        >
-          <i className="fas fa-plus mr-2"></i>Add Plan
-        </Button>
-      </div>
+    <AdminLayout title="Paketler" showAddButton onAddClick={handleAdd}>
+      <div className="space-y-6">
+        {/* Plans Grid */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          </div>
+        ) : plans?.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {plans.map((plan: Plan) => (
+              <Card key={plan.id} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-5 w-5 text-purple-400" />
+                      <CardTitle className="text-lg text-white">{plan.title}</CardTitle>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={plan.isActive ? "default" : "secondary"}
+                        className={plan.isActive ? "bg-green-600 text-white" : "bg-gray-600 text-white"}
+                      >
+                        {plan.isActive ? (
+                          <><Eye className="h-3 w-3 mr-1" /> Aktif</>
+                        ) : (
+                          <><EyeOff className="h-3 w-3 mr-1" /> Pasif</>
+                        )}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  {/* Price */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-slate-400">Fiyat</div>
+                    <div className="text-xl font-bold text-green-400 flex items-center gap-1">
+                      <DollarSign className="h-4 w-4" />
+                      {formatPrice(plan.priceUsd)}
+                    </div>
+                  </div>
+                  
+                  {/* Data Amount */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-slate-400">Veri Miktarı</div>
+                    <div className="text-lg font-semibold text-cyan-400 flex items-center gap-1">
+                      <Wifi className="h-4 w-4" />
+                      {plan.gbAmount} GB
+                    </div>
+                  </div>
+                  
+                  {/* Speed Note */}
+                  {plan.speedNote && (
+                    <div>
+                      <div className="text-sm text-slate-400">Hız Notu</div>
+                      <div className="text-sm text-slate-300 line-clamp-2">{plan.speedNote}</div>
+                    </div>
+                  )}
+                  
+                  {/* Validity Note */}
+                  {plan.validityNote && (
+                    <div>
+                      <div className="text-sm text-slate-400">Geçerlilik Notu</div>
+                      <div className="text-sm text-slate-300 line-clamp-2">{plan.validityNote}</div>
+                    </div>
+                  )}
+                  
+                  {/* Sort Order */}
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>Sıralama: {plan.sortOrder}</span>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(plan.createdAt)}
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleEdit(plan)}
+                      className="flex-1 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                      data-testid={`edit-plan-${plan.id}`}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Düzenle
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDeletePlan(plan)}
+                      className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                      data-testid={`delete-plan-${plan.id}`}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Sil
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-slate-800/50 border-slate-700/50">
+            <CardContent className="text-center py-12">
+              <Package className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">Henüz Paket Yok</h3>
+              <p className="text-slate-400 mb-6">İlk veri paketinizi oluşturmak için "Yeni Ekle" butonuna tıklayın.</p>
+              <Button
+                onClick={handleAdd}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                İlk Paket Ekle
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-      {isCreating && (
-        <Card className="glassmorphism rounded-xl p-6 mb-6 border-transparent" data-testid="plan-form">
-          <h4 className="text-lg font-semibold text-white mb-4">
-            {editingPlan ? 'Edit Plan' : 'Create New Plan'}
-          </h4>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-slate-300">Plan Title</Label>
+        {/* Add/Edit Form Dialog */}
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogContent className="bg-slate-800 border-slate-700 max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-white">
+                {editingPlan ? "Paket Düzenle" : "Yeni Paket Ekle"}
+              </DialogTitle>
+              <DialogDescription className="text-slate-400">
+                {editingPlan ? "Mevcut paket bilgilerini güncelleyin." : "Yeni bir veri paketi oluşturun."}
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-slate-300">
+                  Paket Adı *
+                </Label>
                 <Input
+                  id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="glassmorphism border-slate-600 text-white"
-                  placeholder="e.g., Professional"
+                  placeholder="Örn: Premium Starlink Paketi"
+                  className="bg-slate-700 border-slate-600 text-white"
                   required
                   data-testid="plan-title-input"
                 />
               </div>
-              
-              <div>
-                <Label className="text-slate-300">Data Amount (GB)</Label>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gbAmount" className="text-slate-300">
+                    Veri Miktarı (GB) *
+                  </Label>
+                  <Input
+                    id="gbAmount"
+                    type="number"
+                    min="1"
+                    value={formData.gbAmount}
+                    onChange={(e) => setFormData({ ...formData, gbAmount: parseInt(e.target.value) || 1 })}
+                    className="bg-slate-700 border-slate-600 text-white"
+                    required
+                    data-testid="plan-gb-input"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="priceUsd" className="text-slate-300">
+                    Fiyat (USD) *
+                  </Label>
+                  <Input
+                    id="priceUsd"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.priceUsd}
+                    onChange={(e) => setFormData({ ...formData, priceUsd: e.target.value })}
+                    className="bg-slate-700 border-slate-600 text-white"
+                    required
+                    data-testid="plan-price-input"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="speedNote" className="text-slate-300">
+                  Hız Notu
+                </Label>
                 <Input
-                  type="number"
-                  value={formData.gbAmount}
-                  onChange={(e) => setFormData({ ...formData, gbAmount: parseInt(e.target.value) || 0 })}
-                  className="glassmorphism border-slate-600 text-white"
-                  placeholder="25"
-                  required
-                  data-testid="plan-gb-input"
+                  id="speedNote"
+                  value={formData.speedNote}
+                  onChange={(e) => setFormData({ ...formData, speedNote: e.target.value })}
+                  placeholder="Örn: Yüksek hız - 100 Mbps'e kadar"
+                  className="bg-slate-700 border-slate-600 text-white"
+                  data-testid="plan-speed-input"
                 />
               </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-slate-300">Price (USD)</Label>
+
+              <div className="space-y-2">
+                <Label htmlFor="validityNote" className="text-slate-300">
+                  Geçerlilik Notu
+                </Label>
                 <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.priceUsd}
-                  onChange={(e) => setFormData({ ...formData, priceUsd: e.target.value })}
-                  className="glassmorphism border-slate-600 text-white"
-                  placeholder="399.00"
-                  required
-                  data-testid="plan-price-input"
+                  id="validityNote"
+                  value={formData.validityNote}
+                  onChange={(e) => setFormData({ ...formData, validityNote: e.target.value })}
+                  placeholder="Örn: 30 gün geçerli"
+                  className="bg-slate-700 border-slate-600 text-white"
+                  data-testid="plan-validity-input"
                 />
               </div>
-              
-              <div>
-                <Label className="text-slate-300">Sort Order</Label>
+
+              <div className="space-y-2">
+                <Label htmlFor="sortOrder" className="text-slate-300">
+                  Sıralama
+                </Label>
                 <Input
+                  id="sortOrder"
                   type="number"
+                  min="0"
                   value={formData.sortOrder}
                   onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
-                  className="glassmorphism border-slate-600 text-white"
                   placeholder="0"
+                  className="bg-slate-700 border-slate-600 text-white"
                   data-testid="plan-sort-input"
                 />
+                <p className="text-xs text-slate-400">
+                  Düşük numara önce gösterilir (0 = en üst)
+                </p>
               </div>
-            </div>
-            
-            <div>
-              <Label className="text-slate-300">Speed Note</Label>
-              <Input
-                value={formData.speedNote}
-                onChange={(e) => setFormData({ ...formData, speedNote: e.target.value })}
-                className="glassmorphism border-slate-600 text-white"
-                placeholder="e.g., High-speed priority"
-                data-testid="plan-speed-input"
-              />
-            </div>
-            
-            <div>
-              <Label className="text-slate-300">Validity Note</Label>
-              <Input
-                value={formData.validityNote}
-                onChange={(e) => setFormData({ ...formData, validityNote: e.target.value })}
-                className="glassmorphism border-slate-600 text-white"
-                placeholder="e.g., Monthly renewal"
-                data-testid="plan-validity-input"
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isActive"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="rounded"
-                data-testid="plan-active-checkbox"
-              />
-              <Label htmlFor="isActive" className="text-slate-300">Active</Label>
-            </div>
-            
-            <div className="flex space-x-3">
-              <Button 
-                type="submit" 
-                disabled={createPlanMutation.isPending || updatePlanMutation.isPending}
-                className="bg-neon-cyan text-white hover:bg-neon-cyan/80"
-                data-testid="save-plan-button"
-              >
-                {createPlanMutation.isPending || updatePlanMutation.isPending 
-                  ? 'Saving...' 
-                  : editingPlan ? 'Update Plan' : 'Create Plan'
-                }
-              </Button>
-              <Button 
-                type="button" 
-                variant="ghost"
-                onClick={() => {
-                  setIsCreating(false);
-                  setEditingPlan(null);
-                  resetForm();
-                }}
-                data-testid="cancel-plan-button"
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
 
-      {/* Plans List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {plans?.map((plan) => (
-          <Card key={plan.id} className="glassmorphism rounded-xl p-6 border-transparent" data-testid={`plan-card-${plan.id}`}>
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-lg font-semibold text-white" data-testid={`plan-title-${plan.id}`}>
-                {plan.title}
-              </h4>
-              <Badge 
-                className={`${
-                  plan.isActive 
-                    ? 'bg-neon-green/20 text-neon-green' 
-                    : 'bg-slate-500/20 text-slate-400'
-                } border-transparent`}
-                data-testid={`plan-status-${plan.id}`}
-              >
-                {plan.isActive ? 'Active' : 'Inactive'}
-              </Badge>
-            </div>
-            
-            <div className="text-2xl font-bold text-neon-cyan mb-2" data-testid={`plan-price-${plan.id}`}>
-              ${Number(plan.priceUsd).toFixed(0)}
-            </div>
-            
-            <div className="space-y-2 mb-4">
-              <div className="text-sm text-slate-300" data-testid={`plan-data-${plan.id}`}>
-                <i className="fas fa-database mr-2"></i>{plan.gbAmount} GB
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isActive"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                  data-testid="plan-active-switch"
+                />
+                <Label htmlFor="isActive" className="text-slate-300">
+                  Aktif durumda
+                </Label>
               </div>
-              {plan.speedNote && (
-                <div className="text-sm text-slate-400" data-testid={`plan-speed-${plan.id}`}>
-                  <i className="fas fa-tachometer-alt mr-2"></i>{plan.speedNote}
-                </div>
-              )}
-              {plan.validityNote && (
-                <div className="text-sm text-slate-400" data-testid={`plan-validity-${plan.id}`}>
-                  <i className="fas fa-calendar mr-2"></i>{plan.validityNote}
-                </div>
-              )}
-              <div className="text-sm text-slate-400" data-testid={`plan-sort-${plan.id}`}>
-                <i className="fas fa-sort mr-2"></i>Sort: {plan.sortOrder}
-              </div>
-            </div>
-            
-            <div className="flex space-x-2">
+            </form>
+
+            <DialogFooter>
               <Button
-                size="sm"
-                onClick={() => handleEdit(plan)}
-                className="bg-neon-purple/20 text-neon-purple hover:bg-neon-purple/30 border-transparent"
-                data-testid={`edit-plan-${plan.id}`}
+                type="button"
+                variant="outline"
+                onClick={() => setIsFormOpen(false)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
               >
-                <i className="fas fa-edit mr-1"></i>Edit
+                İptal
               </Button>
               <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => handleDelete(plan.id)}
-                className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                data-testid={`delete-plan-${plan.id}`}
+                onClick={handleSubmit}
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                data-testid="plan-submit-button"
               >
-                <i className="fas fa-trash mr-1"></i>Delete
+                {(createMutation.isPending || updateMutation.isPending) && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
+                {editingPlan ? "Güncelle" : "Oluştur"}
               </Button>
-            </div>
-          </Card>
-        ))}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!deletePlan} onOpenChange={() => setDeletePlan(null)}>
+          <DialogContent className="bg-slate-800 border-slate-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">Paket Sil</DialogTitle>
+              <DialogDescription className="text-slate-400">
+                "{deletePlan?.title}" paketini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDeletePlan(null)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                İptal
+              </Button>
+              <Button
+                onClick={() => deletePlan && deleteMutation.mutate(deletePlan.id)}
+                disabled={deleteMutation.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                data-testid="confirm-delete-plan"
+              >
+                {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Sil
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {plans?.length === 0 && (
-        <div className="text-center py-12" data-testid="no-plans">
-          <i className="fas fa-wifi text-6xl text-slate-500 mb-4"></i>
-          <h3 className="text-xl font-semibold text-slate-400 mb-2">No plans found</h3>
-          <p className="text-slate-500">Create your first data plan to get started.</p>
-        </div>
-      )}
-    </div>
+    </AdminLayout>
   );
 }

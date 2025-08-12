@@ -1,160 +1,173 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import {
+  Menu,
+  X,
+  Ship,
+  Package,
+  Ticket,
+  ShoppingCart,
+  Users,
+  Settings,
+  BarChart3,
+  LogOut,
+  Home,
+  Plus
+} from "lucide-react";
 
 interface AdminLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  title: string;
+  showAddButton?: boolean;
+  onAddClick?: () => void;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [location, setLocation] = useLocation();
+const menuItems = [
+  { href: "/admin", icon: BarChart3, label: "Dashboard", exact: true },
+  { href: "/admin/ships", icon: Ship, label: "Gemiler" },
+  { href: "/admin/plans", icon: Package, label: "Paketler" },
+  { href: "/admin/coupons", icon: Ticket, label: "Kuponlar" },
+  { href: "/admin/orders", icon: ShoppingCart, label: "Siparişler" },
+  { href: "/admin/users", icon: Users, label: "Kullanıcılar" },
+  { href: "/admin/settings", icon: Settings, label: "Ayarlar" },
+];
+
+export default function AdminLayout({ children, title, showAddButton, onAddClick }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [location] = useLocation();
+  const { user, logout } = useAdminAuth();
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", "/api/auth/logout");
-    },
-    onSuccess: () => {
-      toast({
-        title: "Başarılı",
-        description: "Çıkış yapıldı.",
-      });
-      queryClient.clear();
-      setLocation("/login");
-    },
-    onError: () => {
-      toast({
-        title: "Hata",
-        description: "Çıkış işlemi başarısız.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const isActiveRoute = (href: string, exact = false) => {
+    if (exact) return location === href;
+    return location.startsWith(href);
   };
 
-  const menuItems = [
-    { path: "/admin", label: "Dashboard", icon: "fas fa-tachometer-alt" },
-    { path: "/admin/ships", label: "Gemiler", icon: "fas fa-ship" },
-    { path: "/admin/plans", label: "Paketler", icon: "fas fa-box" },
-    { path: "/admin/coupons", label: "Kuponlar", icon: "fas fa-ticket-alt" },
-    { path: "/admin/orders", label: "Siparişler", icon: "fas fa-shopping-cart" },
-    { path: "/admin/settings", label: "Ayarlar", icon: "fas fa-cog" },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-space-blue via-space-dark to-space-blue text-slate-200">
-      {/* Stellar background */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-10 w-2 h-2 bg-neon-cyan rounded-full animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-1 h-1 bg-neon-purple rounded-full animate-ping"></div>
-        <div className="absolute bottom-20 left-1/4 w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse"></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100">
+      {/* Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900/95 backdrop-blur-sm border-r border-slate-700/50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* Logo */}
+        <div className="flex items-center justify-between h-16 px-6 border-b border-slate-700/50">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
+              <i className="fas fa-satellite text-white text-sm"></i>
+            </div>
+            <h1 className="text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              AdeGloba Admin
+            </h1>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="lg:hidden text-slate-400 hover:text-white"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="p-4 space-y-2">
+          {menuItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                isActiveRoute(item.href, item.exact)
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/25'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+              }`}
+              onClick={() => setSidebarOpen(false)}
+              data-testid={`admin-nav-${item.label.toLowerCase()}`}
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="font-medium">{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+
+        {/* User Info & Logout */}
+        <div className="absolute bottom-4 left-4 right-4 space-y-4">
+          <div className="px-4 py-3 bg-slate-800/50 rounded-lg">
+            <div className="text-sm font-medium text-white">{user?.username}</div>
+            <div className="text-xs text-slate-400">Admin Panel</div>
+          </div>
+          
+          <div className="flex space-x-2">
+            <Link href="/" className="flex-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800/50"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Ana Sayfa
+              </Button>
+            </Link>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1 justify-start text-red-400 hover:text-red-300 hover:bg-red-500/20"
+              onClick={logout}
+              data-testid="admin-logout"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Çıkış
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Mobile menu overlay */}
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition duration-200 ease-in-out lg:static lg:inset-0`}>
-        <Card className="h-full glassmorphism rounded-none border-r border-slate-700/50">
-          <div className="flex flex-col h-full">
-            {/* Logo */}
-            <div className="p-6 border-b border-slate-700/50">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-neon-cyan to-neon-purple flex items-center justify-center">
-                  <i className="fas fa-satellite text-white text-lg"></i>
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-white">StarLink Marine</h1>
-                  <p className="text-xs text-slate-400">Admin Panel</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Menu Items */}
-            <nav className="flex-1 p-4 space-y-2">
-              {menuItems.map((item) => (
-                <Link key={item.path} href={item.path}>
-                  <button
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                      location === item.path
-                        ? 'bg-gradient-to-r from-neon-cyan/20 to-neon-purple/20 text-neon-cyan border border-neon-cyan/30'
-                        : 'text-slate-300 hover:bg-space-card hover:text-white'
-                    }`}
-                    data-testid={`menu-${item.path.replace('/admin', '').replace('/', '') || 'dashboard'}`}
-                  >
-                    <i className={`${item.icon} text-lg`}></i>
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                </Link>
-              ))}
-            </nav>
-
-            {/* Logout */}
-            <div className="p-4 border-t border-slate-700/50">
-              <Button
-                onClick={handleLogout}
-                disabled={logoutMutation.isPending}
-                className="w-full bg-red-600/20 text-red-400 border border-red-600/30 hover:bg-red-600/30 hover:text-red-300"
-                data-testid="logout-button"
-              >
-                <i className="fas fa-sign-out-alt mr-2"></i>
-                {logoutMutation.isPending ? "Çıkış yapılıyor..." : "Çıkış Yap"}
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
-
       {/* Main Content */}
-      <div className="lg:ml-64">
-        {/* Top Navigation */}
-        <header className="sticky top-0 z-30 glassmorphism border-b border-slate-700/50">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex items-center">
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="lg:hidden text-slate-400 hover:text-white"
-                  data-testid="mobile-menu-button"
-                >
-                  <i className="fas fa-bars text-xl"></i>
-                </button>
-                <div className="ml-4 lg:ml-0">
-                  <h2 className="text-xl font-semibold text-white">
-                    {menuItems.find(item => item.path === location)?.label || 'Admin Panel'}
-                  </h2>
-                </div>
-              </div>
+      <div className="lg:pl-64">
+        {/* Top Bar */}
+        <header className="sticky top-0 z-30 h-16 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50">
+          <div className="flex items-center justify-between h-full px-6">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="lg:hidden text-slate-400 hover:text-white"
+                onClick={() => setSidebarOpen(true)}
+                data-testid="mobile-menu-toggle"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
               
-              <div className="flex items-center space-x-4">
-                <div className="text-sm text-slate-300">
-                  <i className="fas fa-user-circle mr-2"></i>
-                  Admin
-                </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">{title}</h1>
+                <div className="text-sm text-slate-400">AdeGloba Starlink System - Yönetim Paneli</div>
               </div>
             </div>
+
+            {showAddButton && onAddClick && (
+              <Button
+                onClick={onAddClick}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg"
+                data-testid="admin-add-button"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Yeni Ekle
+              </Button>
+            )}
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 relative z-10">
-          <div className="py-6">
-            {children}
-          </div>
+        <main className="p-6">
+          {children}
         </main>
       </div>
     </div>

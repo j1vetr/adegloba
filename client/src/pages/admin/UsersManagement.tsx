@@ -1,146 +1,271 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import AdminLayout from "@/components/AdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Users,
+  Eye,
+  Search,
+  Loader2,
+  Calendar,
+  Ship,
+  Mail,
+  User
+} from "lucide-react";
+
+type UserData = {
+  id: string;
+  username: string;
+  email: string;
+  shipId: string | null;
+  created_at: string;
+  ship?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+};
 
 export default function UsersManagement() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Note: This would need a proper API endpoint for user management
-  // For now, we'll show a placeholder structure
   const { data: users, isLoading } = useQuery({
     queryKey: ["/api/admin/users"],
-    enabled: false // Disabled since endpoint doesn't exist yet
   });
 
-  // Mock data for demonstration
-  const mockUsers = [
-    {
-      id: '1',
-      email: 'captain@atlantis.com',
-      firstName: 'John',
-      lastName: 'Smith',
-      role: 'user',
-      createdAt: '2024-01-15T10:00:00Z',
-      lastLogin: '2024-01-20T14:30:00Z'
-    },
-    {
-      id: '2',
-      email: 'admin@starlink.com',
-      firstName: 'Admin',
-      lastName: 'User',
-      role: 'admin',
-      createdAt: '2024-01-01T00:00:00Z',
-      lastLogin: '2024-01-21T09:15:00Z'
-    }
-  ];
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('tr-TR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
-  const filteredUsers = mockUsers.filter(user =>
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users?.filter((user: UserData) => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      user.username.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower) ||
+      user.ship?.name.toLowerCase().includes(searchLower)
+    );
+  }) || [];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-white">Users Management</h3>
-        <div className="flex space-x-2">
-          <Input
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="glassmorphism border-slate-600 text-white w-64"
-            data-testid="search-users-input"
-          />
-        </div>
-      </div>
-
-      <Card className="glassmorphism rounded-xl border-transparent overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-600">
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">User</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Email</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Role</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Joined</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Last Login</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="border-b border-slate-700/50" data-testid={`user-row-${user.id}`}>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-neon-cyan to-neon-purple flex items-center justify-center">
-                        <span className="text-white text-sm font-bold">
-                          {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="text-white font-medium" data-testid={`user-name-${user.id}`}>
-                          {user.firstName} {user.lastName}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 text-slate-300" data-testid={`user-email-${user.id}`}>
-                    {user.email}
-                  </td>
-                  <td className="py-4 px-4" data-testid={`user-role-${user.id}`}>
-                    <Badge 
-                      className={`${
-                        user.role === 'admin' 
-                          ? 'bg-neon-purple/20 text-neon-purple' 
-                          : 'bg-neon-cyan/20 text-neon-cyan'
-                      } border-transparent`}
-                    >
-                      {user.role}
-                    </Badge>
-                  </td>
-                  <td className="py-4 px-4 text-slate-400" data-testid={`user-joined-${user.id}`}>
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="py-4 px-4 text-slate-400" data-testid={`user-last-login-${user.id}`}>
-                    {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
-                  </td>
-                  <td className="py-4 px-4" data-testid={`user-status-${user.id}`}>
-                    <Badge className="bg-neon-green/20 text-neon-green border-transparent">
-                      Active
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      {filteredUsers.length === 0 && (
-        <div className="text-center py-12" data-testid="no-users">
-          <i className="fas fa-users text-6xl text-slate-500 mb-4"></i>
-          <h3 className="text-xl font-semibold text-slate-400 mb-2">No users found</h3>
-          <p className="text-slate-500">
-            {searchTerm ? `No users match "${searchTerm}"` : 'No users registered yet.'}
-          </p>
-        </div>
-      )}
-
-      {/* Note for implementation */}
-      <div className="mt-6 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-        <div className="flex items-start space-x-2">
-          <i className="fas fa-info-circle text-yellow-500 mt-0.5"></i>
-          <div>
-            <h4 className="text-yellow-500 font-medium">Implementation Note</h4>
-            <p className="text-slate-400 text-sm">
-              User management is currently showing mock data. The backend needs a proper user management API endpoint 
-              to enable full functionality including role changes and user status management.
-            </p>
+    <AdminLayout title="Kullanıcılar">
+      <div className="space-y-6">
+        {/* Search and Stats */}
+        <div className="flex items-center justify-between">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+            <Input
+              placeholder="Kullanıcı ara..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-slate-700 border-slate-600 text-white"
+              data-testid="search-users-input"
+            />
+          </div>
+          
+          <div className="flex items-center gap-4 text-sm text-slate-400">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              {filteredUsers.length} kullanıcı
+            </div>
           </div>
         </div>
+
+        {/* Users List */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          </div>
+        ) : filteredUsers.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredUsers.map((user: UserData) => (
+              <Card key={user.id} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <User className="h-5 w-5 text-green-400" />
+                        <div>
+                          <div className="font-medium text-white">{user.username}</div>
+                          <div className="text-sm text-slate-400 flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {user.email}
+                          </div>
+                        </div>
+                      </div>
+
+                      {user.ship && (
+                        <div className="flex items-center gap-2">
+                          <Ship className="h-4 w-4 text-blue-400" />
+                          <div>
+                            <div className="text-sm font-medium text-white">{user.ship.name}</div>
+                            <div className="text-xs text-slate-400">Gemi: {user.ship.slug}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="text-sm text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDate(user.created_at)}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-green-600 text-white">
+                        Aktif
+                      </Badge>
+
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelectedUser(user)}
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                        data-testid={`view-user-${user.id}`}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Detay
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-slate-800/50 border-slate-700/50">
+            <CardContent className="text-center py-12">
+              <Users className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {searchTerm ? "Kullanıcı Bulunamadı" : "Henüz Kullanıcı Yok"}
+              </h3>
+              <p className="text-slate-400">
+                {searchTerm 
+                  ? "Arama kriterlerinize uygun kullanıcı bulunamadı."
+                  : "Henüz hiç kullanıcı kayıt olmamış."
+                }
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* User Details Dialog */}
+        <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+          <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">
+                Kullanıcı Detayları - {selectedUser?.username}
+              </DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Kullanıcı bilgileri ve aktiviteleri
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedUser && (
+              <div className="space-y-6">
+                {/* User Basic Info */}
+                <div className="p-4 bg-slate-700/50 rounded-lg">
+                  <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Temel Bilgiler
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm text-slate-400">Kullanıcı ID</div>
+                      <div className="font-mono text-white text-sm">{selectedUser.id}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-slate-400">Kullanıcı Adı</div>
+                      <div className="text-white">{selectedUser.username}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-slate-400">E-posta</div>
+                      <div className="text-white">{selectedUser.email}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-slate-400">Kayıt Tarihi</div>
+                      <div className="text-white">{formatDate(selectedUser.created_at)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ship Info */}
+                {selectedUser.ship && (
+                  <div className="p-4 bg-slate-700/50 rounded-lg">
+                    <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                      <Ship className="h-4 w-4" />
+                      Gemi Bilgileri
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-sm text-slate-400">Gemi ID</div>
+                        <div className="font-mono text-white text-sm">{selectedUser.ship.id}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-slate-400">Gemi Adı</div>
+                        <div className="text-white">{selectedUser.ship.name}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-slate-400">Gemi Kodu</div>
+                        <div className="text-white">{selectedUser.ship.slug}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Account Status */}
+                <div className="p-4 bg-slate-700/50 rounded-lg">
+                  <h4 className="font-semibold text-white mb-3">Hesap Durumu</h4>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-green-600 text-white">
+                      Aktif Hesap
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Activity Stats */}
+                <div className="p-4 bg-slate-700/50 rounded-lg">
+                  <h4 className="font-semibold text-white mb-3">Aktivite İstatistikleri</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-400">-</div>
+                      <div className="text-xs text-slate-400">Toplam Sipariş</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-400">-</div>
+                      <div className="text-xs text-slate-400">Aktif Paket</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-400">-</div>
+                      <div className="text-xs text-slate-400">Toplam Harcama</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setSelectedUser(null)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                Kapat
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
