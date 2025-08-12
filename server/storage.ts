@@ -430,7 +430,7 @@ export class DatabaseStorage implements IStorage {
   async setSetting(key: string, value: string): Promise<Setting> {
     const [setting] = await db
       .insert(settings)
-      .values({ key, value })
+      .values({ key, value, category: 'general' })
       .onConflictDoUpdate({
         target: settings.key,
         set: { value }
@@ -447,8 +447,8 @@ export class DatabaseStorage implements IStorage {
         ship: ships
       })
       .from(users)
-      .leftJoin(ships, eq(users.shipId, ships.id))
-      .orderBy(desc(users.createdAt));
+      .leftJoin(ships, eq(users.ship_id, ships.id))
+      .orderBy(desc(users.created_at));
       
     return result.map(row => ({
       ...row.user,
@@ -463,8 +463,8 @@ export class DatabaseStorage implements IStorage {
         ship: ships
       })
       .from(users)
-      .leftJoin(ships, eq(users.shipId, ships.id))
-      .orderBy(desc(users.createdAt))
+      .leftJoin(ships, eq(users.ship_id, ships.id))
+      .orderBy(desc(users.created_at))
       .limit(limit);
       
     return result.map(row => ({
@@ -475,29 +475,35 @@ export class DatabaseStorage implements IStorage {
 
   async getRecentOrders(limit: number): Promise<(Order & { user?: User })[]> {
     const result = await db
-      .select()
+      .select({
+        order: orders,
+        user: users
+      })
       .from(orders)
       .leftJoin(users, eq(orders.userId, users.id))
       .orderBy(desc(orders.createdAt))
       .limit(limit);
       
     return result.map(row => ({
-      ...row.orders,
-      user: row.users || undefined
+      ...row.order,
+      user: row.user || undefined
     }));
   }
 
   // Order admin operations
   async getAllOrders(): Promise<(Order & { user?: User })[]> {
     const result = await db
-      .select()
+      .select({
+        order: orders,
+        user: users
+      })
       .from(orders)
       .leftJoin(users, eq(orders.userId, users.id))
       .orderBy(desc(orders.createdAt));
       
     return result.map(row => ({
-      ...row.orders,
-      user: row.users || undefined
+      ...row.order,
+      user: row.user || undefined
     }));
   }
 

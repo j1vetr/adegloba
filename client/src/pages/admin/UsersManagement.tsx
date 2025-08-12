@@ -85,17 +85,17 @@ export default function UsersManagement() {
         {/* Users List */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : filteredUsers.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
             {filteredUsers.map((user: UserData) => (
-              <Card key={user.id} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
+              <Card key={user.id} className="glass-card border-border/50 hover:border-primary/30 transition-all duration-300 card-hover">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <User className="h-5 w-5 text-green-400" />
+                        <User className="h-5 w-5 text-primary" />
                         <div>
                           <div className="font-medium text-white">{user.username}</div>
                           <div className="text-sm text-slate-400 flex items-center gap-1">
@@ -107,7 +107,7 @@ export default function UsersManagement() {
 
                       {user.ship && (
                         <div className="flex items-center gap-2">
-                          <Ship className="h-4 w-4 text-blue-400" />
+                          <Ship className="h-4 w-4 text-primary" />
                           <div>
                             <div className="text-sm font-medium text-white">{user.ship.name}</div>
                             <div className="text-xs text-slate-400">Gemi: {user.ship.slug}</div>
@@ -130,7 +130,7 @@ export default function UsersManagement() {
                         size="sm"
                         variant="ghost"
                         onClick={() => setSelectedUser(user)}
-                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                        className="text-primary hover:text-primary hover:bg-primary/20"
                         data-testid={`view-user-${user.id}`}
                       >
                         <Eye className="h-4 w-4 mr-1" />
@@ -143,7 +143,7 @@ export default function UsersManagement() {
             ))}
           </div>
         ) : (
-          <Card className="bg-slate-800/50 border-slate-700/50">
+          <Card className="glass-card border-border/50">
             <CardContent className="text-center py-12">
               <Users className="h-16 w-16 text-slate-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-white mb-2">

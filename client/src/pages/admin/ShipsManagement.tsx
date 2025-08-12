@@ -188,16 +188,16 @@ export default function ShipsManagement() {
         {/* Ships Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : ships?.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {ships.map((ship: Ship) => (
-              <Card key={ship.id} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
+              <Card key={ship.id} className="glass-card border-border/50 hover:border-primary/30 transition-all duration-300 card-hover">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Ship className="h-5 w-5 text-blue-400" />
+                      <Ship className="h-5 w-5 text-primary" />
                       <CardTitle className="text-lg text-white">{ship.name}</CardTitle>
                     </div>
                     <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export default function ShipsManagement() {
                 <CardContent className="space-y-4">
                   <div>
                     <div className="text-sm text-slate-400">Slug</div>
-                    <div className="text-sm font-mono text-blue-400">{ship.slug}</div>
+                    <div className="text-sm font-mono text-primary">{ship.slug}</div>
                   </div>
                   
                   {ship.description && (
@@ -234,7 +234,7 @@ export default function ShipsManagement() {
                         <Image className="h-3 w-3" />
                         Resim URL
                       </div>
-                      <div className="text-sm text-blue-400 truncate">{ship.imageUrl}</div>
+                      <div className="text-sm text-primary truncate">{ship.imageUrl}</div>
                     </div>
                   )}
                   
@@ -248,7 +248,7 @@ export default function ShipsManagement() {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleEdit(ship)}
-                      className="flex-1 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                      className="flex-1 text-primary hover:text-primary hover:bg-primary/20"
                       data-testid={`edit-ship-${ship.id}`}
                     >
                       <Edit className="h-4 w-4 mr-1" />
@@ -270,7 +270,7 @@ export default function ShipsManagement() {
             ))}
           </div>
         ) : (
-          <Card className="bg-slate-800/50 border-slate-700/50">
+          <Card className="glass-card border-border/50">
             <CardContent className="text-center py-12">
               <Ship className="h-16 w-16 text-slate-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-white mb-2">Henüz Gemi Yok</h3>

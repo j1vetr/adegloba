@@ -186,16 +186,16 @@ export default function PlansManagement() {
         {/* Plans Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : plans?.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {plans.map((plan: Plan) => (
-              <Card key={plan.id} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
+              <Card key={plan.id} className="glass-card border-border/50 hover:border-primary/30 transition-all duration-300 card-hover">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Package className="h-5 w-5 text-purple-400" />
+                      <Package className="h-5 w-5 text-primary" />
                       <CardTitle className="text-lg text-white">{plan.title}</CardTitle>
                     </div>
                     <div className="flex items-center gap-2">

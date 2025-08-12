@@ -150,17 +150,17 @@ export default function OrdersManagement() {
         {/* Orders List */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : filteredOrders.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
             {filteredOrders.map((order: Order) => (
-              <Card key={order.id} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
+              <Card key={order.id} className="glass-card border-border/50 hover:border-primary/30 transition-all duration-300 card-hover">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <ShoppingCart className="h-5 w-5 text-blue-400" />
+                        <ShoppingCart className="h-5 w-5 text-primary" />
                         <div>
                           <div className="font-medium text-white">#{order.id.slice(0, 8)}</div>
                           <div className="text-sm text-slate-400">

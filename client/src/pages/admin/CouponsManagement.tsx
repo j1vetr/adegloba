@@ -225,16 +225,16 @@ export default function CouponsManagement() {
         {/* Coupons Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : coupons?.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {coupons.map((coupon: Coupon) => (
-              <Card key={coupon.id} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300">
+              <Card key={coupon.id} className="glass-card border-border/50 hover:border-primary/30 transition-all duration-300 card-hover">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Ticket className="h-5 w-5 text-yellow-400" />
+                      <Ticket className="h-5 w-5 text-primary" />
                       <CardTitle className="text-lg text-white font-mono">{coupon.code}</CardTitle>
                     </div>
                     <Badge className={getStatusColor(coupon)}>

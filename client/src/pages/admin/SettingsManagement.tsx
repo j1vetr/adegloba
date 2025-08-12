@@ -135,7 +135,7 @@ export default function SettingsManagement() {
     const isSuccess = successField === field.key;
 
     const getFieldIcon = () => {
-      if (isSaving) return <div className="animate-spin h-4 w-4 border-2 border-cyan-400 border-t-transparent rounded-full" />;
+      if (isSaving) return <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />;
       if (isSuccess) return <Check className="h-4 w-4 text-green-400" />;
       return null;
     };
@@ -160,7 +160,7 @@ export default function SettingsManagement() {
                   onChange={(e) => handleSettingUpdate(field.key, e.target.value, category)}
                   disabled={field.disabled || isSaving}
                   className="bg-slate-900/50 border-slate-700/50 text-slate-100 h-11 pr-20 
-                    focus:border-cyan-500/50 focus:ring-cyan-500/20 focus:ring-2 
+                    focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
                     transition-all duration-200 backdrop-blur-sm"
                   placeholder={field.placeholder}
                   data-testid={`input-${field.key}`}
@@ -200,7 +200,7 @@ export default function SettingsManagement() {
                   onChange={(e) => handleSettingUpdate(field.key, e.target.value, category)}
                   disabled={field.disabled || isSaving}
                   className="bg-slate-900/50 border-slate-700/50 text-slate-100 min-h-[100px]
-                    focus:border-cyan-500/50 focus:ring-cyan-500/20 focus:ring-2 
+                    focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
                     transition-all duration-200 backdrop-blur-sm resize-none"
                   placeholder={field.placeholder}
                   data-testid={`textarea-${field.key}`}
@@ -232,7 +232,7 @@ export default function SettingsManagement() {
                   handleSettingUpdate(field.key, checked ? 'on' : 'off', category)
                 }
                 disabled={field.disabled || isSaving}
-                className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-cyan-500 data-[state=checked]:to-blue-500"
+                className="data-[state=checked]:bg-primary"
                 data-testid={`switch-${field.key}`}
               />
               <span className="text-xs text-slate-400">
@@ -261,7 +261,7 @@ export default function SettingsManagement() {
                   data-testid={`select-${field.key}`}
                 >
                   <SelectTrigger className="bg-slate-900/50 border-slate-700/50 text-slate-100 h-11
-                    focus:border-cyan-500/50 focus:ring-cyan-500/20 focus:ring-2 
+                    focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
                     transition-all duration-200 backdrop-blur-sm">
                     <SelectValue placeholder="Seçiniz..." />
                   </SelectTrigger>
@@ -270,7 +270,7 @@ export default function SettingsManagement() {
                       <SelectItem 
                         key={option.value} 
                         value={option.value}
-                        className="text-slate-100 focus:bg-slate-800/50 focus:text-cyan-400"
+                        className="text-slate-100 focus:bg-slate-800/50 focus:text-primary"
                       >
                         {option.label}
                       </SelectItem>
@@ -305,7 +305,7 @@ export default function SettingsManagement() {
                   onChange={(e) => handleSettingUpdate(field.key, e.target.value, category)}
                   disabled={field.disabled || isSaving}
                   className="bg-slate-900/50 border-slate-700/50 text-slate-100 h-11 pr-12
-                    focus:border-cyan-500/50 focus:ring-cyan-500/20 focus:ring-2 
+                    focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
                     transition-all duration-200 backdrop-blur-sm
                     disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder={field.placeholder}
@@ -327,7 +327,7 @@ export default function SettingsManagement() {
     return (
       <AdminLayout title="Ayarlar">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin h-8 w-8 border-3 border-cyan-400 border-t-transparent rounded-full"></div>
+          <div className="animate-spin h-8 w-8 border-3 border-primary border-t-transparent rounded-full"></div>
         </div>
       </AdminLayout>
     );

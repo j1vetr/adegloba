@@ -139,6 +139,17 @@ html {
   border: 1px solid rgba(0, 191, 255, 0.2);
 }
 
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 191, 255, 0.15), 
+              0 4px 16px rgba(0, 0, 0, 0.3);
+  border-color: rgba(0, 191, 255, 0.4);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -306,6 +317,98 @@ html {
 
 .text-light-gray-force {
   color: #d9d9d9 !important;
+}
+
+/* Dark theme component overrides */
+input, textarea, select {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+  border-color: #333333 !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #c0c0c0 !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #00bfff !important;
+  box-shadow: 0 0 0 2px rgba(0, 191, 255, 0.2) !important;
+}
+
+/* Table dark theme */
+table {
+  background-color: #0a0a0a !important;
+}
+
+table th {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid #333333 !important;
+}
+
+table td {
+  color: #ffffff !important;
+  border-bottom: 1px solid #1a1a1a !important;
+}
+
+table tbody tr:hover {
+  background-color: rgba(0, 191, 255, 0.1) !important;
+}
+
+table tbody tr:nth-child(even) {
+  background-color: #111111 !important;
+}
+
+/* Button dark theme */
+button {
+  color: #ffffff !important;
+}
+
+button:hover {
+  background-color: rgba(0, 191, 255, 0.2) !important;
+  border-color: #00bfff !important;
+}
+
+/* Modal dark theme */
+.modal, .dialog {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+  border: 1px solid #333333 !important;
+}
+
+/* Badge dark theme */
+.badge {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+  border: 1px solid #333333 !important;
+}
+
+/* Select dropdown dark theme */
+select option {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+}
+
+/* Checkbox and radio dark theme */
+input[type="checkbox"], input[type="radio"] {
+  background-color: #111111 !important;
+  border-color: #333333 !important;
+}
+
+input[type="checkbox"]:checked, input[type="radio"]:checked {
+  background-color: #00bfff !important;
+  border-color: #00bfff !important;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 191, 255, 0.2);
+  border-color: rgba(0, 191, 255, 0.3);
 }
 
 /* Gradient backgrounds */
