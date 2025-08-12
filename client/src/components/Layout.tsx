@@ -30,9 +30,9 @@ export default function Layout({ children }: LayoutProps) {
             </Link>
             
             <div className="hidden md:flex items-center space-x-6">
-              <Link href="/#ships" className="hover:text-neon-cyan transition-colors">Ships</Link>
-              <Link href="/#plans" className="hover:text-neon-cyan transition-colors">Plans</Link>
-              <Link href="/#support" className="hover:text-neon-cyan transition-colors">Support</Link>
+              <Link href="/#ships" className="hover:text-neon-cyan transition-colors">Gemiler</Link>
+              <Link href="/#plans" className="hover:text-neon-cyan transition-colors">Paketler</Link>
+              <Link href="/#support" className="hover:text-neon-cyan transition-colors">Destek</Link>
               {isAuthenticated && (
                 <Link href="/dashboard" className="hover:text-neon-cyan transition-colors">Dashboard</Link>
               )}
@@ -61,7 +61,7 @@ export default function Layout({ children }: LayoutProps) {
                     onClick={() => window.location.href = '/api/login'}
                     data-testid="login-button"
                   >
-                    <i className="fas fa-user mr-2"></i>Login
+                    <i className="fas fa-user mr-2"></i>Giriş Yap
                   </Button>
                   
                   <Button 
@@ -69,7 +69,7 @@ export default function Layout({ children }: LayoutProps) {
                     onClick={() => window.location.href = '/api/login'}
                     data-testid="register-button"
                   >
-                    Register
+                    Kayıt Ol
                   </Button>
                 </>
               ) : isAuthenticated ? (
@@ -84,7 +84,7 @@ export default function Layout({ children }: LayoutProps) {
                     onClick={() => window.location.href = '/api/logout'}
                     data-testid="logout-button"
                   >
-                    Logout
+                    Çıkış Yap
                   </Button>
                 </div>
               ) : null}
