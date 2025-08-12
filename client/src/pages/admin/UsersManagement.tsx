@@ -21,7 +21,8 @@ import {
   User,
   Edit,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -174,15 +175,32 @@ export default function UsersManagement() {
         {/* Search Section */}
         <Card className="admin-card">
           <CardHeader className="pb-4">
-            <div className="relative w-full max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-              <Input
-                placeholder="Kullanıcı ara..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="admin-input pl-10 w-full"
-                data-testid="search-users-input"
-              />
+            <div className="flex items-center justify-between gap-4">
+              <div className="relative flex-1 max-w-lg">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                  <Search className="h-5 w-5 text-blue-400" />
+                </div>
+                <Input
+                  placeholder="Kullanıcı adı, e-posta veya gemi ara..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-12 pr-4 py-3 bg-slate-800/60 border-slate-600/60 text-white placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 rounded-xl backdrop-blur-sm transition-all duration-200 w-full"
+                  data-testid="search-users-input"
+                />
+              </div>
+              {searchTerm && (
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <span>{filteredUsers.length} sonuç bulundu</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchTerm("")}
+                    className="text-slate-400 hover:text-white px-2"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
         </Card>

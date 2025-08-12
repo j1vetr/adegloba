@@ -136,7 +136,13 @@ export class DatabaseStorage implements IStorage {
   async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(userData)
+      .values({
+        username: userData.username,
+        email: userData.email,
+        password_hash: userData.password_hash,
+        ship_id: userData.ship_id,
+        address: userData.address
+      })
       .returning();
     return user;
   }
@@ -236,27 +242,23 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsersWithShips(): Promise<any[]> {
     const results = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        email: users.email,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        profileImageUrl: users.profileImageUrl,
-        shipId: users.ship_id,
-        created_at: users.createdAt,
-        updated_at: users.updatedAt,
-        ship: {
-          id: ships.id,
-          name: ships.name,
-          slug: ships.slug,
-        }
-      })
+      .select()
       .from(users)
       .leftJoin(ships, eq(users.ship_id, ships.id))
-      .orderBy(desc(users.createdAt));
+      .orderBy(desc(users.created_at));
     
-    return results;
+    return results.map(result => ({
+      id: result.users.id,
+      username: result.users.username,
+      email: result.users.email,
+      shipId: result.users.ship_id,
+      created_at: result.users.created_at,
+      ship: result.ships ? {
+        id: result.ships.id,
+        name: result.ships.name,
+        slug: result.ships.slug,
+      } : null
+    }));
   }
 
   async updateUser(id: string, data: any): Promise<User | undefined> {
@@ -267,7 +269,6 @@ export class DatabaseStorage implements IStorage {
           username: data.username,
           email: data.email,
           ship_id: data.shipId,
-          updatedAt: new Date(),
         })
         .where(eq(users.id, id))
         .returning();
@@ -285,7 +286,7 @@ export class DatabaseStorage implements IStorage {
         .delete(users)
         .where(eq(users.id, id));
       
-      return result.changes > 0;
+      return result.rowCount > 0;
     } catch (error) {
       console.error("Error deleting user:", error);
       return false;
@@ -321,7 +322,12 @@ export class DatabaseStorage implements IStorage {
   async updateShip(id: string, ship: Partial<InsertShip>): Promise<Ship | undefined> {
     const [updatedShip] = await db
       .update(ships)
-      .set({ ...ship, updatedAt: new Date() })
+      .set({
+        name: ship.name,
+        slug: ship.slug,
+        kitNumber: ship.kitNumber,
+        isActive: ship.isActive
+      })
       .where(eq(ships.id, id))
       .returning();
     return updatedShip;
