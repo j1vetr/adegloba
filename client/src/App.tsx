@@ -27,6 +27,7 @@ import UsersManagement from "@/pages/admin/UsersManagement";
 import SettingsManagement from "@/pages/admin/SettingsManagement";
 import TicketManagement from "@/pages/admin/TicketManagement";
 import UserTickets from "@/pages/UserTickets";
+import Profil from "@/pages/Profil";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
 
@@ -109,6 +110,12 @@ function Router() {
       <Route path="/destek">
         <UserProtectedRoute>
           <UserTickets />
+        </UserProtectedRoute>
+      </Route>
+      
+      <Route path="/profil">
+        <UserProtectedRoute>
+          <Profil />
         </UserProtectedRoute>
       </Route>
       
