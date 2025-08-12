@@ -49,22 +49,22 @@ export default function Panel() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
+          <div className="flex-1">
+            <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
               AdeGloba Starlink System - Kontrol Paneli
             </h1>
-            <p className="text-slate-400 mt-2">
-              Hoş geldiniz, {user.username}
-              {user.ship_id && (
-                <> • <span className="text-blue-400">Gemi: {user.ship_id}</span></>
+            <p className="text-slate-400 text-sm lg:text-base">
+              Hoş geldiniz, <span className="text-white font-medium">{user.username}</span>
+              {user.ship && (
+                <> • <span className="text-blue-400 font-medium">Gemi: {user.ship.name}</span></>
               )}
             </p>
           </div>
           <Link href="/paketler">
-            <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700" data-testid="button-buy-packages">
+            <Button className="w-full lg:w-auto bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg" data-testid="button-buy-packages">
               <Package className="mr-2 h-4 w-4" />
               Data Paketi Satın Al
             </Button>
@@ -72,68 +72,74 @@ export default function Panel() {
         </div>
 
         <Tabs defaultValue="packages" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border-slate-700">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border-slate-700/50 rounded-lg p-1">
             <TabsTrigger 
               value="packages" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
               data-testid="tab-packages"
             >
               <Package className="mr-2 h-4 w-4" />
-              Paketlerim
+              <span className="hidden sm:inline">Paketlerim</span>
+              <span className="sm:hidden">Paketler</span>
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
               data-testid="tab-history"
             >
               <History className="mr-2 h-4 w-4" />
-              Geçmiş Satın Alımlar
+              <span className="hidden sm:inline">Geçmiş Satın Alımlar</span>
+              <span className="sm:hidden">Geçmiş</span>
             </TabsTrigger>
             <TabsTrigger 
               value="usage" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
               data-testid="tab-usage"
             >
               <BarChart3 className="mr-2 h-4 w-4" />
-              Kullanım Bilgileri
+              <span className="hidden sm:inline">Kullanım Bilgileri</span>
+              <span className="sm:hidden">Kullanım</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Active Packages */}
           <TabsContent value="packages" className="space-y-4">
-            <Card className="bg-slate-900/50 border-slate-700">
+            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Package className="h-5 w-5" />
+                <CardTitle className="text-white flex items-center gap-2 text-lg">
+                  <Package className="h-5 w-5 text-blue-400" />
                   Aktif Paketlerim
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {packagesLoading ? (
-                  <div className="flex items-center justify-center py-8">
+                  <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
+                    <span className="ml-3 text-slate-300">Paketler yükleniyor...</span>
                   </div>
                 ) : (activePackages as any)?.length ? (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                     {(activePackages as any[]).map((pkg: any) => (
-                      <Card key={pkg.id} className="bg-slate-800/50 border-slate-600" data-testid={`package-card-${pkg.id}`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-semibold text-white">{pkg.title}</h3>
-                            <Badge className="bg-green-600 text-white">Aktif</Badge>
+                      <Card key={pkg.id} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10" data-testid={`package-card-${pkg.id}`}>
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-white text-lg">{pkg.title}</h3>
+                            <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white border-0">
+                              Aktif
+                            </Badge>
                           </div>
-                          <div className="space-y-2 text-sm text-slate-300">
-                            <div className="flex items-center gap-2">
-                              <Package className="h-4 w-4" />
-                              {pkg.gbAmount} GB
+                          <div className="space-y-3 text-sm">
+                            <div className="flex items-center gap-3 text-slate-300">
+                              <Package className="h-4 w-4 text-blue-400" />
+                              <span className="font-medium">{pkg.gbAmount} GB</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              Bitiş: {formatDate(pkg.expiresAt)}
+                            <div className="flex items-center gap-3 text-slate-300">
+                              <Calendar className="h-4 w-4 text-cyan-400" />
+                              <span>Bitiş: {formatDate(pkg.expiresAt)}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <ShipIcon className="h-4 w-4" />
-                              Gemi ID: {user.ship_id || 'Belirtilmemiş'}
+                            <div className="flex items-center gap-3 text-slate-300">
+                              <ShipIcon className="h-4 w-4 text-purple-400" />
+                              <span>Gemi: {user.ship?.name || 'Belirtilmemiş'}</span>
                             </div>
                           </div>
                         </CardContent>
@@ -141,11 +147,17 @@ export default function Panel() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <Package className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <p className="text-slate-400 mb-4">Henüz aktif paketiniz bulunmamaktadır.</p>
+                  <div className="text-center py-12">
+                    <div className="relative mb-6">
+                      <Package className="h-16 w-16 text-slate-400 mx-auto" />
+                      <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-3">Henüz Aktif Paket Yok</h3>
+                    <p className="text-slate-400 mb-6 max-w-md mx-auto">
+                      AdeGloba Starlink System'de ilk data paketinizi satın alın ve kesintisiz internete başlayın.
+                    </p>
                     <Link href="/paketler">
-                      <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+                      <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-blue-500/25 transition-all duration-300">
                         İlk Paketinizi Satın Alın
                       </Button>
                     </Link>
