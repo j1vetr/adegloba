@@ -120,7 +120,7 @@ export default function UsersManagement() {
     setEditFormData({
       username: user.username,
       email: user.email,
-      ship_id: user.shipId || "",
+      ship_id: user.shipId || "none",
     });
   };
 
@@ -131,7 +131,7 @@ export default function UsersManagement() {
         id: editUser.id, 
         data: {
           ...editFormData,
-          ship_id: editFormData.ship_id || null
+          ship_id: editFormData.ship_id === "none" ? null : editFormData.ship_id
         }
       });
     }
@@ -523,7 +523,7 @@ export default function UsersManagement() {
                     <SelectValue placeholder="Gemi seçin" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="">Gemi Atanmadı</SelectItem>
+                    <SelectItem value="none" className="text-white focus:bg-primary/20">Gemi Atanmadı</SelectItem>
                     {ships?.map((ship) => (
                       <SelectItem key={ship.id} value={ship.id} className="text-white focus:bg-primary/20">
                         {ship.name}
