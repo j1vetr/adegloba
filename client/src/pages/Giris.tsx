@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Satellite, Waves, User, Lock, CheckCircle } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
+import { useUserAuth } from "@/hooks/useUserAuth";
 
 export default function Giris() {
   const [location, setLocation] = useLocation();
@@ -16,6 +18,14 @@ export default function Giris() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { user, isLoading: authLoading } = useUserAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && user) {
+      setLocation("/panel");
+    }
+  }, [user, authLoading, setLocation]);
 
   // Check for registration success
   useEffect(() => {
@@ -24,6 +34,15 @@ export default function Giris() {
       setSuccess("Kayıt başarılı! Şimdi giriş yapabilirsiniz.");
     }
   }, []);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +62,12 @@ export default function Giris() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Redirect to user dashboard
-        setLocation("/panel");
+        // Invalidate user auth cache and redirect to user dashboard
+        await queryClient.invalidateQueries({ queryKey: ["/api/user/me"] });
+        // Force a brief delay for cache invalidation to take effect
+        setTimeout(() => {
+          setLocation("/panel");
+        }, 100);
       } else {
         setError(data.message || "Giriş işlemi başarısız");
       }

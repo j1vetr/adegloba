@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Satellite, Waves, User, Mail, Lock, Ship as ShipIcon, MapPin } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
+import { useUserAuth } from "@/hooks/useUserAuth";
 import type { Ship } from "@shared/schema";
 
 export default function Kayit() {
@@ -21,12 +23,30 @@ export default function Kayit() {
     address: ""
   });
 
+  const { user, isLoading: authLoading } = useUserAuth();
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && user) {
+      setLocation("/panel");
+    }
+  }, [user, authLoading, setLocation]);
+
   // Fetch active ships for dropdown
   const { data: ships, isLoading: shipsLoading } = useQuery<Ship[]>({
     queryKey: ["/api/ships/active"]
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,8 +65,12 @@ export default function Kayit() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Redirect to user dashboard after successful registration
-        setLocation("/panel");
+        // Invalidate user auth cache and redirect to user dashboard after successful registration
+        await queryClient.invalidateQueries({ queryKey: ["/api/user/me"] });
+        // Force a brief delay for cache invalidation to take effect
+        setTimeout(() => {
+          setLocation("/panel");
+        }, 100);
       } else {
         setError(data.message || "Kayıt işlemi başarısız");
       }
