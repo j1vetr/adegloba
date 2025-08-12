@@ -17,6 +17,7 @@ export function setupUserAuth(app: Express) {
     try {
       // Map password to password_hash for validation
       const validatedData = registerSchema.parse({
+        full_name: req.body.full_name,
         username: req.body.username,
         email: req.body.email,
         password_hash: req.body.password,
@@ -49,6 +50,7 @@ export function setupUserAuth(app: Express) {
 
       // Create user
       const user = await storage.createUser({
+        full_name: validatedData.full_name,
         username: validatedData.username,
         email: validatedData.email,
         password_hash: hashedPassword,

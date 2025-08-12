@@ -32,6 +32,7 @@ type UserData = {
   id: string;
   username: string;
   email: string;
+  full_name?: string;
   shipId: string | null;
   created_at: string;
   ship?: {
@@ -49,6 +50,7 @@ export default function UsersManagement() {
   const [editFormData, setEditFormData] = useState({
     username: "",
     email: "",
+    full_name: "",
     ship_id: "",
   });
   const { toast } = useToast();
@@ -120,6 +122,7 @@ export default function UsersManagement() {
     setEditFormData({
       username: user.username,
       email: user.email,
+      full_name: user.full_name || "",
       ship_id: user.shipId || "none",
     });
   };
@@ -149,6 +152,7 @@ export default function UsersManagement() {
     return (
       user.username.toLowerCase().includes(searchLower) ||
       user.email.toLowerCase().includes(searchLower) ||
+      (user.full_name && user.full_name.toLowerCase().includes(searchLower)) ||
       user.ship?.name.toLowerCase().includes(searchLower)
     );
   }) || [];
@@ -181,7 +185,7 @@ export default function UsersManagement() {
                   <Search className="h-5 w-5 text-blue-400" />
                 </div>
                 <Input
-                  placeholder="Kullanıcı adı, e-posta veya gemi ara..."
+                  placeholder="İsim, kullanıcı adı, e-posta veya gemi ara..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-12 pr-4 py-3 bg-slate-800/60 border-slate-600/60 text-white placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 rounded-xl backdrop-blur-sm transition-all duration-200 w-full"
@@ -221,16 +225,17 @@ export default function UsersManagement() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="text-white font-semibold">Kullanıcı</TableHead>
+                        <TableHead className="text-white font-semibold hidden lg:table-cell">İsim Soyisim</TableHead>
                         <TableHead className="text-white font-semibold hidden md:table-cell">E-posta</TableHead>
                         <TableHead className="text-white font-semibold">Gemi</TableHead>
-                        <TableHead className="text-white font-semibold hidden lg:table-cell">Kayıt Tarihi</TableHead>
+                        <TableHead className="text-white font-semibold hidden xl:table-cell">Kayıt Tarihi</TableHead>
                         <TableHead className="text-white font-semibold text-right">İşlemler</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredUsers.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-12">
+                          <TableCell colSpan={6} className="text-center py-12">
                             <div className="flex flex-col items-center gap-4">
                               <Users className="h-12 w-12 text-slate-500" />
                               <div className="text-center">
@@ -260,6 +265,11 @@ export default function UsersManagement() {
                                 </div>
                               </div>
                             </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <div className="text-slate-300 text-sm truncate">
+                                {user.full_name || <span className="text-slate-500 italic">Belirtilmemiş</span>}
+                              </div>
+                            </TableCell>
                             <TableCell className="hidden md:table-cell">
                               <div className="text-slate-300 text-sm truncate">{user.email}</div>
                             </TableCell>
@@ -275,7 +285,7 @@ export default function UsersManagement() {
                                 <span className="text-slate-500 italic text-sm">Atanmamış</span>
                               )}
                             </TableCell>
-                            <TableCell className="hidden lg:table-cell">
+                            <TableCell className="hidden xl:table-cell">
                               <div className="text-slate-300 text-xs">
                                 {formatDate(user.created_at)}
                               </div>
@@ -352,6 +362,12 @@ export default function UsersManagement() {
                           </div>
                           
                           <div className="space-y-2">
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-400">İsim Soyisim:</span>
+                              <span className="text-slate-300 text-xs text-right">
+                                {user.full_name || 'Belirtilmemiş'}
+                              </span>
+                            </div>
                             <div className="flex justify-between items-center text-sm">
                               <span className="text-slate-400">Atanmış Gemi:</span>
                               <span className="text-slate-300 text-right">
@@ -449,6 +465,10 @@ export default function UsersManagement() {
                       <div className="text-white">{selectedUser.email}</div>
                     </div>
                     <div>
+                      <div className="text-sm text-slate-400">İsim Soyisim</div>
+                      <div className="text-white">{selectedUser.full_name || 'Belirtilmemiş'}</div>
+                    </div>
+                    <div>
                       <div className="text-sm text-slate-400">Kayıt Tarihi</div>
                       <div className="text-white">{formatDate(selectedUser.created_at)}</div>
                     </div>
@@ -510,6 +530,18 @@ export default function UsersManagement() {
                   onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
                   className="admin-input"
                   data-testid="input-edit-email"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-full-name" className="text-white">İsim Soyisim</Label>
+                <Input
+                  id="edit-full-name"
+                  value={editFormData.full_name}
+                  onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})}
+                  className="admin-input"
+                  placeholder="Kullanıcının tam adını girin"
+                  data-testid="input-edit-full-name"
                 />
               </div>
 

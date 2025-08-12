@@ -270,6 +270,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
 });
 
 export const registerSchema = createInsertSchema(users, {
+  full_name: z.string().min(2, "İsim Soyisim en az 2 karakter olmalı"),
   username: z.string().min(3, "Kullanıcı adı en az 3 karakter olmalı"),
   email: z.string().email("Geçerli bir e-posta adresi girin"),
   password_hash: z.string().min(6, "Şifre en az 6 karakter olmalı"),

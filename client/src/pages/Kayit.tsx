@@ -16,6 +16,7 @@ import type { Ship } from "@shared/schema";
 export default function Kayit() {
   const [, setLocation] = useLocation();
   const [formData, setFormData] = useState({
+    full_name: "",
     username: "",
     email: "",
     password: "",
@@ -135,11 +136,33 @@ export default function Kayit() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-3">
+                <Label htmlFor="full_name" className="text-slate-300 flex items-center gap-2 font-medium">
+                  <div className="p-1 rounded bg-primary/10">
+                    <User className="h-4 w-4 text-primary" />
+                  </div>
+                  İsim Soyisim *
+                </Label>
+                <Input
+                  id="full_name"
+                  name="full_name"
+                  type="text"
+                  value={formData.full_name}
+                  onChange={handleChange}
+                  required
+                  className="bg-slate-800/50 border-slate-600/50 text-white h-12 
+                    placeholder:text-slate-400 focus:border-primary/50 focus:ring-primary/20 focus:ring-2 
+                    transition-all duration-200 backdrop-blur-sm"
+                  placeholder="Adınız ve soyadınızı girin"
+                  data-testid="input-full-name"
+                />
+              </div>
+
+              <div className="space-y-3">
                 <Label htmlFor="username" className="text-slate-300 flex items-center gap-2 font-medium">
                   <div className="p-1 rounded bg-primary/10">
                     <User className="h-4 w-4 text-primary" />
                   </div>
-                  Kullanıcı Adı
+                  Kullanıcı Adı *
                 </Label>
                 <Input
                   id="username"
@@ -161,7 +184,7 @@ export default function Kayit() {
                   <div className="p-1 rounded bg-primary/10">
                     <Mail className="h-4 w-4 text-primary" />
                   </div>
-                  E-posta
+                  E-posta *
                 </Label>
                 <Input
                   id="email"
@@ -183,7 +206,7 @@ export default function Kayit() {
                   <div className="p-1 rounded bg-primary/10">
                     <Lock className="h-4 w-4 text-primary" />
                   </div>
-                  Şifre
+                  Şifre *
                 </Label>
                 <Input
                   id="password"
@@ -205,7 +228,7 @@ export default function Kayit() {
                   <div className="p-1 rounded bg-primary/10">
                     <ShipIcon className="h-4 w-4 text-primary" />
                   </div>
-                  Gemi Seçin
+                  Gemi Seçin *
                 </Label>
                 <Select onValueChange={handleShipChange} required>
                   <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white h-12 

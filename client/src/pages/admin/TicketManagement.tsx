@@ -59,6 +59,7 @@ interface Ticket {
   status: 'Açık' | 'Beklemede' | 'Kapalı';
   userName: string;
   userEmail: string;
+  userFullName?: string;
   shipName?: string;
   createdAt: string;
   updatedAt: string;
@@ -297,7 +298,10 @@ export default function TicketManagement() {
                     <Label className="text-cyan-300 text-sm font-medium">Kullanıcı</Label>
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-cyan-400" />
-                      <span className="text-white" data-testid="text-username">{ticket.userName}</span>
+                      <div className="flex flex-col">
+                        <span className="text-white" data-testid="text-username">{ticket.userFullName || ticket.userName}</span>
+                        <span className="text-xs text-slate-400">@{ticket.userName}</span>
+                      </div>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -668,7 +672,12 @@ export default function TicketManagement() {
                               {ticket.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-white">{ticket.userName}</TableCell>
+                          <TableCell className="text-white">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{ticket.userFullName || ticket.userName}</span>
+                              <span className="text-xs text-slate-400">@{ticket.userName}</span>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-cyan-300">
                             {ticket.shipName || (
                               <span className="text-slate-400 italic">Atanmamış</span>

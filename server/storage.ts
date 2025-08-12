@@ -269,23 +269,20 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsersWithShips(): Promise<any[]> {
     const results = await db
-      .select()
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        full_name: users.full_name,
+        shipId: users.ship_id,
+        created_at: users.created_at,
+        ship: ships
+      })
       .from(users)
       .leftJoin(ships, eq(users.ship_id, ships.id))
       .orderBy(desc(users.created_at));
     
-    return results.map(result => ({
-      id: result.users.id,
-      username: result.users.username,
-      email: result.users.email,
-      shipId: result.users.ship_id,
-      created_at: result.users.created_at,
-      ship: result.ships ? {
-        id: result.ships.id,
-        name: result.ships.name,
-        slug: result.ships.slug,
-      } : null
-    }));
+    return results;
   }
 
   async updateUser(id: string, data: any): Promise<User | undefined> {
@@ -295,7 +292,8 @@ export class DatabaseStorage implements IStorage {
         .set({
           username: data.username,
           email: data.email,
-          ship_id: data.shipId,
+          full_name: data.full_name,
+          ship_id: data.ship_id,
         })
         .where(eq(users.id, id))
         .returning();
@@ -744,6 +742,7 @@ export class DatabaseStorage implements IStorage {
       assignedAdminId: tickets.assignedAdminId,
       userName: users.username,
       userEmail: users.email,
+      userFullName: users.full_name,
       shipName: ships.name,
     })
     .from(tickets)
@@ -770,6 +769,7 @@ export class DatabaseStorage implements IStorage {
       assignedAdminId: tickets.assignedAdminId,
       userName: users.username,
       userEmail: users.email,
+      userFullName: users.full_name,
       shipName: ships.name,
     })
     .from(tickets)

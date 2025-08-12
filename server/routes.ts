@@ -476,7 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/admin/users/:id', isAdminAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
-      const { username, email, ship_id } = req.body;
+      const { username, email, full_name, ship_id } = req.body;
 
       if (!username || !email) {
         return res.status(400).json({ message: "Username and email are required" });
@@ -497,7 +497,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedUser = await storage.updateUser(id, {
         username,
         email,
-        shipId: ship_id || null
+        full_name: req.body.full_name,
+        ship_id: ship_id || null
       });
 
       if (!updatedUser) {
