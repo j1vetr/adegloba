@@ -53,51 +53,89 @@ export default function PayPalButton({
 
   // Load PayPal SDK
   useEffect(() => {
-    if (!settings?.paypal_client_id) return;
+    if (!settings?.paypal_client_id || settings.paypal_client_id.trim() === '') {
+      console.log('PayPal client ID not available, skipping SDK load');
+      return;
+    }
 
     const loadPayPalSDK = () => {
       return new Promise<void>((resolve, reject) => {
+        // Check if PayPal SDK is already loaded
         if ((window as any).paypal) {
+          console.log('PayPal SDK already loaded');
           setPaypalLoaded(true);
           resolve();
           return;
         }
 
+        // Remove any existing PayPal scripts to avoid conflicts
+        const existingScripts = document.querySelectorAll('script[src*="paypal.com/sdk"]');
+        existingScripts.forEach(script => script.remove());
+
         const script = document.createElement('script');
         const clientId = settings.paypal_client_id;
         const environment = settings.paypal_environment || 'sandbox';
         
-        script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=${currency}&intent=${intent}`;
+        // Build PayPal SDK URL with proper parameters
+        const sdkUrl = new URL('https://www.paypal.com/sdk/js');
+        sdkUrl.searchParams.set('client-id', clientId);
+        sdkUrl.searchParams.set('currency', currency);
+        sdkUrl.searchParams.set('intent', intent);
+        sdkUrl.searchParams.set('components', 'buttons');
+        
+        // Add sandbox parameter for sandbox environment
+        if (environment === 'sandbox') {
+          sdkUrl.searchParams.set('disable-funding', 'venmo');
+        }
+        
+        script.src = sdkUrl.toString();
         script.async = true;
+        script.defer = true;
+        
+        console.log('Loading PayPal SDK from:', script.src);
         
         script.onload = () => {
-          setPaypalLoaded(true);
-          resolve();
+          console.log('PayPal SDK loaded successfully');
+          // Wait a moment for PayPal to initialize
+          setTimeout(() => {
+            if ((window as any).paypal) {
+              setPaypalLoaded(true);
+              resolve();
+            } else {
+              reject(new Error('PayPal object not available after SDK load'));
+            }
+          }, 100);
         };
         
-        script.onerror = () => {
-          reject(new Error('Failed to load PayPal SDK'));
+        script.onerror = (error) => {
+          console.error('PayPal SDK script failed to load:', error);
+          // Check if it's a CORS or client-id validation error
+          reject(new Error(`PayPal SDK load failed. Please check client-id: ${clientId.substring(0, 20)}...`));
         };
         
-        document.body.appendChild(script);
+        document.head.appendChild(script);
       });
     };
 
-    loadPayPalSDK().catch((error) => {
-      console.error('PayPal SDK load error:', error);
-      toast({
-        title: "PayPal Hatası",
-        description: "PayPal yüklenemedi. Lütfen sayfayı yenileyin.",
-        variant: "destructive",
+    const timeoutId = setTimeout(() => {
+      loadPayPalSDK().catch((error) => {
+        console.error('PayPal SDK load error:', error);
+        toast({
+          title: "PayPal Yapılandırma Hatası",
+          description: "PayPal Client ID geçersiz veya hatalı. Lütfen admin panelinden doğru sandbox Client ID girin.",
+          variant: "destructive",
+        });
       });
-    });
-  }, [settings, currency, intent, toast]);
+    }, 100); // Small delay to ensure settings are properly loaded
+
+    return () => clearTimeout(timeoutId);
+  }, [settings?.paypal_client_id, settings?.paypal_environment, currency, intent, toast]);
 
   const handlePayPalClick = async () => {
     if (!paypalLoaded || !(window as any).paypal) {
       toast({
         title: "PayPal Hazır Değil",
-        description: "PayPal henüz yüklenemedi. Lütfen bekleyin.",
+        description: "PayPal henüz yüklenemedi. Lütfen bekleyin veya sayfayı yenileyin.",
         variant: "destructive",
       });
       return;
@@ -106,39 +144,66 @@ export default function PayPalButton({
     setIsLoading(true);
 
     try {
-      // Create PayPal order
-      const createResponse = await fetch('/api/paypal/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: amount,
-          currency: currency,
-        }),
-      });
-
-      if (!createResponse.ok) {
-        const contentType = createResponse.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await createResponse.json();
-          throw new Error(errorData.message || 'Order creation failed');
-        } else {
-          const errorText = await createResponse.text();
-          throw new Error(`Order creation failed: ${errorText}`);
-        }
+      // Clear any existing PayPal button container
+      const container = document.getElementById('paypal-button-container');
+      if (container) {
+        container.innerHTML = '';
+        container.style.display = 'block';
       }
 
-      const createData = await createResponse.json();
-      const orderId = createData.id;
-
-      // Initialize PayPal checkout
+      // Initialize PayPal checkout directly
       const paypal = (window as any).paypal;
       
       paypal.Buttons({
-        createOrder: () => orderId,
+        style: {
+          layout: 'vertical',
+          color: 'blue',
+          shape: 'rect',
+          label: 'pay',
+          height: 40
+        },
+        createOrder: async () => {
+          try {
+            // Create PayPal order
+            const createResponse = await fetch('/api/paypal/create-order', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                amount: parseFloat(amount),
+                currency: currency,
+              }),
+            });
+
+            if (!createResponse.ok) {
+              const contentType = createResponse.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                const errorData = await createResponse.json();
+                throw new Error(errorData.message || 'Order creation failed');
+              } else {
+                const errorText = await createResponse.text();
+                throw new Error(`Order creation failed: ${errorText}`);
+              }
+            }
+
+            const createData = await createResponse.json();
+            console.log('PayPal order created:', createData.id);
+            return createData.id;
+          } catch (error) {
+            console.error('Error creating PayPal order:', error);
+            toast({
+              title: "Sipariş Oluşturma Hatası",
+              description: error instanceof Error ? error.message : "Bilinmeyen hata",
+              variant: "destructive",
+            });
+            throw error;
+          }
+        },
         onApprove: async (data: any) => {
           try {
+            console.log('PayPal payment approved:', data.orderID);
+            
             // Capture the payment
             const captureResponse = await fetch('/api/paypal/capture-order', {
               method: 'POST',
@@ -162,37 +227,64 @@ export default function PayPalButton({
             }
 
             const captureData = await captureResponse.json();
+            console.log('PayPal payment captured:', captureData);
             
             if (captureData.status === 'COMPLETED') {
+              toast({
+                title: "Ödeme Başarılı",
+                description: "PayPal ödemesi tamamlandı.",
+              });
               onSuccess?.(data.orderID);
             } else {
               throw new Error('Payment not completed');
             }
           } catch (error) {
             console.error('Payment capture error:', error);
+            toast({
+              title: "Ödeme Hatası",
+              description: error instanceof Error ? error.message : "Ödeme tamamlanamadı",
+              variant: "destructive",
+            });
             onError?.(error);
-          } finally {
-            setIsLoading(false);
           }
         },
         onError: (err: any) => {
           console.error('PayPal error:', err);
+          toast({
+            title: "PayPal Hatası",
+            description: "Ödeme işlemi sırasında bir hata oluştu.",
+            variant: "destructive",
+          });
           onError?.(err);
-          setIsLoading(false);
         },
         onCancel: () => {
-          setIsLoading(false);
           toast({
             title: "Ödeme İptal Edildi",
             description: "PayPal ödemesi iptal edildi.",
             variant: "default",
           });
         }
-      }).render('#paypal-button-container');
+      }).render('#paypal-button-container').then(() => {
+        setIsLoading(false);
+        console.log('PayPal buttons rendered successfully');
+      }).catch((error: any) => {
+        console.error('PayPal render error:', error);
+        setIsLoading(false);
+        toast({
+          title: "PayPal Render Hatası",
+          description: "PayPal butonları yüklenemedi.",
+          variant: "destructive",
+        });
+      });
 
     } catch (error) {
       console.error('PayPal initialization error:', error);
       setIsLoading(false);
+      toast({
+        title: "PayPal Başlatma Hatası",
+        description: error instanceof Error ? error.message : "PayPal başlatılamadı",
+        variant: "destructive",
+      });
       onError?.(error);
     }
   };
@@ -239,8 +331,8 @@ export default function PayPalButton({
         </div>
       </div>
 
-      {/* PayPal Container - Hidden but required for PayPal SDK */}
-      <div id="paypal-button-container" className="hidden"></div>
+      {/* PayPal Container - Visible when PayPal buttons are rendered */}
+      <div id="paypal-button-container" className="mt-2"></div>
 
       {/* Accepted Payment Methods */}
       <div className="text-center">
@@ -283,12 +375,16 @@ export default function PayPalButton({
       <div className="w-full p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center">
         <h3 className="text-amber-400 text-lg font-semibold mb-2">PayPal Yapılandırması Gerekli</h3>
         <p className="text-amber-300 text-sm mb-3">
-          PayPal ödeme sistemini kullanabilmek için admin panelinden PayPal ayarlarını yapılandırmanız gerekiyor.
+          PayPal ödemelerini kabul etmek için sandbox veya live PayPal hesabınızdan API anahtarlarını yapılandırmanız gerekiyor.
         </p>
-        <div className="text-amber-200 text-xs space-y-1">
-          <p>• Admin Panel → Ayarlar → PayPal Integration</p>
-          <p>• Client ID ve Client Secret değerlerini girin</p>
-          <p>• Environment ayarını (Sandbox/Live) seçin</p>
+        <div className="text-amber-200 text-xs space-y-2">
+          <div className="bg-amber-500/10 p-3 rounded border border-amber-500/20">
+            <p className="font-medium text-amber-300 mb-1">Yapılandırma Adımları:</p>
+            <p>1. Admin Panel → Ayarlar → PayPal Integration</p>
+            <p>2. PayPal Developer Console'dan Client ID alın</p>
+            <p>3. Client Secret anahtarını girin</p>
+            <p>4. Sandbox veya Live environment seçin</p>
+          </div>
         </div>
       </div>
     );

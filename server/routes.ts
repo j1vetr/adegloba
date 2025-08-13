@@ -82,8 +82,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Amount and currency are required' });
       }
 
-      const order = await createPaypalOrder(parseFloat(amount), currency);
-      res.json(order);
+      // Get PayPal settings from database for validation
+      const settings = await storage.getSettingsByCategory('payment');
+      const paypalClientId = settings.find(s => s.key === 'PAYPAL_CLIENT_ID')?.value;
+      const paypalSecret = settings.find(s => s.key === 'PAYPAL_CLIENT_SECRET')?.value;
+      
+      if (!paypalClientId || !paypalSecret || paypalClientId.trim() === '' || paypalSecret.trim() === '') {
+        return res.status(400).json({ 
+          error: "PayPal not configured", 
+          message: "PayPal credentials are missing. Please configure PayPal settings in the admin panel." 
+        });
+      }
+
+      // Temporarily set environment variables from database for PayPal SDK
+      const originalClientId = process.env.PAYPAL_CLIENT_ID;
+      const originalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
+      
+      process.env.PAYPAL_CLIENT_ID = paypalClientId;
+      process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
+
+      try {
+        const order = await createPaypalOrder(parseFloat(amount), currency);
+        res.json(order);
+      } finally {
+        // Restore original environment variables
+        if (originalClientId) process.env.PAYPAL_CLIENT_ID = originalClientId;
+        if (originalClientSecret) process.env.PAYPAL_CLIENT_SECRET = originalClientSecret;
+      }
     } catch (error) {
       console.error("PayPal order creation error:", error);
       res.status(500).json({ message: "Failed to create PayPal order" });
@@ -99,8 +124,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Order ID is required' });
       }
 
-      const captureResult = await capturePaypalOrder(orderId);
-      res.json(captureResult);
+      // Get PayPal settings from database
+      const settings = await storage.getSettingsByCategory('payment');
+      const paypalClientId = settings.find(s => s.key === 'PAYPAL_CLIENT_ID')?.value;
+      const paypalSecret = settings.find(s => s.key === 'PAYPAL_CLIENT_SECRET')?.value;
+      
+      if (!paypalClientId || !paypalSecret || paypalClientId.trim() === '' || paypalSecret.trim() === '') {
+        return res.status(400).json({ 
+          error: "PayPal not configured", 
+          message: "PayPal credentials are missing. Please configure PayPal settings in the admin panel." 
+        });
+      }
+
+      // Temporarily set environment variables from database for PayPal SDK
+      const originalClientId = process.env.PAYPAL_CLIENT_ID;
+      const originalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
+      
+      process.env.PAYPAL_CLIENT_ID = paypalClientId;
+      process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
+
+      try {
+        const captureResult = await capturePaypalOrder(orderId);
+        res.json(captureResult);
+      } finally {
+        // Restore original environment variables
+        if (originalClientId) process.env.PAYPAL_CLIENT_ID = originalClientId;
+        if (originalClientSecret) process.env.PAYPAL_CLIENT_SECRET = originalClientSecret;
+      }
     } catch (error) {
       console.error("PayPal capture error:", error);
       res.status(500).json({ message: "Failed to capture PayPal payment" });
