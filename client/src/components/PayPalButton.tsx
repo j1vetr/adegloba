@@ -171,8 +171,9 @@ export default function PayPalButton({
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                amount: parseFloat(amount),
+                amount: parseFloat(amount).toString(),
                 currency: currency,
+                intent: 'CAPTURE',
               }),
             });
 

@@ -102,8 +102,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
 
       try {
-        const order = await createPaypalOrder(parseFloat(amount), currency);
-        res.json(order);
+        // Call PayPal function directly with proper request/response
+        await createPaypalOrder(req, res);
+        return; // Function handles response
       } finally {
         // Restore original environment variables
         if (originalClientId) process.env.PAYPAL_CLIENT_ID = originalClientId;
@@ -144,8 +145,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
 
       try {
-        const captureResult = await capturePaypalOrder(orderId);
-        res.json(captureResult);
+        // Set orderID in params for PayPal function
+        req.params = { ...req.params, orderID: orderId };
+        await capturePaypalOrder(req, res);
+        return; // Function handles response
       } finally {
         // Restore original environment variables
         if (originalClientId) process.env.PAYPAL_CLIENT_ID = originalClientId;
