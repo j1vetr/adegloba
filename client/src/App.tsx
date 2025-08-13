@@ -145,6 +145,7 @@ function Router() {
       
       <Route path="/checkout/success" component={OrderSuccess} />
       <Route path="/checkout/cancel" component={OrderCancel} />
+      <Route path="/order-success" component={OrderSuccess} />
       
       <Route path="/destek">
         <UserProtectedRoute>

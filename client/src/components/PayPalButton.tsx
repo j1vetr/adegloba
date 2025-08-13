@@ -240,7 +240,7 @@ export default function PayPalButton({
               
               // Redirect to success page after 1.5 seconds
               setTimeout(() => {
-                window.location.href = `/checkout/success?orderId=${data.orderID}&amount=${amount}&paymentId=${captureData.id}`;
+                window.location.href = `/order-success?orderId=${data.orderID}&amount=${amount}&paymentId=${captureData.id}`;
               }, 1500);
             } else {
               throw new Error('Payment not completed');

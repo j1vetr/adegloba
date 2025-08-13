@@ -2034,14 +2034,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log(`Processing payment completion for order: ${orderId}`);
         
-        // Mark order as paid and assign credentials (placeholder - would need to implement markOrderAsPaid method)
-        console.log('Would mark order as paid:', orderId, {
-          paypal_payment_id: payment.id,
-          payment_status: 'completed',
-          amount: payment.amount.value,
-          currency: payment.amount.currency_code,
-          payer_email: payment.payer?.email_address
-        });
+        // Mark order as paid and assign credentials
+        try {
+          const order = await storage.getOrderById(orderId);
+          if (order) {
+            await storage.updateOrderStatus(orderId, 'paid', {
+              paypal_payment_id: payment.id,
+              payment_status: 'completed',
+              amount: payment.amount.value,
+              currency: payment.amount.currency_code,
+              payer_email: payment.payer?.email_address
+            });
+            console.log(`Order ${orderId} marked as paid via webhook`);
+          }
+        } catch (dbError) {
+          console.error('Database error during webhook processing:', dbError);
+        }
         
         // Send success response to PayPal
         res.status(200).json({ status: 'success' });
