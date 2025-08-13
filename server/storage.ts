@@ -9,6 +9,7 @@ import {
   orderItems,
   orderCredentials,
   settings,
+  systemLogs,
   tickets,
   ticketMessages,
   ticketAttachments,
@@ -38,6 +39,8 @@ import {
   type InsertTicketMessage,
   type TicketAttachment,
   type InsertTicketAttachment,
+  type SystemLog,
+  type InsertSystemLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt } from "drizzle-orm";
@@ -130,6 +133,16 @@ export interface IStorage {
 
   // Statistics
   getOrderStats(): Promise<{ totalRevenue: number; activeOrders: number; totalOrders: number }>;
+  
+  // System logs operations
+  createSystemLog(logData: InsertSystemLog): Promise<SystemLog>;
+  getSystemLogs(options?: {
+    page?: number;
+    pageSize?: number;
+    category?: string;
+    action?: string;
+    search?: string;
+  }): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1070,6 +1083,67 @@ export class DatabaseStorage implements IStorage {
         totalAmount: parseFloat(order.totalAmount),
       };
     });
+  }
+
+  // System logs implementation
+  async createSystemLog(logData: InsertSystemLog): Promise<SystemLog> {
+    const [log] = await db.insert(systemLogs).values(logData).returning();
+    return log;
+  }
+
+  async getSystemLogs(options?: {
+    page?: number;
+    pageSize?: number;
+    category?: string;
+    action?: string;
+    search?: string;
+  }): Promise<any[]> {
+    const { page = 1, pageSize = 50, category, action, search } = options || {};
+    const offset = (page - 1) * pageSize;
+
+    let query = db
+      .select({
+        id: systemLogs.id,
+        category: systemLogs.category,
+        action: systemLogs.action,
+        userId: systemLogs.userId,
+        adminId: systemLogs.adminId,
+        entityType: systemLogs.entityType,
+        entityId: systemLogs.entityId,
+        details: systemLogs.details,
+        ipAddress: systemLogs.ipAddress,
+        userAgent: systemLogs.userAgent,
+        createdAt: systemLogs.createdAt,
+        userName: users.username,
+        adminName: admin_users.username,
+      })
+      .from(systemLogs)
+      .leftJoin(users, eq(systemLogs.userId, users.id))
+      .leftJoin(admin_users, eq(systemLogs.adminId, admin_users.id));
+
+    if (category && category !== 'all') {
+      query = query.where(eq(systemLogs.category, category));
+    }
+
+    if (action && action !== 'all') {
+      query = query.where(eq(systemLogs.action, action));
+    }
+
+    if (search) {
+      query = query.where(
+        or(
+          sql`${systemLogs.action} ILIKE ${'%' + search + '%'}`,
+          sql`${users.username} ILIKE ${'%' + search + '%'}`,
+          sql`${admin_users.username} ILIKE ${'%' + search + '%'}`,
+          sql`${systemLogs.ipAddress} ILIKE ${'%' + search + '%'}`
+        )
+      );
+    }
+
+    return query
+      .orderBy(desc(systemLogs.createdAt))
+      .limit(pageSize)
+      .offset(offset);
   }
 }
 

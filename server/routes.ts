@@ -1393,6 +1393,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // System logs routes
+  app.get('/api/admin/logs', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { page, pageSize, category, action, search } = req.query;
+      
+      const logs = await storage.getSystemLogs({
+        page: page ? parseInt(page as string) : 1,
+        pageSize: pageSize ? parseInt(pageSize as string) : 50,
+        category: category as string,
+        action: action as string,
+        search: search as string,
+      });
+      
+      res.json(logs);
+    } catch (error) {
+      console.error('Error fetching system logs:', error);
+      res.status(500).json({ message: 'Failed to fetch system logs' });
+    }
+  });
+
+  app.post('/api/admin/logs', isAdminAuthenticated, async (req, res) => {
+    try {
+      const logData = {
+        ...req.body,
+        adminId: req.session.adminUser.id,
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      };
+      
+      const log = await storage.createSystemLog(logData);
+      res.json(log);
+    } catch (error) {
+      console.error('Error creating system log:', error);
+      res.status(500).json({ message: 'Failed to create system log' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

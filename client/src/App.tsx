@@ -30,6 +30,7 @@ import OrdersManagement from "@/pages/admin/OrdersManagement";
 import UsersManagementNew from "@/pages/admin/UsersManagementNew";
 import SettingsManagement from "@/pages/admin/SettingsManagement";
 import TicketManagement from "@/pages/admin/TicketManagement";
+import SystemLogs from "@/pages/admin/SystemLogs";
 import UserTickets from "@/pages/UserTickets";
 import TicketDetail from "@/pages/TicketDetail";
 import Profil from "@/pages/Profil";
@@ -104,6 +105,12 @@ function Router() {
       <Route path="/admin/tickets">
         <AdminProtectedRoute>
           <TicketManagement />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/logs">
+        <AdminProtectedRoute>
+          <SystemLogs />
         </AdminProtectedRoute>
       </Route>
       

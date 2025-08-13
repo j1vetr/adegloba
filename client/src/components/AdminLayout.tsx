@@ -62,7 +62,7 @@ const navigationCategories = [
     name: 'Sistem',
     items: [
       { name: 'Ayarlar', href: '/admin/settings', icon: Settings },
-      { name: 'Loglar', href: '/admin/logs', icon: FileText },
+      { name: 'Sistem Logları', href: '/admin/logs', icon: FileText },
     ]
   }
 ];

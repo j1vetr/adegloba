@@ -149,6 +149,21 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// System logs table for tracking platform events
+export const systemLogs = pgTable("system_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  category: varchar("category").notNull(), // user_action, package_creation, credential_assignment, order_processing, admin_action
+  action: varchar("action").notNull(), // login, logout, create_package, assign_credential, process_order, etc.
+  userId: varchar("user_id").references(() => users.id),
+  adminId: varchar("admin_id").references(() => admin_users.id),
+  entityType: varchar("entity_type"), // package, credential, order, user, ship
+  entityId: varchar("entity_id"), // ID of the affected entity
+  details: jsonb("details"), // Additional contextual data
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Ticket system tables
 export const tickets = pgTable("tickets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -440,3 +455,12 @@ export type InsertTicketMessage = z.infer<typeof insertTicketMessageSchema>;
 export type TicketMessage = typeof ticketMessages.$inferSelect;
 export type InsertTicketAttachment = z.infer<typeof insertTicketAttachmentSchema>;
 export type TicketAttachment = typeof ticketAttachments.$inferSelect;
+
+// System logs schemas and types
+export const insertSystemLogSchema = createInsertSchema(systemLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
+export type SystemLog = typeof systemLogs.$inferSelect;
