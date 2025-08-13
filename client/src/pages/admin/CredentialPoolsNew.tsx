@@ -93,7 +93,7 @@ export default function CredentialPoolsNew() {
       const ship = ships?.find((s: Ship) => s.id === plan.shipId);
       return {
         planId: plan.id,
-        planTitle: plan.title,
+        planTitle: plan.name,
         shipName: ship?.name || 'Unknown Ship',
         total: planCredentials.length,
         available: planCredentials.filter(c => !c.isAssigned).length,
@@ -106,7 +106,7 @@ export default function CredentialPoolsNew() {
   const filteredCredentials = credentials?.filter((credential: CredentialWithDetails) => {
     const matchesSearch = !searchQuery || 
       credential.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      credential.plan?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      credential.plan?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       credential.ship?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || 
@@ -427,7 +427,7 @@ export default function CredentialPoolsNew() {
                     <SelectItem value="all">Tüm Paketler</SelectItem>
                     {plans?.map((plan: Plan) => (
                       <SelectItem key={plan.id} value={plan.id}>
-                        {plan.title}
+                        {plan.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -615,7 +615,7 @@ export default function CredentialPoolsNew() {
                         <SelectItem key={plan.id} value={plan.id}>
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4" />
-                            {plan.title}
+                            {plan.name}
                             <span className="text-gray-400 text-sm">({ship?.name})</span>
                           </div>
                         </SelectItem>
@@ -697,7 +697,7 @@ export default function CredentialPoolsNew() {
                         <SelectItem key={plan.id} value={plan.id}>
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4" />
-                            {plan.title}
+                            {plan.name}
                             <span className="text-gray-400 text-sm">({ship?.name})</span>
                           </div>
                         </SelectItem>
