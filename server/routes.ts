@@ -833,12 +833,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/plans', isAdminAuthenticated, async (req, res) => {
     try {
+      console.log('Received plan data:', req.body);
       const planData = insertPlanSchema.parse(req.body);
+      console.log('Parsed plan data:', planData);
       const plan = await storage.createPlan(planData);
       res.json(plan);
     } catch (error) {
       console.error('Error creating plan:', error);
-      res.status(500).json({ message: 'Failed to create plan' });
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+      }
+      res.status(500).json({ 
+        message: 'Failed to create plan',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

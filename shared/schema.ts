@@ -60,10 +60,10 @@ export const ships = pgTable("ships", {
 export const plans = pgTable("plans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   shipId: varchar("ship_id").notNull().references(() => ships.id, { onDelete: "cascade" }),
-  title: varchar("title").notNull(),
-  gbAmount: integer("gb_amount").notNull(),
-  speedNote: text("speed_note"),
-  validityNote: text("validity_note"),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  dataLimitGb: integer("data_limit_gb").notNull(),
+  validityDays: integer("validity_days").notNull(),
   priceUsd: decimal("price_usd", { precision: 10, scale: 2 }).notNull(),
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
@@ -349,6 +349,11 @@ export const insertPlanSchema = createInsertSchema(plans).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  sortOrder: true,
+}).extend({
+  priceUsd: z.string().or(z.number()).transform(val => typeof val === 'string' ? val : val.toString()),
+  dataLimitGb: z.number().int().positive(),
+  validityDays: z.number().int().positive(),
 });
 
 export const insertCredentialPoolSchema = createInsertSchema(credentialPools).omit({

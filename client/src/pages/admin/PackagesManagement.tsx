@@ -91,7 +91,7 @@ export default function PackagesManagement() {
     description: '',
     priceUsd: '',
     dataLimitGb: '',
-    validityDays: '',
+    validityDays: '30', // Default to 30 days, but will be auto-calculated
     shipId: '',
     isActive: true
   });
@@ -174,7 +174,7 @@ export default function PackagesManagement() {
       description: '',
       priceUsd: '',
       dataLimitGb: '',
-      validityDays: '',
+      validityDays: '30',
       shipId: '',
       isActive: true
     });
