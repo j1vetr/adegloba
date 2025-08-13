@@ -33,6 +33,7 @@ export default function SystemLogs() {
       category: categoryFilter,
       action: actionFilter 
     }],
+    refetchInterval: 5000, // Refresh every 5 seconds to show new logs
   });
 
   // Get unique categories and actions for filters

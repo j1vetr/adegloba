@@ -623,7 +623,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/users/:id", isAdminAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
+      
+      // Get user info before deletion for logging
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
       await storage.deleteUser(id);
+      
+      // Create system log for user deletion
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'delete_user',
+        adminId: req.session.adminUser.id,
+        entityType: 'user',
+        entityId: id,
+        details: {
+          deletedUser: {
+            username: user.username,
+            email: user.email,
+            full_name: user.full_name
+          }
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+      
       res.json({ message: "User deleted successfully" });
     } catch (error: any) {
       console.error("Error deleting user:", error);
@@ -649,9 +675,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Simple hardcoded authentication
       if (username === 'emir' && password === 'test') {
-        req.session.adminUser = { username: 'emir' };
+        req.session.adminUser = { id: 'admin-emir', username: 'emir' };
+        
+        // Create system log for admin login
+        await storage.createSystemLog({
+          category: 'admin_action',
+          action: 'admin_login',
+          adminId: 'admin-emir',
+          entityType: 'admin',
+          entityId: 'admin-emir',
+          details: { loginSuccess: true },
+          ipAddress: req.ip || req.connection.remoteAddress,
+          userAgent: req.get('User-Agent'),
+        });
+        
         res.json({ success: true, user: { username: 'emir' } });
       } else {
+        // Log failed login attempt
+        await storage.createSystemLog({
+          category: 'admin_action',
+          action: 'admin_login_failed',
+          entityType: 'admin',
+          details: { 
+            attemptedUsername: username,
+            loginSuccess: false 
+          },
+          ipAddress: req.ip || req.connection.remoteAddress,
+          userAgent: req.get('User-Agent'),
+        });
+        
         res.status(401).json({ message: 'Kullanıcı adı veya şifre hatalı' });
       }
     } catch (error) {
@@ -660,13 +712,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/logout', (req: any, res) => {
-    req.session.destroy((err: any) => {
-      if (err) {
-        return res.status(500).json({ message: 'Çıkış işlemi başarısız' });
+  app.post('/api/admin/logout', async (req: any, res) => {
+    try {
+      // Create system log for admin logout
+      if (req.session.adminUser) {
+        await storage.createSystemLog({
+          category: 'admin_action',
+          action: 'admin_logout',
+          adminId: req.session.adminUser.id,
+          entityType: 'admin',
+          entityId: req.session.adminUser.id,
+          details: { logoutSuccess: true },
+          ipAddress: req.ip || req.connection.remoteAddress,
+          userAgent: req.get('User-Agent'),
+        });
       }
-      res.json({ success: true });
-    });
+      
+      req.session.destroy((err: any) => {
+        if (err) {
+          return res.status(500).json({ message: 'Çıkış işlemi başarısız' });
+        }
+        res.json({ success: true });
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ message: 'Çıkış işlemi başarısız' });
+    }
   });
 
   // Admin Users Management routes
@@ -725,10 +796,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
+      // Get user info before deletion for logging
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
       const success = await storage.deleteUser(id);
       if (!success) {
         return res.status(404).json({ message: "User not found" });
       }
+
+      // Create system log for user deletion
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'delete_user',
+        adminId: req.session.adminUser.id || 'admin-emir',
+        entityType: 'user',
+        entityId: id,
+        details: {
+          deletedUser: {
+            username: user.username,
+            email: user.email,
+            full_name: user.full_name
+          }
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
 
       res.json({ message: "User deleted successfully" });
     } catch (error) {
@@ -768,6 +863,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         slug: generateSlug(shipData.name)
       };
       const ship = await storage.createShip(shipWithSlug);
+      
+      // Create system log for ship creation
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'create_ship',
+        adminId: req.session.adminUser.id,
+        entityType: 'ship',
+        entityId: ship.id,
+        details: {
+          shipName: ship.name,
+          shipSlug: ship.slug,
+          isActive: ship.isActive
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+      
       res.json(ship);
     } catch (error) {
       console.error('Error creating ship:', error);
@@ -795,7 +907,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/admin/ships/:id', isAdminAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
+      
+      // Get ship info before deletion for logging
+      const ships = await storage.getAllShips();
+      const ship = ships.find(s => s.id === id);
+      
       await storage.deleteShip(id);
+      
+      // Create system log for ship deletion
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'delete_ship',
+        adminId: req.session.adminUser.id,
+        entityType: 'ship',
+        entityId: id,
+        details: {
+          deletedShip: ship ? {
+            name: ship.name,
+            slug: ship.slug,
+            isActive: ship.isActive
+          } : { id }
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+      
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting ship:', error);
@@ -851,6 +987,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const planData = insertPlanSchema.parse(req.body);
       console.log('Parsed plan data:', planData);
       const plan = await storage.createPlan(planData);
+      
+      // Create system log for plan creation
+      await storage.createSystemLog({
+        category: 'package_creation',
+        action: 'create_package',
+        adminId: req.session.adminUser.id,
+        entityType: 'plan',
+        entityId: plan.id,
+        details: {
+          planName: plan.name,
+          dataAmount: plan.dataAmount,
+          priceUSD: plan.priceUSD,
+          shipId: plan.shipId
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+      
       res.json(plan);
     } catch (error) {
       console.error('Error creating plan:', error);

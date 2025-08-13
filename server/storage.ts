@@ -1024,8 +1024,9 @@ export class DatabaseStorage implements IStorage {
     await db.delete(credentialPools).where(eq(credentialPools.id, id));
   }
   // Enhanced User Management Methods
-  async deleteUser(id: string): Promise<void> {
-    await db.delete(users).where(eq(users.id, id));
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result.rowCount > 0;
   }
 
   async getUser(id: string): Promise<User | null> {
