@@ -1,0 +1,450 @@
+import { useState, useEffect } from "react";
+import { X, CreditCard, Lock, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+
+interface CreditCardDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  amount: string;
+  currency: string;
+  onSuccess?: (paymentData: any) => void;
+  onError?: (error: any) => void;
+}
+
+export default function CreditCardDrawer({
+  isOpen,
+  onClose,
+  amount,
+  currency,
+  onSuccess,
+  onError
+}: CreditCardDrawerProps) {
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    cardholderName: '',
+    surname: '',
+    addressLine1: '',
+    addressLine2: '',
+    postalCode: '',
+    region: '',
+    city: '',
+    phone: '',
+    email: ''
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [cardBrand, setCardBrand] = useState('');
+
+  // Detect card brand from number
+  const detectCardBrand = (cardNumber: string) => {
+    const cleaned = cardNumber.replace(/\s/g, '');
+    if (/^4/.test(cleaned)) return 'visa';
+    if (/^5[1-5]/.test(cleaned)) return 'mastercard';
+    if (/^3[47]/.test(cleaned)) return 'amex';
+    if (/^6011|^644|^65/.test(cleaned)) return 'discover';
+    return '';
+  };
+
+  // Format card number with spaces
+  const formatCardNumber = (value: string) => {
+    const cleaned = value.replace(/\s/g, '');
+    const match = cleaned.match(/.{1,4}/g);
+    return match ? match.join(' ') : cleaned;
+  };
+
+  // Format expiry date MM/YY
+  const formatExpiryDate = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length >= 2) {
+      return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}`;
+    }
+    return cleaned;
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    let formattedValue = value;
+    
+    if (field === 'cardNumber') {
+      formattedValue = formatCardNumber(value);
+      setCardBrand(detectCardBrand(value));
+    } else if (field === 'expiryDate') {
+      formattedValue = formatExpiryDate(value);
+    } else if (field === 'cvv') {
+      formattedValue = value.replace(/\D/g, '').slice(0, 4);
+    } else if (field === 'phone') {
+      formattedValue = value.replace(/\D/g, '');
+    }
+
+    setFormData(prev => ({ ...prev, [field]: formattedValue }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.cardNumber || formData.cardNumber.replace(/\s/g, '').length < 13) {
+      newErrors.cardNumber = 'Geçerli bir kart numarası girin';
+    }
+    
+    if (!formData.expiryDate || !/^\d{2}\/\d{2}$/.test(formData.expiryDate)) {
+      newErrors.expiryDate = 'MM/YY formatında girin';
+    }
+    
+    if (!formData.cvv || formData.cvv.length < 3) {
+      newErrors.cvv = 'Geçerli CVV girin';
+    }
+    
+    if (!formData.cardholderName.trim()) {
+      newErrors.cardholderName = 'Kart sahibinin adını girin';
+    }
+    
+    if (!formData.surname.trim()) {
+      newErrors.surname = 'Soyadını girin';
+    }
+    
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Geçerli bir e-posta adresi girin';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast({
+        title: "Hata",
+        description: "Lütfen tüm gerekli alanları doğru şekilde doldurun",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      // Process credit card payment
+      // Note: This would typically use PayPal's hosted fields or similar service
+      toast({
+        title: "Ödeme İşlemi",
+        description: "Kart ödemesi şu anda geliştirilme aşamasında. PayPal kullanın.",
+        variant: "default",
+      });
+      
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      onSuccess?.({ method: 'card', amount, currency });
+    } catch (error) {
+      toast({
+        title: "Ödeme Hatası",
+        description: "Kart ödemesi işlenirken bir hata oluştu",
+        variant: "destructive",
+      });
+      onError?.(error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const getCardIcon = () => {
+    switch (cardBrand) {
+      case 'visa':
+        return <span className="text-blue-400 font-bold text-sm">VISA</span>;
+      case 'mastercard':
+        return <span className="text-red-400 font-bold text-sm">MC</span>;
+      case 'amex':
+        return <span className="text-green-400 font-bold text-sm">AMEX</span>;
+      default:
+        return <CreditCard className="w-4 h-4 text-slate-400" />;
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
+      
+      {/* Drawer */}
+      <div className="absolute right-0 top-0 h-full w-full max-w-2xl transform transition-transform duration-300 ease-out sm:max-w-lg md:max-w-xl lg:max-w-2xl">
+        <div className="flex h-full flex-col glassmorphism border-l border-slate-600/30 bg-slate-950/95">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full glassmorphism flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-cyan-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-white">Kart ile Ödeme</h2>
+                <p className="text-sm text-slate-400">Güvenli ödeme işlemi</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="text-slate-400 hover:text-white hover:bg-slate-800"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Form Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Card Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-cyan-400" />
+                  Kart Bilgileri
+                </h3>
+                
+                {/* Card Number */}
+                <div>
+                  <Label className="text-slate-300">Kart Numarası</Label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="1234 5678 9012 3456"
+                      value={formData.cardNumber}
+                      onChange={(e) => handleInputChange('cardNumber', e.target.value)}
+                      maxLength={19}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 pr-12 h-12 text-lg tracking-wider
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardNumber ? 'border-red-500' : ''}`}
+                    />
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {getCardIcon()}
+                    </div>
+                  </div>
+                  {errors.cardNumber && (
+                    <p className="text-red-400 text-sm mt-1">{errors.cardNumber}</p>
+                  )}
+                </div>
+
+                {/* Expiry and CVV */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-slate-300">Son Kullanma Tarihi</Label>
+                    <Input
+                      type="text"
+                      placeholder="MM/YY"
+                      value={formData.expiryDate}
+                      onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                      maxLength={5}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12 text-lg tracking-wider
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.expiryDate ? 'border-red-500' : ''}`}
+                    />
+                    {errors.expiryDate && (
+                      <p className="text-red-400 text-sm mt-1">{errors.expiryDate}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label className="text-slate-300">CVV</Label>
+                    <Input
+                      type="text"
+                      placeholder="123"
+                      value={formData.cvv}
+                      onChange={(e) => handleInputChange('cvv', e.target.value)}
+                      maxLength={4}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12 text-lg tracking-wider
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cvv ? 'border-red-500' : ''}`}
+                    />
+                    {errors.cvv && (
+                      <p className="text-red-400 text-sm mt-1">{errors.cvv}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Billing Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white">Fatura Adresi</h3>
+                
+                {/* Name and Surname */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-slate-300">Ad</Label>
+                    <Input
+                      type="text"
+                      placeholder="Adınız"
+                      value={formData.cardholderName}
+                      onChange={(e) => handleInputChange('cardholderName', e.target.value)}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardholderName ? 'border-red-500' : ''}`}
+                    />
+                    {errors.cardholderName && (
+                      <p className="text-red-400 text-sm mt-1">{errors.cardholderName}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label className="text-slate-300">Soyad</Label>
+                    <Input
+                      type="text"
+                      placeholder="Soyadınız"
+                      value={formData.surname}
+                      onChange={(e) => handleInputChange('surname', e.target.value)}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.surname ? 'border-red-500' : ''}`}
+                    />
+                    {errors.surname && (
+                      <p className="text-red-400 text-sm mt-1">{errors.surname}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <Label className="text-slate-300">Adres Satırı 1</Label>
+                  <Input
+                    type="text"
+                    placeholder="Ana adres bilginiz"
+                    value={formData.addressLine1}
+                    onChange={(e) => handleInputChange('addressLine1', e.target.value)}
+                    className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-slate-300">Adres Satırı 2 (Opsiyonel)</Label>
+                  <Input
+                    type="text"
+                    placeholder="Bina, daire vb."
+                    value={formData.addressLine2}
+                    onChange={(e) => handleInputChange('addressLine2', e.target.value)}
+                    className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                  />
+                </div>
+
+                {/* City, Region, Postal Code */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-slate-300">Şehir</Label>
+                    <Input
+                      type="text"
+                      placeholder="İstanbul"
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-slate-300">Bölge</Label>
+                    <Input
+                      type="text"
+                      placeholder="Marmara"
+                      value={formData.region}
+                      onChange={(e) => handleInputChange('region', e.target.value)}
+                      className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-slate-300">Posta Kodu</Label>
+                  <Input
+                    type="text"
+                    placeholder="34000"
+                    value={formData.postalCode}
+                    onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                    className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                  />
+                </div>
+
+                {/* Contact Information */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-slate-300">Cep Telefonu</Label>
+                    <Input
+                      type="tel"
+                      placeholder="5xxxxxxxxx"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-slate-300">E-posta</Label>
+                    <Input
+                      type="email"
+                      placeholder="ornek@email.com"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.email ? 'border-red-500' : ''}`}
+                    />
+                    {errors.email && (
+                      <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Footer - Sticky */}
+          <div className="border-t border-slate-700/50 p-6 bg-slate-950/98">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-slate-400 text-sm flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                256-bit SSL şifreli ödeme
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-white">
+                  {amount} {currency.toUpperCase()}
+                </div>
+                <div className="text-sm text-slate-400">Toplam tutar</div>
+              </div>
+            </div>
+            
+            <Button
+              onClick={handleSubmit}
+              disabled={isProcessing}
+              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 
+                hover:from-cyan-600 hover:to-blue-700 text-white border-none shadow-lg shadow-cyan-500/25
+                disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+            >
+              {isProcessing ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  İşleniyor...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Ödemeyi Tamamla
+                </div>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, CreditCard, Shield, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import CreditCardDrawer from "./CreditCardDrawer";
 
 interface PayPalButtonProps {
   amount: string;
@@ -21,6 +22,7 @@ export default function PayPalButton({
   const [isLoading, setIsLoading] = useState(false);
   const [paypalLoaded, setPaypalLoaded] = useState(false);
   const [settings, setSettings] = useState<any>(null);
+  const [showCardDrawer, setShowCardDrawer] = useState(false);
   const { toast } = useToast();
 
   // Load PayPal settings from backend
@@ -320,6 +322,17 @@ export default function PayPalButton({
         <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 animate-pulse"></div>
       </Button>
 
+      {/* Credit Card Alternative Button */}
+      <Button
+        onClick={() => setShowCardDrawer(true)}
+        variant="outline"
+        className="w-full border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white py-3 rounded-xl text-sm transition-all duration-200"
+        data-testid="credit-card-button"
+      >
+        <CreditCard className="h-4 w-4 mr-2" />
+        Kart ile Ödeme (Alternatif)
+      </Button>
+
       {/* Payment Methods Info */}
       <div className="flex items-center justify-center space-x-4 text-xs text-slate-400">
         <div className="flex items-center space-x-1">
@@ -391,5 +404,25 @@ export default function PayPalButton({
     );
   }
 
-  return renderCustomButton();
+  return (
+    <>
+      {renderCustomButton()}
+      
+      {/* Credit Card Drawer */}
+      <CreditCardDrawer
+        isOpen={showCardDrawer}
+        onClose={() => setShowCardDrawer(false)}
+        amount={amount}
+        currency={currency}
+        onSuccess={(paymentData) => {
+          setShowCardDrawer(false);
+          onSuccess?.(paymentData.orderId || 'card-payment-success');
+        }}
+        onError={(error) => {
+          setShowCardDrawer(false);
+          onError?.(error);
+        }}
+      />
+    </>
+  );
 }
