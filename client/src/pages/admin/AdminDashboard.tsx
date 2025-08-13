@@ -82,22 +82,19 @@ export default function AdminDashboard() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { label: 'Bekliyor', variant: 'secondary', icon: Clock },
-      completed: { label: 'Tamamlandı', variant: 'default', icon: CheckCircle },
-      cancelled: { label: 'İptal', variant: 'destructive', icon: AlertCircle },
+      pending: { label: 'Bekliyor', className: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30', icon: Clock },
+      completed: { label: 'Tamamlandı', className: 'bg-green-500/20 text-green-300 border-green-500/30', icon: CheckCircle },
+      cancelled: { label: 'İptal', className: 'bg-red-500/20 text-red-300 border-red-500/30', icon: AlertCircle },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     const Icon = config.icon;
 
     return (
-      <Badge 
-        variant={config.variant as any}
-        className="flex items-center gap-1 px-2 py-1 rounded-lg font-medium"
-      >
+      <div className={`flex items-center gap-1 px-2 py-1 rounded-lg font-medium border ${config.className}`}>
         <Icon className="h-3 w-3" />
         {config.label}
-      </Badge>
+      </div>
     );
   };
 
@@ -276,7 +273,7 @@ export default function AdminDashboard() {
                       <p className="text-xs text-light-gray">
                         {formatDate(user.createdAt)}
                       </p>
-                      <Badge variant="outline" className="mt-1">
+                      <Badge variant="outline" className="mt-1 text-primary border-primary/50">
                         Yeni
                       </Badge>
                     </div>

@@ -414,8 +414,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderId: order.id,
         shipId: user.ship_id,
         planId: firstItem.plan.id,
-        quantity: firstItem.quantity,
-        priceUsd: firstItem.plan.priceUsd,
+        qty: firstItem.quantity,
+        unitPriceUsd: firstItem.plan.priceUsd,
+        lineTotalUsd: (parseFloat(firstItem.plan.priceUsd) * firstItem.quantity).toFixed(2),
       });
 
       // Record coupon usage if coupon was applied
@@ -493,8 +494,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             orderId: order.id,
             shipId: user.ship_id,
             planId: cartItem.plan.id,
-            quantity: cartItem.quantity,
-            priceUsd: cartItem.plan.priceUsd,
+            qty: cartItem.quantity,
+            unitPriceUsd: cartItem.plan.priceUsd,
+            lineTotalUsd: (parseFloat(cartItem.plan.priceUsd) * cartItem.quantity).toFixed(2),
           });
         }
       }
