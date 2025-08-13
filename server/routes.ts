@@ -73,6 +73,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await loadPaypalDefault(req, res);
   });
 
+  // Create PayPal order
+  app.post('/api/paypal/create-order', async (req, res) => {
+    try {
+      const { amount, currency } = req.body;
+      
+      if (!amount || !currency) {
+        return res.status(400).json({ message: 'Amount and currency are required' });
+      }
+
+      const order = await createPaypalOrder(parseFloat(amount), currency);
+      res.json(order);
+    } catch (error) {
+      console.error("PayPal order creation error:", error);
+      res.status(500).json({ message: "Failed to create PayPal order" });
+    }
+  });
+
+  // Capture PayPal order
+  app.post('/api/paypal/capture-order', async (req, res) => {
+    try {
+      const { orderId } = req.body;
+      
+      if (!orderId) {
+        return res.status(400).json({ message: 'Order ID is required' });
+      }
+
+      const captureResult = await capturePaypalOrder(orderId);
+      res.json(captureResult);
+    } catch (error) {
+      console.error("PayPal capture error:", error);
+      res.status(500).json({ message: "Failed to capture PayPal payment" });
+    }
+  });
+
+  // Get payment settings (must be before other settings routes)
+  app.get('/api/settings/payment', async (req, res) => {
+    console.log('Payment settings route hit');
+    try {
+      const settingsData = await storage.getSettingsByCategory('payment');
+      const paymentSettings = {
+        paypal_client_id: settingsData.find(s => s.key === 'paypal_client_id')?.value || '',
+        paypal_environment: settingsData.find(s => s.key === 'paypal_environment')?.value || 'sandbox',
+      };
+      
+      console.log('Returning payment settings:', paymentSettings);
+      
+      res.setHeader('Content-Type', 'application/json');
+      return res.json(paymentSettings);
+    } catch (error) {
+      console.error("Error fetching payment settings:", error);
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(500).json({ message: "Failed to fetch payment settings" });
+    }
+  });
+
   app.post("/api/paypal/order", async (req, res) => {
     await createPaypalOrder(req, res);
   });

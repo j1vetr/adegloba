@@ -674,6 +674,10 @@ export class DatabaseStorage implements IStorage {
     return setting;
   }
 
+  async getSettingsByCategory(category: string): Promise<Setting[]> {
+    return db.select().from(settings).where(eq(settings.category, category));
+  }
+
   // User admin operations
   async getAllUsers(): Promise<(User & { ship?: Ship })[]> {
     const result = await db
