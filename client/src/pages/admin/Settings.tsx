@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,38 @@ export default function Settings() {
     termsOfService: '',
     cookiePolicy: ''
   });
+
+  // Load current settings from server
+  const { data: currentSettings } = useQuery({
+    queryKey: ["/api/admin/settings"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/settings");
+      return response.json();
+    },
+  });
+
+  // Update local settings when server data loads
+  useEffect(() => {
+    if (currentSettings) {
+      const settingsObj: any = {};
+      currentSettings.forEach((setting: any) => {
+        switch (setting.key) {
+          case 'PAYPAL_CLIENT_ID':
+            settingsObj.paypalClientId = setting.value || '';
+            break;
+          case 'PAYPAL_CLIENT_SECRET':
+            settingsObj.paypalSecret = setting.value || '';
+            break;
+          case 'PAYPAL_ENV':
+            settingsObj.paypalEnvironment = setting.value || 'sandbox';
+            break;
+          default:
+            settingsObj[setting.key] = setting.value;
+        }
+      });
+      setSettings(prev => ({ ...prev, ...settingsObj }));
+    }
+  }, [currentSettings]);
 
   const updateSettingMutation = useMutation({
     mutationFn: async ({ key, value, category = 'general' }: { key: string; value: string; category?: string }) => {
@@ -168,7 +200,12 @@ export default function Settings() {
               <Label className="text-slate-300">Environment</Label>
               <select
                 value={settings.paypalEnvironment}
-                onChange={(e) => setSettings({ ...settings, paypalEnvironment: e.target.value })}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setSettings({ ...settings, paypalEnvironment: newValue });
+                  // Auto-save on change
+                  handleSaveSetting('PAYPAL_ENV', newValue, 'payment');
+                }}
                 className="w-full px-3 py-2 rounded-lg glassmorphism border border-slate-600 text-white bg-transparent"
                 data-testid="paypal-env-select"
               >
@@ -181,9 +218,14 @@ export default function Settings() {
               <Label className="text-slate-300">Client ID</Label>
               <Input
                 value={settings.paypalClientId}
-                onChange={(e) => setSettings({ ...settings, paypalClientId: e.target.value })}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setSettings({ ...settings, paypalClientId: newValue });
+                  // Auto-save on change
+                  handleSaveSetting('PAYPAL_CLIENT_ID', newValue, 'payment');
+                }}
                 className="glassmorphism border-slate-600 text-white"
-                placeholder="PayPal Client ID"
+                placeholder="PayPal Client ID (starts with AX...)"
                 data-testid="paypal-client-id-input"
               />
             </div>
@@ -193,9 +235,14 @@ export default function Settings() {
               <Input
                 type="password"
                 value={settings.paypalSecret}
-                onChange={(e) => setSettings({ ...settings, paypalSecret: e.target.value })}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setSettings({ ...settings, paypalSecret: newValue });
+                  // Auto-save on change
+                  handleSaveSetting('PAYPAL_CLIENT_SECRET', newValue, 'payment');
+                }}
                 className="glassmorphism border-slate-600 text-white"
-                placeholder="PayPal Client Secret"
+                placeholder="PayPal Client Secret (starts with EL...)"
                 data-testid="paypal-secret-input"
               />
             </div>
