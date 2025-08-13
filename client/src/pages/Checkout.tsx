@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
-import CardPaymentButton from "@/components/CardPaymentButton";
+import PayPalButton from "@/components/PayPalButton";
 
 export default function Checkout() {
   const [location] = useLocation();
@@ -400,7 +400,7 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                {/* Card Payment */}
+                {/* PayPal Payment */}
                 <div className="space-y-4">
                   <div className="text-center">
                     <div className="text-sm text-slate-400 mb-4">
@@ -409,16 +409,17 @@ export default function Checkout() {
                   </div>
                   
                   {total > 0 ? (
-                    <div data-testid="card-payment-container">
-                      <CardPaymentButton
+                    <div data-testid="paypal-container">
+                      <PayPalButton
                         amount={total.toFixed(2)}
                         currency="USD"
+                        intent="capture"
                         onSuccess={(orderId: string) => {
                           completeOrderMutation.mutate(orderId);
                         }}
                         onError={(error: any) => {
                           toast({
-                            title: "Ödeme Hatası",
+                            title: "PayPal Hatası",
                             description: "Ödeme işlemi başarısız oldu",
                             variant: "destructive",
                           });
