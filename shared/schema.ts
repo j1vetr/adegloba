@@ -114,6 +114,18 @@ export const orderCredentials = pgTable("order_credentials", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Shopping cart tables
+export const cartItems = pgTable("cart_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  planId: varchar("plan_id").notNull().references(() => plans.id, { onDelete: "cascade" }),
+  quantity: integer("quantity").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  unique().on(table.userId, table.planId) // One cart item per user per plan
+]);
+
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -464,3 +476,22 @@ export const insertSystemLogSchema = createInsertSchema(systemLogs).omit({
 
 export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
 export type SystemLog = typeof systemLogs.$inferSelect;
+
+export const systemLogsRelations = relations(systemLogs, ({ one }) => ({
+  adminUser: one(admin_users, { fields: [systemLogs.adminId], references: [admin_users.id] }),
+}));
+
+export const cartItemsRelations = relations(cartItems, ({ one }) => ({
+  user: one(users, { fields: [cartItems.userId], references: [users.id] }),
+  plan: one(plans, { fields: [cartItems.planId], references: [plans.id] }),
+}));
+
+// Cart item schemas and types
+export const insertCartItemSchema = createInsertSchema(cartItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+export type CartItem = typeof cartItems.$inferSelect;

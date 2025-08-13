@@ -7,7 +7,8 @@ import {
   User, 
   LogOut,
   Menu,
-  X
+  X,
+  ShoppingCart
 } from "lucide-react";
 import { useState } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
@@ -27,6 +28,18 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
       href: "/panel",
       icon: Home,
       active: location === "/panel"
+    },
+    {
+      name: "Paketler",
+      href: "/paketler",
+      icon: Package,
+      active: location === "/paketler"
+    },
+    {
+      name: "Sepet",
+      href: "/sepet",
+      icon: ShoppingCart,
+      active: location === "/sepet"
     },
     {
       name: "Destek",

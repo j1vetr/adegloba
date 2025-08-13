@@ -251,6 +251,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cart API endpoints
+  app.get('/api/cart', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const cartItems = await storage.getCartItems(userId);
+      const cartTotal = await storage.getCartTotal(userId);
+      
+      res.json({
+        items: cartItems,
+        ...cartTotal
+      });
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+      res.status(500).json({ message: "Failed to fetch cart" });
+    }
+  });
+
+  app.post('/api/cart', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const { planId, quantity = 1 } = req.body;
+
+      if (!planId) {
+        return res.status(400).json({ message: 'Plan ID is required' });
+      }
+
+      const cartItem = await storage.addToCart(userId, planId, quantity);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      res.status(500).json({ message: "Failed to add to cart" });
+    }
+  });
+
+  app.put('/api/cart/:planId', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const { planId } = req.params;
+      const { quantity } = req.body;
+
+      if (quantity <= 0) {
+        return res.status(400).json({ message: 'Quantity must be greater than 0' });
+      }
+
+      const cartItem = await storage.updateCartItem(userId, planId, quantity);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error updating cart item:", error);
+      res.status(500).json({ message: "Failed to update cart item" });
+    }
+  });
+
+  app.delete('/api/cart/:planId', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const { planId } = req.params;
+
+      await storage.removeFromCart(userId, planId);
+      res.json({ message: 'Item removed from cart' });
+    } catch (error) {
+      console.error("Error removing cart item:", error);
+      res.status(500).json({ message: "Failed to remove cart item" });
+    }
+  });
+
+  app.delete('/api/cart', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      await storage.clearCart(userId);
+      res.json({ message: 'Cart cleared' });
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      res.status(500).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Create order from cart
+  app.post('/api/cart/checkout', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const { couponCode } = req.body;
+
+      // Get user to get ship ID
+      const user = await storage.getUserById(userId);
+      if (!user || !user.ship_id) {
+        return res.status(400).json({ message: 'User ship not found' });
+      }
+
+      // Get cart items
+      const cartItems = await storage.getCartItems(userId);
+      if (cartItems.length === 0) {
+        return res.status(400).json({ message: 'Cart is empty' });
+      }
+
+      // For now, just take the first item (can be extended for multiple items)
+      const firstItem = cartItems[0];
+      if (!firstItem.plan) {
+        return res.status(400).json({ message: 'Plan not found' });
+      }
+
+      // Create order using existing order service
+      const order = await orderService.createOrder(userId, user.ship_id, firstItem.plan.id, couponCode);
+      
+      // Clear cart after successful order creation
+      await storage.clearCart(userId);
+      
+      res.json(order);
+    } catch (error) {
+      console.error("Error creating order from cart:", error);
+      res.status(400).json({ message: error.message || "Failed to create order" });
+    }
+  });
+
   // Admin routes - temporarily simplified for development
   const adminMiddleware = async (req: any, res: any, next: any) => {
     // For now, just check if user is authenticated - in production you'd check admin role

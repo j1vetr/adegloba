@@ -18,25 +18,25 @@ export default function Paketler() {
     enabled: !!user?.ship_id
   });
 
-  const createOrderMutation = useMutation({
+  const addToCartMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const response = await apiRequest('POST', '/api/orders', {
-        shipId: user?.ship_id,
-        planId: planId
+      const response = await apiRequest('POST', '/api/cart', {
+        planId: planId,
+        quantity: 1
       });
       return response.json();
     },
-    onSuccess: (order) => {
+    onSuccess: () => {
       toast({
-        title: "Sipariş Oluşturuldu",
-        description: "Ödeme sayfasına yönlendiriliyorsunuz...",
+        title: "Sepete Eklendi",
+        description: "Paket başarıyla sepete eklendi",
       });
-      window.location.href = `/checkout?orderId=${order.id}`;
+      window.location.href = '/sepet';
     },
     onError: (error: any) => {
       toast({
         title: "Hata",
-        description: error.message || "Sipariş oluşturulamadı",
+        description: error.message || "Sepete eklenemedi",
         variant: "destructive",
       });
     },
@@ -155,20 +155,20 @@ export default function Paketler() {
 
                   {/* Purchase Button */}
                   <Button
-                    onClick={() => createOrderMutation.mutate(plan.id)}
-                    disabled={createOrderMutation.isPending}
+                    onClick={() => addToCartMutation.mutate(plan.id)}
+                    disabled={addToCartMutation.isPending}
                     className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 group-hover:shadow-xl group-hover:shadow-blue-500/30"
                     data-testid={`button-buy-${plan.id}`}
                   >
-                    {createOrderMutation.isPending ? (
+                    {addToCartMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        İşleniyor...
+                        Ekleniyor...
                       </>
                     ) : (
                       <>
-                        Satın Al
-                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                        Sepete Ekle
+                        <Package className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                       </>
                     )}
                   </Button>

@@ -41,6 +41,9 @@ import {
   type InsertTicketAttachment,
   type SystemLog,
   type InsertSystemLog,
+  cartItems,
+  type CartItem,
+  type InsertCartItem,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt, lt } from "drizzle-orm";
@@ -143,6 +146,15 @@ export interface IStorage {
     action?: string;
     search?: string;
   }): Promise<any[]>;
+  deleteOldLogs(cutoffDate: Date): Promise<number>;
+
+  // Cart operations
+  getCartItems(userId: string): Promise<CartItem[]>;
+  addToCart(userId: string, planId: string, quantity?: number): Promise<CartItem>;
+  updateCartItem(userId: string, planId: string, quantity: number): Promise<CartItem>;
+  removeFromCart(userId: string, planId: string): Promise<void>;
+  clearCart(userId: string): Promise<void>;
+  getCartTotal(userId: string): Promise<{ subtotal: number; total: number; itemCount: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1153,6 +1165,106 @@ export class DatabaseStorage implements IStorage {
       .where(lt(systemLogs.createdAt, cutoffDate));
     
     return result.rowCount || 0;
+  }
+
+  // Cart operations
+  async getCartItems(userId: string): Promise<CartItem[]> {
+    const items = await db
+      .select({
+        cartItem: cartItems,
+        plan: plans,
+      })
+      .from(cartItems)
+      .leftJoin(plans, eq(cartItems.planId, plans.id))
+      .where(eq(cartItems.userId, userId))
+      .orderBy(cartItems.createdAt);
+
+    return items.map(item => ({
+      ...item.cartItem,
+      plan: item.plan
+    })) as CartItem[];
+  }
+
+  async addToCart(userId: string, planId: string, quantity: number = 1): Promise<CartItem> {
+    // Check if item already exists in cart
+    const [existingItem] = await db
+      .select()
+      .from(cartItems)
+      .where(and(eq(cartItems.userId, userId), eq(cartItems.planId, planId)));
+
+    if (existingItem) {
+      // Update existing item quantity
+      const [updatedItem] = await db
+        .update(cartItems)
+        .set({ 
+          quantity: existingItem.quantity + quantity,
+          updatedAt: new Date()
+        })
+        .where(and(eq(cartItems.userId, userId), eq(cartItems.planId, planId)))
+        .returning();
+      return updatedItem;
+    } else {
+      // Create new cart item
+      const [newItem] = await db
+        .insert(cartItems)
+        .values({
+          userId,
+          planId,
+          quantity
+        })
+        .returning();
+      return newItem;
+    }
+  }
+
+  async updateCartItem(userId: string, planId: string, quantity: number): Promise<CartItem> {
+    const [updatedItem] = await db
+      .update(cartItems)
+      .set({ 
+        quantity,
+        updatedAt: new Date()
+      })
+      .where(and(eq(cartItems.userId, userId), eq(cartItems.planId, planId)))
+      .returning();
+    return updatedItem;
+  }
+
+  async removeFromCart(userId: string, planId: string): Promise<void> {
+    await db
+      .delete(cartItems)
+      .where(and(eq(cartItems.userId, userId), eq(cartItems.planId, planId)));
+  }
+
+  async clearCart(userId: string): Promise<void> {
+    await db
+      .delete(cartItems)
+      .where(eq(cartItems.userId, userId));
+  }
+
+  async getCartTotal(userId: string): Promise<{ subtotal: number; total: number; itemCount: number }> {
+    const items = await db
+      .select({
+        quantity: cartItems.quantity,
+        price: plans.priceUsd,
+      })
+      .from(cartItems)
+      .leftJoin(plans, eq(cartItems.planId, plans.id))
+      .where(eq(cartItems.userId, userId));
+
+    let subtotal = 0;
+    let itemCount = 0;
+
+    for (const item of items) {
+      const price = parseFloat(item.price || '0');
+      subtotal += price * item.quantity;
+      itemCount += item.quantity;
+    }
+
+    return {
+      subtotal,
+      total: subtotal, // No tax for now
+      itemCount
+    };
   }
 }
 

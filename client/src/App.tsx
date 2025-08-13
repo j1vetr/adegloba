@@ -18,6 +18,7 @@ import Kayit from "@/pages/Kayit";
 import Giris from "@/pages/Giris";
 import Panel from "@/pages/Panel";
 import Paketler from "@/pages/Paketler";
+import Sepet from "@/pages/Sepet";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ShipsManagement from "@/pages/admin/ShipsManagement";
 import PackagesManagement from "@/pages/admin/PackagesManagement";
@@ -126,6 +127,12 @@ function Router() {
       <Route path="/paketler">
         <UserProtectedRoute>
           <Paketler />
+        </UserProtectedRoute>
+      </Route>
+      
+      <Route path="/sepet">
+        <UserProtectedRoute>
+          <Sepet />
         </UserProtectedRoute>
       </Route>
       
