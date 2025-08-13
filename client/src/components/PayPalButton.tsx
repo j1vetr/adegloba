@@ -204,7 +204,7 @@ export default function PayPalButton({
       <Button
         onClick={handlePayPalClick}
         disabled={isLoading || !paypalLoaded || !settings?.paypal_client_id}
-        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 rounded-xl text-base transition-all duration-200 shadow-lg hover:shadow-xl"
+        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 rounded-xl text-base transition-all duration-200 shadow-lg hover:shadow-xl relative overflow-hidden"
         data-testid="paypal-payment-button"
       >
         {isLoading ? (
@@ -214,10 +214,17 @@ export default function PayPalButton({
           </>
         ) : (
           <>
-            <CreditCard className="h-5 w-5 mr-2" />
-            PayPal ile Öde - {formatPrice(amount)}
+            <div className="flex items-center justify-center w-full">
+              <CreditCard className="h-5 w-5 mr-2" />
+              <span className="font-bold">PayPal ile Güvenli Ödeme</span>
+            </div>
+            <div className="text-xs text-blue-100 mt-1">
+              Kredi Kartı & PayPal Hesabı - {formatPrice(amount)}
+            </div>
           </>
         )}
+        {/* Animated background effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 animate-pulse"></div>
       </Button>
 
       {/* Payment Methods Info */}
@@ -237,13 +244,20 @@ export default function PayPalButton({
 
       {/* Accepted Payment Methods */}
       <div className="text-center">
-        <p className="text-xs text-slate-500 mb-2">Kabul Edilen Ödeme Yöntemleri:</p>
+        <p className="text-xs text-slate-500 mb-2">Güvenli Ödeme Yöntemleri:</p>
         <div className="flex items-center justify-center space-x-2 text-slate-400">
-          <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">PayPal</span>
-          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded">Visa</span>
-          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded">MasterCard</span>
-          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded">Amex</span>
+          <div className="flex items-center bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20.067 8.478c.492.5.771 1.217.771 1.942 0 .69-.279 1.411-.771 1.942L12 20.428l-8.067-8.066c-.492-.531-.771-1.252-.771-1.942 0-.725.279-1.442.771-1.942C4.453 7.957 5.615 7.5 6.933 7.5c1.357 0 2.481.457 3.067.978L12 10.236l2-1.758C14.586 7.957 15.71 7.5 17.067 7.5c1.318 0 2.48.457 3 .978z"/>
+            </svg>
+            PayPal
+          </div>
+          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded font-medium">Visa</span>
+          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded font-medium">MC</span>
+          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded font-medium">Amex</span>
+          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded font-medium">Discover</span>
         </div>
+        <p className="text-xs text-slate-500 mt-2">Tüm ödemeler SSL ile şifrelenir</p>
       </div>
     </div>
   );
@@ -264,11 +278,18 @@ export default function PayPalButton({
   }
 
   // Show error if PayPal is not configured
-  if (!settings.paypal_client_id) {
+  if (!settings.paypal_client_id || settings.paypal_client_id.trim() === '') {
     return (
-      <div className="w-full p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center">
-        <p className="text-red-400 text-sm">PayPal ödeme sistemi henüz yapılandırılmamış.</p>
-        <p className="text-red-300 text-xs mt-1">Admin panelinden PayPal ayarlarını yapılandırın.</p>
+      <div className="w-full p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center">
+        <h3 className="text-amber-400 text-lg font-semibold mb-2">PayPal Yapılandırması Gerekli</h3>
+        <p className="text-amber-300 text-sm mb-3">
+          PayPal ödeme sistemini kullanabilmek için admin panelinden PayPal ayarlarını yapılandırmanız gerekiyor.
+        </p>
+        <div className="text-amber-200 text-xs space-y-1">
+          <p>• Admin Panel → Ayarlar → PayPal Integration</p>
+          <p>• Client ID ve Client Secret değerlerini girin</p>
+          <p>• Environment ayarını (Sandbox/Live) seçin</p>
+        </div>
       </div>
     );
   }

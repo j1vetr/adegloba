@@ -112,9 +112,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Payment settings route hit');
     try {
       const settingsData = await storage.getSettingsByCategory('payment');
+      console.log('Database settings data:', settingsData);
+      
       const paymentSettings = {
-        paypal_client_id: settingsData.find(s => s.key === 'paypal_client_id')?.value || '',
-        paypal_environment: settingsData.find(s => s.key === 'paypal_environment')?.value || 'sandbox',
+        paypal_client_id: settingsData.find(s => s.key === 'PAYPAL_CLIENT_ID')?.value || 
+                         settingsData.find(s => s.key === 'paypal_client_id')?.value || '',
+        paypal_environment: settingsData.find(s => s.key === 'PAYPAL_ENV')?.value || 
+                           settingsData.find(s => s.key === 'paypal_environment')?.value || 'sandbox',
+        paypal_secret: settingsData.find(s => s.key === 'PAYPAL_CLIENT_SECRET')?.value || 
+                      settingsData.find(s => s.key === 'paypal_secret')?.value || '',
       };
       
       console.log('Returning payment settings:', paymentSettings);
@@ -830,7 +836,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/settings', isAdminAuthenticated, async (req, res) => {
     try {
       const { key, value, category } = req.body;
-      const setting = await storage.setSetting(key, value, category);
+      
+      // Determine category based on key for PayPal settings
+      let settingCategory = category || 'general';
+      if (key.startsWith('PAYPAL_') || key.includes('paypal')) {
+        settingCategory = 'payment';
+      }
+      
+      const setting = await storage.upsertSetting(key, value, settingCategory);
+      console.log(`Setting updated: ${key} = ${value} (category: ${settingCategory})`);
       res.json(setting);
     } catch (error) {
       console.error("Error setting value:", error);

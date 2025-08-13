@@ -26,8 +26,8 @@ export default function Settings() {
   });
 
   const updateSettingMutation = useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: string }) => {
-      const response = await apiRequest('POST', '/api/admin/settings', { key, value });
+    mutationFn: async ({ key, value, category = 'general' }: { key: string; value: string; category?: string }) => {
+      const response = await apiRequest('POST', '/api/admin/settings', { key, value, category });
       return response.json();
     },
     onSuccess: () => {
@@ -57,13 +57,34 @@ export default function Settings() {
     },
   });
 
-  const handleSaveSetting = (key: string, value: string) => {
-    updateSettingMutation.mutate({ key, value });
+  const handleSaveSetting = (key: string, value: string, category = 'general') => {
+    updateSettingMutation.mutate({ key, value, category });
   };
 
   const handleSaveAll = () => {
-    Object.entries(settings).forEach(([key, value]) => {
-      updateSettingMutation.mutate({ key, value });
+    // Save PayPal settings with proper keys and categories
+    const settingsMap = {
+      paypalClientId: { key: 'PAYPAL_CLIENT_ID', category: 'payment' },
+      paypalSecret: { key: 'PAYPAL_CLIENT_SECRET', category: 'payment' },
+      paypalEnvironment: { key: 'PAYPAL_ENV', category: 'payment' },
+      siteName: { key: 'siteName', category: 'general' },
+      whatsappNumber: { key: 'whatsappNumber', category: 'general' },
+      defaultLanguage: { key: 'defaultLanguage', category: 'general' },
+      timezone: { key: 'timezone', category: 'general' },
+      privacyPolicy: { key: 'privacyPolicy', category: 'general' },
+      termsOfService: { key: 'termsOfService', category: 'general' },
+      cookiePolicy: { key: 'cookiePolicy', category: 'general' },
+    };
+
+    Object.entries(settings).forEach(([settingKey, value]) => {
+      const mapping = settingsMap[settingKey as keyof typeof settingsMap];
+      if (mapping) {
+        updateSettingMutation.mutate({ 
+          key: mapping.key, 
+          value: value as string, 
+          category: mapping.category 
+        });
+      }
     });
   };
 
