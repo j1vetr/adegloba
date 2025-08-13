@@ -63,7 +63,7 @@ export default function CardPaymentButton({
 
       {/* Credit Card Drawer */}
       <CreditCardDrawer
-        open={showCardDrawer}
+        isOpen={showCardDrawer}
         onClose={() => setShowCardDrawer(false)}
         amount={amount}
         currency={currency}
