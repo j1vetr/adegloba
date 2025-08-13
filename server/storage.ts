@@ -390,15 +390,15 @@ export class DatabaseStorage implements IStorage {
 
   // Plan operations
   async getPlans(): Promise<Plan[]> {
-    return db.select().from(plans).orderBy(plans.sortOrder, plans.title);
+    return db.select().from(plans).orderBy(plans.sortOrder, plans.name);
   }
 
   async getAllPlans(): Promise<Plan[]> {
-    return db.select().from(plans).orderBy(plans.sortOrder, plans.title);
+    return db.select().from(plans).orderBy(plans.sortOrder, plans.name);
   }
 
   async getActivePlans(): Promise<Plan[]> {
-    return db.select().from(plans).where(eq(plans.isActive, true)).orderBy(plans.sortOrder, plans.title);
+    return db.select().from(plans).where(eq(plans.isActive, true)).orderBy(plans.sortOrder, plans.name);
   }
 
   async getPlansForShip(shipId: string): Promise<Plan[]> {
@@ -406,11 +406,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(plans)
       .where(and(eq(plans.shipId, shipId), eq(plans.isActive, true)))
-      .orderBy(plans.sortOrder, plans.title);
+      .orderBy(plans.sortOrder, plans.name);
   }
 
   async getPlansByShip(shipId: string): Promise<Plan[]> {
-    return db.select().from(plans).where(eq(plans.shipId, shipId)).orderBy(plans.sortOrder, plans.title);
+    return db.select().from(plans).where(eq(plans.shipId, shipId)).orderBy(plans.sortOrder, plans.name);
   }
 
   async createPlan(plan: InsertPlan): Promise<Plan> {
