@@ -8,9 +8,18 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AdminLayout from '@/components/AdminLayout';
-import type { SystemLog } from '@/../shared/schema';
-
-interface LogWithDetails extends SystemLog {
+interface LogWithDetails {
+  id: string;
+  category: string;
+  action: string;
+  userId?: string;
+  adminId?: string;
+  entityType?: string;
+  entityId?: string;
+  details?: any;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
   userName?: string;
   adminName?: string;
   entityName?: string;
@@ -26,13 +35,22 @@ export default function SystemLogs() {
 
   // Fetch system logs
   const { data: logs, isLoading } = useQuery<LogWithDetails[]>({
-    queryKey: ["/api/admin/logs", { 
-      page: currentPage, 
-      pageSize, 
-      search: searchQuery,
-      category: categoryFilter,
-      action: actionFilter 
-    }],
+    queryKey: ["/api/admin/logs", currentPage, pageSize, searchQuery, categoryFilter, actionFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        pageSize: pageSize.toString(),
+        ...(searchQuery && { search: searchQuery }),
+        ...(categoryFilter !== 'all' && { category: categoryFilter }),
+        ...(actionFilter !== 'all' && { action: actionFilter }),
+      });
+      
+      const response = await fetch(`/api/admin/logs?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch logs');
+      }
+      return response.json();
+    },
     refetchInterval: 5000, // Refresh every 5 seconds to show new logs
   });
 
@@ -125,7 +143,7 @@ export default function SystemLogs() {
   }) || [];
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Sistem Logları">
       <div className="space-y-6">
         {/* Header */}
         <div>
