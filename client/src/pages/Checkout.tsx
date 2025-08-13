@@ -135,20 +135,20 @@ export default function Checkout() {
 
   const getCurrentSubtotal = () => {
     if (orderId && orderData) {
-      return parseFloat(orderData.subtotalUsd || orderData.total || 0);
+      return parseFloat((orderData as any)?.subtotalUsd || (orderData as any)?.total || '0');
     }
     if (cartData) {
-      return parseFloat(cartData.subtotal || 0);
+      return parseFloat((cartData as any)?.subtotal || '0');
     }
     return 0;
   };
 
   const getCurrentItems = () => {
     if (orderId && orderData) {
-      return orderData.items || [];
+      return (orderData as any)?.items || [];
     }
     if (cartData) {
-      return cartData.items || [];
+      return (cartData as any)?.items || [];
     }
     return [];
   };
@@ -414,6 +414,7 @@ export default function Checkout() {
                         amount={total.toFixed(2)}
                         currency="USD"
                         intent="capture"
+                        couponCode={appliedCoupon?.code}
                         onSuccess={(orderId: string) => {
                           completeOrderMutation.mutate(orderId);
                         }}

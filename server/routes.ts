@@ -620,10 +620,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await couponService.recordCouponUsage(validatedCoupon.id, userId, order.id, discount);
       }
 
-      // Clear cart after successful order creation
+      // Assign credentials for each order item
+      for (const cartItem of cartItems) {
+        if (cartItem.plan) {
+          try {
+            // Assign credentials based on quantity for each plan
+            for (let i = 0; i < cartItem.quantity; i++) {
+              await storage.deliverCredentialsForOrder(cartItem.plan.id, userId, order.id);
+            }
+          } catch (error) {
+            console.error(`Failed to assign credentials for plan ${cartItem.plan.id}:`, error);
+            // Continue with other items even if one fails
+          }
+        }
+      }
+
+      // Clear cart after successful order creation and credential assignment
       await storage.clearCart(userId);
 
-      res.json({ id: order.id, orderId: order.id });
+      res.json({ 
+        id: order.id, 
+        orderId: order.id,
+        success: true,
+        message: 'Order completed and credentials assigned',
+        totalUsd: total.toFixed(2)
+      });
     } catch (error) {
       console.error("Error completing payment from cart:", error);
       res.status(500).json({ message: "Failed to complete payment" });

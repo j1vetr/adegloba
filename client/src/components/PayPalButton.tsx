@@ -8,6 +8,7 @@ interface PayPalButtonProps {
   amount: string;
   currency: string;
   intent: string;
+  couponCode?: string;
   onSuccess?: (orderId: string) => void;
   onError?: (error: any) => void;
 }
@@ -16,6 +17,7 @@ export default function PayPalButton({
   amount,
   currency,
   intent,
+  couponCode,
   onSuccess,
   onError
 }: PayPalButtonProps) {
@@ -233,14 +235,34 @@ export default function PayPalButton({
             console.log('PayPal payment captured:', captureData);
             
             if (captureData.status === 'COMPLETED') {
+              // Complete the order in our backend and assign credentials
+              const completeResponse = await fetch('/api/cart/complete-payment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  paypalOrderId: data.orderID,
+                  couponCode: couponCode || ''
+                }),
+              });
+
+              if (!completeResponse.ok) {
+                const errorText = await completeResponse.text();
+                throw new Error(`Order completion failed: ${errorText}`);
+              }
+
+              const completeData = await completeResponse.json();
+              console.log('Order completed with credentials assigned:', completeData);
+              
               toast({
                 title: "Ödeme Başarılı",
-                description: "PayPal ödemesi tamamlandı. Yönlendiriliyorsunuz...",
+                description: "PayPal ödemesi tamamlandı ve paketler etkinleştirildi. Yönlendiriliyorsunuz...",
               });
               
               // Redirect to success page after 1.5 seconds
               setTimeout(() => {
-                window.location.href = `/order-success?orderId=${data.orderID}&amount=${amount}&paymentId=${captureData.id}`;
+                window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureData.id}`;
               }, 1500);
             } else {
               throw new Error('Payment not completed');
