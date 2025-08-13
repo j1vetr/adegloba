@@ -1584,6 +1584,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual log cleanup endpoint for admin
+  app.post('/api/admin/logs/cleanup', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { logCleanupService } = await import('./services/logCleanupService');
+      const deletedCount = await logCleanupService.forceCleanup();
+      
+      // Log the cleanup action
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'manual_log_cleanup',
+        adminId: req.session.adminUser.id,
+        entityType: 'system',
+        entityId: 'log_cleanup',
+        details: {
+          deletedCount,
+          action: 'Manual log cleanup executed'
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+      
+      res.json({ 
+        success: true, 
+        message: `Deleted ${deletedCount} old log entries`,
+        deletedCount 
+      });
+    } catch (error: any) {
+      console.error('Manual log cleanup error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error during log cleanup: ' + error.message 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

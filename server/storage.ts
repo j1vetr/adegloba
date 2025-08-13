@@ -43,7 +43,7 @@ import {
   type InsertSystemLog,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt } from "drizzle-orm";
+import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt, lt } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -1145,6 +1145,14 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(systemLogs.createdAt))
       .limit(pageSize)
       .offset(offset);
+  }
+
+  async deleteOldLogs(cutoffDate: Date): Promise<number> {
+    const result = await db
+      .delete(systemLogs)
+      .where(lt(systemLogs.createdAt, cutoffDate));
+    
+    return result.rowCount || 0;
   }
 }
 

@@ -5,6 +5,7 @@ import { pool } from "./db";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth, seedDefaultAdmin } from "./auth";
+import { logCleanupService } from "./services/logCleanupService";
 
 const app = express();
 app.use(express.json());
@@ -70,6 +71,9 @@ app.use((req, res, next) => {
   
   const { seedInitialShips } = await import('./shipSeed');
   await seedInitialShips();
+  
+  // Start log cleanup service
+  logCleanupService.startCleanupScheduler();
   
   const server = await registerRoutes(app);
 
