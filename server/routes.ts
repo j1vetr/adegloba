@@ -202,9 +202,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/orders', isAuthenticated, async (req: any, res) => {
+  app.post('/api/orders', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const { shipId, planId, couponCode } = req.body;
 
       const order = await orderService.createOrder(userId, shipId, planId, couponCode);
@@ -215,7 +219,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/orders/:orderId/complete', isAuthenticated, async (req: any, res) => {
+  app.post('/api/orders/:orderId/complete', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
     try {
       const { orderId } = req.params;
       const { paypalOrderId } = req.body;
@@ -228,7 +236,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/coupons/validate', isAuthenticated, async (req: any, res) => {
+  app.post('/api/coupons/validate', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
     try {
       const { code, shipId } = req.body;
       const coupon = await couponService.validateCoupon(code, shipId);
