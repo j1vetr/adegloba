@@ -136,6 +136,12 @@ function Router() {
         </UserProtectedRoute>
       </Route>
       
+      <Route path="/checkout">
+        <UserProtectedRoute>
+          <Checkout />
+        </UserProtectedRoute>
+      </Route>
+      
       <Route path="/destek">
         <UserProtectedRoute>
           <UserTickets />

@@ -422,14 +422,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (validatedCoupon && discount > 0) {
         await couponService.recordCouponUsage(validatedCoupon.id, userId, order.id, discount);
       }
-      
-      // Clear cart after successful order creation
-      await storage.clearCart(userId);
-      
+
       res.json(order);
     } catch (error) {
       console.error("Error creating order from cart:", error);
-      res.status(400).json({ message: error.message || "Failed to create order" });
+      res.status(500).json({ message: "Failed to create order from cart" });
+    }
+  });
+
+  // Complete payment for cart-based order
+  app.post('/api/cart/complete-payment', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const { paypalOrderId, couponCode } = req.body;
+
+      // Get user to get ship ID
+      const user = await storage.getUserById(userId);
+      if (!user || !user.ship_id) {
+        return res.status(400).json({ message: 'User ship not found' });
+      }
+
+      // Get cart items
+      const cartItems = await storage.getCartItems(userId);
+      if (cartItems.length === 0) {
+        return res.status(400).json({ message: 'Cart is empty' });
+      }
+
+      // Calculate cart total
+      const cartTotal = await storage.getCartTotal(userId);
+      let subtotal = cartTotal.subtotal;
+      let discount = 0;
+      let total = subtotal;
+      let validatedCoupon = null;
+
+      // Apply coupon if provided
+      if (couponCode) {
+        try {
+          validatedCoupon = await couponService.validateCoupon(couponCode, user.ship_id, userId);
+          const couponResult = await couponService.applyCouponDiscount(validatedCoupon, subtotal);
+          discount = couponResult.discount;
+          total = couponResult.total;
+        } catch (error) {
+          return res.status(400).json({ message: error.message });
+        }
+      }
+
+      // Create order with 'completed' status
+      const orderData = {
+        userId,
+        shipId: user.ship_id,
+        status: 'completed',
+        currency: 'USD',
+        subtotalUsd: subtotal.toFixed(2),
+        discountUsd: discount.toFixed(2),
+        totalUsd: total.toFixed(2),
+        couponId: validatedCoupon?.id || null,
+        paypalOrderId: paypalOrderId || null,
+      };
+
+      const order = await storage.createOrder(orderData);
+
+      // Create order items for all cart items
+      for (const cartItem of cartItems) {
+        if (cartItem.plan) {
+          await storage.createOrderItem({
+            orderId: order.id,
+            shipId: user.ship_id,
+            planId: cartItem.plan.id,
+            quantity: cartItem.quantity,
+            priceUsd: cartItem.plan.priceUsd,
+          });
+        }
+      }
+
+      // Record coupon usage if coupon was applied
+      if (validatedCoupon && discount > 0) {
+        await couponService.recordCouponUsage(validatedCoupon.id, userId, order.id, discount);
+      }
+
+      // Clear cart after successful order creation
+      await storage.clearCart(userId);
+
+      res.json({ id: order.id, orderId: order.id });
+    } catch (error) {
+      console.error("Error completing payment from cart:", error);
+      res.status(500).json({ message: "Failed to complete payment" });
     }
   });
 
