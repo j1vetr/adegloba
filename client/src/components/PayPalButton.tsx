@@ -295,42 +295,56 @@ export default function PayPalButton({
   // Custom styled PayPal/Credit Card button
   const renderCustomButton = () => (
     <div className="space-y-3">
-      {/* Main Payment Button */}
+      {/* PayPal Payment Button */}
       <Button
         onClick={handlePayPalClick}
         disabled={isLoading || !paypalLoaded || !settings?.paypal_client_id}
-        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 rounded-xl text-base transition-all duration-200 shadow-lg hover:shadow-xl relative overflow-hidden"
+        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-xl text-sm transition-all duration-200 shadow-lg hover:shadow-xl relative overflow-hidden"
         data-testid="paypal-payment-button"
       >
         {isLoading ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
             Ödeme İşleniyor...
-          </>
+          </div>
         ) : (
-          <>
-            <div className="flex items-center justify-center w-full">
-              <CreditCard className="h-5 w-5 mr-2" />
-              <span className="font-bold">PayPal ile Güvenli Ödeme</span>
-            </div>
-            <div className="text-xs text-blue-100 mt-1">
-              Kredi Kartı & PayPal Hesabı - {formatPrice(amount)}
-            </div>
-          </>
+          <div className="flex items-center justify-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a9.159 9.159 0 0 1-.354 1.888c-1.171 5.04-4.484 6.930-8.854 6.930H9.577a.5.5 0 0 0-.496.58l-.466 2.956-.132.84a.318.318 0 0 0 .314.37h2.4a.5.5 0 0 0 .496-.42l.020-.124.382-2.42.025-.134a.5.5 0 0 1 .496-.42h.312c3.634 0 6.479-1.476 7.314-5.738.348-1.781.167-3.27-.784-4.32z"/>
+            </svg>
+            <span className="font-semibold">PayPal ile Ödeme</span>
+          </div>
         )}
         {/* Animated background effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 animate-pulse"></div>
       </Button>
 
-      {/* Credit Card Alternative Button */}
+      {/* Credit Card Payment Button */}
       <Button
         onClick={() => setShowCardDrawer(true)}
-        variant="outline"
-        className="w-full border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white py-3 rounded-xl text-sm transition-all duration-200"
+        className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-semibold py-3 rounded-xl text-sm transition-all duration-200 shadow-lg hover:shadow-xl relative overflow-hidden"
         data-testid="credit-card-button"
       >
-        <CreditCard className="h-4 w-4 mr-2" />
-        Kart ile Ödeme (Alternatif)
+        <div className="flex items-center justify-center">
+          {/* Card Brand Icons */}
+          <div className="flex items-center space-x-1 mr-3">
+            <div className="bg-white rounded px-1 py-0.5">
+              <span className="text-xs font-bold text-blue-600">VISA</span>
+            </div>
+            <div className="bg-white rounded px-1 py-0.5">
+              <span className="text-xs font-bold text-red-600">MC</span>
+            </div>
+            <div className="bg-white rounded px-1 py-0.5">
+              <span className="text-xs font-bold text-blue-800">AMEX</span>
+            </div>
+            <div className="bg-white rounded px-1 py-0.5">
+              <span className="text-xs font-bold text-red-500">MAESTRO</span>
+            </div>
+          </div>
+          <span className="font-semibold">Kredi Kartı ile Ödeme</span>
+        </div>
+        {/* Animated background effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 animate-pulse"></div>
       </Button>
 
       {/* Payment Methods Info */}
@@ -348,22 +362,9 @@ export default function PayPalButton({
       {/* PayPal Container - Visible when PayPal buttons are rendered */}
       <div id="paypal-button-container" className="mt-2"></div>
 
-      {/* Accepted Payment Methods */}
+      {/* Secure Payment Info */}
       <div className="text-center">
-        <p className="text-xs text-slate-500 mb-2">Güvenli Ödeme Yöntemleri:</p>
-        <div className="flex items-center justify-center space-x-2 text-slate-400">
-          <div className="flex items-center bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M20.067 8.478c.492.5.771 1.217.771 1.942 0 .69-.279 1.411-.771 1.942L12 20.428l-8.067-8.066c-.492-.531-.771-1.252-.771-1.942 0-.725.279-1.442.771-1.942C4.453 7.957 5.615 7.5 6.933 7.5c1.357 0 2.481.457 3.067.978L12 10.236l2-1.758C14.586 7.957 15.71 7.5 17.067 7.5c1.318 0 2.48.457 3 .978z"/>
-            </svg>
-            PayPal
-          </div>
-          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded font-medium">Visa</span>
-          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded font-medium">MC</span>
-          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded font-medium">Amex</span>
-          <span className="text-xs bg-slate-700 text-white px-2 py-1 rounded font-medium">Discover</span>
-        </div>
-        <p className="text-xs text-slate-500 mt-2">Tüm ödemeler SSL ile şifrelenir</p>
+        <p className="text-xs text-slate-500">Tüm ödemeler 256-bit SSL ile şifrelenir</p>
       </div>
     </div>
   );
