@@ -811,17 +811,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const plansWithDetails = await Promise.all(plans.map(async (plan) => {
         const ship = ships.find(s => s.id === plan.shipId);
-        const planCredentials = await storage.getCredentialsForPlan(plan.id);
         
-        return {
-          ...plan,
-          ship,
-          credentialStats: {
-            total: planCredentials.length,
-            available: planCredentials.filter(c => !c.isAssigned).length,
-            assigned: planCredentials.filter(c => c.isAssigned).length,
-          }
-        };
+        try {
+          const planCredentials = await storage.getCredentialsForPlan(plan.id);
+          
+          return {
+            ...plan,
+            ship,
+            credentialStats: {
+              total: planCredentials.length,
+              available: planCredentials.filter(c => !c.isAssigned).length,
+              assigned: planCredentials.filter(c => c.isAssigned).length,
+            }
+          };
+        } catch (error) {
+          console.log('Error fetching credentials for plan', plan.id, ':', error);
+          return {
+            ...plan,
+            ship,
+            credentialStats: {
+              total: 0,
+              available: 0,
+              assigned: 0,
+            }
+          };
+        }
       }));
 
       res.json(plansWithDetails);
