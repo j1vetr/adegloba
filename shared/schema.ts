@@ -481,9 +481,27 @@ export const systemLogsRelations = relations(systemLogs, ({ one }) => ({
   adminUser: one(admin_users, { fields: [systemLogs.adminId], references: [admin_users.id] }),
 }));
 
+// Coupon usage tracking table
+export const couponUsage = pgTable("coupon_usage", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  couponId: varchar("coupon_id").notNull().references(() => coupons.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
+  usedAt: timestamp("used_at").defaultNow(),
+});
+
+export const insertCouponUsageSchema = createInsertSchema(couponUsage);
+
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   user: one(users, { fields: [cartItems.userId], references: [users.id] }),
   plan: one(plans, { fields: [cartItems.planId], references: [plans.id] }),
+}));
+
+export const couponUsageRelations = relations(couponUsage, ({ one }) => ({
+  coupon: one(coupons, { fields: [couponUsage.couponId], references: [coupons.id] }),
+  user: one(users, { fields: [couponUsage.userId], references: [users.id] }),
+  order: one(orders, { fields: [couponUsage.orderId], references: [orders.id] }),
 }));
 
 // Cart item schemas and types
@@ -495,3 +513,5 @@ export const insertCartItemSchema = createInsertSchema(cartItems).omit({
 
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type CartItem = typeof cartItems.$inferSelect;
+export type InsertCouponUsage = z.infer<typeof insertCouponUsageSchema>;
+export type CouponUsage = typeof couponUsage.$inferSelect;

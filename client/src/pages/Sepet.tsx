@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ShoppingCart, Package, Trash2, Plus, Minus, DollarSign } from "lucide-react";
+import { Loader2, ShoppingCart, Package, Trash2, Plus, Minus, DollarSign, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
@@ -36,6 +36,8 @@ export default function Sepet() {
   const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
   const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [discount, setDiscount] = useState(0);
 
   const { data: cartData, isLoading: cartLoading } = useQuery<CartData>({
     queryKey: ["/api/cart"],
@@ -87,6 +89,9 @@ export default function Sepet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      setAppliedCoupon(null);
+      setDiscount(0);
+      setCouponCode("");
       toast({
         title: "Temizlendi",
         description: "Sepet temizlendi",
@@ -101,10 +106,71 @@ export default function Sepet() {
     },
   });
 
+  const validateCouponMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const response = await apiRequest('POST', '/api/coupons/validate', { 
+        code, 
+        shipId: user?.ship_id 
+      });
+      return response.json();
+    },
+    onSuccess: (coupon) => {
+      setAppliedCoupon(coupon);
+      
+      // Calculate discount
+      const subtotal = cartData?.subtotal || 0;
+      let discountAmount = 0;
+      
+      if (coupon.type === 'percentage') {
+        discountAmount = (subtotal * parseFloat(coupon.value)) / 100;
+        if (coupon.maxDiscount && discountAmount > parseFloat(coupon.maxDiscount)) {
+          discountAmount = parseFloat(coupon.maxDiscount);
+        }
+      } else if (coupon.type === 'fixed') {
+        discountAmount = Math.min(parseFloat(coupon.value), subtotal);
+      }
+      
+      setDiscount(discountAmount);
+      toast({
+        title: "Kupon Uygulandı",
+        description: `${coupon.code} kuponu başarıyla uygulandı`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Kupon Hatası",
+        description: error.message || "Kupon geçerli değil",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleApplyCoupon = () => {
+    if (!couponCode.trim()) {
+      toast({
+        title: "Hata",
+        description: "Lütfen kupon kodu girin",
+        variant: "destructive",
+      });
+      return;
+    }
+    validateCouponMutation.mutate(couponCode);
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setDiscount(0);
+    setCouponCode("");
+    toast({
+      title: "Kupon Kaldırıldı",
+      description: "Kupon sepetten kaldırıldı",
+    });
+  };
+
   const checkoutMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('POST', '/api/cart/checkout', {
-        couponCode: couponCode || undefined
+        couponCode: appliedCoupon?.code || undefined
       });
       return response.json();
     },
@@ -304,44 +370,82 @@ export default function Sepet() {
                         placeholder="Kupon kodunu girin"
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value)}
+                        disabled={!!appliedCoupon}
                         className="flex-1 bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-500"
                         data-testid="coupon-input"
                       />
+                      <Button 
+                        onClick={appliedCoupon ? removeCoupon : handleApplyCoupon}
+                        disabled={validateCouponMutation.isPending || (!appliedCoupon && !couponCode.trim())}
+                        className={appliedCoupon 
+                          ? "bg-red-500 hover:bg-red-600 text-white" 
+                          : "bg-cyan-500 hover:bg-cyan-600 text-white"
+                        }
+                        data-testid={appliedCoupon ? "remove-coupon-button" : "apply-coupon-button"}
+                      >
+                        {validateCouponMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : appliedCoupon ? (
+                          <Trash2 className="h-4 w-4" />
+                        ) : (
+                          <Tag className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
+                    
+                    {appliedCoupon && (
+                      <div className="mt-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="text-green-400 text-sm font-medium">
+                            {appliedCoupon.code} uygulandı
+                          </span>
+                          <span className="text-green-400 text-sm font-semibold">
+                            -{formatPrice(discount)}
+                          </span>
+                        </div>
+                        <p className="text-green-300/80 text-xs mt-1">
+                          {appliedCoupon.type === 'percentage' 
+                            ? `%${appliedCoupon.value} indirim` 
+                            : `$${appliedCoupon.value} indirim`
+                          }
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Price Breakdown */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-slate-300">
-                      <span>Ara Toplam ({cartData.itemCount} ürün)</span>
-                      <span data-testid="subtotal">{formatPrice(cartData.subtotal)}</span>
+                  <div className="space-y-3 pt-4 border-t border-slate-600">
+                    <div className="flex justify-between">
+                      <span className="text-slate-300">Ara Toplam</span>
+                      <span className="text-white font-semibold">{formatPrice(cartData.subtotal)}</span>
                     </div>
-                    <div className="border-t border-slate-600 pt-3">
-                      <div className="flex justify-between text-xl font-bold text-white">
-                        <span>Toplam</span>
-                        <span data-testid="total">{formatPrice(cartData.total)}</span>
+                    
+                    {discount > 0 && (
+                      <div className="flex justify-between text-green-400">
+                        <span>İndirim</span>
+                        <span className="font-semibold">-{formatPrice(discount)}</span>
                       </div>
+                    )}
+                    
+                    <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-600">
+                      <span className="text-white">Toplam</span>
+                      <span className="text-cyan-400">{formatPrice((cartData.subtotal || 0) - discount)}</span>
                     </div>
                   </div>
 
                   {/* Checkout Button */}
-                  <Button 
+                  <Button
                     onClick={() => checkoutMutation.mutate()}
-                    disabled={checkoutMutation.isPending || !cartData.items.length}
-                    className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/25"
+                    disabled={checkoutMutation.isPending}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-xl text-lg"
                     data-testid="checkout-button"
                   >
                     {checkoutMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        İşleniyor...
-                      </>
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
                     ) : (
-                      <>
-                        <DollarSign className="mr-2 h-4 w-4" />
-                        Ödemeye Geç
-                      </>
+                      <ShoppingCart className="h-5 w-5 mr-2" />
                     )}
+                    Ödemeye Geç
                   </Button>
 
                   {/* Security Notice */}

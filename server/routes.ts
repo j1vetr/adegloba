@@ -243,7 +243,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const { code, shipId } = req.body;
-      const coupon = await couponService.validateCoupon(code, shipId);
+      const userId = req.session.userId;
+      const coupon = await couponService.validateCoupon(code, shipId, userId);
       res.json(coupon);
     } catch (error) {
       console.error("Error validating coupon:", error);
@@ -369,14 +370,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Cart is empty' });
       }
 
-      // For now, just take the first item (can be extended for multiple items)
+      // Calculate cart total
+      const cartTotal = await storage.getCartTotal(userId);
+      let subtotal = cartTotal.subtotal;
+      let discount = 0;
+      let total = subtotal;
+      let validatedCoupon = null;
+
+      // Apply coupon if provided
+      if (couponCode) {
+        try {
+          validatedCoupon = await couponService.validateCoupon(couponCode, user.ship_id, userId);
+          const couponResult = await couponService.applyCouponDiscount(validatedCoupon, subtotal);
+          discount = couponResult.discount;
+          total = couponResult.total;
+        } catch (error) {
+          return res.status(400).json({ message: error.message });
+        }
+      }
+
+      // For now, create order with first item (can be extended later)
       const firstItem = cartItems[0];
       if (!firstItem.plan) {
         return res.status(400).json({ message: 'Plan not found' });
       }
 
-      // Create order using existing order service
-      const order = await orderService.createOrder(userId, user.ship_id, firstItem.plan.id, couponCode);
+      // Create order with discount applied
+      const orderData = {
+        userId,
+        shipId: user.ship_id,
+        status: 'pending',
+        currency: 'USD',
+        subtotalUsd: subtotal.toFixed(2),
+        discountUsd: discount.toFixed(2),
+        totalUsd: total.toFixed(2),
+        couponId: validatedCoupon?.id || null,
+      };
+
+      const order = await storage.createOrder(orderData);
+
+      // Create order item
+      await storage.createOrderItem({
+        orderId: order.id,
+        shipId: user.ship_id,
+        planId: firstItem.plan.id,
+        quantity: firstItem.quantity,
+        priceUsd: firstItem.plan.priceUsd,
+      });
+
+      // Record coupon usage if coupon was applied
+      if (validatedCoupon && discount > 0) {
+        await couponService.recordCouponUsage(validatedCoupon.id, userId, order.id, discount);
+      }
       
       // Clear cart after successful order creation
       await storage.clearCart(userId);
@@ -538,7 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin - Coupons
-  app.get('/api/admin/coupons', isAuthenticated, adminMiddleware, async (req, res) => {
+  app.get('/api/admin/coupons', isAdminAuthenticated, async (req, res) => {
     try {
       const coupons = await storage.getCoupons();
       res.json(coupons);
@@ -548,7 +593,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/coupons', isAuthenticated, adminMiddleware, async (req, res) => {
+  app.post('/api/admin/coupons', isAdminAuthenticated, async (req, res) => {
     try {
       const couponData = insertCouponSchema.parse(req.body);
       const coupon = await storage.createCoupon(couponData);
@@ -559,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/coupons/:id', isAuthenticated, adminMiddleware, async (req, res) => {
+  app.put('/api/admin/coupons/:id', isAdminAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       const couponData = insertCouponSchema.partial().parse(req.body);
@@ -574,7 +619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/coupons/:id', isAuthenticated, adminMiddleware, async (req, res) => {
+  app.delete('/api/admin/coupons/:id', isAdminAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       await storage.deleteCoupon(id);
@@ -586,7 +631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin - Statistics
-  app.get('/api/admin/stats', isAuthenticated, adminMiddleware, async (req, res) => {
+  app.get('/api/admin/stats', isAdminAuthenticated, async (req, res) => {
     try {
       const stats = await storage.getOrderStats();
       res.json(stats);

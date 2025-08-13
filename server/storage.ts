@@ -42,8 +42,11 @@ import {
   type SystemLog,
   type InsertSystemLog,
   cartItems,
+  couponUsage,
   type CartItem,
   type InsertCartItem,
+  type CouponUsage,
+  type InsertCouponUsage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt, lt } from "drizzle-orm";
@@ -105,6 +108,11 @@ export interface IStorage {
   createCoupon(coupon: InsertCoupon): Promise<Coupon>;
   updateCoupon(id: string, coupon: Partial<InsertCoupon>): Promise<Coupon | undefined>;
   deleteCoupon(id: string): Promise<void>;
+  
+  // Coupon usage operations
+  createCouponUsage(usage: InsertCouponUsage): Promise<CouponUsage>;
+  getCouponUsageCount(couponId: string, userId?: string): Promise<number>;
+  getUserCouponUsage(userId: string, couponId: string): Promise<number>;
 
   // Order operations
   getOrders(): Promise<Order[]>;
@@ -1265,6 +1273,38 @@ export class DatabaseStorage implements IStorage {
       total: subtotal, // No tax for now
       itemCount
     };
+  }
+
+  // Coupon usage operations
+  async createCouponUsage(usage: InsertCouponUsage): Promise<CouponUsage> {
+    const [couponUsageRecord] = await db
+      .insert(couponUsage)
+      .values(usage)
+      .returning();
+    return couponUsageRecord;
+  }
+
+  async getCouponUsageCount(couponId: string, userId?: string): Promise<number> {
+    let query = db
+      .select({ count: sql<number>`count(*)` })
+      .from(couponUsage)
+      .where(eq(couponUsage.couponId, couponId));
+
+    if (userId) {
+      query = query.where(eq(couponUsage.userId, userId));
+    }
+
+    const result = await query;
+    return result[0]?.count || 0;
+  }
+
+  async getUserCouponUsage(userId: string, couponId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(couponUsage)
+      .where(and(eq(couponUsage.userId, userId), eq(couponUsage.couponId, couponId)));
+
+    return result[0]?.count || 0;
   }
 }
 
