@@ -12,6 +12,7 @@ import ShipPlans from "@/pages/ShipPlans";
 import Cart from "@/pages/Cart";
 import Checkout from "@/pages/Checkout";
 import OrderSuccess from "@/pages/OrderSuccess";
+import OrderCancel from "@/pages/OrderCancel";
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import Kayit from "@/pages/Kayit";
@@ -141,6 +142,9 @@ function Router() {
           <Checkout />
         </UserProtectedRoute>
       </Route>
+      
+      <Route path="/checkout/success" component={OrderSuccess} />
+      <Route path="/checkout/cancel" component={OrderCancel} />
       
       <Route path="/destek">
         <UserProtectedRoute>

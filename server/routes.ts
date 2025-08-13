@@ -103,7 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         // Call PayPal function directly with proper request/response
-        await createPaypalOrder(req, res);
+        const order = await createPaypalOrder(req, res);
         return; // Function handles response
       } finally {
         // Restore original environment variables
@@ -145,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
 
       try {
-        // Set orderID in params for PayPal function
+        // Set orderID in params for PayPal function  
         req.params = { ...req.params, orderID: orderId };
         await capturePaypalOrder(req, res);
         return; // Function handles response
@@ -2015,6 +2015,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         message: 'Error during log cleanup: ' + error.message 
       });
+    }
+  });
+
+  // PayPal webhook endpoint for payment verification
+  app.post("/api/paypal/webhook", async (req, res) => {
+    console.log('PayPal webhook received:', req.body);
+    
+    try {
+      const event = req.body;
+      
+      // Verify webhook signature (in production, you'd validate the webhook signature)
+      // For now, we'll process the event if it's a payment completion
+      
+      if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+        const payment = event.resource;
+        const orderId = payment.supplementary_data?.related_ids?.order_id || payment.custom_id;
+        
+        console.log(`Processing payment completion for order: ${orderId}`);
+        
+        // Mark order as paid and assign credentials (placeholder - would need to implement markOrderAsPaid method)
+        console.log('Would mark order as paid:', orderId, {
+          paypal_payment_id: payment.id,
+          payment_status: 'completed',
+          amount: payment.amount.value,
+          currency: payment.amount.currency_code,
+          payer_email: payment.payer?.email_address
+        });
+        
+        // Send success response to PayPal
+        res.status(200).json({ status: 'success' });
+      } else {
+        // Handle other webhook events
+        console.log(`Unhandled webhook event: ${event.event_type}`);
+        res.status(200).json({ status: 'ignored' });
+      }
+      
+    } catch (error) {
+      console.error('Webhook processing error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
     }
   });
 

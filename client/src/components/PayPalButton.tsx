@@ -235,9 +235,13 @@ export default function PayPalButton({
             if (captureData.status === 'COMPLETED') {
               toast({
                 title: "Ödeme Başarılı",
-                description: "PayPal ödemesi tamamlandı.",
+                description: "PayPal ödemesi tamamlandı. Yönlendiriliyorsunuz...",
               });
-              onSuccess?.(data.orderID);
+              
+              // Redirect to success page after 1.5 seconds
+              setTimeout(() => {
+                window.location.href = `/checkout/success?orderId=${data.orderID}&amount=${amount}&paymentId=${captureData.id}`;
+              }, 1500);
             } else {
               throw new Error('Payment not completed');
             }
@@ -248,6 +252,12 @@ export default function PayPalButton({
               description: error instanceof Error ? error.message : "Ödeme tamamlanamadı",
               variant: "destructive",
             });
+            
+            // Redirect to cancel page on error
+            setTimeout(() => {
+              window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(error instanceof Error ? error.message : 'Payment processing failed')}`;
+            }, 2000);
+            
             onError?.(error);
           }
         },
@@ -258,6 +268,12 @@ export default function PayPalButton({
             description: "Ödeme işlemi sırasında bir hata oluştu.",
             variant: "destructive",
           });
+          
+          // Redirect to cancel page on PayPal error
+          setTimeout(() => {
+            window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent('PayPal processing error')}`;
+          }, 2000);
+          
           onError?.(err);
         },
         onCancel: () => {
@@ -266,6 +282,11 @@ export default function PayPalButton({
             description: "PayPal ödemesi iptal edildi.",
             variant: "default",
           });
+          
+          // Redirect to cancel page after a short delay
+          setTimeout(() => {
+            window.location.href = `/checkout/cancel?status=cancelled&amount=${amount}&reason=User cancelled payment`;
+          }, 2000);
         }
       }).render('#paypal-button-container').then(() => {
         setIsLoading(false);
