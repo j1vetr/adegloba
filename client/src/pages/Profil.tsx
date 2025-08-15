@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   Loader2,
@@ -21,15 +22,18 @@ import {
   Key
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
 import type { User as UserType, Ship } from "@shared/schema";
 
 export default function Profil() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
+    email: "",
+    ship_id: "",
     address: "",
     currentPassword: "",
     newPassword: "",
@@ -42,7 +46,11 @@ export default function Profil() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // No need for separate ship query since user data includes ship info
+  // Fetch ships for dropdown
+  const { data: ships } = useQuery({
+    queryKey: ["/api/ships"],
+    enabled: !!user
+  });
 
   // Profile update mutation
   const updateProfileMutation = useMutation({
@@ -78,7 +86,9 @@ export default function Profil() {
         newPassword: "",
         confirmPassword: ""
       }));
+      // Refresh user data and packages if ship was changed
       queryClient.invalidateQueries({ queryKey: ['/api/user/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/active-packages'] });
     },
     onError: (error: Error) => {
       toast({
@@ -94,6 +104,8 @@ export default function Profil() {
     if (user) {
       setFormData({
         full_name: user.full_name || "",
+        email: user.email || "",
+        ship_id: user.ship_id || "",
         address: user.address || "",
         currentPassword: "",
         newPassword: "",
@@ -116,6 +128,8 @@ export default function Profil() {
   const handleCancel = () => {
     setFormData({
       full_name: user?.full_name || "",
+      email: user?.email || "",
+      ship_id: user?.ship_id || "",
       address: user?.address || "",
       currentPassword: "",
       newPassword: "",
@@ -126,54 +140,47 @@ export default function Profil() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-black p-4 flex items-center justify-center">
-        <div className="flex items-center gap-2 text-cyan-400">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Yükleniyor...</span>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <UserNavigation />
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
         </div>
       </div>
     );
   }
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-black p-4 flex items-center justify-center">
-        <div className="text-white text-center">
-          <h2 className="text-xl font-semibold mb-2">Kullanıcı bulunamadı</h2>
-          <p className="text-gray-400">Lütfen giriş yapın.</p>
-        </div>
-      </div>
-    );
+    window.location.href = '/giris';
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <UserNavigation />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">
-              AdeGloba Starlink System - Kullanıcı Profili
+            <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
+              AdeGloba Starlink System - Profil
             </h1>
-            <p className="text-gray-400">
-              Hesap bilgilerinizi görüntüleyin ve güncelleyin
+            <p className="text-slate-400">
+              Profil bilgilerinizi görüntüleyin ve güncelleyin
             </p>
           </div>
 
           {/* Profile Card */}
-          <Card className="bg-gray-900/50 border-cyan-500/30 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-cyan-400 text-xl flex items-center gap-2">
-                <User className="h-6 w-6" />
+          <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <CardTitle className="text-white text-xl flex items-center gap-2">
+                <User className="h-6 w-6 text-blue-400" />
                 Profil Bilgileri
               </CardTitle>
               {!isEditing && (
                 <Button
                   onClick={() => setIsEditing(true)}
-                  variant="outline"
-                  className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white w-full sm:w-auto"
                   data-testid="button-edit-profile"
                 >
                   <Edit className="h-4 w-4 mr-2" />
@@ -184,164 +191,200 @@ export default function Profil() {
             
             <CardContent className="space-y-6">
               <div className="grid gap-6">
-                {/* Read-only fields */}
-                <div className="flex items-center gap-4">
-                  <User className="h-5 w-5 text-cyan-400" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-300">Kullanıcı Adı</p>
-                    <p className="text-white text-lg bg-gray-800/50 p-2 rounded border border-cyan-500/20">
-                      {user?.username || "-"}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">Bu alan düzenlenemez</p>
+                {/* Read-only Username field */}
+                <div className="space-y-2">
+                  <Label className="text-slate-400 flex items-center gap-2">
+                    <User className="h-4 w-4 text-blue-400" />
+                    Kullanıcı Adı
+                  </Label>
+                  <div className="text-white bg-slate-800/50 p-3 rounded-lg border border-slate-600">
+                    {user?.username || "-"}
                   </div>
+                  <p className="text-xs text-slate-500">Bu alan değiştirilemez</p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <Mail className="h-5 w-5 text-cyan-400" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-300">E-posta</p>
-                    <p className="text-white text-lg bg-gray-800/50 p-2 rounded border border-cyan-500/20">
-                      {user?.email || "-"}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">Bu alan düzenlenemez</p>
-                  </div>
+                {/* Editable Email field */}
+                <div className="space-y-2">
+                  <Label className="text-slate-400 flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-cyan-400" />
+                    E-posta
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      placeholder="E-posta adresiniz"
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="input-email"
+                    />
+                  ) : (
+                    <div className="text-white bg-slate-800/50 p-3 rounded-lg border border-slate-600">
+                      {user?.email || "Henüz girilmemiş"}
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <User className="h-5 w-5 text-cyan-400" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-300">İsim Soyisim</p>
-                    {isEditing ? (
-                      <Input
-                        value={formData.full_name}
-                        onChange={(e) => handleInputChange('full_name', e.target.value)}
-                        placeholder="Ad Soyad"
-                        className="bg-gray-900/50 border-cyan-500/30 text-white mt-1"
-                        data-testid="input-full-name"
-                      />
-                    ) : (
-                      <p className="text-white text-lg bg-gray-800/50 p-2 rounded border border-cyan-500/20">
-                        {user?.full_name || "Henüz girilmemiş"}
-                      </p>
-                    )}
-                  </div>
+                {/* Editable Name field */}
+                <div className="space-y-2">
+                  <Label className="text-slate-400 flex items-center gap-2">
+                    <User className="h-4 w-4 text-green-400" />
+                    İsim Soyisim
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      value={formData.full_name}
+                      onChange={(e) => handleInputChange('full_name', e.target.value)}
+                      placeholder="Ad Soyad"
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="input-full-name"
+                    />
+                  ) : (
+                    <div className="text-white bg-slate-800/50 p-3 rounded-lg border border-slate-600">
+                      {user?.full_name || "Henüz girilmemiş"}
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <ShipIcon className="h-5 w-5 text-cyan-400" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-300">Atanan Gemi</p>
-                    <p className="text-white text-lg bg-gray-800/50 p-2 rounded border border-cyan-500/20">
-                      {user?.ship?.name || "Henüz atanmamış"}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">Bu alan düzenlenemez</p>
-                  </div>
+                {/* Editable Ship Selection */}
+                <div className="space-y-2">
+                  <Label className="text-slate-400 flex items-center gap-2">
+                    <ShipIcon className="h-4 w-4 text-purple-400" />
+                    Seçili Gemi
+                  </Label>
+                  {isEditing ? (
+                    <Select value={formData.ship_id} onValueChange={(value) => handleInputChange('ship_id', value)}>
+                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white" data-testid="select-ship">
+                        <SelectValue placeholder="Gemi seçin..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        {(ships as Ship[])?.map((ship) => (
+                          <SelectItem key={ship.id} value={ship.id} className="text-white focus:bg-slate-600">
+                            {ship.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-white bg-slate-800/50 p-3 rounded-lg border border-slate-600">
+                      {user?.ship?.name || "Gemi seçilmemiş"}
+                    </div>
+                  )}
+                  {isEditing && (
+                    <p className="text-xs text-blue-400">Gemi değiştirildiğinde paket atamaları yenilenecek</p>
+                  )}
                 </div>
 
-                <Separator className="bg-cyan-500/20" />
+                <Separator className="bg-slate-700" />
 
                 {/* Editable Address Field */}
-                <div className="flex items-start gap-4">
-                  <MapPin className="h-5 w-5 text-cyan-400 mt-1" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-300">Adres</p>
-                    {isEditing ? (
-                      <Textarea
-                        value={formData.address}
-                        onChange={(e) => handleInputChange('address', e.target.value)}
-                        placeholder="Teslimat/fatura adresi"
-                        className="bg-gray-900/50 border-cyan-500/30 text-white mt-1 resize-none"
-                        rows={3}
-                        data-testid="input-address"
-                      />
-                    ) : (
-                      <p className="text-white text-lg">{user?.address || "Henüz girilmemiş"}</p>
-                    )}
-                  </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-400 flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-orange-400" />
+                    Adres
+                  </Label>
+                  {isEditing ? (
+                    <Textarea
+                      value={formData.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      placeholder="Teslimat/fatura adresi"
+                      className="bg-slate-700 border-slate-600 text-white resize-none min-h-[80px]"
+                      rows={3}
+                      data-testid="input-address"
+                    />
+                  ) : (
+                    <div className="text-white bg-slate-800/50 p-3 rounded-lg border border-slate-600 min-h-[80px] whitespace-pre-wrap">
+                      {user?.address || "Henüz girilmemiş"}
+                    </div>
+                  )}
                 </div>
 
                 {/* Password Change Section - Only show when editing */}
                 {isEditing && (
                   <>
-                    <Separator className="bg-cyan-500/20" />
+                    <Separator className="bg-slate-700" />
                     
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-cyan-400 flex items-center gap-2">
-                        <Key className="h-5 w-5" />
+                      <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                        <Key className="h-5 w-5 text-yellow-400" />
                         Şifre Değiştir (İsteğe Bağlı)
                       </h3>
                       
                       <div className="grid gap-4">
-                        <div className="flex items-center gap-4">
-                          <Lock className="h-5 w-5 text-cyan-400" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-300">Mevcut Şifre</p>
-                            <Input
-                              type="password"
-                              value={formData.currentPassword}
-                              onChange={(e) => handleInputChange('currentPassword', e.target.value)}
-                              placeholder="Mevcut şifrenizi girin"
-                              className="bg-gray-900/50 border-cyan-500/30 text-white mt-1"
-                              data-testid="input-current-password"
-                            />
-                          </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-400 flex items-center gap-2">
+                            <Lock className="h-4 w-4 text-red-400" />
+                            Mevcut Şifre
+                          </Label>
+                          <Input
+                            type="password"
+                            value={formData.currentPassword}
+                            onChange={(e) => handleInputChange('currentPassword', e.target.value)}
+                            placeholder="Mevcut şifrenizi girin"
+                            className="bg-slate-700 border-slate-600 text-white"
+                            data-testid="input-current-password"
+                          />
                         </div>
 
-                        <div className="flex items-center gap-4">
-                          <Lock className="h-5 w-5 text-cyan-400" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-300">Yeni Şifre</p>
-                            <Input
-                              type="password"
-                              value={formData.newPassword}
-                              onChange={(e) => handleInputChange('newPassword', e.target.value)}
-                              placeholder="Yeni şifrenizi girin (en az 6 karakter)"
-                              className="bg-gray-900/50 border-cyan-500/30 text-white mt-1"
-                              data-testid="input-new-password"
-                            />
-                          </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-400 flex items-center gap-2">
+                            <Lock className="h-4 w-4 text-green-400" />
+                            Yeni Şifre
+                          </Label>
+                          <Input
+                            type="password"
+                            value={formData.newPassword}
+                            onChange={(e) => handleInputChange('newPassword', e.target.value)}
+                            placeholder="Yeni şifrenizi girin (en az 6 karakter)"
+                            className="bg-slate-700 border-slate-600 text-white"
+                            data-testid="input-new-password"
+                          />
                         </div>
 
-                        <div className="flex items-center gap-4">
-                          <Lock className="h-5 w-5 text-cyan-400" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-300">Yeni Şifre Tekrar</p>
-                            <Input
-                              type="password"
-                              value={formData.confirmPassword}
-                              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                              placeholder="Yeni şifrenizi tekrar girin"
-                              className="bg-gray-900/50 border-cyan-500/30 text-white mt-1"
-                              data-testid="input-confirm-password"
-                            />
-                          </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-400 flex items-center gap-2">
+                            <Lock className="h-4 w-4 text-green-400" />
+                            Yeni Şifre Tekrar
+                          </Label>
+                          <Input
+                            type="password"
+                            value={formData.confirmPassword}
+                            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                            placeholder="Yeni şifrenizi tekrar girin"
+                            className="bg-slate-700 border-slate-600 text-white"
+                            data-testid="input-confirm-password"
+                          />
                         </div>
                       </div>
                     </div>
                   </>
                 )}
 
-                <div className="flex items-center gap-4">
-                  <Calendar className="h-5 w-5 text-cyan-400" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-300">Kayıt Tarihi</p>
-                    <p className="text-white text-lg">
-                      {user?.created_at 
-                        ? new Date(user.created_at).toLocaleDateString('tr-TR')
-                        : "-"
-                      }
-                    </p>
+                <div className="space-y-2">
+                  <Label className="text-slate-400 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-pink-400" />
+                    Kayıt Tarihi
+                  </Label>
+                  <div className="text-white bg-slate-800/50 p-3 rounded-lg border border-slate-600">
+                    {user?.created_at 
+                      ? new Date(user.created_at).toLocaleDateString('tr-TR', {
+                          year: 'numeric',
+                          month: 'long', 
+                          day: 'numeric'
+                        })
+                      : "-"
+                    }
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
               {isEditing && (
-                <div className="flex gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <Button
                     onClick={handleSave}
                     disabled={updateProfileMutation.isPending}
-                    className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white flex-1 sm:flex-initial"
                     data-testid="button-save-profile"
                   >
                     {updateProfileMutation.isPending ? (
@@ -349,12 +392,12 @@ export default function Profil() {
                     ) : (
                       <Save className="h-4 w-4 mr-2" />
                     )}
-                    Kaydet
+                    Değişiklikleri Kaydet
                   </Button>
                   <Button
                     onClick={handleCancel}
                     variant="outline"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                    className="border-slate-600 text-slate-300 hover:bg-slate-700 flex-1 sm:flex-initial"
                     data-testid="button-cancel-edit"
                   >
                     <X className="h-4 w-4 mr-2" />
