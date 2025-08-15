@@ -555,6 +555,51 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  async getUserActivePackages(userId: string): Promise<Array<{
+    credentialId: string;
+    username: string;
+    password: string;
+    planName: string;
+    dataLimitGb: number;
+    validityDays: number;
+    assignedAt: Date;
+    expirationDate: Date;
+    orderStatus: string;
+  }>> {
+    // Calculate the last day of current month for expiration
+    const now = new Date();
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    const results = await db
+      .select({
+        credentialId: credentialPools.id,
+        username: credentialPools.username,
+        password: credentialPools.password,
+        planName: plans.name,
+        dataLimitGb: plans.dataLimitGb,
+        validityDays: plans.validityDays,
+        assignedAt: credentialPools.assignedAt,
+        orderStatus: orders.status,
+      })
+      .from(credentialPools)
+      .innerJoin(orders, eq(credentialPools.assignedToOrderId, orders.id))
+      .innerJoin(plans, eq(credentialPools.planId, plans.id))
+      .where(
+        and(
+          eq(credentialPools.assignedToUserId, userId),
+          eq(credentialPools.isAssigned, true),
+          eq(orders.status, 'completed')
+        )
+      )
+      .orderBy(credentialPools.assignedAt);
+
+    return results.map(r => ({
+      ...r,
+      assignedAt: r.assignedAt!,
+      expirationDate: lastDayOfMonth,
+    }));
+  }
+
   async updateShipPlan(shipId: string, planId: string, updates: Partial<InsertShipPlan>): Promise<void> {
     await db
       .update(shipPlans)

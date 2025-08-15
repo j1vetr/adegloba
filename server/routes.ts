@@ -316,6 +316,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's active packages with credentials
+  app.get('/api/user/active-packages', async (req: any, res, next) => {
+    if (req.session && req.session.userId) {
+      try {
+        const userId = req.session.userId;
+        const activePackages = await storage.getUserActivePackages(userId);
+        res.json(activePackages);
+      } catch (error) {
+        console.error("Error fetching user active packages:", error);
+        res.status(500).json({ message: "Failed to fetch active packages" });
+      }
+    } else {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+  });
+
   app.post('/api/orders', async (req: any, res) => {
     if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -603,14 +619,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create order items for all cart items
       for (const cartItem of cartItems) {
-        if (cartItem.plan) {
+        // Get plan details for pricing
+        const plan = await storage.getPlanById(cartItem.planId);
+        if (plan) {
           await storage.createOrderItem({
             orderId: order.id,
             shipId: user.ship_id,
-            planId: cartItem.plan.id,
+            planId: cartItem.planId,
             qty: cartItem.quantity,
-            unitPriceUsd: cartItem.plan.priceUsd,
-            lineTotalUsd: (parseFloat(cartItem.plan.priceUsd) * cartItem.quantity).toFixed(2),
+            unitPriceUsd: plan.priceUsd,
+            lineTotalUsd: (parseFloat(plan.priceUsd) * cartItem.quantity).toFixed(2),
           });
         }
       }
@@ -622,16 +640,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Assign credentials for each order item
       for (const cartItem of cartItems) {
-        if (cartItem.plan) {
-          try {
-            // Assign credentials based on quantity for each plan
-            for (let i = 0; i < cartItem.quantity; i++) {
-              await storage.deliverCredentialsForOrder(cartItem.plan.id, userId, order.id);
-            }
-          } catch (error) {
-            console.error(`Failed to assign credentials for plan ${cartItem.plan.id}:`, error);
-            // Continue with other items even if one fails
-          }
+        try {
+          // Assign credentials based on quantity for each plan
+          await storage.deliverCredentialsForOrder(order.id, cartItem.planId, cartItem.quantity);
+          console.log(`Successfully assigned ${cartItem.quantity} credentials for plan ${cartItem.planId}`);
+        } catch (error) {
+          console.error(`Failed to assign credentials for plan ${cartItem.planId}:`, error);
+          // Continue with other items even if one fails
         }
       }
 

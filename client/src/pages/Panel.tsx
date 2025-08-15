@@ -124,10 +124,10 @@ export default function Panel() {
                 ) : (activePackages as any)?.length ? (
                   <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                     {(activePackages as any[]).map((pkg: any) => (
-                      <Card key={pkg.id} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10" data-testid={`package-card-${pkg.id}`}>
+                      <Card key={pkg.credentialId} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10" data-testid={`package-card-${pkg.credentialId}`}>
                         <CardContent className="p-6">
                           <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-white text-lg">{pkg.title}</h3>
+                            <h3 className="font-semibold text-white text-lg">{pkg.planName}</h3>
                             <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white border-0">
                               Aktif
                             </Badge>
@@ -135,15 +135,21 @@ export default function Panel() {
                           <div className="space-y-3 text-sm">
                             <div className="flex items-center gap-3 text-slate-300">
                               <Package className="h-4 w-4 text-blue-400" />
-                              <span className="font-medium">{pkg.gbAmount} GB</span>
+                              <span className="font-medium">{pkg.dataLimitGb} GB</span>
                             </div>
                             <div className="flex items-center gap-3 text-slate-300">
                               <Calendar className="h-4 w-4 text-cyan-400" />
-                              <span>Bitiş: {formatDate(pkg.expiresAt)}</span>
+                              <span>Bitiş: {formatDate(pkg.expirationDate)}</span>
                             </div>
-                            <div className="flex items-center gap-3 text-slate-300">
-                              <ShipIcon className="h-4 w-4 text-purple-400" />
-                              <span>Gemi: {user.ship?.name || 'Belirtilmemiş'}</span>
+                            <div className="bg-slate-700/30 rounded-lg p-3 mt-4 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-slate-400 text-xs font-medium">Kullanıcı Adı:</span>
+                                <span className="text-white font-mono text-sm">{pkg.username}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-slate-400 text-xs font-medium">Şifre:</span>
+                                <span className="text-white font-mono text-sm">{pkg.password}</span>
+                              </div>
                             </div>
                           </div>
                         </CardContent>
