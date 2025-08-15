@@ -292,17 +292,24 @@ export class DatabaseStorage implements IStorage {
 
       console.log(`Found ${results.length} active packages for user ${userId}`);
       
-      return results.map(r => ({
-        credentialId: r.credentialId,
-        username: r.username,
-        password: r.password,
-        planName: r.planName,
-        dataLimitGb: r.dataLimitGb,
-        validityDays: r.validityDays,
-        assignedAt: r.assignedAt,
-        expirationDate: endOfCurrentMonth,
-        orderStatus: r.orderStatus
-      }));
+      return results.map(r => {
+        // Calculate proper expiration date based on paidAt + validityDays
+        const paidDate = r.paidAt ? new Date(r.paidAt) : (r.assignedAt ? new Date(r.assignedAt) : new Date());
+        const expirationDate = new Date(paidDate.getTime() + (r.validityDays * 24 * 60 * 60 * 1000));
+        
+        return {
+          credentialId: r.credentialId,
+          username: r.username,
+          password: r.password,
+          planName: r.planName,
+          dataLimitGb: r.dataLimitGb,
+          validityDays: r.validityDays,
+          assignedAt: r.assignedAt,
+          paidAt: r.paidAt,
+          expirationDate: expirationDate,
+          orderStatus: r.orderStatus
+        };
+      });
     } catch (error) {
       console.error('Error fetching user active packages:', error);
       return [];
@@ -374,6 +381,7 @@ export class DatabaseStorage implements IStorage {
           email: data.email,
           full_name: data.full_name,
           ship_id: data.ship_id,
+          address: data.address,
         })
         .where(eq(users.id, id))
         .returning();

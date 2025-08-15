@@ -260,46 +260,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/user/profile', async (req: any, res, next) => {
-    if (req.session && req.session.userId) {
-      try {
-        const userId = req.session.userId;
-        const { address, currentPassword, newPassword, full_name } = req.body;
-
-        // If password change is requested, verify current password
-        if (newPassword && currentPassword) {
-          const user = await storage.getUserById(userId);
-          if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-          }
-
-          const bcrypt = require('bcrypt');
-          const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password_hash);
-          if (!isCurrentPasswordValid) {
-            return res.status(400).json({ message: 'Current password is incorrect' });
-          }
-
-          // Hash new password
-          const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-          await storage.updateUser(userId, { 
-            address, 
-            full_name,
-            password_hash: hashedNewPassword 
-          });
-        } else {
-          // Update only profile fields
-          await storage.updateUser(userId, { address, full_name });
-        }
-
-        res.json({ message: 'Profile updated successfully' });
-      } catch (error) {
-        console.error("Error updating user profile:", error);
-        res.status(500).json({ message: "Failed to update profile" });
-      }
-    } else {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-  });
 
   app.get('/api/user/orders', async (req: any, res, next) => {
     if (req.session && req.session.userId) {
@@ -1609,8 +1569,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updateData: any = {
+        full_name: req.body.full_name,
+        email: req.body.email,
+        ship_id: req.body.ship_id,
         address: req.body.address,
-        updated_at: new Date()
       };
 
       // Handle password update if provided
