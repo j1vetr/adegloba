@@ -6,75 +6,78 @@
 @tailwind utilities;
 
 :root {
-  /* AdeGloba Futuristic Black & Blue Theme */
-  --background: 0 0% 4%; /* Deep black #0a0a0a */
-  --foreground: 0 0% 100%; /* Bright white #ffffff */
-  --card: 0 0% 6.7%; /* Slightly lighter black #111111 */
-  --card-foreground: 0 0% 100%; /* Bright white #ffffff */
-  --popover: 0 0% 6.7%;
-  --popover-foreground: 0 0% 100%; /* Bright white #ffffff */
-  --primary: 195 100% 50%; /* Neon blue #00bfff */
-  --primary-foreground: 0 0% 100%; /* White text on primary */
-  --secondary: 0 0% 8%; /* Dark gray */
-  --secondary-foreground: 0 0% 100%; /* Bright white #ffffff */
-  --muted: 0 0% 8%;
-  --muted-foreground: 0 0% 85%; /* Lighter gray #d9d9d9 */
-  --accent: 195 100% 60%; /* Lighter blue #33ccff */
-  --accent-foreground: 0 0% 100%; /* White text on accent */
-  --destructive: 0 84% 60%;
+  /* AdeGloba Golden Dark Theme */
+  --background: 0 0% 12%; /* Deep dark gray #1E1E1E */
+  --foreground: 0 0% 100%; /* White #FFFFFF */
+  --card: 0 0% 15%; /* Secondary background #252525 */
+  --card-foreground: 0 0% 100%; /* White text #FFFFFF */
+  --popover: 0 0% 15%;
+  --popover-foreground: 0 0% 100%; /* White text */
+  --primary: 43 52% 60%; /* Golden-beige #CDAF66 */
+  --primary-foreground: 0 0% 12%; /* Dark text on golden #1E1E1E */
+  --secondary: 0 0% 17%; /* Secondary button background #2C2C2C */
+  --secondary-foreground: 0 0% 100%; /* White text */
+  --muted: 0 0% 17%;
+  --muted-foreground: 0 0% 70%; /* Secondary text #B3B3B3 */
+  --accent: 43 52% 60%; /* Golden-beige accent #CDAF66 */
+  --accent-foreground: 0 0% 12%; /* Dark text on accent */
+  --destructive: 348 83% 47%; /* Error red #C0392B */
   --destructive-foreground: 0 0% 100%;
-  --border: 0 0% 15%; /* Lighter border for visibility */
-  --input: 0 0% 8%;
-  --ring: 195 100% 50%;
-  --chart-1: 195 100% 50%;
-  --chart-2: 220 70% 50%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --border: 0 0% 20%; /* Borders/dividers #333333 */
+  --input: 0 0% 17%; /* Input background #2C2C2C */
+  --ring: 43 52% 60%; /* Golden focus ring */
+  --chart-1: 43 52% 60%; /* Golden */
+  --chart-2: 28 80% 52%; /* Warning orange #E67E22 */
+  --chart-3: 145 63% 42%; /* Success green #27AE60 */
+  --chart-4: 348 83% 47%; /* Danger red #C0392B */
+  --chart-5: 43 58% 70%; /* Light golden #E0C67F */
   --radius: 0.75rem;
   
-  /* Custom neon colors */
-  --neon-blue: 195 100% 50%; /* #00bfff */
-  --neon-blue-light: 195 100% 60%; /* #33ccff */
-  --neon-blue-hover: 206 100% 56%; /* #1e90ff */
-  --neon-glow: 195 100% 50%;
+  /* Custom golden theme colors */
+  --golden-accent: 43 52% 60%; /* #CDAF66 */
+  --golden-hover: 43 45% 53%; /* #B89B59 */
+  --golden-light: 43 58% 70%; /* #E0C67F */
+  --success: 145 63% 42%; /* #27AE60 */
+  --warning: 28 80% 52%; /* #E67E22 */
+  --text-secondary: 0 0% 70%; /* #B3B3B3 */
+  --table-hover: 0 0% 23%; /* #3A3A3A */
   
   /* Sidebar colors */
-  --sidebar: 0 0% 6.7%;
-  --sidebar-foreground: 0 0% 100%; /* Bright white #ffffff */
-  --sidebar-primary: 195 100% 50%;
-  --sidebar-primary-foreground: 0 0% 100%; /* White text on primary */
-  --sidebar-accent: 0 0% 8%;
-  --sidebar-accent-foreground: 0 0% 100%; /* Bright white #ffffff */
-  --sidebar-border: 0 0% 15%;
-  --sidebar-ring: 195 100% 50%;
+  --sidebar: 0 0% 15%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 43 52% 60%;
+  --sidebar-primary-foreground: 0 0% 12%;
+  --sidebar-accent: 0 0% 17%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 0 0% 20%;
+  --sidebar-ring: 43 52% 60%;
 }
 
 .dark {
-  --background: 0 0% 4%;
-  --foreground: 0 0% 100%; /* Bright white #ffffff */
-  --card: 0 0% 6.7%;
-  --card-foreground: 0 0% 100%; /* Bright white #ffffff */
-  --popover: 0 0% 6.7%;
-  --popover-foreground: 0 0% 100%; /* Bright white #ffffff */
-  --primary: 195 100% 50%;
-  --primary-foreground: 0 0% 100%; /* White text on primary */
-  --secondary: 0 0% 8%;
-  --secondary-foreground: 0 0% 100%; /* Bright white #ffffff */
-  --muted: 0 0% 8%;
-  --muted-foreground: 0 0% 85%; /* Lighter gray #d9d9d9 */
-  --accent: 195 100% 60%;
-  --accent-foreground: 0 0% 100%; /* White text on accent */
-  --destructive: 0 84% 60%;
+  --background: 0 0% 12%; /* #1E1E1E */
+  --foreground: 0 0% 100%; /* #FFFFFF */
+  --card: 0 0% 15%; /* #252525 */
+  --card-foreground: 0 0% 100%; /* #FFFFFF */
+  --popover: 0 0% 15%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 43 52% 60%; /* #CDAF66 */
+  --primary-foreground: 0 0% 12%; /* #1E1E1E */
+  --secondary: 0 0% 17%; /* #2C2C2C */
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 17%;
+  --muted-foreground: 0 0% 70%; /* #B3B3B3 */
+  --accent: 43 52% 60%; /* #CDAF66 */
+  --accent-foreground: 0 0% 12%;
+  --destructive: 348 83% 47%; /* #C0392B */
   --destructive-foreground: 0 0% 100%;
-  --border: 0 0% 15%; /* Lighter border for visibility */
-  --input: 0 0% 8%;
-  --ring: 195 100% 50%;
-  --chart-1: 195 100% 50%;
-  --chart-2: 220 70% 50%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --border: 0 0% 20%; /* #333333 */
+  --input: 0 0% 17%; /* #2C2C2C */
+  --ring: 43 52% 60%; /* #CDAF66 */
+  --chart-1: 43 52% 60%;
+  --chart-2: 28 80% 52%;
+  --chart-3: 145 63% 42%;
+  --chart-4: 348 83% 47%;
+  --chart-5: 43 58% 70%;
 }
 
 /* Apply dark theme by default */
@@ -91,7 +94,7 @@ html {
   body {
     @apply font-sans antialiased bg-background text-foreground;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
+    background: linear-gradient(135deg, #1E1E1E 0%, #252525 50%, #1E1E1E 100%);
     min-height: 100vh;
   }
   
