@@ -2074,14 +2074,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const order = await storage.getOrderById(orderId);
           if (order) {
-            await storage.updateOrderStatus(orderId, 'paid', {
-              paypal_payment_id: payment.id,
-              payment_status: 'completed',
-              amount: payment.amount.value,
-              currency: payment.amount.currency_code,
-              payer_email: payment.payer?.email_address
+            // Update order status first
+            await storage.updateOrder(orderId, {
+              status: 'paid',
+              paidAt: new Date(),
+              paypalOrderId: payment.id
             });
             console.log(`Order ${orderId} marked as paid via webhook`);
+            
+            // Get order items to assign credentials
+            const orderItems = await storage.getOrderItems(orderId);
+            console.log(`Found ${orderItems.length} items in order ${orderId}`);
+            
+            // Assign credentials for each order item
+            for (const item of orderItems) {
+              try {
+                const deliveredCredentials = await storage.deliverCredentialsForOrder(
+                  orderId, 
+                  item.planId, 
+                  item.quantity
+                );
+                console.log(`Delivered ${deliveredCredentials.length} credentials for plan ${item.planId}`);
+              } catch (credentialError) {
+                console.error(`Error delivering credentials for plan ${item.planId}:`, credentialError);
+              }
+            }
+            
+            console.log(`Completed credential assignment for order ${orderId}`);
           }
         } catch (dbError) {
           console.error('Database error during webhook processing:', dbError);
