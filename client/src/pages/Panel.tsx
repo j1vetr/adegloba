@@ -8,10 +8,10 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, Package, History, BarChart3, Calendar, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
-import type { Order } from "@shared/schema";
+import type { Order, User, Ship } from "@shared/schema";
 
 export default function Panel() {
-  const { user, isLoading: authLoading } = useUserAuth();
+  const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }, isLoading: boolean };
 
   const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/user/orders"],

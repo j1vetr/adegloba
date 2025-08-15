@@ -9,13 +9,14 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
+import type { User, Order } from "@shared/schema";
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: userOrders, isLoading: ordersLoading } = useQuery({
+  const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/user/orders"],
     enabled: isAuthenticated
   });
@@ -81,10 +82,10 @@ export default function Dashboard() {
     );
   }
 
-  const activeOrders = userOrders?.filter((order: any) => order.status === 'paid' && order.daysRemaining > 0) || [];
-  const expiredOrders = userOrders?.filter((order: any) => order.status === 'expired' || order.daysRemaining <= 0) || [];
+  const activeOrders = userOrders?.filter((order: any) => order.status === 'paid' && (order as any).daysRemaining > 0) || [];
+  const expiredOrders = userOrders?.filter((order: any) => order.status === 'expired' || (order as any).daysRemaining <= 0) || [];
   const totalSpent = userOrders?.filter((order: any) => order.status === 'paid').reduce((sum: number, order: any) => sum + Number(order.totalUsd), 0) || 0;
-  const connectedShips = new Set(userOrders?.filter((order: any) => order.status === 'paid').flatMap((order: any) => order.items.map((item: any) => item.shipId))).size;
+  const connectedShips = new Set(userOrders?.filter((order: any) => order.status === 'paid').flatMap((order: any) => (order as any).items?.map((item: any) => item.shipId) || [])).size;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -94,7 +95,7 @@ export default function Dashboard() {
           <header className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white">AdeGloba Starlink System - Kontrol Paneli</h1>
-              <p className="text-slate-400">Hoş geldiniz, {user?.firstName || 'Kullanıcı'}</p>
+              <p className="text-slate-400">Hoş geldiniz, {(user as any)?.full_name || user?.username || 'Kullanıcı'}</p>
             </div>
           </header>
 
@@ -118,7 +119,7 @@ export default function Dashboard() {
                       <i className="fas fa-user text-white text-2xl"></i>
                     </div>
                     <h3 className="text-xl font-semibold text-white" data-testid="user-name">
-                      {user?.firstName || 'Captain'} {user?.lastName || ''}
+                      {(user as any)?.full_name || user?.username || 'Captain'}
                     </h3>
                     <p className="text-slate-400" data-testid="user-email">{user?.email}</p>
                   </div>
@@ -130,7 +131,7 @@ export default function Dashboard() {
                     <Link href="/" className="flex items-center px-4 py-2 rounded-lg hover:bg-space-card transition-colors text-slate-300">
                       <i className="fas fa-ship mr-3"></i>Browse Ships
                     </Link>
-                    <div className="flex items-center px-4 py-2 rounded-lg hover:bg-space-card transition-colors text-slate-300 cursor-pointer" onClick={() => document.querySelector('[data-testid="whatsapp-button"]')?.click()}>
+                    <div className="flex items-center px-4 py-2 rounded-lg hover:bg-space-card transition-colors text-slate-300 cursor-pointer" onClick={() => (document.querySelector('[data-testid="whatsapp-button"]') as HTMLElement)?.click()}>
                       <i className="fab fa-whatsapp mr-3"></i>Support
                     </div>
                     <button 

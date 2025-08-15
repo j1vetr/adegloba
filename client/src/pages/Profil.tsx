@@ -41,13 +41,13 @@ export default function Profil() {
   });
 
   // Fetch user profile with ship information
-  const { data: user, isLoading: authLoading } = useQuery({
+  const { data: user, isLoading: authLoading } = useQuery<UserType & { ship?: Ship }>({
     queryKey: ['/api/user/me'],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   // Fetch ships for dropdown
-  const { data: ships } = useQuery({
+  const { data: ships } = useQuery<Ship[]>({
     queryKey: ["/api/ships"],
     enabled: !!user
   });
