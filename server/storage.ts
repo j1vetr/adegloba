@@ -48,6 +48,7 @@ import {
   type CouponUsage,
   type InsertCouponUsage,
 } from "@shared/schema";
+import { getDaysRemainingIstanbul, isExpiredIstanbul } from './utils/dateUtils';
 import { db } from "./db";
 import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt, lt } from "drizzle-orm";
 
@@ -268,11 +269,11 @@ export class DatabaseStorage implements IStorage {
           password: credentialPools.password,
           planName: plans.name,
           dataLimitGb: plans.dataLimitGb,
-          validityDays: plans.validityDays,
           assignedAt: credentialPools.assignedAt,
           orderId: orders.id,
           orderStatus: orders.status,
           paidAt: orders.paidAt,
+          expiresAt: orders.expiresAt,
           createdAt: orders.createdAt
         })
         .from(credentialPools)
@@ -285,6 +286,11 @@ export class DatabaseStorage implements IStorage {
             or(
               eq(orders.status, 'paid'),
               eq(orders.status, 'completed')
+            ),
+            // Only include packages that haven't expired
+            and(
+              isNotNull(orders.expiresAt),
+              gt(orders.expiresAt, new Date())
             )
           )
         )
@@ -293,9 +299,9 @@ export class DatabaseStorage implements IStorage {
       console.log(`Found ${results.length} active packages for user ${userId}`);
       
       return results.map(r => {
-        // Calculate proper expiration date based on paidAt + validityDays
-        const paidDate = r.paidAt ? new Date(r.paidAt) : (r.assignedAt ? new Date(r.assignedAt) : new Date());
-        const expirationDate = new Date(paidDate.getTime() + (r.validityDays * 24 * 60 * 60 * 1000));
+        // Use the expires_at field directly (end of purchase month)
+        const expirationDate = r.expiresAt ? new Date(r.expiresAt) : null;
+        const daysRemaining = expirationDate ? getDaysRemainingIstanbul(expirationDate) : 0;
         
         return {
           credentialId: r.credentialId,
@@ -303,10 +309,11 @@ export class DatabaseStorage implements IStorage {
           password: r.password,
           planName: r.planName,
           dataLimitGb: r.dataLimitGb,
-          validityDays: r.validityDays,
           assignedAt: r.assignedAt,
           paidAt: r.paidAt,
+          expiresAt: expirationDate,
           expirationDate: expirationDate,
+          daysRemaining: daysRemaining,
           orderStatus: r.orderStatus
         };
       });

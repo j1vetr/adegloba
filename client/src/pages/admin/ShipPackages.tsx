@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Package, Ship as ShipIcon, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Ship, Plan } from '../../../shared/schema';
+import type { Ship, Plan } from '@shared/schema';
 
 export default function ShipPackages() {
   const [selectedShip, setSelectedShip] = useState<string>('');
@@ -84,7 +84,7 @@ export default function ShipPackages() {
       description: formData.get('description') as string,
       priceUsd: parseFloat(formData.get('priceUsd') as string),
       dataLimitGb: parseInt(formData.get('dataLimitGb') as string),
-      validityDays: parseInt(formData.get('validityDays') as string),
+      // validityDays removed - all packages now expire at end of month
       isActive: formData.get('isActive') === 'on',
       sortOrder: parseInt(formData.get('sortOrder') as string) || 0
     };
@@ -104,7 +104,7 @@ export default function ShipPackages() {
       description: formData.get('description') as string,
       priceUsd: parseFloat(formData.get('priceUsd') as string),
       dataLimitGb: parseInt(formData.get('dataLimitGb') as string),
-      validityDays: parseInt(formData.get('validityDays') as string),
+      // validityDays removed - all packages now expire at end of month
       isActive: formData.get('isActive') === 'on',
       sortOrder: parseInt(formData.get('sortOrder') as string) || 0
     };
@@ -169,17 +169,13 @@ export default function ShipPackages() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="validityDays">Geçerlilik (Gün)</Label>
-          <Input
-            id="validityDays"
-            name="validityDays"
-            type="number"
-            min="1"
-            defaultValue={plan?.validityDays || ''}
-            placeholder="30"
-            required
-            data-testid="input-plan-validity"
-          />
+          <Label className="text-slate-300">Geçerlilik Süresi</Label>
+          <div className="bg-slate-800/30 border border-slate-600 rounded-lg p-3">
+            <div className="text-cyan-400 font-medium text-sm">Ay sonu bitiş sistemi</div>
+            <div className="text-slate-400 text-xs mt-1">
+              Tüm paketler satın alınan ayın son gününe kadar geçerlidir.
+            </div>
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="sortOrder">Sıralama</Label>
@@ -325,7 +321,7 @@ export default function ShipPackages() {
                       <div className="flex gap-4 mt-2 text-sm">
                         <span className="text-green-400 font-medium">${plan.priceUsd}</span>
                         <span className="text-blue-400">{plan.dataLimitGb} GB</span>
-                        <span className="text-yellow-400">{plan.validityDays} gün</span>
+                        <span className="text-yellow-400">Ay sonu bitiş</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

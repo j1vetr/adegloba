@@ -266,7 +266,7 @@ export default function Checkout() {
                         <div className="flex items-center space-x-2 text-sm text-slate-400">
                           <span>{item.plan?.dataLimitGb || item.plan?.gbAmount}GB</span>
                           <span>•</span>
-                          <span>{item.plan?.validityDays || 30} Gün</span>
+                          <span>Ay sonu bitiş</span>
                           {item.quantity && item.quantity > 1 && (
                             <>
                               <span>•</span>
@@ -395,8 +395,11 @@ export default function Checkout() {
                     </span>
                   </div>
                   
-                  <div className="text-sm text-slate-400 text-center">
-                    Paketler ay sonunda otomatik olarak sona erer
+                  <div className="text-sm text-slate-400 text-center space-y-1">
+                    <div>Paketler satın alınan ayın sonunda otomatik olarak sona erer</div>
+                    <div className="text-xs text-slate-500">
+                      Örnek: 15 Ocak'ta alınan paket 31 Ocak 23:59'a kadar geçerli
+                    </div>
                   </div>
                 </div>
 

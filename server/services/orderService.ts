@@ -2,7 +2,7 @@ import { storage } from "../storage";
 import type { IStorage } from "../storage";
 import { ExpiryService } from "./expiryService";
 import { CouponService } from "./couponService";
-import { calculatePackageExpiration } from "../utils/dateUtils";
+import { getEndOfMonthIstanbul } from "../utils/dateUtils";
 
 export class OrderService {
   private expiryService: ExpiryService;
@@ -43,17 +43,17 @@ export class OrderService {
         }
         discount = Math.min(discount, subtotal); // Don't exceed subtotal
         couponId = coupon.id;
-      } catch (error) {
+      } catch (error: any) {
         throw new Error(`Invalid coupon: ${error.message}`);
       }
     }
 
     const total = subtotal - discount;
-    const expiryDate = this.expiryService.calculateEndOfMonthExpiry();
 
     // Create order
     const order = await this.storage.createOrder({
       userId,
+      shipId,
       status: 'pending',
       currency: 'USD',
       subtotalUsd: subtotal.toFixed(2),
@@ -85,12 +85,13 @@ export class OrderService {
       throw new Error("Order is not in pending status");
     }
 
-    const expiryDate = this.expiryService.calculateEndOfMonthExpiry();
+    const paidAt = new Date();
+    const expiryDate = getEndOfMonthIstanbul(paidAt);
 
     return this.storage.updateOrder(orderId, {
       status: 'paid',
       paypalOrderId,
-      paidAt: new Date(),
+      paidAt,
       expiresAt: expiryDate
     });
   }
@@ -102,7 +103,7 @@ export class OrderService {
       orders.map(async (order) => {
         const items = await this.storage.getOrderItems(order.id);
         const itemsWithDetails = await Promise.all(
-          items.map(async (item) => {
+          items.map(async (item: any) => {
             const [ships, plans] = await Promise.all([
               this.storage.getShips(),
               this.storage.getPlans()
@@ -138,12 +139,12 @@ export class OrderService {
     const ordersWithDetails = await Promise.all(
       orders.map(async (order) => {
         const [user, items] = await Promise.all([
-          this.storage.getUser(order.userId),
+          this.storage.getUserById(order.userId),
           this.storage.getOrderItems(order.id)
         ]);
 
         const itemsWithDetails = await Promise.all(
-          items.map(async (item) => {
+          items.map(async (item: any) => {
             const [ships, plans] = await Promise.all([
               this.storage.getShips(),
               this.storage.getPlans()
@@ -178,7 +179,7 @@ export class OrderService {
     }
 
     const [user, items] = await Promise.all([
-      this.storage.getUser(order.userId),
+      this.storage.getUserById(order.userId),
       this.storage.getOrderItems(order.id)
     ]);
 

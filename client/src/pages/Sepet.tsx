@@ -20,7 +20,7 @@ interface CartItem {
     name: string;
     description: string;
     dataLimitGb: number;
-    validityDays: number;
+    validityDays?: number; // DEPRECATED: All packages now valid until end of purchase month
     priceUsd: string;
   };
 }
@@ -282,7 +282,7 @@ export default function Sepet() {
                             {item.plan?.name || 'Paket'}
                           </h3>
                           <p className="text-slate-400 text-sm mb-2">
-                            {item.plan?.dataLimitGb}GB - {item.plan?.validityDays} Gün
+                            {item.plan?.dataLimitGb}GB - Ay sonu bitiş
                           </p>
                           <div className="flex items-center text-cyan-400">
                             <DollarSign className="h-4 w-4 mr-1" />

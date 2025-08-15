@@ -63,7 +63,7 @@ export const plans = pgTable("plans", {
   name: varchar("name").notNull(),
   description: text("description"),
   dataLimitGb: integer("data_limit_gb").notNull(),
-  validityDays: integer("validity_days").notNull(),
+  validityDays: integer("validity_days"), // DEPRECATED: All packages now valid until end of purchase month
   priceUsd: decimal("price_usd", { precision: 10, scale: 2 }).notNull(),
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
@@ -111,8 +111,9 @@ export const orderCredentials = pgTable("order_credentials", {
   orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
   credentialId: varchar("credential_id").notNull().references(() => credentialPools.id, { onDelete: "cascade" }),
   deliveredAt: timestamp("delivered_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // Expiry date: last day of purchase month at 23:59:59 Europe/Istanbul
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [index("idx_order_credentials_expires").on(table.expiresAt)]);
 
 // Shopping cart tables
 export const cartItems = pgTable("cart_items", {
@@ -140,8 +141,8 @@ export const orders = pgTable("orders", {
   assignedCredentialId: varchar("assigned_credential_id"),
   createdAt: timestamp("created_at").defaultNow(),
   paidAt: timestamp("paid_at"),
-  expiresAt: timestamp("expires_at"),
-});
+  expiresAt: timestamp("expires_at"), // Expiry date: last day of purchase month at 23:59:59 Europe/Istanbul
+}, (table) => [index("idx_orders_status_expires").on(table.status, table.expiresAt)]);
 
 export const orderItems = pgTable("order_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -151,6 +152,7 @@ export const orderItems = pgTable("order_items", {
   qty: integer("qty").notNull().default(1),
   unitPriceUsd: decimal("unit_price_usd", { precision: 10, scale: 2 }).notNull(),
   lineTotalUsd: decimal("line_total_usd", { precision: 10, scale: 2 }).notNull(),
+  expiresAt: timestamp("expires_at"), // Expiry date: last day of purchase month at 23:59:59 Europe/Istanbul
 });
 
 export const settings = pgTable("settings", {
@@ -377,10 +379,10 @@ export const insertPlanSchema = createInsertSchema(plans).omit({
   createdAt: true,
   updatedAt: true,
   sortOrder: true,
+  validityDays: true, // DEPRECATED: Validity is now until end of purchase month
 }).extend({
   priceUsd: z.string().or(z.number()).transform(val => typeof val === 'string' ? val : val.toString()),
   dataLimitGb: z.number().int().positive(),
-  validityDays: z.number().int().positive(),
 });
 
 export const insertCredentialPoolSchema = createInsertSchema(credentialPools).omit({
@@ -396,6 +398,7 @@ export const insertCredentialPoolSchema = createInsertSchema(credentialPools).om
 export const insertOrderCredentialSchema = createInsertSchema(orderCredentials).omit({
   id: true,
   deliveredAt: true,
+  expiresAt: true, // Computed from order paidAt
   createdAt: true,
 });
 
@@ -415,6 +418,7 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   id: true,
+  expiresAt: true, // Computed from order paidAt
 });
 
 export const insertSettingSchema = createInsertSchema(settings).omit({

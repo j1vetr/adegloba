@@ -65,7 +65,7 @@ interface Plan {
   description?: string;
   priceUsd: string;
   dataLimitGb: number;
-  validityDays: number;
+  validityDays?: number; // DEPRECATED: All packages now valid until end of purchase month
   shipId: string;
   isActive: boolean;
   createdAt: string;
@@ -91,7 +91,6 @@ export default function PackagesManagement() {
     description: '',
     priceUsd: '',
     dataLimitGb: '',
-    validityDays: '30', // Default to 30 days, but will be auto-calculated
     shipId: '',
     isActive: true
   });
@@ -174,7 +173,6 @@ export default function PackagesManagement() {
       description: '',
       priceUsd: '',
       dataLimitGb: '',
-      validityDays: '30',
       shipId: '',
       isActive: true
     });
@@ -187,7 +185,6 @@ export default function PackagesManagement() {
       description: plan.description || '',
       priceUsd: plan.priceUsd,
       dataLimitGb: plan.dataLimitGb.toString(),
-      validityDays: plan.validityDays.toString(),
       shipId: plan.shipId,
       isActive: plan.isActive
     });
@@ -199,8 +196,7 @@ export default function PackagesManagement() {
     const data = {
       ...formData,
       priceUsd: parseFloat(formData.priceUsd).toFixed(2),
-      dataLimitGb: parseInt(formData.dataLimitGb),
-      validityDays: parseInt(formData.validityDays)
+      dataLimitGb: parseInt(formData.dataLimitGb)
     };
 
     if (editingPlan) {
@@ -340,7 +336,7 @@ export default function PackagesManagement() {
                     <TableHead className="text-slate-300">Gemi</TableHead>
                     <TableHead className="text-slate-300">Fiyat</TableHead>
                     <TableHead className="text-slate-300">Veri Limiti</TableHead>
-                    <TableHead className="text-slate-300">Geçerlilik</TableHead>
+                    <TableHead className="text-slate-300">Geçerlilik Süresi</TableHead>
                     <TableHead className="text-slate-300">Kimlik Durumu</TableHead>
                     <TableHead className="text-slate-300">Durum</TableHead>
                     <TableHead className="text-slate-300">İşlemler</TableHead>
@@ -373,7 +369,10 @@ export default function PackagesManagement() {
                         <span className="text-slate-300">{plan.dataLimitGb} GB</span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-slate-300">{plan.validityDays} gün</span>
+                        <div className="text-sm">
+                          <div className="text-cyan-400 font-medium">Ay sonu bitiş</div>
+                          <div className="text-slate-400">Satın alınan ay sonuna kadar</div>
+                        </div>
                       </TableCell>
                       <TableCell>
                         {plan.credentialStats ? (
@@ -516,17 +515,17 @@ export default function PackagesManagement() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="validityDays" className="text-slate-300">Geçerlilik (Gün)</Label>
-                <Input
-                  id="validityDays"
-                  type="number"
-                  value={formData.validityDays}
-                  onChange={(e) => setFormData({ ...formData, validityDays: e.target.value })}
-                  className="bg-slate-800/50 border-slate-600 text-white"
-                  required
-                  data-testid="input-package-validity"
-                />
+              <div className="bg-slate-800/30 border border-slate-600 rounded-lg p-4">
+                <Label className="text-slate-300 font-medium">Geçerlilik Süresi</Label>
+                <div className="mt-2 space-y-1">
+                  <div className="text-cyan-400 font-medium">Ay sonu bitiş sistemi</div>
+                  <div className="text-sm text-slate-400">
+                    Tüm paketler satın alınan ayın son gününe kadar geçerlidir.
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Örnek: 15 Ocak'ta alınan paket 31 Ocak 23:59'a kadar geçerli olur.
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center justify-between pt-4">

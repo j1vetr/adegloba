@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Package, History, BarChart3, Calendar, Clock } from "lucide-react";
+import { Loader2, Package, History, BarChart3, Calendar, Clock, Info } from "lucide-react";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import type { Order, User, Ship } from "@shared/schema";
@@ -51,13 +51,27 @@ export default function Panel() {
     return `$${Number(price).toFixed(2)}`;
   };
 
-  const calculateDaysRemaining = (paidAt: string, validityDays: number) => {
-    const paidDate = new Date(paidAt);
-    const expirationDate = new Date(paidDate.getTime() + (validityDays * 24 * 60 * 60 * 1000));
+  const calculateExpiryInfo = (paidAt: string, expiresAt: string) => {
+    if (!expiresAt) {
+      // Fallback for old orders without expiresAt
+      const paidDate = new Date(paidAt);
+      const endOfMonth = new Date(paidDate.getFullYear(), paidDate.getMonth() + 1, 0, 23, 59, 59, 999);
+      expiresAt = endOfMonth.toISOString();
+    }
+    
+    const expirationDate = new Date(expiresAt);
     const now = new Date();
     const diffTime = expirationDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return { daysRemaining: Math.max(0, diffDays), expirationDate };
+    
+    // Calculate progress from start of month to end of month
+    const paidDate = new Date(paidAt);
+    const startOfMonth = new Date(paidDate.getFullYear(), paidDate.getMonth(), 1);
+    const totalMonthDuration = expirationDate.getTime() - startOfMonth.getTime();
+    const elapsed = now.getTime() - startOfMonth.getTime();
+    const progressPercentage = totalMonthDuration > 0 ? Math.max(0, Math.min(100, ((totalMonthDuration - Math.max(0, diffTime)) / totalMonthDuration) * 100)) : 0;
+    
+    return { daysRemaining: Math.max(0, diffDays), expirationDate, progressPercentage };
   };
 
 
@@ -135,8 +149,7 @@ export default function Panel() {
                 ) : (activePackages as any)?.length ? (
                   <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                     {(activePackages as any[]).map((pkg: any) => {
-                      const { daysRemaining, expirationDate } = calculateDaysRemaining(pkg.paidAt || pkg.assignedAt, pkg.validityDays);
-                      const progressPercentage = Math.max(0, (daysRemaining / pkg.validityDays) * 100);
+                      const { daysRemaining, expirationDate, progressPercentage } = calculateExpiryInfo(pkg.paidAt || pkg.assignedAt, pkg.expiresAt);
                       
                       return (
                         <Card key={pkg.credentialId} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10" data-testid={`package-card-${pkg.credentialId}`}>
@@ -160,7 +173,16 @@ export default function Panel() {
                                 <span className="font-medium">{pkg.dataLimitGb} GB Data Paketi</span>
                               </div>
                               
-                              <div className="space-y-2">
+                              <div className="space-y-3">
+                                <div className="bg-slate-700/30 rounded-lg p-3 space-y-2">
+                                  <div className="flex items-center gap-2 text-xs text-cyan-400">
+                                    <Info className="h-3 w-3" />
+                                    <span className="font-medium">Ay sonu bitiş sistemi</span>
+                                  </div>
+                                  <div className="text-xs text-slate-400">
+                                    Bu paket {formatDate(expirationDate.toISOString())} tarihinde sona erecek
+                                  </div>
+                                </div>
                                 <div className="flex items-center justify-between text-sm">
                                   <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 text-cyan-400" />
@@ -187,7 +209,7 @@ export default function Panel() {
                                 />
                                 <div className="flex items-center gap-2 text-xs text-slate-400">
                                   <Calendar className="h-3 w-3" />
-                                  <span>Bitiş: {formatDate(expirationDate.toISOString())}</span>
+                                  <span>Ay sonu bitiş: {formatDate(expirationDate.toISOString())}</span>
                                 </div>
                               </div>
                               
