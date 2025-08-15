@@ -3,6 +3,9 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from "@/components/AdminLayout";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
+import { toZonedTime } from "date-fns-tz";
 import {
   Users,
   ShoppingCart,
@@ -18,20 +21,48 @@ import {
   CheckCircle
 } from "lucide-react";
 
+interface DashboardStats {
+  totalRevenue: number;
+  activeUsers: number;
+  activePackages: number;
+  totalOrders: number;
+}
+
+interface RecentOrder {
+  id: string;
+  createdAt: string;
+  status: string;
+  totalUsd?: string;
+  total_usd?: string;
+  user?: {
+    username: string;
+  };
+}
+
+interface RecentUser {
+  id: string;
+  username: string;
+  createdAt: string;
+  created_at?: string;
+  ship?: {
+    name: string;
+  };
+}
+
 export default function AdminDashboard() {
   const { user, isLoading } = useAdminAuth();
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<DashboardStats>({
     queryKey: ["/api/admin/stats"],
     enabled: !!user
   });
 
-  const { data: recentOrders, isLoading: ordersLoading } = useQuery({
+  const { data: recentOrders, isLoading: ordersLoading, error: ordersError } = useQuery<RecentOrder[]>({
     queryKey: ["/api/admin/recent-orders"],
     enabled: !!user
   });
 
-  const { data: recentUsers, isLoading: usersLoading } = useQuery({
+  const { data: recentUsers, isLoading: usersLoading, error: usersError } = useQuery<RecentUser[]>({
     queryKey: ["/api/admin/recent-users"],
     enabled: !!user
   });
@@ -66,18 +97,25 @@ export default function AdminDashboard() {
     );
   }
 
-  const formatCurrency = (value: number | string) => {
-    return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  const formatCurrency = (value: number | string | null | undefined) => {
+    const numValue = Number(value) || 0;
+    return `$${numValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'Tarih bilinmiyor';
+    
+    try {
+      // Parse the date and convert to Istanbul timezone
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Geçersiz tarih';
+      
+      const istanbulDate = toZonedTime(date, 'Europe/Istanbul');
+      return format(istanbulDate, 'd MMM yyyy HH:mm', { locale: tr });
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Tarih hatası';
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -102,34 +140,34 @@ export default function AdminDashboard() {
     {
       title: "Toplam Gelir",
       value: formatCurrency(stats?.totalRevenue || 0),
-      description: "Bu ayki toplam gelir",
+      description: "Tamamlanan siparişlerden gelir",
       icon: DollarSign,
-      trend: "+12.5%",
-      trendUp: true
+      trend: statsError ? "Hata" : "USD",
+      trendUp: !statsError
     },
     {
       title: "Aktif Kullanıcılar",
-      value: stats?.totalUsers || 0,
-      description: "Kayıtlı kullanıcı sayısı",
+      value: stats?.activeUsers || 0,
+      description: "Aktif paketi olan kullanıcılar",
       icon: Users,
-      trend: "+5.2%",
-      trendUp: true
+      trend: statsError ? "Hata" : "kullanıcı",
+      trendUp: !statsError
     },
     {
       title: "Toplam Sipariş",
       value: stats?.totalOrders || 0,
-      description: "Bu ayki sipariş sayısı",
+      description: "Toplam sipariş sayısı",
       icon: ShoppingCart,
-      trend: "+8.1%",
-      trendUp: true
+      trend: statsError ? "Hata" : "sipariş",
+      trendUp: !statsError
     },
     {
       title: "Aktif Paketler",
-      value: stats?.totalPlans || 0,
-      description: "Mevcut veri paketleri",
+      value: stats?.activePackages || 0,
+      description: "Aktif veri paketleri",
       icon: Package,
-      trend: "2 yeni",
-      trendUp: true
+      trend: statsError ? "Hata" : "paket",
+      trendUp: !statsError
     }
   ];
 
@@ -203,32 +241,39 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
                 </div>
-              ) : recentOrders?.length > 0 ? (
-                recentOrders.slice(0, 5).map((order: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-card/50 border border-border/30 hover:border-primary/20 transition-all duration-200">
+              ) : ordersError ? (
+                <div className="text-center py-8 text-red-400">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4" />
+                  <p>Siparişler yüklenirken hata oluştu</p>
+                </div>
+              ) : recentOrders && recentOrders.length > 0 ? (
+                recentOrders.slice(0, 5).map((order, index) => (
+                  <div key={order.id || index} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30 border border-slate-600/50 hover:border-cyan-500/30 transition-all duration-200">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center">
-                        <span className="text-xs font-medium text-primary">#{order.id.slice(-3)}</span>
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center">
+                        <span className="text-xs font-medium text-cyan-400">#{order.id.slice(-3)}</span>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-white">
                           {order.user?.username || 'Anonim Kullanıcı'}
                         </p>
-                        <p className="text-xs text-light-gray">
+                        <p className="text-xs text-slate-400">
                           {formatDate(order.createdAt)}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-white">
-                        {formatCurrency(order.totalAmount)}
+                        {formatCurrency(order.totalUsd || order.total_usd)}
                       </p>
-                      {getStatusBadge(order.status)}
+                      <div className="mt-1">
+                        {getStatusBadge(order.status)}
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-light-gray">
+                <div className="text-center py-8 text-slate-400">
                   <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-20" />
                   <p>Henüz sipariş bulunmuyor</p>
                 </div>
@@ -250,11 +295,16 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
                 </div>
-              ) : recentUsers?.length > 0 ? (
-                recentUsers.slice(0, 5).map((user: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-card/50 border border-border/30 hover:border-primary/20 transition-all duration-200">
+              ) : usersError ? (
+                <div className="text-center py-8 text-red-400">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4" />
+                  <p>Kullanıcılar yüklenirken hata oluştu</p>
+                </div>
+              ) : recentUsers && recentUsers.length > 0 ? (
+                recentUsers.slice(0, 5).map((user, index) => (
+                  <div key={user.id || index} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30 border border-slate-600/50 hover:border-cyan-500/30 transition-all duration-200">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-neon flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center">
                         <span className="text-sm font-medium text-white">
                           {user.username?.charAt(0).toUpperCase() || 'U'}
                         </span>
@@ -262,25 +312,25 @@ export default function AdminDashboard() {
                       <div>
                         <p className="text-sm font-medium text-white">{user.username}</p>
                         <div className="flex items-center space-x-2">
-                          <Ship className="h-3 w-3 text-light-gray" />
-                          <p className="text-xs text-light-gray">
+                          <Ship className="h-3 w-3 text-slate-400" />
+                          <p className="text-xs text-slate-400">
                             {user.ship?.name || 'Gemi seçilmemiş'}
                           </p>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-light-gray">
-                        {formatDate(user.createdAt)}
+                      <p className="text-xs text-slate-400">
+                        {formatDate(user.createdAt || user.created_at)}
                       </p>
-                      <Badge variant="outline" className="mt-1 text-primary border-primary/50">
+                      <Badge variant="outline" className="mt-1 text-cyan-400 border-cyan-500/50">
                         Yeni
                       </Badge>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-light-gray">
+                <div className="text-center py-8 text-slate-400">
                   <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
                   <p>Henüz kullanıcı bulunmuyor</p>
                 </div>

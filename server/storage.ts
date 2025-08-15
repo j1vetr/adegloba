@@ -145,7 +145,7 @@ export interface IStorage {
   getUnreadTicketCount(userId: string): Promise<number>;
 
   // Statistics
-  getOrderStats(): Promise<{ totalRevenue: number; activeOrders: number; totalOrders: number }>;
+  getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number }>;
   
   // System logs operations
   createSystemLog(logData: InsertSystemLog): Promise<SystemLog>;
@@ -836,19 +836,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Statistics
-  async getOrderStats(): Promise<{ totalRevenue: number; activeOrders: number; totalOrders: number }> {
-    const [stats] = await db
+  async getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number }> {
+    // Total Revenue from completed orders
+    const [revenueStats] = await db
       .select({
-        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'paid' THEN total_usd ELSE 0 END), 0)`,
-        activeOrders: sql<number>`COUNT(CASE WHEN status = 'paid' AND expires_at > NOW() THEN 1 END)`,
+        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(total_usd AS DECIMAL) ELSE 0 END), 0)`,
         totalOrders: sql<number>`COUNT(*)`
       })
       .from(orders);
 
+    // Active Users - users with at least one active package (expires_at > now)
+    const [activeUsersStats] = await db
+      .select({
+        activeUsers: sql<number>`COUNT(DISTINCT o.user_id)`
+      })
+      .from(orders)
+      .innerJoin(orderCredentials, eq(orders.id, orderCredentials.orderId))
+      .where(gt(orderCredentials.expiresAt, new Date()));
+
+    // Active Packages - count of active order_credentials with expires_at > now
+    const [activePackagesStats] = await db
+      .select({
+        activePackages: sql<number>`COUNT(*)`
+      })
+      .from(orderCredentials)
+      .where(gt(orderCredentials.expiresAt, new Date()));
+
     return {
-      totalRevenue: Number(stats.totalRevenue) || 0,
-      activeOrders: Number(stats.activeOrders) || 0,
-      totalOrders: Number(stats.totalOrders) || 0
+      totalRevenue: Number(revenueStats.totalRevenue) || 0,
+      activeUsers: Number(activeUsersStats.activeUsers) || 0,
+      activePackages: Number(activePackagesStats.activePackages) || 0,
+      totalOrders: Number(revenueStats.totalOrders) || 0
     };
   }
 
