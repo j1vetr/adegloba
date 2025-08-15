@@ -214,20 +214,6 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUserWithShip(id: string): Promise<any> {
-    const [result] = await db
-      .select()
-      .from(users)
-      .leftJoin(ships, eq(users.ship_id, ships.id))
-      .where(eq(users.id, id));
-    
-    if (!result) return undefined;
-    
-    return {
-      ...result.users,
-      ship: result.ships
-    };
-  }
 
   async getShipPlans(shipId: string): Promise<Plan[]> {
     const results = await db
@@ -555,50 +541,6 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getUserActivePackages(userId: string): Promise<Array<{
-    credentialId: string;
-    username: string;
-    password: string;
-    planName: string;
-    dataLimitGb: number;
-    validityDays: number;
-    assignedAt: Date;
-    expirationDate: Date;
-    orderStatus: string;
-  }>> {
-    // Calculate the last day of current month for expiration
-    const now = new Date();
-    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
-    const results = await db
-      .select({
-        credentialId: credentialPools.id,
-        username: credentialPools.username,
-        password: credentialPools.password,
-        planName: plans.name,
-        dataLimitGb: plans.dataLimitGb,
-        validityDays: plans.validityDays,
-        assignedAt: credentialPools.assignedAt,
-        orderStatus: orders.status,
-      })
-      .from(credentialPools)
-      .innerJoin(orders, eq(credentialPools.assignedToOrderId, orders.id))
-      .innerJoin(plans, eq(credentialPools.planId, plans.id))
-      .where(
-        and(
-          eq(credentialPools.assignedToUserId, userId),
-          eq(credentialPools.isAssigned, true),
-          eq(orders.status, 'completed')
-        )
-      )
-      .orderBy(credentialPools.assignedAt);
-
-    return results.map(r => ({
-      ...r,
-      assignedAt: r.assignedAt!,
-      expirationDate: lastDayOfMonth,
-    }));
-  }
 
   async updateShipPlan(shipId: string, planId: string, updates: Partial<InsertShipPlan>): Promise<void> {
     await db
@@ -723,22 +665,6 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(settings).where(eq(settings.category, category));
   }
 
-  // User admin operations
-  async getAllUsers(): Promise<(User & { ship?: Ship })[]> {
-    const result = await db
-      .select({
-        user: users,
-        ship: ships
-      })
-      .from(users)
-      .leftJoin(ships, eq(users.ship_id, ships.id))
-      .orderBy(desc(users.created_at));
-      
-    return result.map(row => ({
-      ...row.user,
-      ship: row.ship || undefined
-    }));
-  }
 
   async getRecentUsers(limit: number): Promise<(User & { ship?: Ship })[]> {
     const result = await db
@@ -803,26 +729,12 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(settings).orderBy(settings.key);
   }
 
-  async getSettingsByCategory(category: string): Promise<Setting[]> {
-    return db.select().from(settings).where(eq(settings.category, category)).orderBy(settings.key);
-  }
 
   async getSetting(key: string): Promise<Setting | null> {
     const [setting] = await db.select().from(settings).where(eq(settings.key, key));
     return setting || null;
   }
 
-  async setSetting(key: string, value: string, category: string): Promise<Setting> {
-    const [setting] = await db
-      .insert(settings)
-      .values({ key, value, category })
-      .onConflictDoUpdate({
-        target: settings.key,
-        set: { value, category, updatedAt: new Date() }
-      })
-      .returning();
-    return setting;
-  }
 
   async initializeDefaultSettings(): Promise<void> {
     const defaultSettings = [
@@ -1038,38 +950,6 @@ export class DatabaseStorage implements IStorage {
     return db.insert(credentialPools).values(credentials).returning();
   }
 
-  async assignCredentialToOrder(orderId: string, shipId: string): Promise<CredentialPool | null> {
-    // Get the order to check its ship
-    const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
-    if (!order) return null;
-
-    // Find an available credential for the ship
-    const [credential] = await db.select().from(credentialPools)
-      .where(and(
-        eq(credentialPools.shipId, shipId),
-        eq(credentialPools.isAssigned, false)
-      ))
-      .limit(1);
-
-    if (!credential) return null;
-
-    // Assign the credential
-    const [assignedCredential] = await db.update(credentialPools)
-      .set({
-        isAssigned: true,
-        assignedToOrderId: orderId,
-        assignedAt: new Date()
-      })
-      .where(eq(credentialPools.id, credential.id))
-      .returning();
-
-    // Update the order with the assigned credential
-    await db.update(orders)
-      .set({ assignedCredentialId: assignedCredential.id })
-      .where(eq(orders.id, orderId));
-
-    return assignedCredential;
-  }
 
   async unassignCredential(credentialId: string): Promise<void> {
     const [credential] = await db.update(credentialPools)
@@ -1092,11 +972,6 @@ export class DatabaseStorage implements IStorage {
   async deleteCredential(id: string): Promise<void> {
     await db.delete(credentialPools).where(eq(credentialPools.id, id));
   }
-  // Enhanced User Management Methods
-  async deleteUser(id: string): Promise<boolean> {
-    const result = await db.delete(users).where(eq(users.id, id));
-    return result.rowCount > 0;
-  }
 
   async getUser(id: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -1107,9 +982,6 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(credentialPools).orderBy(credentialPools.createdAt);
   }
 
-  async getCredentialsForPlan(planId: string): Promise<CredentialPool[]> {
-    return db.select().from(credentialPools).where(eq(credentialPools.planId, planId));
-  }
 
   async getUsersWithOrderStats(): Promise<Array<User & { ship: Ship | undefined; orderStats: { totalOrders: number; totalAmountPaid: number; lastOrderDate: string | null } }>> {
     const allUsers = await db.select().from(users).orderBy(users.created_at);
