@@ -143,7 +143,7 @@ export default function Profil() {
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <UserNavigation />
         <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
         </div>
       </div>
     );
@@ -174,13 +174,13 @@ export default function Profil() {
           <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <CardTitle className="text-white text-xl flex items-center gap-2">
-                <User className="h-6 w-6 text-amber-400" />
+                <User className="h-6 w-6 text-blue-400" />
                 Profil Bilgileri
               </CardTitle>
               {!isEditing && (
                 <Button
                   onClick={() => setIsEditing(true)}
-                  className="bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white w-full sm:w-auto"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white w-full sm:w-auto"
                   data-testid="button-edit-profile"
                 >
                   <Edit className="h-4 w-4 mr-2" />
@@ -194,7 +194,7 @@ export default function Profil() {
                 {/* Read-only Username field */}
                 <div className="space-y-2">
                   <Label className="text-slate-400 flex items-center gap-2">
-                    <User className="h-4 w-4 text-amber-400" />
+                    <User className="h-4 w-4 text-blue-400" />
                     Kullanıcı Adı
                   </Label>
                   <div className="text-white bg-slate-800/50 p-3 rounded-lg border border-slate-600">
@@ -206,7 +206,7 @@ export default function Profil() {
                 {/* Editable Email field */}
                 <div className="space-y-2">
                   <Label className="text-slate-400 flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-amber-400" />
+                    <Mail className="h-4 w-4 text-cyan-400" />
                     E-posta
                   </Label>
                   {isEditing ? (
@@ -228,7 +228,7 @@ export default function Profil() {
                 {/* Editable Name field */}
                 <div className="space-y-2">
                   <Label className="text-slate-400 flex items-center gap-2">
-                    <User className="h-4 w-4 text-amber-400" />
+                    <User className="h-4 w-4 text-green-400" />
                     İsim Soyisim
                   </Label>
                   {isEditing ? (
@@ -249,7 +249,7 @@ export default function Profil() {
                 {/* Editable Ship Selection */}
                 <div className="space-y-2">
                   <Label className="text-slate-400 flex items-center gap-2">
-                    <ShipIcon className="h-4 w-4 text-amber-400" />
+                    <ShipIcon className="h-4 w-4 text-purple-400" />
                     Seçili Gemi
                   </Label>
                   {isEditing ? (
@@ -271,7 +271,7 @@ export default function Profil() {
                     </div>
                   )}
                   {isEditing && (
-                    <p className="text-xs text-amber-400">Gemi değiştirildiğinde paket atamaları yenilenecek</p>
+                    <p className="text-xs text-blue-400">Gemi değiştirildiğinde paket atamaları yenilenecek</p>
                   )}
                 </div>
 
@@ -280,7 +280,7 @@ export default function Profil() {
                 {/* Editable Address Field */}
                 <div className="space-y-2">
                   <Label className="text-slate-400 flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-amber-400" />
+                    <MapPin className="h-4 w-4 text-orange-400" />
                     Adres
                   </Label>
                   {isEditing ? (
@@ -306,14 +306,14 @@ export default function Profil() {
                     
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-white flex items-center gap-2">
-                        <Key className="h-5 w-5 text-amber-400" />
+                        <Key className="h-5 w-5 text-yellow-400" />
                         Şifre Değiştir (İsteğe Bağlı)
                       </h3>
                       
                       <div className="grid gap-4">
                         <div className="space-y-2">
                           <Label className="text-slate-400 flex items-center gap-2">
-                            <Lock className="h-4 w-4 text-amber-400" />
+                            <Lock className="h-4 w-4 text-red-400" />
                             Mevcut Şifre
                           </Label>
                           <Input
@@ -328,7 +328,7 @@ export default function Profil() {
 
                         <div className="space-y-2">
                           <Label className="text-slate-400 flex items-center gap-2">
-                            <Lock className="h-4 w-4 text-amber-400" />
+                            <Lock className="h-4 w-4 text-green-400" />
                             Yeni Şifre
                           </Label>
                           <Input
@@ -343,7 +343,7 @@ export default function Profil() {
 
                         <div className="space-y-2">
                           <Label className="text-slate-400 flex items-center gap-2">
-                            <Lock className="h-4 w-4 text-amber-400" />
+                            <Lock className="h-4 w-4 text-green-400" />
                             Yeni Şifre Tekrar
                           </Label>
                           <Input
@@ -362,7 +362,7 @@ export default function Profil() {
 
                 <div className="space-y-2">
                   <Label className="text-slate-400 flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-amber-400" />
+                    <Calendar className="h-4 w-4 text-pink-400" />
                     Kayıt Tarihi
                   </Label>
                   <div className="text-white bg-slate-800/50 p-3 rounded-lg border border-slate-600">
@@ -384,7 +384,7 @@ export default function Profil() {
                   <Button
                     onClick={handleSave}
                     disabled={updateProfileMutation.isPending}
-                    className="bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white flex-1 sm:flex-initial"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white flex-1 sm:flex-initial"
                     data-testid="button-save-profile"
                   >
                     {updateProfileMutation.isPending ? (

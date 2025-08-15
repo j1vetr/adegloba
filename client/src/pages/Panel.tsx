@@ -28,7 +28,7 @@ export default function Panel() {
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <UserNavigation />
         <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
         </div>
       </div>
     );
@@ -74,12 +74,12 @@ export default function Panel() {
             <p className="text-slate-400 text-sm lg:text-base">
               Hoş geldiniz, <span className="text-white font-medium">{user.username}</span>
               {user.ship && (
-                <> • <span className="text-amber-400 font-medium">Gemi: {user.ship.name}</span></>
+                <> • <span className="text-blue-400 font-medium">Gemi: {user.ship.name}</span></>
               )}
             </p>
           </div>
           <Link href="/paketler">
-            <Button className="w-full lg:w-auto bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white shadow-lg" data-testid="button-buy-packages">
+            <Button className="w-full lg:w-auto bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg" data-testid="button-buy-packages">
               <Package className="mr-2 h-4 w-4" />
               Data Paketi Satın Al
             </Button>
@@ -90,7 +90,7 @@ export default function Panel() {
           <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border-slate-700/50 rounded-lg p-1">
             <TabsTrigger 
               value="packages" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-yellow-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
               data-testid="tab-packages"
             >
               <Package className="mr-2 h-4 w-4" />
@@ -99,7 +99,7 @@ export default function Panel() {
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-yellow-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
               data-testid="tab-history"
             >
               <History className="mr-2 h-4 w-4" />
@@ -108,7 +108,7 @@ export default function Panel() {
             </TabsTrigger>
             <TabsTrigger 
               value="usage" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-yellow-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
               data-testid="tab-usage"
             >
               <BarChart3 className="mr-2 h-4 w-4" />
@@ -122,14 +122,14 @@ export default function Panel() {
             <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 text-lg">
-                  <Package className="h-5 w-5 text-amber-400" />
+                  <Package className="h-5 w-5 text-blue-400" />
                   Aktif Paketlerim
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {packagesLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
                     <span className="ml-3 text-slate-300">Paketler yükleniyor...</span>
                   </div>
                 ) : (activePackages as any)?.length ? (
@@ -139,7 +139,7 @@ export default function Panel() {
                       const progressPercentage = Math.max(0, (daysRemaining / pkg.validityDays) * 100);
                       
                       return (
-                        <Card key={pkg.credentialId} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-amber-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/10" data-testid={`package-card-${pkg.credentialId}`}>
+                        <Card key={pkg.credentialId} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10" data-testid={`package-card-${pkg.credentialId}`}>
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between mb-4">
                               <h3 className="font-semibold text-white text-lg">{pkg.planName}</h3>
@@ -156,14 +156,14 @@ export default function Panel() {
                             
                             <div className="space-y-4">
                               <div className="flex items-center gap-3 text-slate-300">
-                                <Package className="h-4 w-4 text-amber-400" />
+                                <Package className="h-4 w-4 text-blue-400" />
                                 <span className="font-medium">{pkg.dataLimitGb} GB Data Paketi</span>
                               </div>
                               
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between text-sm">
                                   <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-amber-400" />
+                                    <Clock className="h-4 w-4 text-cyan-400" />
                                     <span className="text-slate-300">Kalan Süre</span>
                                   </div>
                                   <span className={`font-semibold ${
@@ -211,14 +211,14 @@ export default function Panel() {
                   <div className="text-center py-12">
                     <div className="relative mb-6">
                       <Package className="h-16 w-16 text-slate-400 mx-auto" />
-                      <div className="absolute inset-0 bg-amber-500/20 rounded-full blur-xl" />
+                      <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl" />
                     </div>
                     <h3 className="text-xl font-semibold text-white mb-3">Henüz Aktif Paket Yok</h3>
                     <p className="text-slate-400 mb-6 max-w-md mx-auto">
                       AdeGloba Starlink System'de ilk data paketinizi satın alın ve kesintisiz internete başlayın.
                     </p>
                     <Link href="/paketler">
-                      <Button className="bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-amber-500/25 transition-all duration-300">
+                      <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-blue-500/25 transition-all duration-300">
                         İlk Paketinizi Satın Alın
                       </Button>
                     </Link>
@@ -240,7 +240,7 @@ export default function Panel() {
               <CardContent>
                 {ordersLoading ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
                   </div>
                 ) : userOrders?.length ? (
                   <div className="space-y-4">
