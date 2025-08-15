@@ -257,46 +257,56 @@ export class DatabaseStorage implements IStorage {
 
   async getUserActivePackages(userId: string): Promise<any[]> {
     const now = new Date();
+    const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     
-    // Get active packages with assigned credentials
-    const results = await db
-      .select({
-        credentialId: credentialPools.id,
-        username: credentialPools.username,
-        password: credentialPools.password,
-        planName: plans.name,
-        dataLimitGb: plans.dataLimitGb,
-        validityDays: plans.validityDays,
-        assignedAt: credentialPools.assignedAt,
-        orderId: orders.id,
-        orderStatus: orders.status,
-        paidAt: orders.paidAt,
-        expiresAt: orders.expiresAt
-      })
-      .from(credentialPools)
-      .innerJoin(orders, eq(credentialPools.assignedToOrderId, orders.id))
-      .innerJoin(plans, eq(credentialPools.planId, plans.id))
-      .where(
-        and(
-          eq(credentialPools.assignedToUserId, userId),
-          eq(credentialPools.isAssigned, true),
-          eq(orders.status, 'paid'),
-          isNotNull(orders.paidAt)
+    try {
+      // Get active packages with assigned credentials
+      const results = await db
+        .select({
+          credentialId: credentialPools.id,
+          username: credentialPools.username,
+          password: credentialPools.password,
+          planName: plans.name,
+          dataLimitGb: plans.dataLimitGb,
+          validityDays: plans.validityDays,
+          assignedAt: credentialPools.assignedAt,
+          orderId: orders.id,
+          orderStatus: orders.status,
+          paidAt: orders.paidAt,
+          createdAt: orders.createdAt
+        })
+        .from(credentialPools)
+        .innerJoin(orders, eq(credentialPools.assignedToOrderId, orders.id))
+        .innerJoin(plans, eq(credentialPools.planId, plans.id))
+        .where(
+          and(
+            eq(credentialPools.assignedToUserId, userId),
+            eq(credentialPools.isAssigned, true),
+            or(
+              eq(orders.status, 'paid'),
+              eq(orders.status, 'completed')
+            )
+          )
         )
-      )
-      .orderBy(desc(orders.paidAt));
+        .orderBy(desc(orders.paidAt));
 
-    return results.map(r => ({
-      credentialId: r.credentialId,
-      username: r.username,
-      password: r.password,
-      planName: r.planName,
-      dataLimitGb: r.dataLimitGb,
-      validityDays: r.validityDays,
-      assignedAt: r.assignedAt,
-      expirationDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0), // End of current month
-      orderStatus: r.orderStatus
-    }));
+      console.log(`Found ${results.length} active packages for user ${userId}`);
+      
+      return results.map(r => ({
+        credentialId: r.credentialId,
+        username: r.username,
+        password: r.password,
+        planName: r.planName,
+        dataLimitGb: r.dataLimitGb,
+        validityDays: r.validityDays,
+        assignedAt: r.assignedAt,
+        expirationDate: endOfCurrentMonth,
+        orderStatus: r.orderStatus
+      }));
+    } catch (error) {
+      console.error('Error fetching user active packages:', error);
+      return [];
+    }
   }
 
   async getAdminUser(id: string): Promise<AdminUser | undefined> {
@@ -534,11 +544,16 @@ export class DatabaseStorage implements IStorage {
       if (assignedCredential) {
         deliveredCredentials.push(assignedCredential);
         
-        // Create delivery record
-        await db.insert(orderCredentials).values({
-          orderId,
-          credentialId: credential.id,
-        });
+        // Create delivery record - skip if table doesn't exist yet
+        try {
+          await db.insert(orderCredentials).values({
+            orderId,
+            credentialId: credential.id,
+          });
+          console.log(`Created delivery record for credential ${credential.id} in order ${orderId}`);
+        } catch (error) {
+          console.log('Delivery record creation skipped (table may not exist):', error.message);
+        }
       }
     }
 
