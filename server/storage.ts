@@ -87,6 +87,7 @@ export interface IStorage {
   getPlans(): Promise<Plan[]>;
   getAllPlans(): Promise<Plan[]>;
   getActivePlans(): Promise<Plan[]>;
+  getPlanById(id: string): Promise<Plan | undefined>;
   getPlansForShip(shipId: string): Promise<Plan[]>;
   createPlan(plan: InsertPlan): Promise<Plan>;
   updatePlan(id: string, plan: Partial<InsertPlan>): Promise<Plan | undefined>;
@@ -442,6 +443,11 @@ export class DatabaseStorage implements IStorage {
 
   async getActivePlans(): Promise<Plan[]> {
     return db.select().from(plans).where(eq(plans.isActive, true)).orderBy(plans.sortOrder, plans.name);
+  }
+
+  async getPlanById(id: string): Promise<Plan | undefined> {
+    const [plan] = await db.select().from(plans).where(eq(plans.id, id));
+    return plan;
   }
 
   async getPlansForShip(shipId: string): Promise<Plan[]> {
