@@ -75,7 +75,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <UserNavigation />
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-cyan-400"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-400"></div>
         </div>
       </div>
     );
@@ -103,7 +103,7 @@ export default function Dashboard() {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent" data-testid="dashboard-title">
+              <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent" data-testid="dashboard-title">
                 Dashboard
               </h1>
               <p className="text-xl text-slate-300">Manage your account and view purchase history</p>
@@ -114,7 +114,7 @@ export default function Dashboard() {
               <div className="lg:col-span-1">
                 <Card className="glassmorphism rounded-2xl p-6 border-transparent">
                   <div className="text-center mb-6">
-                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-neon-cyan to-neon-purple flex items-center justify-center" data-testid="user-avatar">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-amber-600 to-yellow-600 flex items-center justify-center" data-testid="user-avatar">
                       <i className="fas fa-user text-white text-2xl"></i>
                     </div>
                     <h3 className="text-xl font-semibold text-white" data-testid="user-name">
@@ -124,7 +124,7 @@ export default function Dashboard() {
                   </div>
                   
                   <nav className="space-y-2">
-                    <div className="flex items-center px-4 py-2 rounded-lg bg-neon-cyan/20 text-neon-cyan">
+                    <div className="flex items-center px-4 py-2 rounded-lg bg-amber-500/20 text-amber-400">
                       <i className="fas fa-chart-line mr-3"></i>Dashboard
                     </div>
                     <Link href="/" className="flex items-center px-4 py-2 rounded-lg hover:bg-space-card transition-colors text-slate-300">
@@ -152,9 +152,9 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-sm text-slate-400">Active Plans</div>
-                        <div className="text-2xl font-bold text-neon-green">{activeOrders.length}</div>
+                        <div className="text-2xl font-bold text-green-400">{activeOrders.length}</div>
                       </div>
-                      <i className="fas fa-wifi text-neon-green text-2xl"></i>
+                      <i className="fas fa-wifi text-green-400 text-2xl"></i>
                     </div>
                   </Card>
                   
@@ -162,9 +162,9 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-sm text-slate-400">Total Spent</div>
-                        <div className="text-2xl font-bold text-neon-purple">${totalSpent.toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-yellow-400">${totalSpent.toFixed(2)}</div>
                       </div>
-                      <i className="fas fa-dollar-sign text-neon-purple text-2xl"></i>
+                      <i className="fas fa-dollar-sign text-yellow-400 text-2xl"></i>
                     </div>
                   </Card>
                   
@@ -200,7 +200,7 @@ export default function Dashboard() {
                           <div className="flex items-center space-x-4">
                             <div className={`w-12 h-12 rounded-lg bg-gradient-to-r flex items-center justify-center ${
                               order.status === 'paid' && order.daysRemaining > 0 
-                                ? 'from-neon-green to-emerald-500' 
+                                ? 'from-green-600 to-emerald-500' 
                                 : order.status === 'expired' || order.daysRemaining <= 0
                                 ? 'from-slate-500 to-slate-600'
                                 : 'from-yellow-500 to-orange-500'
@@ -228,7 +228,7 @@ export default function Dashboard() {
                             <div className="text-sm">
                               {order.status === 'paid' && order.daysRemaining > 0 ? (
                                 <>
-                                  <Badge className="bg-neon-green/20 text-neon-green border-transparent">Active</Badge>
+                                  <Badge className="bg-neon-green/20 text-green-400 border-transparent">Active</Badge>
                                   <div className="text-xs text-slate-400 mt-1">
                                     {order.daysRemaining} days left
                                   </div>
@@ -242,7 +242,7 @@ export default function Dashboard() {
                             {order.items?.[0] && (
                               <Button 
                                 size="sm"
-                                className="mt-2 px-3 py-1 text-xs rounded-lg bg-neon-cyan/20 text-neon-cyan hover:bg-neon-cyan/30 transition-colors"
+                                className="mt-2 px-3 py-1 text-xs rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
                                 onClick={() => buyAgainMutation.mutate({
                                   shipId: order.items[0].shipId,
                                   planId: order.items[0].planId
@@ -263,7 +263,7 @@ export default function Dashboard() {
                       <h3 className="text-xl font-semibold text-slate-400 mb-2">No orders yet</h3>
                       <p className="text-slate-500 mb-6">Start by browsing our data packages</p>
                       <Link href="/">
-                        <Button className="px-6 py-3 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple text-white">
+                        <Button className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-600 text-white">
                           Browse Plans
                         </Button>
                       </Link>
