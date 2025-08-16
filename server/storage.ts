@@ -625,13 +625,21 @@ export class DatabaseStorage implements IStorage {
     return {
       id: dbCoupon.id,
       code: dbCoupon.code,
-      discountType: dbCoupon.type,
-      discountValue: parseFloat(dbCoupon.value),
+      // Use new standardized fields, fallback to legacy if needed
+      discountType: dbCoupon.discountType || dbCoupon.type,
+      discountValue: parseFloat(dbCoupon.discountValue || dbCoupon.value),
       minOrderAmount: dbCoupon.minOrderAmount ? parseFloat(dbCoupon.minOrderAmount) : null,
       maxUses: dbCoupon.maxUses,
       usedCount: dbCoupon.uses,
       validFrom: dbCoupon.startsAt ? dbCoupon.startsAt.toISOString().split('T')[0] : null,
       validUntil: dbCoupon.endsAt ? dbCoupon.endsAt.toISOString().split('T')[0] : null,
+      // Enhanced scope functionality
+      scope: dbCoupon.scope || 'general',
+      applicableShips: typeof dbCoupon.applicableShips === 'string' ? JSON.parse(dbCoupon.applicableShips) : (dbCoupon.applicableShips || []),
+      applicablePlans: typeof dbCoupon.applicablePlans === 'string' ? JSON.parse(dbCoupon.applicablePlans) : (dbCoupon.applicablePlans || []),
+      description: dbCoupon.description,
+      // Legacy fields
+      shipId: dbCoupon.shipId,
       isActive: dbCoupon.isActive,
       singleUseOnly: dbCoupon.singleUseOnly || false,
       createdAt: dbCoupon.createdAt.toISOString(),
@@ -641,11 +649,22 @@ export class DatabaseStorage implements IStorage {
 
   private transformFrontendCouponToDb(frontendCoupon: any): any {
     const dbCoupon: any = {
-      code: frontendCoupon.code,
+      code: frontendCoupon.code.toUpperCase().trim(),
+      // Store in both legacy and new fields for compatibility
       type: frontendCoupon.discountType,
       value: frontendCoupon.discountValue.toString(),
+      discountType: frontendCoupon.discountType,
+      discountValue: frontendCoupon.discountValue.toString(),
       minOrderAmount: frontendCoupon.minOrderAmount ? frontendCoupon.minOrderAmount.toString() : null,
       maxUses: frontendCoupon.maxUses,
+      // Enhanced scope functionality
+      scope: frontendCoupon.scope || 'general',
+      applicableShips: JSON.stringify(frontendCoupon.applicableShips || []),
+      applicablePlans: JSON.stringify(frontendCoupon.applicablePlans || []),
+      description: frontendCoupon.description,
+      // Legacy ship reference (deprecated but maintained)
+      shipId: frontendCoupon.scope === 'ship' && frontendCoupon.applicableShips?.length === 1 
+        ? frontendCoupon.applicableShips[0] : null,
       isActive: frontendCoupon.isActive,
       singleUseOnly: frontendCoupon.singleUseOnly || false,
     };

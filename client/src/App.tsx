@@ -27,7 +27,7 @@ import PackagesManagement from "@/pages/admin/PackagesManagement";
 import ShipPackages from "@/pages/admin/ShipPackages";
 import CredentialPoolsNew from "@/pages/admin/CredentialPoolsNew";
 
-import CouponsManagement from "@/pages/admin/CouponsManagement";
+import CouponsManagementNew from "@/pages/admin/CouponsManagementNew";
 import OrdersManagement from "@/pages/admin/OrdersManagement";
 import UsersManagementNew from "@/pages/admin/UsersManagementNew";
 import SettingsManagement from "@/pages/admin/SettingsManagement";
@@ -82,7 +82,7 @@ function Router() {
       
       <Route path="/admin/coupons">
         <AdminProtectedRoute>
-          <CouponsManagement />
+          <CouponsManagementNew />
         </AdminProtectedRoute>
       </Route>
       

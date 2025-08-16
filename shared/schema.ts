@@ -76,14 +76,24 @@ export const plans = pgTable("plans", {
 export const coupons = pgTable("coupons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   code: varchar("code").notNull().unique(),
+  // Legacy fields (keeping for backward compatibility)
   type: varchar("type").notNull(), // 'percentage' or 'fixed'
   value: decimal("value", { precision: 10, scale: 2 }).notNull(),
+  // New standardized fields
+  discountType: varchar("discount_type").notNull().default('percentage'), // 'percentage' or 'fixed'
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull().default('0'),
   minOrderAmount: decimal("min_order_amount", { precision: 10, scale: 2 }),
   maxUses: integer("max_uses"),
   uses: integer("uses").notNull().default(0),
   startsAt: timestamp("starts_at"),
   endsAt: timestamp("ends_at"),
-  shipId: varchar("ship_id").references(() => ships.id, { onDelete: "cascade" }),
+  // Enhanced scope functionality
+  scope: varchar("scope").notNull().default('general'), // 'general', 'ship', 'package'
+  applicableShips: jsonb("applicable_ships").default('[]'), // Array of ship IDs
+  applicablePlans: jsonb("applicable_plans").default('[]'), // Array of plan IDs
+  description: text("description"),
+  // Legacy ship reference (deprecated in favor of scope + applicableShips)
+  shipId: varchar("ship_id").references(() => ships.id, { onDelete: "set null" }),
   isActive: boolean("is_active").notNull().default(true),
   singleUseOnly: boolean("single_use_only").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
@@ -404,15 +414,19 @@ export const insertOrderCredentialSchema = createInsertSchema(orderCredentials).
   createdAt: true,
 });
 
-// Frontend-compatible coupon schema
+// Enhanced coupon schema with scope functionality
 export const insertCouponSchema = z.object({
-  code: z.string().min(1),
+  code: z.string().min(1, "Kupon kodu gerekli"),
   discountType: z.enum(['percentage', 'fixed']),
-  discountValue: z.number().positive(),
+  discountValue: z.number().positive("İndirim değeri pozitif olmalı"),
   minOrderAmount: z.number().positive().optional().nullable(),
   maxUses: z.number().int().positive().optional().nullable(),
   validFrom: z.string().optional().nullable(),
   validUntil: z.string().optional().nullable(),
+  scope: z.enum(['general', 'ship', 'package']).default('general'),
+  applicableShips: z.array(z.string()).default([]),
+  applicablePlans: z.array(z.string()).default([]),
+  description: z.string().optional().nullable(),
   isActive: z.boolean().default(true),
   singleUseOnly: z.boolean().default(false),
 });

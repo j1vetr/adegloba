@@ -846,53 +846,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin - Coupons
-  app.get('/api/admin/coupons', isAdminAuthenticated, async (req, res) => {
-    try {
-      const coupons = await storage.getCoupons();
-      res.json(coupons);
-    } catch (error) {
-      console.error("Error fetching coupons:", error);
-      res.status(500).json({ message: "Failed to fetch coupons" });
-    }
-  });
-
-  app.post('/api/admin/coupons', isAdminAuthenticated, async (req, res) => {
-    try {
-      const couponData = insertCouponSchema.parse(req.body);
-      const coupon = await storage.createCoupon(couponData);
-      res.json(coupon);
-    } catch (error) {
-      console.error("Error creating coupon:", error);
-      res.status(400).json({ message: error.message || "Failed to create coupon" });
-    }
-  });
-
-  app.put('/api/admin/coupons/:id', isAdminAuthenticated, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const couponData = insertCouponSchema.partial().parse(req.body);
-      const coupon = await storage.updateCoupon(id, couponData);
-      if (!coupon) {
-        return res.status(404).json({ message: "Coupon not found" });
-      }
-      res.json(coupon);
-    } catch (error) {
-      console.error("Error updating coupon:", error);
-      res.status(400).json({ message: error.message || "Failed to update coupon" });
-    }
-  });
-
-  app.delete('/api/admin/coupons/:id', isAdminAuthenticated, async (req, res) => {
-    try {
-      const { id } = req.params;
-      await storage.deleteCoupon(id);
-      res.json({ message: "Coupon deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting coupon:", error);
-      res.status(500).json({ message: "Failed to delete coupon" });
-    }
-  });
+  // Admin - Coupons (Enhanced version with filtering and pagination is implemented later)
 
   // Admin - Statistics
   app.get('/api/admin/stats', isAdminAuthenticated, async (req, res) => {
@@ -1530,25 +1484,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin CRUD Routes for Coupons
+  // Enhanced Admin CRUD Routes for Coupons with filtering and pagination
   app.get('/api/admin/coupons', isAdminAuthenticated, async (req, res) => {
     try {
-      const coupons = await storage.getAllCoupons();
-      res.json(coupons);
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      const search = req.query.search as string;
+      const status = req.query.status as string;
+      const type = req.query.type as string;
+      const scope = req.query.scope as string;
+      const dateFrom = req.query.dateFrom as string;
+      const dateTo = req.query.dateTo as string;
+
+      // Build where conditions
+      const whereConditions = [];
+      const params: any[] = [];
+
+      if (search) {
+        whereConditions.push('UPPER(code) LIKE UPPER($' + (params.length + 1) + ')');
+        params.push(`%${search}%`);
+      }
+
+      if (status === 'active') {
+        whereConditions.push('is_active = $' + (params.length + 1));
+        params.push(true);
+      } else if (status === 'inactive') {
+        whereConditions.push('is_active = $' + (params.length + 1));
+        params.push(false);
+      } else if (status === 'expired') {
+        whereConditions.push('ends_at < $' + (params.length + 1));
+        params.push(new Date());
+      }
+
+      if (type) {
+        whereConditions.push('(discount_type = $' + (params.length + 1) + ' OR type = $' + (params.length + 2) + ')');
+        params.push(type);
+        params.push(type);
+      }
+
+      if (scope) {
+        whereConditions.push('scope = $' + (params.length + 1));
+        params.push(scope);
+      }
+
+      if (dateFrom) {
+        whereConditions.push('created_at >= $' + (params.length + 1));
+        params.push(new Date(dateFrom));
+      }
+
+      if (dateTo) {
+        whereConditions.push('created_at <= $' + (params.length + 1));
+        params.push(new Date(dateTo + 'T23:59:59'));
+      }
+
+      const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
+      const offset = (page - 1) * pageSize;
+
+      // Get total count
+      const countQuery = `SELECT COUNT(*) as total FROM coupons ${whereClause}`;
+      const countResult = await db.execute({ sql: countQuery, args: params });
+      const total = Number(countResult.rows[0]?.total) || 0;
+
+      // Get paginated results
+      const dataQuery = `
+        SELECT * FROM coupons 
+        ${whereClause}
+        ORDER BY created_at DESC 
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+      `;
+      const dataResult = await db.execute({ 
+        sql: dataQuery, 
+        args: [...params, pageSize, offset] 
+      });
+
+      const coupons = dataResult.rows.map((row: any) => storage.transformDbCouponToFrontend(row));
+
+      res.json({
+        coupons,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize)
+      });
     } catch (error) {
       console.error('Error fetching coupons:', error);
-      res.status(500).json({ message: 'Failed to fetch coupons' });
+      // Fallback to simple query if advanced query fails
+      try {
+        const coupons = await storage.getAllCoupons();
+        res.json({ coupons, total: coupons.length, page: 1, pageSize: coupons.length, totalPages: 1 });
+      } catch (fallbackError) {
+        res.status(500).json({ message: 'Failed to fetch coupons' });
+      }
     }
   });
 
   app.post('/api/admin/coupons', isAdminAuthenticated, async (req, res) => {
     try {
       const couponData = insertCouponSchema.parse(req.body);
+      
+      // Check for duplicate coupon codes
+      const existingCoupon = await storage.getCouponByCode(couponData.code);
+      if (existingCoupon) {
+        return res.status(400).json({ message: 'Bu kupon kodu zaten kullanılıyor. Lütfen farklı bir kod seçin.' });
+      }
+      
       const coupon = await storage.createCoupon(couponData);
       res.json(coupon);
     } catch (error) {
       console.error('Error creating coupon:', error);
-      res.status(500).json({ message: 'Failed to create coupon' });
+      if (error.code === '23505') { // Unique constraint violation
+        res.status(400).json({ message: 'Bu kupon kodu zaten kullanılıyor. Lütfen farklı bir kod seçin.' });
+      } else {
+        res.status(500).json({ message: error.message || 'Failed to create coupon' });
+      }
     }
   });
 

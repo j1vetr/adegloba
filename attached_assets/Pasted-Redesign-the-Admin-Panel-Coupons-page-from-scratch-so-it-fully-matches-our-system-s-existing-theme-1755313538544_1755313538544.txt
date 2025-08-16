@@ -1,0 +1,21 @@
+Redesign the Admin Panel > Coupons page from scratch so it fully matches our system’s existing theme and colors (use our current blue theme, dark background) and is 100% functional end-to-end.
+
+Requirements:
+
+UI/UX: One cohesive page with a responsive layout (no overflow). Top area: “Add/Edit Coupon” form in a card; below: a searchable, filterable, paginated Coupons Table. Use clear Turkish labels, visible icons (no black-on-dark), tooltips, and success/error toasts.
+
+Form (Add/Edit): Fields: Kupon Kodu (unique, uppercase, trimmed), Tür (Yüzde / Sabit), İndirim Değeri, Geçerlilik Başlangıcı, Geçerlilik Bitişi, Durum (Aktif/Pasif), Tek Kullanımlık (on/off), Kullanım Limiti (opsiyonel), Kapsam (Genel / Gemi / Paket), Gemi Seçimi (çoklu), Paket Seçimi (çoklu), Açıklama (opsiyonel). Validate all fields; disable submit if invalid.
+
+Table: Columns: Kod, Tür/Değer, Durum, Kapsam (Genel/Gemi/Paket + seçilmiş öğe sayısı), Kullanım (kullanıldı/toplam limit), Geçerlilik (Başlangıç–Bitiş), Oluşturulma, İşlemler. Actions: Düzenle (prefill form in edit mode), Sil (confirm, then delete and refresh). Search by code; filters by Durum, Tür, Tarih aralığı, Kapsam.
+
+Behavior: Create, update, delete must update DB and refresh the table without full page reload (optimistic UI with error rollback). Enforce unique code at DB level; handle constraint errors gracefully (Turkish messages).
+
+Integration: Ensure checkout/cart uses coupons correctly: apply valid coupon to subtotal (support % and fixed), cap discount to not exceed subtotal, enforce scope (Genel/Gemi/Paket), date validity, status, single-use vs multi-use and usage limits. Recalculate totals live and update PayPal order amount accordingly. Persist coupon usage on orders.
+
+Backend/DB: Add/verify API routes for list/create/update/delete; add indices/constraints (unique code, usage counters). Return numeric discount_amount and new_total consistently (USD, 2 decimals). Use Europe/Istanbul timezone for date validations.
+
+Mobile: Ensure the form and table are easy to use on mobile (stacked layout, accessible actions menu).
+
+Theme: Match our existing blue theme and dark maritime styling; consistent icons, hover/focus states.
+
+Deliver a polished page that is visually consistent with the rest of the admin, and fully functional with real data.
