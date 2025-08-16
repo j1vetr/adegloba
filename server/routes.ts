@@ -330,14 +330,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         }));
         
-        // Set strong headers to prevent caching and force fresh data
+        // Set aggressive headers to completely prevent caching
         res.set({
-          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, private',
           'Pragma': 'no-cache',
           'Expires': '0',
-          'Last-Modified': new Date().toUTCString(),
-          'ETag': Date.now().toString() // Force unique response
+          'Surrogate-Control': 'no-store',
+          'Vary': '*'
         });
+        
+        // Remove any ETag to prevent conditional requests
+        res.removeHeader('ETag');
+        res.removeHeader('Last-Modified');
         
         res.json(plansWithStock);
       } catch (error) {

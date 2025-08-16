@@ -24,12 +24,14 @@ export default function Paketler() {
   const queryClient = useQueryClient();
 
   const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
-    queryKey: ["/api/user/ship-plans"],
+    queryKey: ["/api/user/ship-plans", Date.now()], // Force unique query key
     enabled: !!user?.ship_id,
-    refetchInterval: 30000, // Refetch every 30 seconds to catch stock updates
+    refetchInterval: 10000, // Refetch every 10 seconds for immediate updates
     staleTime: 0, // Always fresh data, no cache
+    cacheTime: 0, // Don't cache at all
     refetchOnWindowFocus: true, // Refetch when user returns to tab
-    refetchOnMount: true // Always refetch when component mounts
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchIntervalInBackground: true // Continue refetching in background
   });
 
   const addToCartMutation = useMutation({

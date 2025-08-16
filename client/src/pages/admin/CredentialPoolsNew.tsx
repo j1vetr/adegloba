@@ -128,10 +128,10 @@ export default function CredentialPoolsNew() {
       return await apiRequest("POST", "/api/admin/credentials", data);
     },
     onSuccess: () => {
-      // Invalidate both admin and user package queries to update stock
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/ship-plans"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      // Force complete cache refresh for immediate stock updates
+      queryClient.resetQueries({ queryKey: ["/api/admin/credentials"] });
+      queryClient.removeQueries({ queryKey: ["/api/user/ship-plans"], exact: false });
+      queryClient.resetQueries({ queryKey: ["/api/admin/plans"] });
       
       setIsFormOpen(false);
       resetForm();
@@ -155,10 +155,10 @@ export default function CredentialPoolsNew() {
       return await apiRequest("POST", "/api/admin/credentials/import", data);
     },
     onSuccess: (data) => {
-      // Invalidate both admin and user package queries to update stock
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/ship-plans"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      // Force complete cache refresh for immediate stock updates
+      queryClient.resetQueries({ queryKey: ["/api/admin/credentials"] });
+      queryClient.removeQueries({ queryKey: ["/api/user/ship-plans"], exact: false });
+      queryClient.resetQueries({ queryKey: ["/api/admin/plans"] });
       
       setIsImportOpen(false);
       setImportText('');
