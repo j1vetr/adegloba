@@ -840,7 +840,7 @@ export class DatabaseStorage implements IStorage {
     // Total Revenue from completed orders
     const [revenueStats] = await db
       .select({
-        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(total_usd AS DECIMAL) ELSE 0 END), 0)`,
+        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
         totalOrders: sql<number>`COUNT(*)`
       })
       .from(orders);
@@ -848,7 +848,7 @@ export class DatabaseStorage implements IStorage {
     // Active Users - users with at least one active package (expires_at > now)
     const [activeUsersStats] = await db
       .select({
-        activeUsers: sql<number>`COUNT(DISTINCT o.user_id)`
+        activeUsers: sql<number>`COUNT(DISTINCT ${orders.userId})`
       })
       .from(orders)
       .innerJoin(orderCredentials, eq(orders.id, orderCredentials.orderId))

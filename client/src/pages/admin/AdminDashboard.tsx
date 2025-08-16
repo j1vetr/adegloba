@@ -98,7 +98,9 @@ export default function AdminDashboard() {
   }
 
   const formatCurrency = (value: number | string | null | undefined) => {
-    const numValue = Number(value) || 0;
+    if (value === null || value === undefined) return '$0.00';
+    const numValue = Number(value);
+    if (isNaN(numValue)) return '$0.00';
     return `$${numValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
@@ -108,12 +110,15 @@ export default function AdminDashboard() {
     try {
       // Parse the date and convert to Istanbul timezone
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Geçersiz tarih';
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date string:', dateString);
+        return 'Geçersiz tarih';
+      }
       
       const istanbulDate = toZonedTime(date, 'Europe/Istanbul');
       return format(istanbulDate, 'd MMM yyyy HH:mm', { locale: tr });
     } catch (error) {
-      console.error('Date formatting error:', error);
+      console.error('Date formatting error:', error, 'Input:', dateString);
       return 'Tarih hatası';
     }
   };
@@ -142,32 +147,36 @@ export default function AdminDashboard() {
       value: formatCurrency(stats?.totalRevenue || 0),
       description: "Tamamlanan siparişlerden gelir",
       icon: DollarSign,
-      trend: statsError ? "Hata" : "USD",
-      trendUp: !statsError
+      trend: "USD",
+      trendUp: true,
+      color: "text-green-400"
     },
     {
       title: "Aktif Kullanıcılar",
       value: stats?.activeUsers || 0,
       description: "Aktif paketi olan kullanıcılar",
       icon: Users,
-      trend: statsError ? "Hata" : "kullanıcı",
-      trendUp: !statsError
+      trend: "kullanıcı",
+      trendUp: true,
+      color: "text-blue-400"
     },
     {
       title: "Toplam Sipariş",
       value: stats?.totalOrders || 0,
       description: "Toplam sipariş sayısı",
       icon: ShoppingCart,
-      trend: statsError ? "Hata" : "sipariş",
-      trendUp: !statsError
+      trend: "sipariş",
+      trendUp: true,
+      color: "text-purple-400"
     },
     {
       title: "Aktif Paketler",
       value: stats?.activePackages || 0,
       description: "Aktif veri paketleri",
       icon: Package,
-      trend: statsError ? "Hata" : "paket",
-      trendUp: !statsError
+      trend: "paket",
+      trendUp: true,
+      color: "text-cyan-400"
     }
   ];
 
@@ -201,18 +210,18 @@ export default function AdminDashboard() {
           {statCards.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index} className="glass-card border-border/50 hover:border-primary/30 transition-all duration-300 card-hover">
+              <Card key={index} className="glass-card border-slate-700/50 hover:border-cyan-500/30 transition-all duration-300 card-hover">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-light-gray">
+                  <CardTitle className="text-sm font-medium text-slate-300">
                     {stat.title}
                   </CardTitle>
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center">
-                    <Icon className="h-5 w-5 text-primary" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center">
+                    <Icon className={`h-5 w-5 ${(stat as any).color}`} />
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-                  <p className="text-xs text-light-gray mb-2">{stat.description}</p>
+                  <p className="text-xs text-slate-400 mb-2">{stat.description}</p>
                   <div className={`flex items-center text-xs ${
                     stat.trendUp ? 'text-green-400' : 'text-red-400'
                   }`}>
@@ -228,13 +237,13 @@ export default function AdminDashboard() {
         {/* Recent Activity Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Orders */}
-          <Card className="glass-card border-border/50">
+          <Card className="glass-card border-slate-700/50">
             <CardHeader>
               <CardTitle className="flex items-center text-white">
-                <ShoppingCart className="mr-2 h-5 w-5 text-primary" />
+                <ShoppingCart className="mr-2 h-5 w-5 text-cyan-400" />
                 Son Siparişler
               </CardTitle>
-              <CardDescription className="text-light-gray">En son gelen siparişlerin listesi</CardDescription>
+              <CardDescription className="text-slate-400">En son gelen siparişlerin listesi</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {ordersLoading ? (
@@ -247,31 +256,37 @@ export default function AdminDashboard() {
                   <p>Siparişler yüklenirken hata oluştu</p>
                 </div>
               ) : recentOrders && recentOrders.length > 0 ? (
-                recentOrders.slice(0, 5).map((order, index) => (
-                  <div key={order.id || index} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30 border border-slate-600/50 hover:border-cyan-500/30 transition-all duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center">
-                        <span className="text-xs font-medium text-cyan-400">#{order.id.slice(-3)}</span>
+                recentOrders.slice(0, 5).map((order, index) => {
+                  // Handle both camelCase and snake_case field names from database
+                  const orderTotal = order.totalUsd || (order as any).total_usd || '0';
+                  const orderDate = order.createdAt || (order as any).created_at;
+                  
+                  return (
+                    <div key={order.id || index} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30 border border-slate-600/50 hover:border-cyan-500/30 transition-all duration-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center">
+                          <span className="text-xs font-medium text-cyan-400">#{order.id.slice(-3)}</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white">
+                            {order.user?.username || 'Anonim Kullanıcı'}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {formatDate(orderDate)}
+                          </p>
+                        </div>
                       </div>
-                      <div>
+                      <div className="text-right">
                         <p className="text-sm font-medium text-white">
-                          {order.user?.username || 'Anonim Kullanıcı'}
+                          {formatCurrency(orderTotal)}
                         </p>
-                        <p className="text-xs text-slate-400">
-                          {formatDate(order.createdAt)}
-                        </p>
+                        <div className="mt-1">
+                          {getStatusBadge(order.status)}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-white">
-                        {formatCurrency(order.totalUsd || order.total_usd)}
-                      </p>
-                      <div className="mt-1">
-                        {getStatusBadge(order.status)}
-                      </div>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-8 text-slate-400">
                   <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-20" />
@@ -282,13 +297,13 @@ export default function AdminDashboard() {
           </Card>
 
           {/* Recent Users */}
-          <Card className="glass-card border-border/50">
+          <Card className="glass-card border-slate-700/50">
             <CardHeader>
               <CardTitle className="flex items-center text-white">
-                <Users className="mr-2 h-5 w-5 text-primary" />
+                <Users className="mr-2 h-5 w-5 text-cyan-400" />
                 Yeni Kullanıcılar
               </CardTitle>
-              <CardDescription className="text-light-gray">Son kayıt olan kullanıcılar</CardDescription>
+              <CardDescription className="text-slate-400">Son kayıt olan kullanıcılar</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {usersLoading ? (
@@ -301,34 +316,39 @@ export default function AdminDashboard() {
                   <p>Kullanıcılar yüklenirken hata oluştu</p>
                 </div>
               ) : recentUsers && recentUsers.length > 0 ? (
-                recentUsers.slice(0, 5).map((user, index) => (
-                  <div key={user.id || index} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30 border border-slate-600/50 hover:border-cyan-500/30 transition-all duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center">
-                        <span className="text-sm font-medium text-white">
-                          {user.username?.charAt(0).toUpperCase() || 'U'}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-white">{user.username}</p>
-                        <div className="flex items-center space-x-2">
-                          <Ship className="h-3 w-3 text-slate-400" />
-                          <p className="text-xs text-slate-400">
-                            {user.ship?.name || 'Gemi seçilmemiş'}
-                          </p>
+                recentUsers.slice(0, 5).map((user, index) => {
+                  // Handle both camelCase and snake_case field names from database
+                  const userDate = user.createdAt || user.created_at;
+                  
+                  return (
+                    <div key={user.id || index} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30 border border-slate-600/50 hover:border-cyan-500/30 transition-all duration-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center">
+                          <span className="text-sm font-medium text-white">
+                            {user.username?.charAt(0).toUpperCase() || 'U'}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white">{user.username}</p>
+                          <div className="flex items-center space-x-2">
+                            <Ship className="h-3 w-3 text-slate-400" />
+                            <p className="text-xs text-slate-400">
+                              {user.ship?.name || 'Gemi seçilmemiş'}
+                            </p>
+                          </div>
                         </div>
                       </div>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400">
+                          {formatDate(userDate)}
+                        </p>
+                        <Badge variant="outline" className="mt-1 text-cyan-400 border-cyan-500/50">
+                          Yeni
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-slate-400">
-                        {formatDate(user.createdAt || user.created_at)}
-                      </p>
-                      <Badge variant="outline" className="mt-1 text-cyan-400 border-cyan-500/50">
-                        Yeni
-                      </Badge>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-8 text-slate-400">
                   <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
@@ -340,13 +360,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <Card className="glass-card border-border/50">
+        <Card className="glass-card border-slate-700/50">
           <CardHeader>
             <CardTitle className="flex items-center text-white">
-              <Star className="mr-2 h-5 w-5 text-primary" />
+              <Star className="mr-2 h-5 w-5 text-cyan-400" />
               Hızlı İşlemler
             </CardTitle>
-            <CardDescription className="text-light-gray">Sık kullanılan yönetim işlemleri</CardDescription>
+            <CardDescription className="text-slate-400">Sık kullanılan yönetim işlemleri</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -361,12 +381,12 @@ export default function AdminDashboard() {
                   <a
                     key={index}
                     href={action.href}
-                    className="group p-4 rounded-xl bg-card/50 border border-border/30 hover:border-primary/30 transition-all duration-300 card-hover"
+                    className="group p-4 rounded-xl bg-slate-800/50 border border-slate-600/30 hover:border-cyan-500/30 transition-all duration-300 card-hover"
                   >
                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}>
                       <Icon className="h-6 w-6 text-white" />
                     </div>
-                    <h3 className="font-medium text-white text-sm group-hover:text-primary transition-colors duration-200">
+                    <h3 className="font-medium text-white text-sm group-hover:text-cyan-400 transition-colors duration-200">
                       {action.name}
                     </h3>
                   </a>
