@@ -337,6 +337,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's expired packages
+  app.get('/api/user/expired-packages', async (req: any, res) => {
+    if (req.session && req.session.userId) {
+      try {
+        const userId = req.session.userId;
+        const page = parseInt(req.query.page as string) || 1;
+        const pageSize = parseInt(req.query.pageSize as string) || 10;
+        const offset = (page - 1) * pageSize;
+        
+        const expiredPackages = await storage.getUserExpiredPackages(userId, offset, pageSize);
+        const totalCount = await storage.getUserExpiredPackagesCount(userId);
+        const totalPages = Math.ceil(totalCount / pageSize);
+        
+        res.json({
+          packages: expiredPackages,
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalCount,
+            pageSize
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching user expired packages:", error);
+        res.status(500).json({ message: "Failed to fetch expired packages" });
+      }
+    } else {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+  });
+
   app.post('/api/orders', async (req: any, res) => {
     if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });

@@ -1,17 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Package, History, BarChart3, Calendar, Clock, Info } from "lucide-react";
+import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive } from "lucide-react";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import type { Order, User, Ship } from "@shared/schema";
 
 export default function Panel() {
   const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }, isLoading: boolean };
+  const [expiredPage, setExpiredPage] = useState(1);
+  const expiredPageSize = 6;
 
   const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/user/orders"],
@@ -20,6 +23,16 @@ export default function Panel() {
 
   const { data: activePackages, isLoading: packagesLoading } = useQuery({
     queryKey: ["/api/user/active-packages"],
+    enabled: !!user
+  });
+
+  const { data: expiredPackagesData, isLoading: expiredLoading } = useQuery({
+    queryKey: ["/api/user/expired-packages", expiredPage],
+    queryFn: async () => {
+      const response = await fetch(`/api/user/expired-packages?page=${expiredPage}&pageSize=${expiredPageSize}`);
+      if (!response.ok) throw new Error('Failed to fetch expired packages');
+      return response.json();
+    },
     enabled: !!user
   });
 
@@ -121,13 +134,13 @@ export default function Panel() {
               <span className="sm:hidden">Geçmiş</span>
             </TabsTrigger>
             <TabsTrigger 
-              value="usage" 
+              value="expired" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
-              data-testid="tab-usage"
+              data-testid="tab-expired"
             >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Kullanım Bilgileri</span>
-              <span className="sm:hidden">Kullanım</span>
+              <Archive className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Süresi Bitmiş Paketlerim</span>
+              <span className="sm:hidden">Bitmiş</span>
             </TabsTrigger>
           </TabsList>
 
@@ -306,23 +319,117 @@ export default function Panel() {
             </Card>
           </TabsContent>
 
-          {/* Usage Statistics */}
-          <TabsContent value="usage" className="space-y-4">
-            <Card className="bg-slate-900/50 border-slate-700">
+          {/* Expired Packages */}
+          <TabsContent value="expired" className="space-y-4">
+            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Kullanım Bilgileri
+                <CardTitle className="text-white flex items-center gap-2 text-lg">
+                  <Archive className="h-5 w-5 text-red-400" />
+                  Süresi Bitmiş Paketlerim
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <BarChart3 className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                  <p className="text-slate-400 mb-2">Kullanım istatistikleri yakında eklenecek.</p>
-                  <p className="text-sm text-slate-500">
-                    Bu bölümde veri kullanım detaylarınızı görebileceksiniz.
-                  </p>
-                </div>
+                {expiredLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-red-400" />
+                    <span className="ml-3 text-slate-300">Bitmiş paketler yükleniyor...</span>
+                  </div>
+                ) : expiredPackagesData?.packages?.length ? (
+                  <div className="space-y-6">
+                    <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                      {expiredPackagesData.packages.map((pkg: any) => (
+                        <Card key={pkg.credentialId} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-red-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10" data-testid={`expired-package-card-${pkg.credentialId}`}>
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="font-semibold text-white text-lg">{pkg.planName}</h3>
+                              <Badge className="bg-gradient-to-r from-red-600 to-red-700 text-white border-0">
+                                Süresi Doldu
+                              </Badge>
+                            </div>
+                            
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-3 text-slate-300">
+                                <Package className="h-4 w-4 text-red-400" />
+                                <span className="font-medium">{pkg.dataLimitGb} GB Data Paketi</span>
+                              </div>
+                              
+                              <div className="space-y-3">
+                                <div className="bg-slate-700/30 rounded-lg p-3 space-y-2">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-slate-400 font-medium">Satın Alma:</span>
+                                    <span className="text-slate-300">{formatDate(pkg.purchaseDate)}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-slate-400 font-medium">Bitiş:</span>
+                                    <span className="text-red-400 font-medium">{formatDate(pkg.expiredDate)}</span>
+                                  </div>
+                                </div>
+                                
+                                <div className="bg-slate-700/30 rounded-lg p-3 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 text-xs font-medium">Kullanıcı Adı:</span>
+                                    <span className="text-white font-mono text-sm">{pkg.username}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 text-xs font-medium">Şifre:</span>
+                                    <span className="text-white font-mono text-sm">{pkg.maskedPassword}</span>
+                                  </div>
+                                  <div className="text-xs text-slate-500 mt-2">
+                                    Bu bilgiler artık kullanılamaz
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    
+                    {/* Pagination */}
+                    {expiredPackagesData.pagination && expiredPackagesData.pagination.totalPages > 1 && (
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-slate-400">
+                          Toplam {expiredPackagesData.pagination.totalCount} paket • Sayfa {expiredPackagesData.pagination.currentPage} / {expiredPackagesData.pagination.totalPages}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setExpiredPage(prev => Math.max(1, prev - 1))}
+                            disabled={expiredPackagesData.pagination.currentPage === 1}
+                            className="bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700/50"
+                            data-testid="pagination-prev"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            Önceki
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setExpiredPage(prev => Math.min(expiredPackagesData.pagination.totalPages, prev + 1))}
+                            disabled={expiredPackagesData.pagination.currentPage === expiredPackagesData.pagination.totalPages}
+                            className="bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700/50"
+                            data-testid="pagination-next"
+                          >
+                            Sonraki
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="relative mb-6">
+                      <Archive className="h-16 w-16 text-slate-400 mx-auto" />
+                      <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-3">Süresi Bitmiş Paket Yok</h3>
+                    <p className="text-slate-400 mb-6 max-w-md mx-auto">
+                      Henüz süresi dolmuş paketiniz bulunmamaktadır. Aktif paketleriniz sona erdiğinde burada görünecek.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

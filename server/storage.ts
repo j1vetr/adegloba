@@ -61,6 +61,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserOrders(userId: string): Promise<(Order & { items: OrderItem[] })[]>;
   getUserActivePackages(userId: string): Promise<any[]>;
+  getUserExpiredPackages(userId: string, offset: number, pageSize: number): Promise<any[]>;
+  getUserExpiredPackagesCount(userId: string): Promise<number>;
   getShipPlans(shipId: string): Promise<Plan[]>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<(User & { ship?: Ship })[]>;
@@ -1619,6 +1621,101 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orderCredentials.orderId, orderId));
     
     return results;
+  }
+
+  async getUserExpiredPackages(userId: string, offset: number, pageSize: number): Promise<any[]> {
+    const now = new Date();
+    
+    try {
+      const results = await db
+        .select({
+          credentialId: credentialPools.id,
+          username: credentialPools.username,
+          password: credentialPools.password,
+          planName: plans.name,
+          dataLimitGb: plans.dataLimitGb,
+          assignedAt: credentialPools.assignedAt,
+          orderId: orders.id,
+          orderStatus: orders.status,
+          paidAt: orders.paidAt,
+          expiresAt: orders.expiresAt,
+          createdAt: orders.createdAt
+        })
+        .from(credentialPools)
+        .innerJoin(orders, eq(credentialPools.assignedToOrderId, orders.id))
+        .innerJoin(plans, eq(credentialPools.planId, plans.id))
+        .where(
+          and(
+            eq(credentialPools.assignedToUserId, userId),
+            eq(credentialPools.isAssigned, true),
+            or(
+              eq(orders.status, 'paid'),
+              eq(orders.status, 'completed')
+            ),
+            // Only include packages that have expired
+            and(
+              isNotNull(orders.expiresAt),
+              lt(orders.expiresAt, now)
+            )
+          )
+        )
+        .orderBy(desc(orders.expiresAt)) // Most recently expired first
+        .limit(pageSize)
+        .offset(offset);
+
+      return results.map(r => {
+        const expirationDate = r.expiresAt ? new Date(r.expiresAt) : null;
+        const purchaseDate = r.paidAt ? new Date(r.paidAt) : new Date(r.createdAt);
+        
+        return {
+          credentialId: r.credentialId,
+          username: r.username,
+          // Mask password: show first 2 and last 2 characters, mask the middle
+          maskedPassword: r.password.length > 4 
+            ? r.password.substring(0, 2) + '*'.repeat(r.password.length - 4) + r.password.substring(r.password.length - 2)
+            : '****',
+          planName: r.planName,
+          dataLimitGb: r.dataLimitGb,
+          purchaseDate: purchaseDate.toISOString(),
+          expiredDate: expirationDate?.toISOString() || null,
+          orderId: r.orderId,
+          orderStatus: r.orderStatus
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching expired packages:', error);
+      return [];
+    }
+  }
+
+  async getUserExpiredPackagesCount(userId: string): Promise<number> {
+    const now = new Date();
+    
+    try {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(credentialPools)
+        .innerJoin(orders, eq(credentialPools.assignedToOrderId, orders.id))
+        .where(
+          and(
+            eq(credentialPools.assignedToUserId, userId),
+            eq(credentialPools.isAssigned, true),
+            or(
+              eq(orders.status, 'paid'),
+              eq(orders.status, 'completed')
+            ),
+            and(
+              isNotNull(orders.expiresAt),
+              lt(orders.expiresAt, now)
+            )
+          )
+        );
+      
+      return result?.count || 0;
+    } catch (error) {
+      console.error('Error counting expired packages:', error);
+      return 0;
+    }
   }
 }
 
