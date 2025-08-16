@@ -534,7 +534,7 @@ export default function PackagesManagement() {
         </div>
 
         {/* Enhanced Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="glass-card border-primary/20 hover:border-primary/40 transition-all duration-300 bg-gradient-to-br from-slate-900/20 to-slate-800/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-300">Toplam Paket</CardTitle>
@@ -568,40 +568,6 @@ export default function PackagesManagement() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-blue-500/20 hover:border-blue-400/40 transition-all duration-300 bg-gradient-to-br from-blue-900/20 to-cyan-900/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-200">Toplam Kimlik</CardTitle>
-              <Key className="h-5 w-5 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-white">{totalCredentials}</div>
-              <p className="text-xs text-blue-300/80">Kimlik havuzundaki toplam</p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 bg-gradient-to-br from-purple-900/20 to-violet-900/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-purple-200">Kullanılabilir</CardTitle>
-              <Users className="h-5 w-5 text-purple-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-white">{availableCredentials}</div>
-              <p className="text-xs text-purple-300/80">Atanmaya hazır kimlik</p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-cyan-500/20 hover:border-cyan-400/40 transition-all duration-300 bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-cyan-200">Kullanım Oranı</CardTitle>
-              <Activity className="h-5 w-5 text-cyan-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-white">{credentialUtilization}%</div>
-              <div className="mt-2">
-                <Progress value={credentialUtilization} className="h-2 bg-slate-700" />
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Enhanced Filters */}
@@ -912,25 +878,15 @@ export default function PackagesManagement() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Switch
-                                checked={plan.isActive}
-                                onCheckedChange={(checked) => 
-                                  toggleStatusMutation.mutate({ id: plan.id, isActive: checked })
-                                }
-                                className="data-[state=checked]:bg-green-600"
-                                disabled={toggleStatusMutation.isPending}
-                              />
-                              <Badge 
-                                variant={plan.isActive ? "default" : "secondary"}
-                                className={plan.isActive 
-                                  ? "bg-green-600/20 text-green-300 border-green-500/50" 
-                                  : "bg-slate-600/20 text-slate-400 border-slate-500/50"
-                                }
-                              >
-                                {plan.isActive ? '✅ Aktif' : '❌ Pasif'}
-                              </Badge>
-                            </div>
+                            <Badge 
+                              variant={plan.isActive ? "default" : "secondary"}
+                              className={plan.isActive 
+                                ? "bg-green-600/20 text-green-300 border-green-500/50" 
+                                : "bg-slate-600/20 text-slate-400 border-slate-500/50"
+                              }
+                            >
+                              {plan.isActive ? '✅ Aktif' : '❌ Pasif'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -953,37 +909,6 @@ export default function PackagesManagement() {
                                   >
                                     <Edit className="mr-2 h-4 w-4" />
                                     Paket Bilgilerini Düzenle
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    onClick={() => {
-                                      setSelectedPlanForCredentials(plan);
-                                      setShowCredentialDialog(true);
-                                    }}
-                                    className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                                  >
-                                    <Key className="mr-2 h-4 w-4" />
-                                    Kimlik Bilgilerini Yönet
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    onClick={() => 
-                                      toggleStatusMutation.mutate({ id: plan.id, isActive: !plan.isActive })
-                                    }
-                                    className={plan.isActive 
-                                      ? "text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                                      : "text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                                    }
-                                  >
-                                    {plan.isActive ? (
-                                      <>
-                                        <XCircle className="mr-2 h-4 w-4" />
-                                        Devre Dışı Bırak
-                                      </>
-                                    ) : (
-                                      <>
-                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                        Aktifleştir
-                                      </>
-                                    )}
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator className="bg-slate-600" />
                                   <DropdownMenuItem 
