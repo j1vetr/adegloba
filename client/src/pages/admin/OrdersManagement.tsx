@@ -110,23 +110,30 @@ export default function OrdersManagement() {
     enabled: !!selectedShip,
   });
 
-  // Calculate order statistics
+  // Calculate order statistics from database values
   const orderStats: OrderStats = {
     totalOrders: orders?.length || 0,
     pendingOrders: orders?.filter((o: OrderWithDetails) => o.status === 'pending').length || 0,
     paidOrders: orders?.filter((o: OrderWithDetails) => o.status === 'paid').length || 0,
     failedOrders: orders?.filter((o: OrderWithDetails) => o.status === 'failed').length || 0,
     cancelledOrders: orders?.filter((o: OrderWithDetails) => o.status === 'cancelled').length || 0,
+    // Total Revenue: sum of totalUsd from paid orders only
     totalRevenue: orders?.filter((o: OrderWithDetails) => o.status === 'paid')
-      .reduce((sum: number, order: OrderWithDetails) => sum + parseFloat(order.totalUsd), 0) || 0,
+      .reduce((sum: number, order: OrderWithDetails) => {
+        const amount = parseFloat(order.totalUsd || '0');
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0) || 0,
+    // Monthly Revenue: current month's paid orders only
     monthlyRevenue: orders?.filter((o: OrderWithDetails) => {
-      if (!o.createdAt) return false;
+      if (!o.createdAt || o.status !== 'paid') return false;
       const orderDate = new Date(o.createdAt);
       const now = new Date();
-      return o.status === 'paid' && 
-        orderDate.getMonth() === now.getMonth() && 
-        orderDate.getFullYear() === now.getFullYear();
-    }).reduce((sum: number, order: OrderWithDetails) => sum + parseFloat(order.totalUsd), 0) || 0,
+      return orderDate.getMonth() === now.getMonth() && 
+             orderDate.getFullYear() === now.getFullYear();
+    }).reduce((sum: number, order: OrderWithDetails) => {
+      const amount = parseFloat(order.totalUsd || '0');
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0) || 0,
   };
 
   // Filter orders based on search and status
@@ -374,100 +381,72 @@ export default function OrdersManagement() {
         <Separator className="bg-gray-700" />
 
         {/* Order Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
-          <Card className="glass-card border-border/50 hover:border-blue-400/40 transition-all duration-300 hover:scale-105">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <Card className="glass-card border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-600/20 rounded-lg animate-pulse">
-                  <ShoppingCart className="h-5 w-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Toplam Sipariş</p>
-                  <p className="text-2xl font-bold text-white transition-all duration-300">{orderStats.totalOrders}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-border/50 hover:border-yellow-400/40 transition-all duration-300 hover:scale-105">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-600/20 rounded-lg animate-pulse">
-                  <Clock className="h-5 w-5 text-yellow-400" />
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Bekleyen</p>
-                  <p className="text-2xl font-bold text-white transition-all duration-300">{orderStats.pendingOrders}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-border/50 hover:border-green-400/40 transition-all duration-300 hover:scale-105">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-600/20 rounded-lg animate-pulse">
+                <div className="p-2 bg-green-600/20 rounded-lg">
                   <CheckCircle className="h-5 w-5 text-green-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Ödenen</p>
-                  <p className="text-2xl font-bold text-white transition-all duration-300">{orderStats.paidOrders}</p>
+                  <p className="text-gray-400 text-sm">Ödenen Siparişler</p>
+                  <p className="text-2xl font-bold text-white">{orderStats.paidOrders}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50 hover:border-red-400/40 transition-all duration-300">
+          <Card className="glass-card border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-600/20 rounded-lg animate-pulse">
-                  <AlertCircle className="h-5 w-5 text-red-400" />
+                <div className="p-2 bg-yellow-600/20 rounded-lg">
+                  <Clock className="h-5 w-5 text-yellow-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Başarısız</p>
-                  <p className="text-2xl font-bold text-white">{orderStats.failedOrders}</p>
+                  <p className="text-gray-400 text-sm">Bekleyen Siparişler</p>
+                  <p className="text-2xl font-bold text-white">{orderStats.pendingOrders}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50 hover:border-gray-400/40 transition-all duration-300">
+          <Card className="glass-card border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gray-600/20 rounded-lg animate-pulse">
+                <div className="p-2 bg-gray-600/20 rounded-lg">
                   <X className="h-5 w-5 text-gray-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">İptal Edildi</p>
+                  <p className="text-gray-400 text-sm">İptal Edilen Siparişler</p>
                   <p className="text-2xl font-bold text-white">{orderStats.cancelledOrders}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50 hover:border-purple-400/40 transition-all duration-300 hover:scale-105">
+          <Card className="glass-card border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-600/20 rounded-lg animate-pulse">
-                  <TrendingUp className="h-5 w-5 text-purple-400" />
+                <div className="p-2 bg-purple-600/20 rounded-lg">
+                  <DollarSign className="h-5 w-5 text-purple-400" />
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Toplam Gelir</p>
-                  <p className="text-2xl font-bold text-white transition-all duration-300">{formatPrice(orderStats.totalRevenue)}</p>
+                  <p className="text-2xl font-bold text-white">{formatPrice(orderStats.totalRevenue)}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50 hover:border-cyan-400/40 transition-all duration-300 hover:scale-105">
+          <Card className="glass-card border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-cyan-600/20 rounded-lg animate-pulse">
+                <div className="p-2 bg-cyan-600/20 rounded-lg">
                   <Calendar className="h-5 w-5 text-cyan-400" />
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Aylık Gelir</p>
-                  <p className="text-2xl font-bold text-white transition-all duration-300">{formatPrice(orderStats.monthlyRevenue)}</p>
+                  <p className="text-2xl font-bold text-white">{formatPrice(orderStats.monthlyRevenue)}</p>
                 </div>
               </div>
             </CardContent>
