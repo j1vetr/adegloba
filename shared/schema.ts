@@ -76,8 +76,9 @@ export const plans = pgTable("plans", {
 export const coupons = pgTable("coupons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   code: varchar("code").notNull().unique(),
-  type: varchar("type").notNull(), // 'percent' or 'fixed'
+  type: varchar("type").notNull(), // 'percentage' or 'fixed'
   value: decimal("value", { precision: 10, scale: 2 }).notNull(),
+  minOrderAmount: decimal("min_order_amount", { precision: 10, scale: 2 }),
   maxUses: integer("max_uses"),
   uses: integer("uses").notNull().default(0),
   startsAt: timestamp("starts_at"),
@@ -402,11 +403,16 @@ export const insertOrderCredentialSchema = createInsertSchema(orderCredentials).
   createdAt: true,
 });
 
-export const insertCouponSchema = createInsertSchema(coupons).omit({
-  id: true,
-  uses: true,
-  createdAt: true,
-  updatedAt: true,
+// Frontend-compatible coupon schema
+export const insertCouponSchema = z.object({
+  code: z.string().min(1),
+  discountType: z.enum(['percentage', 'fixed']),
+  discountValue: z.number().positive(),
+  minOrderAmount: z.number().positive().optional().nullable(),
+  maxUses: z.number().int().positive().optional().nullable(),
+  validFrom: z.string().optional().nullable(),
+  validUntil: z.string().optional().nullable(),
+  isActive: z.boolean().default(true),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({

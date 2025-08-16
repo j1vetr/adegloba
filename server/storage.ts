@@ -617,32 +617,74 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(shipPlans.shipId, shipId), eq(shipPlans.planId, planId)));
   }
 
+  // Coupon transformation functions
+  private transformDbCouponToFrontend(dbCoupon: any): any {
+    return {
+      id: dbCoupon.id,
+      code: dbCoupon.code,
+      discountType: dbCoupon.type,
+      discountValue: parseFloat(dbCoupon.value),
+      minOrderAmount: dbCoupon.minOrderAmount ? parseFloat(dbCoupon.minOrderAmount) : null,
+      maxUses: dbCoupon.maxUses,
+      usedCount: dbCoupon.uses,
+      validFrom: dbCoupon.startsAt ? dbCoupon.startsAt.toISOString().split('T')[0] : null,
+      validUntil: dbCoupon.endsAt ? dbCoupon.endsAt.toISOString().split('T')[0] : null,
+      isActive: dbCoupon.isActive,
+      createdAt: dbCoupon.createdAt.toISOString(),
+      updatedAt: dbCoupon.updatedAt.toISOString(),
+    };
+  }
+
+  private transformFrontendCouponToDb(frontendCoupon: any): any {
+    const dbCoupon: any = {
+      code: frontendCoupon.code,
+      type: frontendCoupon.discountType,
+      value: frontendCoupon.discountValue.toString(),
+      minOrderAmount: frontendCoupon.minOrderAmount ? frontendCoupon.minOrderAmount.toString() : null,
+      maxUses: frontendCoupon.maxUses,
+      isActive: frontendCoupon.isActive,
+    };
+
+    if (frontendCoupon.validFrom) {
+      dbCoupon.startsAt = new Date(frontendCoupon.validFrom);
+    }
+    if (frontendCoupon.validUntil) {
+      dbCoupon.endsAt = new Date(frontendCoupon.validUntil);
+    }
+
+    return dbCoupon;
+  }
+
   // Coupon operations
-  async getCoupons(): Promise<Coupon[]> {
-    return db.select().from(coupons).orderBy(desc(coupons.createdAt));
+  async getCoupons(): Promise<any[]> {
+    const dbCoupons = await db.select().from(coupons).orderBy(desc(coupons.createdAt));
+    return dbCoupons.map(coupon => this.transformDbCouponToFrontend(coupon));
   }
 
-  async getAllCoupons(): Promise<Coupon[]> {
-    return db.select().from(coupons).orderBy(desc(coupons.createdAt));
+  async getAllCoupons(): Promise<any[]> {
+    const dbCoupons = await db.select().from(coupons).orderBy(desc(coupons.createdAt));
+    return dbCoupons.map(coupon => this.transformDbCouponToFrontend(coupon));
   }
 
-  async getCouponByCode(code: string): Promise<Coupon | undefined> {
-    const [coupon] = await db.select().from(coupons).where(eq(coupons.code, code));
-    return coupon;
+  async getCouponByCode(code: string): Promise<any | undefined> {
+    const [dbCoupon] = await db.select().from(coupons).where(eq(coupons.code, code));
+    return dbCoupon ? this.transformDbCouponToFrontend(dbCoupon) : undefined;
   }
 
-  async createCoupon(coupon: InsertCoupon): Promise<Coupon> {
-    const [newCoupon] = await db.insert(coupons).values(coupon).returning();
-    return newCoupon;
+  async createCoupon(frontendCoupon: any): Promise<any> {
+    const dbCouponData = this.transformFrontendCouponToDb(frontendCoupon);
+    const [newDbCoupon] = await db.insert(coupons).values(dbCouponData).returning();
+    return this.transformDbCouponToFrontend(newDbCoupon);
   }
 
-  async updateCoupon(id: string, coupon: Partial<InsertCoupon>): Promise<Coupon | undefined> {
-    const [updatedCoupon] = await db
+  async updateCoupon(id: string, frontendCoupon: any): Promise<any | undefined> {
+    const dbCouponData = this.transformFrontendCouponToDb(frontendCoupon);
+    const [updatedDbCoupon] = await db
       .update(coupons)
-      .set({ ...coupon, updatedAt: new Date() })
+      .set({ ...dbCouponData, updatedAt: new Date() })
       .where(eq(coupons.id, id))
       .returning();
-    return updatedCoupon;
+    return updatedDbCoupon ? this.transformDbCouponToFrontend(updatedDbCoupon) : undefined;
   }
 
   async deleteCoupon(id: string): Promise<void> {
