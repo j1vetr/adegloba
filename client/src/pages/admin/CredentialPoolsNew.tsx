@@ -128,12 +128,16 @@ export default function CredentialPoolsNew() {
       return await apiRequest("POST", "/api/admin/credentials", data);
     },
     onSuccess: () => {
+      // Invalidate both admin and user package queries to update stock
       queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/ship-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      
       setIsFormOpen(false);
       resetForm();
       toast({
         title: "Başarılı",
-        description: "Kimlik bilgisi başarıyla oluşturuldu.",
+        description: "Kimlik bilgisi başarıyla oluşturuldu. Stok güncellenmiştir.",
       });
     },
     onError: (error: Error) => {
@@ -151,13 +155,20 @@ export default function CredentialPoolsNew() {
       return await apiRequest("POST", "/api/admin/credentials/import", data);
     },
     onSuccess: (data) => {
+      // Invalidate both admin and user package queries to update stock
       queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/ship-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      
       setIsImportOpen(false);
       setImportText('');
       setSelectedPlanForImport('');
+      
+      console.log('📦 Stock updated after credential import:', data.updatedStock, 'for plan', selectedPlanForImport);
+      
       toast({
         title: "Başarılı",
-        description: `${data.created} kimlik bilgisi başarıyla içe aktarıldı.`,
+        description: `${data.created} kimlik bilgisi başarıyla içe aktarıldı. Stok güncellenmiştir.`,
       });
     },
     onError: (error: Error) => {
@@ -203,12 +214,16 @@ export default function CredentialPoolsNew() {
       return await apiRequest("DELETE", "/api/admin/credentials/bulk", { ids });
     },
     onSuccess: () => {
+      // Invalidate both admin and user package queries to update stock
       queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/ship-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      
       setDeleteCredentials([]);
       setSelectedCredentials([]);
       toast({
         title: "Başarılı",
-        description: "Seçili kimlik bilgileri başarıyla silindi.",
+        description: "Seçili kimlik bilgileri başarıyla silindi. Stok güncellenmiştir.",
       });
     },
     onError: (error: Error) => {

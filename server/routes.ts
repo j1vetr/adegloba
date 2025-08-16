@@ -1104,7 +1104,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      res.json({ created, total: credentials.length });
+      // Return fresh stock data after import
+      const updatedStock = await storage.getAvailableStock(planId);
+      console.log(`📦 Stock updated for plan ${planId}: ${updatedStock} available`);
+      
+      res.json({ 
+        created, 
+        total: credentials.length,
+        updatedStock,
+        timestamp: new Date().toISOString()
+      });
     } catch (error: any) {
       console.error("Error importing credentials:", error);
       res.status(500).json({ message: error.message });
@@ -2136,10 +2145,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const results = await storage.createCredentialPoolBatch(credentials);
+      
+      // Get updated stock information for affected plans
+      const updatedStockInfo = await storage.getAllCredentialStats();
+      console.log(`📦 Bulk import completed: ${results.length} credentials added`);
+      
       res.status(201).json({ 
         success: results.length, 
         errors,
-        credentials: results 
+        credentials: results,
+        stockUpdate: updatedStockInfo,
+        timestamp: new Date().toISOString()
       });
     } catch (error) {
       console.error('Error bulk importing credentials:', error);

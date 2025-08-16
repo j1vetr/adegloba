@@ -24,7 +24,9 @@ export default function Paketler() {
     queryKey: ["/api/user/ship-plans"],
     enabled: !!user?.ship_id,
     refetchInterval: 30000, // Refetch every 30 seconds to catch stock updates
-    staleTime: 10000 // Consider data stale after 10 seconds
+    staleTime: 5000, // Consider data stale after 5 seconds for faster updates
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    refetchOnMount: true // Always refetch when component mounts
   });
 
   const addToCartMutation = useMutation({
@@ -230,9 +232,21 @@ export default function Paketler() {
                 </CardHeader>
 
                 <CardContent className="relative z-10 space-y-6">
-                  {/* Enhanced Stock Info */}
+                  {/* Enhanced Stock Info - Show badge only when out of stock */}
                   <div className="text-center">
-                    {plan.inStock ? (
+                    {plan.inStock === false ? (
+                      <div className="relative">
+                        <div className="inline-flex items-center px-5 py-3 bg-gradient-to-r from-red-900/40 to-pink-900/40 backdrop-blur-sm rounded-2xl border border-red-400/30">
+                          <div className="flex items-center space-x-3">
+                            <X className="h-5 w-5 text-red-400" />
+                            <div className="text-left">
+                              <div className="text-red-300 font-bold text-sm">Stok Bitti</div>
+                              <div className="text-red-400/70 text-xs">Yakında Gelecek</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
                       <div className="relative group/stock">
                         <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl blur-md opacity-0 group-hover/stock:opacity-30 transition-opacity duration-500" />
                         <div className="relative inline-flex items-center px-5 py-3 bg-gradient-to-r from-green-900/40 to-emerald-900/40 backdrop-blur-sm rounded-2xl border border-green-400/30">
@@ -246,18 +260,6 @@ export default function Paketler() {
                                 {plan.availableStock} Adet Stokta
                               </div>
                               <div className="text-green-400/70 text-xs">Anında Teslimat</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <div className="inline-flex items-center px-5 py-3 bg-gradient-to-r from-red-900/40 to-pink-900/40 backdrop-blur-sm rounded-2xl border border-red-400/30">
-                          <div className="flex items-center space-x-3">
-                            <X className="h-5 w-5 text-red-400" />
-                            <div className="text-left">
-                              <div className="text-red-300 font-bold text-sm">Stokta Yok</div>
-                              <div className="text-red-400/70 text-xs">Yakında Gelecek</div>
                             </div>
                           </div>
                         </div>
@@ -414,16 +416,6 @@ export default function Paketler() {
                     </Button>
                   </div>
 
-                  {/* Enhanced Status Badge */}
-                  <div className="absolute top-6 right-6">
-                    <div className="relative group/badge">
-                      <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl blur-md opacity-50 group-hover/badge:opacity-75 transition-opacity duration-300" />
-                      <Badge className="relative bg-gradient-to-r from-green-900/80 to-emerald-900/80 text-green-300 border border-green-400/40 px-3 py-1 font-semibold backdrop-blur-sm">
-                        <Star className="h-3 w-3 mr-1" />
-                        Aktif
-                      </Badge>
-                    </div>
-                  </div>
                 </CardContent>
 
                 {/* Enhanced Hover Effects */}
