@@ -332,13 +332,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const { code, shipId } = req.body;
+      const { code, shipId, subtotal } = req.body;
       const userId = req.session.userId;
-      const coupon = await couponService.validateCoupon(code, shipId, userId);
-      res.json(coupon);
+      
+      // Use the new method that validates and calculates discount
+      const result = await couponService.validateAndCalculateDiscount(
+        code, 
+        parseFloat(subtotal) || 0, 
+        shipId, 
+        userId
+      );
+      
+      res.json(result);
     } catch (error) {
       console.error("Error validating coupon:", error);
-      res.status(400).json({ message: error.message || "Invalid coupon" });
+      res.status(400).json({ 
+        valid: false,
+        message: error.message || "Invalid coupon",
+        discount_amount: 0,
+        new_total: parseFloat(req.body.subtotal) || 0
+      });
     }
   });
 
@@ -351,7 +364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session.userId;
       const cartItems = await storage.getCartItems(userId);
-      const cartTotal = await storage.getCartTotal(userId);
+      const cartTotal = await storage.getCartTotalFormatted(userId);
       
       res.json({
         items: cartItems,
@@ -360,6 +373,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching cart:", error);
       res.status(500).json({ message: "Failed to fetch cart" });
+    }
+  });
+
+  // Get cart total for coupon validation
+  app.get('/api/cart/total', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
+    try {
+      const userId = req.session.userId;
+      const cartTotal = await storage.getCartTotalFormatted(userId);
+      res.json(cartTotal);
+    } catch (error) {
+      console.error("Error fetching cart total:", error);
+      res.status(500).json({ message: "Failed to fetch cart total" });
     }
   });
 
@@ -470,10 +499,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply coupon if provided
       if (couponCode) {
         try {
-          validatedCoupon = await couponService.validateCoupon(couponCode, user.ship_id, userId);
-          const couponResult = await couponService.applyCouponDiscount(validatedCoupon, subtotal);
-          discount = couponResult.discount;
-          total = couponResult.total;
+          const couponResult = await couponService.validateAndCalculateDiscount(
+            couponCode, 
+            subtotal, 
+            user.ship_id, 
+            userId
+          );
+          validatedCoupon = couponResult.coupon;
+          discount = couponResult.discount_amount;
+          total = couponResult.new_total;
         } catch (error) {
           return res.status(400).json({ message: error.message });
         }
@@ -553,10 +587,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply coupon if provided
       if (couponCode) {
         try {
-          validatedCoupon = await couponService.validateCoupon(couponCode, user.ship_id, userId);
-          const couponResult = await couponService.applyCouponDiscount(validatedCoupon, subtotal);
-          discount = couponResult.discount;
-          total = couponResult.total;
+          const couponResult = await couponService.validateAndCalculateDiscount(
+            couponCode, 
+            subtotal, 
+            user.ship_id, 
+            userId
+          );
+          validatedCoupon = couponResult.coupon;
+          discount = couponResult.discount_amount;
+          total = couponResult.new_total;
         } catch (error) {
           return res.status(400).json({ message: error.message });
         }

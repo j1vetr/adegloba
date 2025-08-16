@@ -104,11 +104,12 @@ export interface IStorage {
   deleteCredential(id: string): Promise<void>;
 
   // Coupon operations
-  getCoupons(): Promise<Coupon[]>;
-  getAllCoupons(): Promise<Coupon[]>;
-  getCouponByCode(code: string): Promise<Coupon | undefined>;
-  createCoupon(coupon: InsertCoupon): Promise<Coupon>;
-  updateCoupon(id: string, coupon: Partial<InsertCoupon>): Promise<Coupon | undefined>;
+  getCoupons(): Promise<any[]>;
+  getAllCoupons(): Promise<any[]>;
+  getCouponByCode(code: string): Promise<any | undefined>;
+  getCouponById(id: string): Promise<any | undefined>;
+  createCoupon(coupon: any): Promise<any>;
+  updateCoupon(id: string, coupon: any): Promise<any | undefined>;
   deleteCoupon(id: string): Promise<void>;
   
   // Coupon usage operations
@@ -667,7 +668,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCouponByCode(code: string): Promise<any | undefined> {
-    const [dbCoupon] = await db.select().from(coupons).where(eq(coupons.code, code));
+    // Search case-insensitively by converting both to uppercase
+    const [dbCoupon] = await db.select().from(coupons).where(sql`UPPER(${coupons.code}) = UPPER(${code})`);
+    return dbCoupon ? this.transformDbCouponToFrontend(dbCoupon) : undefined;
+  }
+
+  async getCouponById(id: string): Promise<any | undefined> {
+    const [dbCoupon] = await db.select().from(coupons).where(eq(coupons.id, id));
     return dbCoupon ? this.transformDbCouponToFrontend(dbCoupon) : undefined;
   }
 
@@ -1407,6 +1414,16 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(couponUsage.userId, userId), eq(couponUsage.couponId, couponId)));
 
     return result[0]?.count || 0;
+  }
+
+  // Helper method to get cart total with formatting
+  async getCartTotalFormatted(userId: string): Promise<{ subtotal: number; total: number; itemCount: number; subtotalFormatted: string; totalFormatted: string }> {
+    const cartTotal = await this.getCartTotal(userId);
+    return {
+      ...cartTotal,
+      subtotalFormatted: `$${cartTotal.subtotal.toFixed(2)}`,
+      totalFormatted: `$${cartTotal.total.toFixed(2)}`
+    };
   }
 }
 

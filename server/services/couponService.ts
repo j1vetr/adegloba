@@ -3,8 +3,10 @@ import type { IStorage } from "../storage";
 export class CouponService {
   constructor(private storage: IStorage) {}
 
-  async validateCoupon(code: string, shipId?: string, userId?: string) {
-    const coupon = await this.storage.getCouponByCode(code);
+  async validateCoupon(code: string, shipId?: string, userId?: string, subtotal?: number) {
+    // Normalize coupon code: trim and convert to uppercase
+    const normalizedCode = code.trim().toUpperCase();
+    const coupon = await this.storage.getCouponByCode(normalizedCode);
     
     if (!coupon) {
       throw new Error("Kupon kodu bulunamadı");
@@ -17,26 +19,31 @@ export class CouponService {
     const now = new Date();
 
     // Check start date
-    if (coupon.startsAt && new Date(coupon.startsAt) > now) {
+    if (coupon.validFrom && new Date(coupon.validFrom) > now) {
       throw new Error("Kupon henüz aktif değil");
     }
 
     // Check end date
-    if (coupon.endsAt && new Date(coupon.endsAt) < now) {
+    if (coupon.validUntil && new Date(coupon.validUntil) < now) {
       throw new Error("Kupon süresi dolmuş");
     }
 
-    // Check total usage limit using coupon_usage table
+    // Check minimum order amount
+    if (coupon.minOrderAmount && subtotal && subtotal < coupon.minOrderAmount) {
+      throw new Error(`Minimum sipariş tutarı $${coupon.minOrderAmount.toFixed(2)} olmalıdır`);
+    }
+
+    // Check total usage limit
     const totalUsage = await this.storage.getCouponUsageCount(coupon.id);
     if (coupon.maxUses && totalUsage >= coupon.maxUses) {
       throw new Error("Kupon kullanım limiti dolmuş");
     }
 
     // Check per-user usage limit
-    if (userId && coupon.maxUsesPerUser !== null) {
+    if (userId) {
       const userUsage = await this.storage.getUserCouponUsage(userId, coupon.id);
-      if (userUsage >= coupon.maxUsesPerUser) {
-        throw new Error("Bu kuponu maksimum sayıda kullandınız");
+      if (userUsage > 0) {
+        throw new Error("Bu kuponu daha önce kullandınız");
       }
     }
 
@@ -51,20 +58,23 @@ export class CouponService {
   async applyCouponDiscount(coupon: any, subtotal: number) {
     let discount = 0;
 
-    if (coupon.type === 'percentage') {
-      discount = (subtotal * parseFloat(coupon.value)) / 100;
-      if (coupon.maxDiscount && discount > parseFloat(coupon.maxDiscount)) {
-        discount = parseFloat(coupon.maxDiscount);
-      }
-    } else if (coupon.type === 'fixed') {
-      discount = Math.min(parseFloat(coupon.value), subtotal);
+    if (coupon.discountType === 'percentage') {
+      discount = (subtotal * coupon.discountValue) / 100;
+    } else if (coupon.discountType === 'fixed') {
+      discount = coupon.discountValue;
     }
 
+    // Cap discount to not exceed subtotal
+    discount = Math.min(discount, subtotal);
+    
+    // Ensure minimum 0 discount
+    discount = Math.max(0, discount);
+    
     const total = Math.max(0, subtotal - discount);
     
     return {
-      discount: parseFloat(discount.toFixed(2)),
-      total: parseFloat(total.toFixed(2)),
+      discount_amount: parseFloat(discount.toFixed(2)),
+      new_total: parseFloat(total.toFixed(2)),
       coupon
     };
   }
@@ -76,5 +86,18 @@ export class CouponService {
       orderId,
       discountAmount: discountAmount.toFixed(2)
     });
+  }
+
+  async validateAndCalculateDiscount(code: string, subtotal: number, shipId?: string, userId?: string) {
+    const coupon = await this.validateCoupon(code, shipId, userId, subtotal);
+    const result = await this.applyCouponDiscount(coupon, subtotal);
+    
+    return {
+      valid: true,
+      coupon,
+      discount_amount: result.discount_amount,
+      new_total: result.new_total,
+      savings: `$${result.discount_amount.toFixed(2)}`
+    };
   }
 }
