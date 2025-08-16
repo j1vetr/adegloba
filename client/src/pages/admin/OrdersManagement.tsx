@@ -320,13 +320,10 @@ export default function OrdersManagement() {
   };
 
   const getStatusBadge = (status: string) => {
-    const getAnimatedBadge = (color: string, bgColor: string, shadowColor: string, label: string, icon: string) => (
+    const getStaticBadge = (color: string, bgColor: string, label: string, icon: string) => (
       <div className="flex items-center gap-2">
-        <div className="relative">
-          <div className={`w-3 h-3 ${bgColor} rounded-full animate-pulse shadow-lg ${shadowColor}`}></div>
-          <div className={`absolute top-0 left-0 w-3 h-3 ${color} rounded-full animate-ping opacity-75`}></div>
-        </div>
-        <Badge className={`${bgColor}/20 ${color} border-${color.replace('text-', '')}/50 animate-pulse hover:${bgColor}/30 hover:border-${color.replace('text-', '')}/70 transition-all duration-300 shadow-lg ${shadowColor}`}>
+        <div className={`w-3 h-3 ${bgColor} rounded-full`}></div>
+        <Badge className={`${bgColor}/20 ${color} border-${color.replace('text-', '')}/50 hover:${bgColor}/30 hover:border-${color.replace('text-', '')}/70 transition-colors duration-200`}>
           {icon} {label}
         </Badge>
       </div>
@@ -334,20 +331,20 @@ export default function OrdersManagement() {
 
     switch (status) {
       case 'pending':
-        return getAnimatedBadge('text-yellow-300', 'bg-yellow-500', 'shadow-yellow-500/50', 'Bekliyor', '⏳');
+        return getStaticBadge('text-yellow-300', 'bg-yellow-500', 'Bekliyor', '⏳');
       case 'paid':
       case 'completed': // Handle both statuses for backwards compatibility
-        return getAnimatedBadge('text-green-300', 'bg-green-500', 'shadow-green-500/50', 'Ödendi', '✅');
+        return getStaticBadge('text-green-300', 'bg-green-500', 'Ödendi', '✅');
       case 'failed':
-        return getAnimatedBadge('text-red-300', 'bg-red-500', 'shadow-red-500/50', 'Başarısız', '❌');
+        return getStaticBadge('text-red-300', 'bg-red-500', 'Başarısız', '❌');
       case 'cancelled':
-        return getAnimatedBadge('text-gray-300', 'bg-gray-500', 'shadow-gray-500/50', 'İptal Edildi', '🚫');
+        return getStaticBadge('text-gray-300', 'bg-gray-500', 'İptal Edildi', '🚫');
       case 'refunded':
-        return getAnimatedBadge('text-purple-300', 'bg-purple-500', 'shadow-purple-500/50', 'İade Edildi', '↩️');
+        return getStaticBadge('text-purple-300', 'bg-purple-500', 'İade Edildi', '↩️');
       case 'expired':
-        return getAnimatedBadge('text-slate-300', 'bg-slate-500', 'shadow-slate-500/50', 'Süresi Doldu', '⏰');
+        return getStaticBadge('text-slate-300', 'bg-slate-500', 'Süresi Doldu', '⏰');
       default:
-        return getAnimatedBadge('text-yellow-300', 'bg-yellow-500', 'shadow-yellow-500/50', 'Bekliyor', '⏳');
+        return getStaticBadge('text-yellow-300', 'bg-yellow-500', 'Bekliyor', '⏳');
     }
   };
 
@@ -536,7 +533,7 @@ export default function OrdersManagement() {
                   </TableHeader>
                   <TableBody>
                     {filteredOrders.map((order: OrderWithDetails) => (
-                      <TableRow key={order.id} className="border-gray-700 hover:bg-gray-800/50 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg hover:shadow-primary/10">
+                      <TableRow key={order.id} className="border-gray-700 hover:bg-gray-800/50 transition-colors duration-200">
                         <TableCell className="font-mono text-sm text-cyan-400">
                           {order.id.slice(0, 8)}...
                         </TableCell>
