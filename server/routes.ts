@@ -319,21 +319,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Add fresh stock information to each plan with no caching
         const plansWithStock = await Promise.all(plans.map(async (plan) => {
-          const availableStock = await storage.getAvailableStock(plan.id);
+          const availableCount = await storage.getAvailableStock(plan.id);
           return {
             ...plan,
-            availableStock,
-            inStock: availableStock > 0,
+            availableCount,
+            availableStock: availableCount, // For backwards compatibility
+            inStock: availableCount > 0,
             shipName: user.ship?.name || 'Belirtilmemiş',
             timestamp: new Date().toISOString() // Force cache bust
           };
         }));
         
-        // Set headers to prevent caching
+        // Set strong headers to prevent caching and force fresh data
         res.set({
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
           'Pragma': 'no-cache',
-          'Expires': '0'
+          'Expires': '0',
+          'Last-Modified': new Date().toUTCString(),
+          'ETag': Date.now().toString() // Force unique response
         });
         
         res.json(plansWithStock);

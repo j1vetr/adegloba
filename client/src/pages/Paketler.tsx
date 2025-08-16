@@ -11,7 +11,8 @@ import type { Plan } from "@shared/schema";
 
 // Extended plan type with stock information
 type PlanWithStock = Plan & {
-  availableStock: number;
+  availableCount: number;
+  availableStock: number; // For backwards compatibility
   inStock: boolean;
   shipName: string;
   timestamp: string;
@@ -254,7 +255,7 @@ export default function Paketler() {
                             </div>
                             <div className="text-left">
                               <div className="text-green-300 font-bold text-sm">
-                                {plan.availableStock} Adet Stokta
+                                Adet Stokta: {plan.availableCount}
                               </div>
                               <div className="text-green-400/70 text-xs">Anında Teslimat</div>
                             </div>
