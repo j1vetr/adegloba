@@ -320,31 +320,30 @@ export default function OrdersManagement() {
   };
 
   const getStatusBadge = (status: string) => {
-    const getStaticBadge = (color: string, bgColor: string, label: string, icon: string) => (
-      <div className="flex items-center gap-2">
-        <div className={`w-3 h-3 ${bgColor} rounded-full`}></div>
-        <Badge className={`${bgColor}/20 ${color} border-${color.replace('text-', '')}/50 hover:${bgColor}/30 hover:border-${color.replace('text-', '')}/70 transition-colors duration-200`}>
-          {icon} {label}
-        </Badge>
+    const getIconBadge = (color: string, bgColor: string, icon: string) => (
+      <div className="flex items-center justify-center">
+        <div className={`w-8 h-8 ${bgColor}/20 ${color} border border-${color.replace('text-', '')}/50 rounded-full flex items-center justify-center text-lg hover:${bgColor}/30 hover:border-${color.replace('text-', '')}/70 transition-colors duration-200`}>
+          {icon}
+        </div>
       </div>
     );
 
     switch (status) {
       case 'pending':
-        return getStaticBadge('text-yellow-300', 'bg-yellow-500', 'Bekliyor', '⏳');
+        return getIconBadge('text-yellow-300', 'bg-yellow-500', '⏳');
       case 'paid':
       case 'completed': // Handle both statuses for backwards compatibility
-        return getStaticBadge('text-green-300', 'bg-green-500', 'Ödendi', '✅');
+        return getIconBadge('text-green-300', 'bg-green-500', '✅');
       case 'failed':
-        return getStaticBadge('text-red-300', 'bg-red-500', 'Başarısız', '❌');
+        return getIconBadge('text-red-300', 'bg-red-500', '❌');
       case 'cancelled':
-        return getStaticBadge('text-gray-300', 'bg-gray-500', 'İptal Edildi', '🚫');
+        return getIconBadge('text-gray-300', 'bg-gray-500', '🚫');
       case 'refunded':
-        return getStaticBadge('text-purple-300', 'bg-purple-500', 'İade Edildi', '↩️');
+        return getIconBadge('text-purple-300', 'bg-purple-500', '↩️');
       case 'expired':
-        return getStaticBadge('text-slate-300', 'bg-slate-500', 'Süresi Doldu', '⏰');
+        return getIconBadge('text-slate-300', 'bg-slate-500', '⏰');
       default:
-        return getStaticBadge('text-yellow-300', 'bg-yellow-500', 'Bekliyor', '⏳');
+        return getIconBadge('text-yellow-300', 'bg-yellow-500', '⏳');
     }
   };
 
