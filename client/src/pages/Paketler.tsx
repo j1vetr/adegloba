@@ -20,18 +20,21 @@ type PlanWithStock = Plan & {
 
 export default function Paketler() {
   const { user, isLoading: authLoading } = useUserAuth();
+  
+  // Get ship name from user data if available
+  const shipName = user?.ship?.name;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
-    queryKey: ["/api/user/ship-plans", Date.now()], // Force unique query key
+    queryKey: ["/api/user/ship-plans"], // Remove Date.now() to prevent constant refetch
     enabled: !!user?.ship_id,
-    refetchInterval: 10000, // Refetch every 10 seconds for immediate updates
-    staleTime: 0, // Always fresh data, no cache
-    cacheTime: 0, // Don't cache at all
+    refetchInterval: 60000, // Refetch every 60 seconds (reduced frequency)
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache at all (gcTime replaces cacheTime in v5)
     refetchOnWindowFocus: true, // Refetch when user returns to tab
     refetchOnMount: true, // Always refetch when component mounts
-    refetchIntervalInBackground: true // Continue refetching in background
+    refetchIntervalInBackground: false // Don't refetch in background to reduce load
   });
 
   const addToCartMutation = useMutation({
@@ -135,7 +138,7 @@ export default function Paketler() {
                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping" />
                     </div>
                     <span className="text-slate-300 font-medium">Aktif Gemi:</span>
-                    <span className="text-white font-bold">{userShipPlans?.[0]?.shipName || 'Belirtilmemiş'}</span>
+                    <span className="text-white font-bold">{userShipPlans?.[0]?.shipName || shipName || 'Belirtilmemiş'}</span>
                   </div>
                 </div>
               </div>

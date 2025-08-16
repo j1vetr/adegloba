@@ -311,11 +311,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userId = req.session.userId;
         const user = await storage.getUserWithShip(userId);
         
+        console.log('User data:', { userId, user: { ...user, ship: user?.ship } });
+        
         if (!user || !user.ship_id) {
           return res.status(400).json({ message: "User has no assigned ship" });
         }
         
         const plans = await storage.getPlansForShip(user.ship_id);
+        
+        // Get ship name - ensure it's properly extracted
+        const shipName = user.ship?.name || 'Gemi Atanmamış';
+        console.log('Ship name being used:', shipName);
         
         // Add fresh stock information to each plan with no caching
         const plansWithStock = await Promise.all(plans.map(async (plan) => {
@@ -325,10 +331,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             availableCount,
             availableStock: availableCount, // For backwards compatibility
             inStock: availableCount > 0,
-            shipName: user.ship?.name || 'Belirtilmemiş',
+            shipName: shipName,
             timestamp: new Date().toISOString() // Force cache bust
           };
         }));
+        
+        console.log('Returning plans with ship name:', plansWithStock[0]?.shipName);
         
         // Set aggressive headers to completely prevent caching
         res.set({
@@ -2194,7 +2202,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       await storage.unassignCredential(id);
-      res.status(200).json({ message: 'Credential unassigned successfully' });
+      
+      // Force cache refresh for immediate stock updates
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'X-Stock-Updated': Date.now().toString()
+      });
+      
+      res.status(200).json({ 
+        message: 'Credential unassigned successfully',
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Error unassigning credential:', error);
       res.status(500).json({ message: 'Failed to unassign credential' });

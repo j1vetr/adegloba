@@ -74,16 +74,16 @@ export default function CredentialPoolsNew() {
   });
 
   // Fetch credentials with plan and ship details
-  const { data: credentials, isLoading: credentialsLoading } = useQuery({
+  const { data: credentials = [], isLoading: credentialsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/credentials"],
   });
 
   // Fetch ships and plans for filters
-  const { data: ships, isLoading: shipsLoading } = useQuery({
+  const { data: ships = [], isLoading: shipsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/ships"],
   });
 
-  const { data: plans, isLoading: plansLoading } = useQuery({
+  const { data: plans = [], isLoading: plansLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/plans"],
   });
 
@@ -168,7 +168,7 @@ export default function CredentialPoolsNew() {
       
       toast({
         title: "Başarılı",
-        description: `${data.created} kimlik bilgisi başarıyla içe aktarıldı. Stok güncellenmiştir.`,
+        description: `${data.created || data.count || 'Birkaç'} kimlik bilgisi başarıyla içe aktarıldı. Stok güncellenmiştir.`,
       });
     },
     onError: (error: Error) => {
@@ -190,13 +190,17 @@ export default function CredentialPoolsNew() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
+      // Force complete cache refresh for immediate stock updates
+      queryClient.resetQueries({ queryKey: ["/api/admin/credentials"] });
+      queryClient.removeQueries({ queryKey: ["/api/user/ship-plans"], exact: false });
+      queryClient.resetQueries({ queryKey: ["/api/admin/plans"] });
+      
       setShowEditDialog(false);
       setEditingCredential(null);
       resetForm();
       toast({
         title: "Başarılı",
-        description: "Kimlik bilgisi başarıyla güncellendi.",
+        description: "Kimlik bilgisi başarıyla güncellendi. Stok güncellenmiştir.",
       });
     },
     onError: (error: Error) => {
