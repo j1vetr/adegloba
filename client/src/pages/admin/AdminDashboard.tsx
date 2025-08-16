@@ -170,33 +170,6 @@ export default function AdminDashboard() {
       trend: "sipariş",
       trendUp: true,
       color: "text-purple-400"
-    },
-    {
-      title: "Aktif Paketler",
-      value: stats?.activePackages || 0,
-      description: "Aktif veri paketleri",
-      icon: Package,
-      trend: "paket",
-      trendUp: true,
-      color: "text-cyan-400"
-    },
-    {
-      title: "İptal Edilen",
-      value: stats?.cancelledOrders || 0,
-      description: "İptal edilen siparişler",
-      icon: AlertCircle,
-      trend: "iptal",
-      trendUp: false,
-      color: "text-red-400"
-    },
-    {
-      title: "Bekleyen Sipariş",
-      value: stats?.pendingOrders || 0,
-      description: "Ödeme bekleyen siparişler",
-      icon: Clock,
-      trend: "bekliyor",
-      trendUp: false,
-      color: "text-yellow-400"
     }
   ];
 
@@ -226,7 +199,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {statCards.map((stat, index) => {
             const Icon = stat.icon;
             return (
