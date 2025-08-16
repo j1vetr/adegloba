@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import type { Ship, Plan, CredentialPool } from '../../../shared/schema';
+import type { Ship, Plan, CredentialPool } from '@shared/schema';
 
 interface CredentialFormData {
   planId: string;
@@ -62,6 +62,10 @@ export default function CredentialPoolsNew() {
   const [showPasswords, setShowPasswords] = useState(false);
   const [importText, setImportText] = useState('');
   const [selectedPlanForImport, setSelectedPlanForImport] = useState('');
+  const [editingCredential, setEditingCredential] = useState<CredentialWithDetails | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
+  const [selectedCredentialForAssignment, setSelectedCredentialForAssignment] = useState<CredentialWithDetails | null>(null);
   
   const [formData, setFormData] = useState<CredentialFormData>({
     planId: '',
@@ -154,6 +158,34 @@ export default function CredentialPoolsNew() {
       toast({
         title: "Başarılı",
         description: `${data.created} kimlik bilgisi başarıyla içe aktarıldı.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Edit credential mutation
+  const editMutation = useMutation({
+    mutationFn: async (data: { id: string; username: string; password: string; planId: string }) => {
+      return await apiRequest("PUT", `/api/admin/credentials/${data.id}`, {
+        username: data.username,
+        password: data.password,
+        planId: data.planId
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
+      setShowEditDialog(false);
+      setEditingCredential(null);
+      resetForm();
+      toast({
+        title: "Başarılı",
+        description: "Kimlik bilgisi başarıyla güncellendi.",
       });
     },
     onError: (error: Error) => {
@@ -279,7 +311,7 @@ export default function CredentialPoolsNew() {
   };
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Kimlik Havuzu Yönetimi">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -560,12 +592,23 @@ export default function CredentialPoolsNew() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setEditingCredential(credential);
+                                setFormData({
+                                  planId: credential.planId,
+                                  username: credential.username,
+                                  password: credential.password
+                                });
+                                setShowEditDialog(true);
+                              }}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Düzenle
                               </DropdownMenuItem>
                               {credential.isAssigned && (
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  setSelectedCredentialForAssignment(credential);
+                                  setShowAssignmentDialog(true);
+                                }}>
                                   <User className="mr-2 h-4 w-4" />
                                   Atama Detayları
                                 </DropdownMenuItem>
@@ -742,6 +785,174 @@ export default function CredentialPoolsNew() {
                   İçe Aktar
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Credential Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="bg-slate-800 border-slate-700 max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-white">Kimlik Bilgisini Düzenle</DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Mevcut kimlik bilgisinin kullanıcı adı, şifresi ve paket atamasini düzenleyin.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-plan" className="text-slate-300">Paket</Label>
+                <Select
+                  value={formData.planId}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, planId: value }))}
+                >
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectValue placeholder="Paket seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plans?.map((plan: Plan) => {
+                      const ship = ships?.find((s: Ship) => s.id === plan.shipId);
+                      return (
+                        <SelectItem key={plan.id} value={plan.id}>
+                          {ship?.name} - {plan.name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-username" className="text-slate-300">Kullanıcı Adı</Label>
+                <Input
+                  id="edit-username"
+                  value={formData.username}
+                  onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="Kullanıcı adı girin"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-password" className="text-slate-300">Şifre</Label>
+                <Input
+                  id="edit-password"
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="Şifre girin"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditDialog(false);
+                  setEditingCredential(null);
+                  resetForm();
+                }}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                İptal
+              </Button>
+              <Button
+                onClick={() => {
+                  if (editingCredential && formData.username && formData.password && formData.planId) {
+                    editMutation.mutate({
+                      id: editingCredential.id,
+                      username: formData.username,
+                      password: formData.password,
+                      planId: formData.planId
+                    });
+                  }
+                }}
+                disabled={editMutation.isPending || !formData.username || !formData.password || !formData.planId}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {editMutation.isPending && (
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                )}
+                Güncelle
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Assignment Details Dialog */}
+        <Dialog open={showAssignmentDialog} onOpenChange={setShowAssignmentDialog}>
+          <DialogContent className="bg-slate-800 border-slate-700 max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-white">Atama Detayları</DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Bu kimlik bilgisinin atama durumu ve detayları.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {selectedCredentialForAssignment && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-slate-400 text-sm">Kullanıcı Adı</Label>
+                      <p className="text-white font-medium">{selectedCredentialForAssignment.username}</p>
+                    </div>
+                    <div>
+                      <Label className="text-slate-400 text-sm">Durum</Label>
+                      <p className="text-white">
+                        {selectedCredentialForAssignment.isAssigned ? (
+                          <Badge className="bg-red-600/20 text-red-300 border-red-500/50">
+                            Atanmış
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-green-600/20 text-green-300 border-green-500/50">
+                            Kullanılabilir
+                          </Badge>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-slate-400 text-sm">Paket</Label>
+                    <p className="text-white">
+                      {selectedCredentialForAssignment.plan?.name} 
+                      <span className="text-slate-400">({selectedCredentialForAssignment.ship?.name})</span>
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-slate-400 text-sm">Oluşturulma Tarihi</Label>
+                    <p className="text-white">{formatDate(selectedCredentialForAssignment.createdAt)}</p>
+                  </div>
+                  
+                  {selectedCredentialForAssignment.isAssigned && (
+                    <>
+                      <Separator className="bg-slate-600" />
+                      <div>
+                        <Label className="text-slate-400 text-sm">Atandığı Kullanıcı</Label>
+                        <p className="text-white">
+                          {selectedCredentialForAssignment.assignedToUserId || "Bilinmiyor"}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-slate-400 text-sm">Atandığı Sipariş</Label>
+                        <p className="text-white">
+                          {selectedCredentialForAssignment.assignedToOrderId || "Bilinmiyor"}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="flex justify-end pt-4">
+              <Button
+                onClick={() => {
+                  setShowAssignmentDialog(false);
+                  setSelectedCredentialForAssignment(null);
+                }}
+                className="bg-slate-600 hover:bg-slate-700 text-white"
+              >
+                Kapat
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
