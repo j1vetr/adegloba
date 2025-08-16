@@ -108,35 +108,35 @@ export default function Sepet() {
 
   const validateCouponMutation = useMutation({
     mutationFn: async (code: string) => {
+      const subtotal = cartData?.subtotal || 0;
       const response = await apiRequest('POST', '/api/coupons/validate', { 
         code, 
-        shipId: user?.ship_id 
+        shipId: user?.ship_id,
+        subtotal
       });
       return response.json();
     },
-    onSuccess: (coupon) => {
-      setAppliedCoupon(coupon);
-      
-      // Calculate discount
-      const subtotal = cartData?.subtotal || 0;
-      let discountAmount = 0;
-      
-      if (coupon.type === 'percentage') {
-        discountAmount = (subtotal * parseFloat(coupon.value)) / 100;
-        if (coupon.maxDiscount && discountAmount > parseFloat(coupon.maxDiscount)) {
-          discountAmount = parseFloat(coupon.maxDiscount);
-        }
-      } else if (coupon.type === 'fixed') {
-        discountAmount = Math.min(parseFloat(coupon.value), subtotal);
+    onSuccess: (result) => {
+      if (result.valid && result.coupon) {
+        setAppliedCoupon(result.coupon);
+        setDiscount(result.discount_amount || 0);
+        toast({
+          title: "Kupon Uygulandı",
+          description: `${result.coupon.code} kuponu başarıyla uygulandı! $${result.discount_amount.toFixed(2)} indirim`,
+        });
+      } else {
+        setAppliedCoupon(null);
+        setDiscount(0);
+        toast({
+          title: "Kupon Hatası",
+          description: result.message || "Kupon geçerli değil",
+          variant: "destructive",
+        });
       }
-      
-      setDiscount(discountAmount);
-      toast({
-        title: "Kupon Uygulandı",
-        description: `${coupon.code} kuponu başarıyla uygulandı`,
-      });
     },
     onError: (error: any) => {
+      setAppliedCoupon(null);
+      setDiscount(0);
       toast({
         title: "Kupon Hatası",
         description: error.message || "Kupon geçerli değil",
