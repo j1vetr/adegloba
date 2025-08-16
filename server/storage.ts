@@ -116,6 +116,7 @@ export interface IStorage {
   createCouponUsage(usage: InsertCouponUsage): Promise<CouponUsage>;
   getCouponUsageCount(couponId: string, userId?: string): Promise<number>;
   getUserCouponUsage(userId: string, couponId: string): Promise<number>;
+  getUserCouponUsageForCompletedOrders(userId: string, couponId: string): Promise<number>;
 
   // Order operations
   getOrders(): Promise<Order[]>;
@@ -1412,6 +1413,20 @@ export class DatabaseStorage implements IStorage {
       .select({ count: sql<number>`count(*)` })
       .from(couponUsage)
       .where(and(eq(couponUsage.userId, userId), eq(couponUsage.couponId, couponId)));
+
+    return result[0]?.count || 0;
+  }
+
+  async getUserCouponUsageForCompletedOrders(userId: string, couponId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(couponUsage)
+      .innerJoin(orders, eq(couponUsage.orderId, orders.id))
+      .where(and(
+        eq(couponUsage.userId, userId),
+        eq(couponUsage.couponId, couponId),
+        eq(orders.status, 'paid')
+      ));
 
     return result[0]?.count || 0;
   }

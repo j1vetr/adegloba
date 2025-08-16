@@ -309,6 +309,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single order with details
+  app.get('/api/orders/:orderId', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
+    try {
+      const { orderId } = req.params;
+      const userId = req.session.userId;
+      
+      // Get order with details
+      const order = await orderService.getOrderWithDetails(orderId);
+      
+      // Verify the order belongs to the user
+      if (order.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      res.status(404).json({ message: error.message || "Order not found" });
+    }
+  });
+
   app.post('/api/orders/:orderId/complete', async (req: any, res) => {
     if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });

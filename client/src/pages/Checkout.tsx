@@ -38,6 +38,14 @@ export default function Checkout() {
     enabled: !!orderId && !!user
   });
 
+  // Initialize coupon state from order data when order loads
+  useEffect(() => {
+    if (orderData && orderData.couponCode && !appliedCoupon) {
+      // If order has a coupon but we don't have it in state, fetch coupon details
+      validateCouponMutation.mutate(orderData.couponCode);
+    }
+  }, [orderData, appliedCoupon]);
+
   const validateCouponMutation = useMutation({
     mutationFn: async (code: string) => {
       const subtotal = getCurrentSubtotal();
@@ -52,28 +60,36 @@ export default function Checkout() {
       if (result.valid && result.coupon) {
         setAppliedCoupon(result.coupon);
         setDiscount(result.discount_amount || 0);
-        toast({
-          title: "Kupon Uygulandı",
-          description: `${result.coupon.code} kuponu başarıyla uygulandı! $${result.discount_amount.toFixed(2)} indirim`,
-        });
+        
+        // Only show toast if user manually applied the coupon (not when loading from order)
+        if (couponCode.trim()) {
+          toast({
+            title: "Kupon Uygulandı",
+            description: `${result.coupon.code} kuponu başarıyla uygulandı! $${result.discount_amount.toFixed(2)} indirim`,
+          });
+        }
       } else {
         setAppliedCoupon(null);
         setDiscount(0);
-        toast({
-          title: "Kupon Hatası",
-          description: result.message || "Kupon geçerli değil",
-          variant: "destructive",
-        });
+        if (couponCode.trim()) {
+          toast({
+            title: "Kupon Hatası",
+            description: result.message || "Kupon geçerli değil",
+            variant: "destructive",
+          });
+        }
       }
     },
     onError: (error: any) => {
       setAppliedCoupon(null);
       setDiscount(0);
-      toast({
-        title: "Kupon Hatası",
-        description: error.message || "Kupon geçerli değil",
-        variant: "destructive",
-      });
+      if (couponCode.trim()) {
+        toast({
+          title: "Kupon Hatası",
+          description: error.message || "Kupon geçerli değil",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -135,7 +151,9 @@ export default function Checkout() {
 
   const getCurrentSubtotal = () => {
     if (orderId && orderData) {
-      return parseFloat((orderData as any)?.subtotalUsd || (orderData as any)?.total || '0');
+      // For orders, use the subtotal before discount
+      const orderSubtotal = parseFloat((orderData as any)?.subtotalUsd || '0');
+      return orderSubtotal > 0 ? orderSubtotal : parseFloat((orderData as any)?.total || '0');
     }
     if (cartData) {
       return parseFloat((cartData as any)?.subtotal || '0');
@@ -210,6 +228,11 @@ export default function Checkout() {
   const items = getCurrentItems();
   const subtotal = getCurrentSubtotal();
   const total = Math.max(0, subtotal - discount);
+  
+  // If we have order data with discount, use that total instead
+  const finalTotal = (orderId && orderData && orderData.total && !appliedCoupon) 
+    ? parseFloat(orderData.total) 
+    : total;
 
   if (items.length === 0) {
     return null; // Redirect handled in useEffect
@@ -393,7 +416,7 @@ export default function Checkout() {
                   <div className="flex justify-between text-xl font-bold">
                     <span className="text-white">Toplam</span>
                     <span className="text-cyan-400 price-highlight font-bold" data-testid="checkout-total">
-                      {formatPrice(total)}
+                      {formatPrice(finalTotal)}
                     </span>
                   </div>
                   
@@ -413,10 +436,10 @@ export default function Checkout() {
                     </div>
                   </div>
                   
-                  {total > 0 ? (
+                  {finalTotal > 0 ? (
                     <div data-testid="paypal-container" className="animate-slide-in-up">
                       <PayPalButton
-                        amount={total.toFixed(2)}
+                        amount={finalTotal.toFixed(2)}
                         currency="USD"
                         intent="capture"
                         couponCode={appliedCoupon?.code}

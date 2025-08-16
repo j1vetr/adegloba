@@ -39,9 +39,9 @@ export class CouponService {
       throw new Error("Kupon kullanım limiti dolmuş");
     }
 
-    // Check per-user usage limit
+    // Check per-user usage limit - only count completed orders
     if (userId) {
-      const userUsage = await this.storage.getUserCouponUsage(userId, coupon.id);
+      const userUsage = await this.storage.getUserCouponUsageForCompletedOrders(userId, coupon.id);
       if (userUsage > 0) {
         throw new Error("Bu kuponu daha önce kullandınız");
       }
