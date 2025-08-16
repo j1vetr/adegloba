@@ -300,9 +300,25 @@ export default function CredentialPoolsNew() {
 
   const getStatusBadge = (isAssigned: boolean) => {
     return isAssigned ? (
-      <Badge className="bg-red-600 text-white">Atanmış</Badge>
+      <div className="flex items-center gap-2">
+        <div className="relative">
+          <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+          <div className="absolute top-0 left-0 w-3 h-3 bg-red-400 rounded-full animate-ping opacity-75"></div>
+        </div>
+        <Badge className="bg-red-600/20 text-red-300 border-red-500/50 animate-pulse">
+          ❌ Atanmış
+        </Badge>
+      </div>
     ) : (
-      <Badge className="bg-green-600 text-white">Uygun</Badge>
+      <div className="flex items-center gap-2">
+        <div className="relative">
+          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+          <div className="absolute top-0 left-0 w-3 h-3 bg-green-400 rounded-full animate-ping opacity-75"></div>
+        </div>
+        <Badge className="bg-green-600/20 text-green-300 border-green-500/50 animate-pulse">
+          ✅ Kullanılabilir
+        </Badge>
+      </div>
     );
   };
 
@@ -360,30 +376,38 @@ export default function CredentialPoolsNew() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50">
+          <Card className="glass-card border-border/50 hover:border-green-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-green-500/10 group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-600/20 rounded-lg">
-                  <Check className="h-5 w-5 text-green-400" />
+                <div className="p-2 bg-green-600/20 rounded-lg group-hover:bg-green-500/30 transition-colors duration-300 relative">
+                  <Check className="h-5 w-5 text-green-400 group-hover:animate-bounce" />
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full group-hover:animate-ping opacity-0 group-hover:opacity-75"></div>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Uygun</p>
-                  <p className="text-2xl font-bold text-white">{credentialStats.availableCredentials}</p>
+                  <p className="text-gray-400 text-sm group-hover:text-green-300 transition-colors duration-300">Kullanılabilir</p>
+                  <p className="text-2xl font-bold text-white group-hover:scale-110 transition-transform duration-300">{credentialStats.availableCredentials}</p>
                 </div>
+              </div>
+              <div className="w-full bg-slate-700 rounded-full h-1 mt-3 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-green-400 to-emerald-400 rounded-full animate-pulse" style={{width: `${credentialStats.totalCredentials > 0 ? (credentialStats.availableCredentials / credentialStats.totalCredentials) * 100 : 0}%`}}></div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50">
+          <Card className="glass-card border-border/50 hover:border-red-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-red-500/10 group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-600/20 rounded-lg">
-                  <User className="h-5 w-5 text-red-400" />
+                <div className="p-2 bg-red-600/20 rounded-lg group-hover:bg-red-500/30 transition-colors duration-300 relative">
+                  <User className="h-5 w-5 text-red-400 group-hover:animate-spin" />
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-400 rounded-full group-hover:animate-ping opacity-0 group-hover:opacity-75"></div>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Atanmış</p>
-                  <p className="text-2xl font-bold text-white">{credentialStats.assignedCredentials}</p>
+                  <p className="text-gray-400 text-sm group-hover:text-red-300 transition-colors duration-300">Atanmış</p>
+                  <p className="text-2xl font-bold text-white group-hover:scale-110 transition-transform duration-300">{credentialStats.assignedCredentials}</p>
                 </div>
+              </div>
+              <div className="w-full bg-slate-700 rounded-full h-1 mt-3 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-red-400 to-rose-400 rounded-full animate-pulse" style={{width: `${credentialStats.totalCredentials > 0 ? (credentialStats.assignedCredentials / credentialStats.totalCredentials) * 100 : 0}%`}}></div>
               </div>
             </CardContent>
           </Card>
