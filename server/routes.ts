@@ -2035,7 +2035,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/ship-plans/:shipId', isAdminAuthenticated, async (req, res) => {
     try {
       const { shipId } = req.params;
-      const plans = await storage.getShipPlans(shipId);
+      const plans = await storage.getPlansForShip(shipId);
       res.json(plans);
     } catch (error) {
       console.error('Error fetching ship plans:', error);
