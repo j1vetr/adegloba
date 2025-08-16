@@ -145,7 +145,9 @@ export interface IStorage {
   getUnreadTicketCount(userId: string): Promise<number>;
 
   // Statistics
-  getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number }>;
+  getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number; cancelledOrders: number; pendingOrders: number }>;
+  getCancelledOrdersCount(): Promise<number>;
+  getPendingOrdersCount(): Promise<number>;
   
   // System logs operations
   createSystemLog(logData: InsertSystemLog): Promise<SystemLog>;
@@ -836,17 +838,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Statistics
-  async getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number }> {
+  async getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number; cancelledOrders: number; pendingOrders: number }> {
     try {
-      // Total Revenue from paid and completed orders
+      // Total Revenue and Orders from completed orders only
       const [revenueStats] = await db
         .select({
-          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid', 'completed') THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
-          totalOrders: sql<number>`COUNT(CASE WHEN ${orders.status} = 'completed' THEN 1 END)`
+          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
+          totalOrders: sql<number>`COUNT(CASE WHEN ${orders.status} = 'completed' THEN 1 END)`,
+          cancelledOrders: sql<number>`COUNT(CASE WHEN ${orders.status} = 'cancelled' THEN 1 END)`,
+          pendingOrders: sql<number>`COUNT(CASE WHEN ${orders.status} = 'pending' THEN 1 END)`
         })
         .from(orders);
 
-      // Active Users - users with at least one active package (orders with expires_at > now and status = paid/completed)
+      // Active Users - users with at least one active package (orders with expires_at > now and status = completed)
       const [activeUsersStats] = await db
         .select({
           activeUsers: sql<number>`COUNT(DISTINCT ${orders.userId})`
@@ -854,13 +858,13 @@ export class DatabaseStorage implements IStorage {
         .from(orders)
         .where(
           and(
-            or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
+            eq(orders.status, 'completed'),
             isNotNull(orders.expiresAt),
             gt(orders.expiresAt, new Date())
           )
         );
 
-      // Active Packages - count of active orders that haven't expired
+      // Active Packages - count of active completed orders that haven't expired
       const [activePackagesStats] = await db
         .select({
           activePackages: sql<number>`COUNT(*)`
@@ -868,7 +872,7 @@ export class DatabaseStorage implements IStorage {
         .from(orders)
         .where(
           and(
-            or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
+            eq(orders.status, 'completed'),
             isNotNull(orders.expiresAt),
             gt(orders.expiresAt, new Date())
           )
@@ -878,7 +882,9 @@ export class DatabaseStorage implements IStorage {
         totalRevenue: Number(revenueStats.totalRevenue) || 0,
         activeUsers: Number(activeUsersStats.activeUsers) || 0,
         activePackages: Number(activePackagesStats.activePackages) || 0,
-        totalOrders: Number(revenueStats.totalOrders) || 0
+        totalOrders: Number(revenueStats.totalOrders) || 0,
+        cancelledOrders: Number(revenueStats.cancelledOrders) || 0,
+        pendingOrders: Number(revenueStats.pendingOrders) || 0
       };
     } catch (error) {
       console.error('Error fetching order stats:', error);
@@ -886,8 +892,42 @@ export class DatabaseStorage implements IStorage {
         totalRevenue: 0,
         activeUsers: 0,
         activePackages: 0,
-        totalOrders: 0
+        totalOrders: 0,
+        cancelledOrders: 0,
+        pendingOrders: 0
       };
+    }
+  }
+
+  async getCancelledOrdersCount(): Promise<number> {
+    try {
+      const [result] = await db
+        .select({
+          count: sql<number>`COUNT(*)`
+        })
+        .from(orders)
+        .where(eq(orders.status, 'cancelled'));
+      
+      return Number(result.count) || 0;
+    } catch (error) {
+      console.error('Error fetching cancelled orders count:', error);
+      return 0;
+    }
+  }
+
+  async getPendingOrdersCount(): Promise<number> {
+    try {
+      const [result] = await db
+        .select({
+          count: sql<number>`COUNT(*)`
+        })
+        .from(orders)
+        .where(eq(orders.status, 'pending'));
+      
+      return Number(result.count) || 0;
+    } catch (error) {
+      console.error('Error fetching pending orders count:', error);
+      return 0;
     }
   }
 

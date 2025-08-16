@@ -6,6 +6,8 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth, seedDefaultAdmin } from "./auth";
 import { logCleanupService } from "./services/logCleanupService";
+import { OrderCancelService } from "./services/orderCancelService";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json());
@@ -74,6 +76,10 @@ app.use((req, res, next) => {
   
   // Start log cleanup service
   logCleanupService.startCleanupScheduler();
+  
+  // Start order auto-cancel service
+  const orderCancelService = new OrderCancelService(storage);
+  orderCancelService.start();
   
   const server = await registerRoutes(app);
 
