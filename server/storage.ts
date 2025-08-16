@@ -147,6 +147,13 @@ export interface IStorage {
   getTicketMessages(ticketId: string): Promise<TicketMessage[]>;
   getUnreadTicketCount(userId: string): Promise<number>;
 
+  // Stock management operations
+  getAvailableStock(planId: string): Promise<number>;
+  getCredentialStats(planId: string): Promise<{ total: number; assigned: number; available: number }>;
+  getAllCredentialStats(): Promise<{ [planId: string]: { total: number; assigned: number; available: number } }>;
+  validateStockAvailability(planId: string, requestedQuantity: number): Promise<boolean>;
+  reserveStock(planId: string, quantity: number, orderId: string): Promise<boolean>;
+
   // Statistics
   getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number; cancelledOrders: number; pendingOrders: number }>;
   getCancelledOrdersCount(): Promise<number>;
@@ -1474,6 +1481,125 @@ export class DatabaseStorage implements IStorage {
       subtotalFormatted: `$${cartTotal.subtotal.toFixed(2)}`,
       totalFormatted: `$${cartTotal.total.toFixed(2)}`
     };
+  }
+
+  // Stock management operations
+  async getAvailableStock(planId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(credentialPools)
+      .where(and(
+        eq(credentialPools.planId, planId),
+        eq(credentialPools.isAssigned, false)
+      ));
+    
+    return result[0]?.count || 0;
+  }
+
+  async getCredentialStats(planId: string): Promise<{ total: number; assigned: number; available: number }> {
+    const [totalResult, assignedResult] = await Promise.all([
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(credentialPools)
+        .where(eq(credentialPools.planId, planId)),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(credentialPools)
+        .where(and(
+          eq(credentialPools.planId, planId),
+          eq(credentialPools.isAssigned, true)
+        ))
+    ]);
+
+    const total = totalResult[0]?.count || 0;
+    const assigned = assignedResult[0]?.count || 0;
+    const available = total - assigned;
+
+    return { total, assigned, available };
+  }
+
+  async getAllCredentialStats(): Promise<{ [planId: string]: { total: number; assigned: number; available: number } }> {
+    const [totalResults, assignedResults] = await Promise.all([
+      db
+        .select({ 
+          planId: credentialPools.planId,
+          count: sql<number>`count(*)` 
+        })
+        .from(credentialPools)
+        .groupBy(credentialPools.planId),
+      db
+        .select({ 
+          planId: credentialPools.planId,
+          count: sql<number>`count(*)` 
+        })
+        .from(credentialPools)
+        .where(eq(credentialPools.isAssigned, true))
+        .groupBy(credentialPools.planId)
+    ]);
+
+    const stats: { [planId: string]: { total: number; assigned: number; available: number } } = {};
+
+    // Initialize with totals
+    for (const result of totalResults) {
+      stats[result.planId] = {
+        total: result.count,
+        assigned: 0,
+        available: result.count
+      };
+    }
+
+    // Add assigned counts
+    for (const result of assignedResults) {
+      if (stats[result.planId]) {
+        stats[result.planId].assigned = result.count;
+        stats[result.planId].available = stats[result.planId].total - result.count;
+      }
+    }
+
+    return stats;
+  }
+
+  async validateStockAvailability(planId: string, requestedQuantity: number): Promise<boolean> {
+    const availableStock = await this.getAvailableStock(planId);
+    return availableStock >= requestedQuantity;
+  }
+
+  async reserveStock(planId: string, quantity: number, orderId: string): Promise<boolean> {
+    try {
+      // Use a transaction to prevent race conditions
+      return await db.transaction(async (tx) => {
+        // Get available credentials with a lock
+        const availableCredentials = await tx
+          .select()
+          .from(credentialPools)
+          .where(and(
+            eq(credentialPools.planId, planId),
+            eq(credentialPools.isAssigned, false)
+          ))
+          .limit(quantity)
+          .for('update'); // Row-level lock
+
+        if (availableCredentials.length < quantity) {
+          return false; // Not enough stock
+        }
+
+        // Mark credentials as assigned
+        const credentialIds = availableCredentials.map(c => c.id);
+        await tx
+          .update(credentialPools)
+          .set({
+            isAssigned: true,
+            assignedToOrderId: orderId,
+            assignedAt: new Date()
+          })
+          .where(sql`${credentialPools.id} = ANY(${credentialIds})`);
+
+        return true;
+      });
+    } catch (error) {
+      console.error('Stock reservation failed:', error);
+      return false;
+    }
   }
 }
 

@@ -235,7 +235,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { shipId } = req.params;
       const plans = await storage.getPlansForShip(shipId);
-      res.json(plans);
+      
+      // Add stock information to each plan
+      const plansWithStock = await Promise.all(plans.map(async (plan) => {
+        const availableStock = await storage.getAvailableStock(plan.id);
+        return {
+          ...plan,
+          availableStock,
+          inStock: availableStock > 0
+        };
+      }));
+      
+      res.json(plansWithStock);
     } catch (error) {
       console.error("Error fetching plans:", error);
       res.status(500).json({ message: "Failed to fetch plans" });
@@ -287,6 +298,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error("Error fetching user active packages:", error);
         res.status(500).json({ message: "Failed to fetch active packages" });
+      }
+    } else {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+  });
+
+  // Get user's ship plans with stock information
+  app.get('/api/user/ship-plans', async (req: any, res) => {
+    if (req.session && req.session.userId) {
+      try {
+        const userId = req.session.userId;
+        const user = await storage.getUserWithShip(userId);
+        
+        if (!user || !user.ship_id) {
+          return res.status(400).json({ message: "User has no assigned ship" });
+        }
+        
+        const plans = await storage.getPlansForShip(user.ship_id);
+        
+        // Add stock information to each plan
+        const plansWithStock = await Promise.all(plans.map(async (plan) => {
+          const availableStock = await storage.getAvailableStock(plan.id);
+          return {
+            ...plan,
+            availableStock,
+            inStock: availableStock > 0
+          };
+        }));
+        
+        res.json(plansWithStock);
+      } catch (error) {
+        console.error("Error fetching user ship plans:", error);
+        res.status(500).json({ message: "Failed to fetch ship plans" });
       }
     } else {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -431,6 +475,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Plan ID is required' });
       }
 
+      // Check stock availability
+      const availableStock = await storage.getAvailableStock(planId);
+      if (quantity > availableStock) {
+        return res.status(400).json({ 
+          message: 'Stokta yeterli ürün yok', 
+          availableStock,
+          requestedQuantity: quantity
+        });
+      }
+
       const cartItem = await storage.addToCart(userId, planId, quantity);
       res.json(cartItem);
     } catch (error) {
@@ -451,6 +505,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (quantity <= 0) {
         return res.status(400).json({ message: 'Quantity must be greater than 0' });
+      }
+
+      // Check stock availability
+      const availableStock = await storage.getAvailableStock(planId);
+      if (quantity > availableStock) {
+        return res.status(400).json({ 
+          message: 'Stokta yeterli ürün yok', 
+          availableStock,
+          requestedQuantity: quantity
+        });
       }
 
       const cartItem = await storage.updateCartItem(userId, planId, quantity);
@@ -513,6 +577,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cartItems = await storage.getCartItems(userId);
       if (cartItems.length === 0) {
         return res.status(400).json({ message: 'Cart is empty' });
+      }
+
+      // Validate stock availability for all items before creating order
+      for (const cartItem of cartItems) {
+        const availableStock = await storage.getAvailableStock(cartItem.planId);
+        if (cartItem.quantity > availableStock) {
+          const plan = await storage.getPlanById(cartItem.planId);
+          return res.status(400).json({ 
+            message: `"${plan?.name || 'Paket'}" için stokta yeterli ürün yok. Mevcut: ${availableStock}, İstenen: ${cartItem.quantity}`,
+            planId: cartItem.planId,
+            availableStock,
+            requestedQuantity: cartItem.quantity
+          });
+        }
       }
 
       // Calculate cart total

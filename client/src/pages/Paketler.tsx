@@ -3,17 +3,23 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRight } from "lucide-react";
+import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRight, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
 import type { Plan } from "@shared/schema";
 
+// Extended plan type with stock information
+type PlanWithStock = Plan & {
+  availableStock: number;
+  inStock: boolean;
+};
+
 export default function Paketler() {
   const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
 
-  const { data: userShipPlans, isLoading: plansLoading } = useQuery<Plan[]>({
+  const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
     queryKey: ["/api/user/ship-plans"],
     enabled: !!user?.ship_id
   });
@@ -34,9 +40,12 @@ export default function Paketler() {
       window.location.href = '/sepet';
     },
     onError: (error: any) => {
+      // Parse error response for stock-related errors
+      const errorMessage = error.message || "Sepete eklenemedi";
+      
       toast({
         title: "Hata",
-        description: error.message || "Sepete eklenemedi",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -114,41 +123,79 @@ export default function Paketler() {
                 <CardHeader className="relative z-10 text-center pb-4">
                   <div className="flex items-center justify-center mb-4">
                     <div className="relative">
-                      <Package className="h-12 w-12 text-blue-400 group-hover:text-cyan-400 transition-colors duration-300" />
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <Package className={`h-12 w-12 transition-colors duration-300 ${
+                        plan.inStock 
+                          ? 'text-blue-400 group-hover:text-cyan-400' 
+                          : 'text-slate-500'
+                      }`} />
+                      {plan.inStock && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      )}
                     </div>
                   </div>
-                  <CardTitle className="text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors duration-300">
-                    {plan.title}
+                  <CardTitle className={`text-xl font-bold mb-2 transition-colors duration-300 ${
+                    plan.inStock 
+                      ? 'text-white group-hover:text-blue-300' 
+                      : 'text-slate-400'
+                  }`}>
+                    {plan.name}
                   </CardTitle>
                   <div className="flex items-center justify-center">
-                    <span className="text-3xl font-bold text-white">{plan.gbAmount}</span>
+                    <span className={`text-3xl font-bold ${
+                      plan.inStock ? 'text-white' : 'text-slate-500'
+                    }`}>{plan.dataLimitGb}</span>
                     <span className="text-xl text-slate-400 ml-1">GB</span>
                   </div>
                 </CardHeader>
 
                 <CardContent className="relative z-10 space-y-4">
+                  {/* Stock Info */}
+                  <div className="text-center mb-3">
+                    {plan.inStock ? (
+                      <div className="inline-flex items-center px-3 py-1 bg-green-600/20 rounded-full border border-green-500/30">
+                        <Package className="h-4 w-4 text-green-400 mr-2" />
+                        <span className="text-sm font-medium text-green-400">
+                          {plan.availableStock} Adet Stokta
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center px-3 py-1 bg-red-600/20 rounded-full border border-red-500/30">
+                        <X className="h-4 w-4 text-red-400 mr-2" />
+                        <span className="text-sm font-medium text-red-400">
+                          Stokta Yok
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Price */}
                   <div className="text-center">
-                    <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-full border border-blue-500/30">
-                      <DollarSign className="h-5 w-5 text-blue-400 mr-1" />
-                      <span className="text-2xl font-bold text-white">{formatPrice(plan.priceUsd)}</span>
+                    <div className={`inline-flex items-center px-4 py-2 rounded-full border ${
+                      plan.inStock 
+                        ? 'bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border-blue-500/30'
+                        : 'bg-slate-600/20 border-slate-500/30'
+                    }`}>
+                      <DollarSign className={`h-5 w-5 mr-1 ${
+                        plan.inStock ? 'text-blue-400' : 'text-slate-500'
+                      }`} />
+                      <span className={`text-2xl font-bold ${
+                        plan.inStock ? 'text-white' : 'text-slate-400'
+                      }`}>{formatPrice(plan.priceUsd)}</span>
                     </div>
                   </div>
 
                   {/* Features */}
                   <div className="space-y-3 text-sm">
-                    {plan.speedNote && (
-                      <div className="flex items-center text-slate-300 bg-slate-800/50 rounded-lg p-3">
-                        <Zap className="h-4 w-4 text-yellow-400 mr-2 flex-shrink-0" />
-                        <span>{plan.speedNote}</span>
-                      </div>
-                    )}
-                    
-                    {plan.validityNote && (
-                      <div className="flex items-center text-slate-300 bg-slate-800/50 rounded-lg p-3">
-                        <Calendar className="h-4 w-4 text-green-400 mr-2 flex-shrink-0" />
-                        <span>{plan.validityNote}</span>
+                    {plan.description && (
+                      <div className={`flex items-center rounded-lg p-3 ${
+                        plan.inStock 
+                          ? 'text-slate-300 bg-slate-800/50'
+                          : 'text-slate-500 bg-slate-800/30'
+                      }`}>
+                        <Calendar className={`h-4 w-4 mr-2 flex-shrink-0 ${
+                          plan.inStock ? 'text-green-400' : 'text-slate-500'
+                        }`} />
+                        <span>{plan.description}</span>
                       </div>
                     )}
                   </div>
@@ -156,14 +203,23 @@ export default function Paketler() {
                   {/* Purchase Button */}
                   <Button
                     onClick={() => addToCartMutation.mutate(plan.id)}
-                    disabled={addToCartMutation.isPending}
-                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 group-hover:shadow-xl group-hover:shadow-blue-500/30"
+                    disabled={addToCartMutation.isPending || !plan.inStock}
+                    className={`w-full font-semibold py-3 rounded-xl transition-all duration-300 ${
+                      plan.inStock 
+                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 group-hover:shadow-xl group-hover:shadow-blue-500/30'
+                        : 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                    }`}
                     data-testid={`button-buy-${plan.id}`}
                   >
                     {addToCartMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Ekleniyor...
+                      </>
+                    ) : !plan.inStock ? (
+                      <>
+                        <X className="mr-2 h-4 w-4" />
+                        Stokta Yok
                       </>
                     ) : (
                       <>
