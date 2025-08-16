@@ -21,6 +21,7 @@ export default function Checkout() {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [discount, setDiscount] = useState(0);
+  const [couponValidating, setCouponValidating] = useState(false);
 
   // Get order ID from URL params (if coming from cart checkout)
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
@@ -48,45 +49,57 @@ export default function Checkout() {
 
   const validateCouponMutation = useMutation({
     mutationFn: async (code: string) => {
+      setCouponValidating(true);
       const subtotal = getCurrentSubtotal();
+      const items = getCurrentItems();
+      const planIds = items.map((item: any) => item.planId || item.plan?.id).filter(Boolean);
+      
       const response = await apiRequest('POST', '/api/coupons/validate', { 
-        code, 
+        code: code.trim().toUpperCase(), 
         shipId: user?.ship_id,
-        subtotal
+        subtotal,
+        planIds
       });
       return response.json();
     },
     onSuccess: (result) => {
+      setCouponValidating(false);
       if (result.valid && result.coupon) {
         setAppliedCoupon(result.coupon);
         setDiscount(result.discount_amount || 0);
         
-        // Only show toast if user manually applied the coupon (not when loading from order)
+        // Show detailed success message
         if (couponCode.trim()) {
+          const discountText = result.coupon.discountType === 'percentage' 
+            ? `%${result.coupon.discountValue} oranında` 
+            : `$${result.coupon.discountValue} tutarında`;
+          
           toast({
-            title: "Kupon Uygulandı",
-            description: `${result.coupon.code} kuponu başarıyla uygulandı! $${result.discount_amount.toFixed(2)} indirim`,
+            title: "✅ Kupon Başarıyla Uygulandı!",
+            description: `"${result.coupon.code}" kuponunuz ${discountText} indirim sağladı. Toplam indirimi: $${result.discount_amount.toFixed(2)}`,
           });
         }
       } else {
         setAppliedCoupon(null);
         setDiscount(0);
         if (couponCode.trim()) {
+          const errorMessage = getDetailedErrorMessage(result.reason || result.message);
           toast({
-            title: "Kupon Hatası",
-            description: result.message || "Kupon geçerli değil",
+            title: "❌ Kupon Uygulanamadı",
+            description: errorMessage,
             variant: "destructive",
           });
         }
       }
     },
     onError: (error: any) => {
+      setCouponValidating(false);
       setAppliedCoupon(null);
       setDiscount(0);
       if (couponCode.trim()) {
         toast({
-          title: "Kupon Hatası",
-          description: error.message || "Kupon geçerli değil",
+          title: "❌ Kupon Hatası",
+          description: error.message || "Kupon doğrulanamadı. Lütfen tekrar deneyin.",
           variant: "destructive",
         });
       }
@@ -127,10 +140,35 @@ export default function Checkout() {
     },
   });
 
+  const getDetailedErrorMessage = (reason: string) => {
+    switch (reason) {
+      case 'not_found':
+        return "Bu kupon kodu geçerli değil. Lütfen kupon kodunuzu kontrol edin.";
+      case 'inactive':
+        return "Bu kupon şu anda aktif değil.";
+      case 'expired':
+        return "Bu kuponun geçerlilik süresi dolmuş.";
+      case 'not_started':
+        return "Bu kupon henüz geçerlilik tarihine ulaşmamış.";
+      case 'usage_limit_reached':
+        return "Bu kuponun kullanım limiti dolmuş.";
+      case 'single_use_already_used':
+        return "Bu kuponu daha önce kullandınız. Tek kullanımlık kuponlar sadece bir kez kullanılabilir.";
+      case 'minimum_order_not_met':
+        return "Bu kupon için minimum sipariş tutarı karşılanmıyor.";
+      case 'scope_ship_mismatch':
+        return "Bu kupon seçtiğiniz gemiye uygulanamaz.";
+      case 'scope_package_mismatch':
+        return "Bu kupon sepetinizdeki paketlere uygulanamaz.";
+      default:
+        return reason || "Kupon geçerli değil.";
+    }
+  };
+
   const handleApplyCoupon = () => {
     if (!couponCode.trim()) {
       toast({
-        title: "Hata",
+        title: "⚠️ Eksik Bilgi",
         description: "Lütfen kupon kodu girin",
         variant: "destructive",
       });
@@ -144,10 +182,15 @@ export default function Checkout() {
     setDiscount(0);
     setCouponCode("");
     toast({
-      title: "Kupon Kaldırıldı",
-      description: "Kupon kaldırıldı",
+      title: "🗑️ Kupon Kaldırıldı",
+      description: "Kupon sepetinizden kaldırıldı. İndirim iptal edildi.",
     });
   };
+
+  // Real-time total calculation
+  const currentSubtotal = getCurrentSubtotal();
+  const currentDiscount = appliedCoupon ? discount : 0;
+  const currentTotal = Math.max(0, currentSubtotal - currentDiscount);
 
   const getCurrentSubtotal = () => {
     if (orderId && orderData) {
@@ -340,41 +383,67 @@ export default function Checkout() {
                     />
                     <Button 
                       onClick={appliedCoupon ? removeCoupon : handleApplyCoupon}
-                      disabled={validateCouponMutation.isPending || (!appliedCoupon && !couponCode.trim())}
-                      className={`btn-interactive ${
+                      disabled={couponValidating || validateCouponMutation.isPending || (!appliedCoupon && !couponCode.trim())}
+                      className={`btn-interactive transition-all duration-300 ${
                         appliedCoupon 
                           ? "bg-red-500 hover:bg-red-600 text-white" 
                           : "bg-green-500 hover:bg-green-600 text-white animate-pulse-glow"
                       }`}
                       data-testid={appliedCoupon ? "remove-coupon-button" : "apply-coupon-button"}
                     >
-                      {validateCouponMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                      {(couponValidating || validateCouponMutation.isPending) ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                          {appliedCoupon ? "Kaldırılıyor..." : "Kontrol ediliyor..."}
+                        </>
                       ) : appliedCoupon ? (
-                        <Trash2 className="h-4 w-4 transition-transform duration-200 hover:scale-110" />
+                        <>
+                          <Trash2 className="h-4 w-4 mr-1 transition-transform duration-200 hover:scale-110" />
+                          Kaldır
+                        </>
                       ) : (
-                        <Tag className="h-4 w-4 transition-transform duration-200 hover:scale-110" />
+                        <>
+                          <Tag className="h-4 w-4 mr-1 transition-transform duration-200 hover:scale-110" />
+                          Uygula
+                        </>
                       )}
                     </Button>
                   </div>
                   
                   {appliedCoupon && (
-                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg success-bounce">
-                      <div className="flex items-center justify-between">
-                        <span className="text-green-400 text-sm font-medium flex items-center">
+                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg success-bounce">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-green-400 font-medium flex items-center">
                           <CheckCircle className="h-4 w-4 mr-2 animate-pulse" />
-                          {appliedCoupon.code} uygulandı
+                          "{appliedCoupon.code}" uygulandı
                         </span>
-                        <span className="text-green-400 text-sm font-semibold">
-                          -{formatPrice(discount)}
+                        <span className="text-green-400 font-bold text-lg">
+                          -{formatPrice(currentDiscount)}
                         </span>
                       </div>
-                      <p className="text-green-300/80 text-xs mt-1">
-                        {appliedCoupon.type === 'percentage' 
-                          ? `%${appliedCoupon.value} indirim` 
-                          : `${formatPrice(appliedCoupon.value)} indirim`
-                        }
-                      </p>
+                      <div className="space-y-1 text-xs">
+                        <p className="text-green-300/90">
+                          {appliedCoupon.discountType === 'percentage' 
+                            ? `%${appliedCoupon.discountValue} oranında indirim` 
+                            : `$${appliedCoupon.discountValue} tutarında indirim`
+                          }
+                        </p>
+                        {appliedCoupon.singleUseOnly && (
+                          <p className="text-orange-300/80">
+                            ⚠️ Tek kullanımlık kupon
+                          </p>
+                        )}
+                        {appliedCoupon.maxUses && (
+                          <p className="text-blue-300/80">
+                            📊 Kullanım: {appliedCoupon.usedCount || 0}/{appliedCoupon.maxUses}
+                          </p>
+                        )}
+                        {appliedCoupon.validUntil && (
+                          <p className="text-slate-300/80">
+                            📅 Geçerlilik: {new Date(appliedCoupon.validUntil).toLocaleDateString('tr-TR')} tarihine kadar
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -398,15 +467,18 @@ export default function Checkout() {
                   <div className="flex justify-between text-slate-300">
                     <span>Ara Toplam</span>
                     <span className="font-semibold price-highlight" data-testid="checkout-subtotal">
-                      {formatPrice(subtotal)}
+                      {formatPrice(currentSubtotal)}
                     </span>
                   </div>
                   
-                  {discount > 0 && (
-                    <div className="flex justify-between text-green-400">
-                      <span>İndirim</span>
+                  {currentDiscount > 0 && (
+                    <div className="flex justify-between text-green-400 animate-slide-in-right">
+                      <span className="flex items-center">
+                        <Tag className="h-4 w-4 mr-1" />
+                        Kupon İndirimi
+                      </span>
                       <span className="font-semibold text-green-400 price-highlight" data-testid="checkout-discount">
-                        -{formatPrice(discount)}
+                        -{formatPrice(currentDiscount)}
                       </span>
                     </div>
                   )}
@@ -414,9 +486,9 @@ export default function Checkout() {
                   <Separator className="bg-slate-600" />
                   
                   <div className="flex justify-between text-xl font-bold">
-                    <span className="text-white">Toplam</span>
-                    <span className="text-cyan-400 price-highlight font-bold" data-testid="checkout-total">
-                      {formatPrice(finalTotal)}
+                    <span className="text-white">Ödenecek Toplam</span>
+                    <span className="text-cyan-400 price-highlight font-bold transition-all duration-500" data-testid="checkout-total">
+                      {formatPrice(currentTotal)}
                     </span>
                   </div>
                   
@@ -436,10 +508,10 @@ export default function Checkout() {
                     </div>
                   </div>
                   
-                  {finalTotal > 0 ? (
+                  {currentTotal > 0 ? (
                     <div data-testid="paypal-container" className="animate-slide-in-up">
                       <PayPalButton
-                        amount={finalTotal.toFixed(2)}
+                        amount={currentTotal.toFixed(2)}
                         currency="USD"
                         intent="capture"
                         couponCode={appliedCoupon?.code}
@@ -448,8 +520,8 @@ export default function Checkout() {
                         }}
                         onError={(error: any) => {
                           toast({
-                            title: "PayPal Hatası",
-                            description: "Ödeme işlemi başarısız oldu",
+                            title: "💳 PayPal Hatası",
+                            description: "Ödeme işlemi başarısız oldu. Lütfen tekrar deneyin.",
                             variant: "destructive",
                           });
                         }}
@@ -467,7 +539,7 @@ export default function Checkout() {
                       ) : (
                         <CheckCircle className="h-5 w-5 mr-2 animate-pulse" />
                       )}
-                      Ücretsiz Siparişi Tamamla
+                      🎉 Ücretsiz Siparişi Tamamla
                     </Button>
                   )}
                 </div>

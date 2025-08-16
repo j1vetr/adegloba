@@ -35,9 +35,6 @@ interface CartData {
 export default function Sepet() {
   const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
-  const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
-  const [discount, setDiscount] = useState(0);
 
   const { data: cartData, isLoading: cartLoading } = useQuery<CartData>({
     queryKey: ["/api/cart"],
@@ -89,9 +86,6 @@ export default function Sepet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-      setAppliedCoupon(null);
-      setDiscount(0);
-      setCouponCode("");
       toast({
         title: "Temizlendi",
         description: "Sepet temizlendi",
@@ -106,72 +100,10 @@ export default function Sepet() {
     },
   });
 
-  const validateCouponMutation = useMutation({
-    mutationFn: async (code: string) => {
-      const subtotal = cartData?.subtotal || 0;
-      const response = await apiRequest('POST', '/api/coupons/validate', { 
-        code, 
-        shipId: user?.ship_id,
-        subtotal
-      });
-      return response.json();
-    },
-    onSuccess: (result) => {
-      if (result.valid && result.coupon) {
-        setAppliedCoupon(result.coupon);
-        setDiscount(result.discount_amount || 0);
-        toast({
-          title: "Kupon Uygulandı",
-          description: `${result.coupon.code} kuponu başarıyla uygulandı! $${result.discount_amount.toFixed(2)} indirim`,
-        });
-      } else {
-        setAppliedCoupon(null);
-        setDiscount(0);
-        toast({
-          title: "Kupon Hatası",
-          description: result.message || "Kupon geçerli değil",
-          variant: "destructive",
-        });
-      }
-    },
-    onError: (error: any) => {
-      setAppliedCoupon(null);
-      setDiscount(0);
-      toast({
-        title: "Kupon Hatası",
-        description: error.message || "Kupon geçerli değil",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleApplyCoupon = () => {
-    if (!couponCode.trim()) {
-      toast({
-        title: "Hata",
-        description: "Lütfen kupon kodu girin",
-        variant: "destructive",
-      });
-      return;
-    }
-    validateCouponMutation.mutate(couponCode);
-  };
-
-  const removeCoupon = () => {
-    setAppliedCoupon(null);
-    setDiscount(0);
-    setCouponCode("");
-    toast({
-      title: "Kupon Kaldırıldı",
-      description: "Kupon sepetten kaldırıldı",
-    });
-  };
 
   const checkoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/cart/checkout', {
-        couponCode: appliedCoupon?.code || undefined
-      });
+      const response = await apiRequest('POST', '/api/cart/checkout', {});
       return response.json();
     },
     onSuccess: (order) => {
@@ -381,69 +313,6 @@ export default function Sepet() {
                 </CardHeader>
                 
                 <CardContent className="space-y-6">
-                  {/* Coupon Code */}
-                  <div>
-                    <Label className="block text-sm font-medium text-slate-300 mb-2">Kupon Kodu</Label>
-                    <div className="flex space-x-2">
-                      <Input 
-                        type="text" 
-                        placeholder="Kupon kodunu girin"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        disabled={!!appliedCoupon}
-                        className="flex-1 bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-500"
-                        data-testid="coupon-input"
-                      />
-                      <Button 
-                        onClick={() => {
-                          const couponCard = document.querySelector('.coupon-success-card');
-                          if (appliedCoupon) {
-                            removeCoupon();
-                          } else {
-                            handleApplyCoupon();
-                          }
-                        }}
-                        disabled={validateCouponMutation.isPending || (!appliedCoupon && !couponCode.trim())}
-                        className={`btn-interactive ${
-                          appliedCoupon 
-                            ? "bg-red-500 hover:bg-red-600 text-white" 
-                            : "bg-cyan-500 hover:bg-cyan-600 text-white animate-pulse-glow"
-                        }`}
-                        data-testid={appliedCoupon ? "remove-coupon-button" : "apply-coupon-button"}
-                      >
-                        {validateCouponMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : appliedCoupon ? (
-                          <Trash2 className="h-4 w-4" />
-                        ) : (
-                          <Tag className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    
-                    {appliedCoupon && (
-                      <div className="coupon-success-card mt-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg success-bounce">
-                        <div className="flex items-center justify-between">
-                          <span className="text-green-400 text-sm font-medium">
-                            {appliedCoupon.code} uygulandı
-                            {appliedCoupon.singleUseOnly && (
-                              <span className="text-xs text-orange-300 ml-2">(Tek kullanım)</span>
-                            )}
-                          </span>
-                          <span className="text-green-400 text-sm font-semibold">
-                            -{formatPrice(discount || 0)}
-                          </span>
-                        </div>
-                        <p className="text-green-300/80 text-xs mt-1">
-                          {appliedCoupon.discountType === 'percentage' 
-                            ? `%${appliedCoupon.discountValue || 0} indirim` 
-                            : `${formatPrice(appliedCoupon.discountValue || 0)} indirim`
-                          }
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Price Breakdown */}
                   <div className="space-y-3 pt-4 border-t border-slate-600">
                     <div className="flex justify-between">
@@ -451,16 +320,17 @@ export default function Sepet() {
                       <span className="text-white font-semibold">{formatPrice(cartData.subtotal)}</span>
                     </div>
                     
-                    {discount > 0 && (
-                      <div className="flex justify-between text-green-400">
-                        <span>İndirim</span>
-                        <span className="font-semibold">-{formatPrice(discount)}</span>
-                      </div>
-                    )}
-                    
                     <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-600">
                       <span className="text-white">Toplam</span>
-                      <span className="text-cyan-400">{formatPrice(Math.max(0, (cartData.subtotal || 0) - (discount || 0)))}</span>
+                      <span className="text-cyan-400">{formatPrice(cartData.subtotal || 0)}</span>
+                    </div>
+                    
+                    <div className="text-center text-sm text-slate-400 bg-slate-800/30 p-3 rounded-lg">
+                      <div className="flex items-center justify-center mb-1">
+                        <Tag className="h-4 w-4 mr-2 text-green-400" />
+                        <span className="text-green-400 font-medium">Kupon kodu var mı?</span>
+                      </div>
+                      <span>Ödeme sayfasında kupon kodunuzu girebilirsiniz</span>
                     </div>
                   </div>
 
