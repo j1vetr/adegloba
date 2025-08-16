@@ -562,11 +562,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create order with 'completed' status
+      // Create order with 'paid' status for consistency
       const orderData = {
         userId,
         shipId: user.ship_id,
-        status: 'completed',
+        status: 'paid',
         currency: 'USD',
         subtotalUsd: subtotal.toFixed(2),
         discountUsd: discount.toFixed(2),
@@ -665,7 +665,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/orders', isAdminAuthenticated, async (req, res) => {
     try {
       const orders = await orderService.getAllOrdersWithDetails();
-      res.json(orders);
+      // Transform the data structure to match frontend expectations
+      const transformedOrders = orders.map((order: any) => ({
+        ...order,
+        // Map 'items' to 'orderItems' and include ship data at root level
+        orderItems: order.items || [],
+        ship: order.items?.[0]?.ship || null
+      }));
+      res.json(transformedOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
       res.status(500).json({ message: "Failed to fetch orders" });
@@ -1504,16 +1511,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin Orders
-  app.get('/api/admin/orders', isAdminAuthenticated, async (req, res) => {
-    try {
-      const orders = await storage.getAllOrders();
-      res.json(orders);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      res.status(500).json({ message: 'Failed to fetch orders' });
-    }
-  });
 
   app.put('/api/admin/orders/:id/status', isAdminAuthenticated, async (req, res) => {
     try {

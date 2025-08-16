@@ -114,18 +114,19 @@ export default function OrdersManagement() {
   const orderStats: OrderStats = {
     totalOrders: orders?.length || 0,
     pendingOrders: orders?.filter((o: OrderWithDetails) => o.status === 'pending').length || 0,
-    paidOrders: orders?.filter((o: OrderWithDetails) => o.status === 'paid').length || 0,
+    // Count both 'paid' and 'completed' as paid for backwards compatibility
+    paidOrders: orders?.filter((o: OrderWithDetails) => o.status === 'paid' || o.status === 'completed').length || 0,
     failedOrders: orders?.filter((o: OrderWithDetails) => o.status === 'failed').length || 0,
     cancelledOrders: orders?.filter((o: OrderWithDetails) => o.status === 'cancelled').length || 0,
-    // Total Revenue: sum of totalUsd from paid orders only
-    totalRevenue: orders?.filter((o: OrderWithDetails) => o.status === 'paid')
+    // Total Revenue: sum of totalUsd from paid/completed orders only
+    totalRevenue: orders?.filter((o: OrderWithDetails) => o.status === 'paid' || o.status === 'completed')
       .reduce((sum: number, order: OrderWithDetails) => {
         const amount = parseFloat(order.totalUsd || '0');
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0) || 0,
-    // Monthly Revenue: current month's paid orders only
+    // Monthly Revenue: current month's paid/completed orders only
     monthlyRevenue: orders?.filter((o: OrderWithDetails) => {
-      if (!o.createdAt || o.status !== 'paid') return false;
+      if (!o.createdAt || (o.status !== 'paid' && o.status !== 'completed')) return false;
       const orderDate = new Date(o.createdAt);
       const now = new Date();
       return orderDate.getMonth() === now.getMonth() && 
@@ -335,6 +336,7 @@ export default function OrdersManagement() {
       case 'pending':
         return getAnimatedBadge('text-yellow-300', 'bg-yellow-500', 'shadow-yellow-500/50', 'Bekliyor', '⏳');
       case 'paid':
+      case 'completed': // Handle both statuses for backwards compatibility
         return getAnimatedBadge('text-green-300', 'bg-green-500', 'shadow-green-500/50', 'Ödendi', '✅');
       case 'failed':
         return getAnimatedBadge('text-red-300', 'bg-red-500', 'shadow-red-500/50', 'Başarısız', '❌');
@@ -479,6 +481,7 @@ export default function OrdersManagement() {
                     <SelectItem value="pending">Bekleyen</SelectItem>
                     <SelectItem value="paid">Ödenen</SelectItem>
                     <SelectItem value="failed">Başarısız</SelectItem>
+                    <SelectItem value="cancelled">İptal Edildi</SelectItem>
                     <SelectItem value="refunded">İade Edildi</SelectItem>
                     <SelectItem value="expired">Süresi Doldu</SelectItem>
                   </SelectContent>
