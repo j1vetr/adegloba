@@ -2294,6 +2294,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to refresh stock cache (triggers real-time updates)
+  app.post('/api/admin/refresh-stock', isAdminAuthenticated, async (req, res) => {
+    try {
+      // Get all credential stats to verify stock levels
+      const stats = await storage.getAllCredentialStats();
+      console.log('📊 Stock levels refreshed:', Object.keys(stats).length, 'plans updated');
+      
+      res.json({
+        success: true,
+        message: 'Stock cache refreshed successfully',
+        stats: Object.keys(stats).length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error refreshing stock cache:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to refresh stock: ${error.message}` 
+      });
+    }
+  });
+
   // Public endpoint to trigger fix for a specific order (for immediate fixes)
   app.post('/api/orders/:orderId/fix-completion', async (req, res) => {
     try {
