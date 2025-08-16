@@ -385,7 +385,7 @@ export default function Paketler() {
                           ) : (
                             <>
                               <Rocket className="h-5 w-5" />
-                              <span className="text-lg">Buy Now</span>
+                              <span className="text-lg">Hemen Satın Al</span>
                             </>
                           )}
                         </div>
@@ -398,7 +398,7 @@ export default function Paketler() {
                       >
                         <div className="flex items-center justify-center space-x-3">
                           <X className="h-5 w-5" />
-                          <span className="text-lg">Out of Stock</span>
+                          <span className="text-lg">Stok Bitti</span>
                         </div>
                       </Button>
                     )}

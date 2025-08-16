@@ -324,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ...plan,
             availableStock,
             inStock: availableStock > 0,
-            shipName: user.ship?.name || 'Unknown Ship',
+            shipName: user.ship?.name || 'Belirtilmemiş',
             timestamp: new Date().toISOString() // Force cache bust
           };
         }));
