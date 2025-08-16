@@ -13,6 +13,8 @@ import type { Plan } from "@shared/schema";
 type PlanWithStock = Plan & {
   availableStock: number;
   inStock: boolean;
+  shipName: string;
+  timestamp: string;
 };
 
 export default function Paketler() {
@@ -24,7 +26,7 @@ export default function Paketler() {
     queryKey: ["/api/user/ship-plans"],
     enabled: !!user?.ship_id,
     refetchInterval: 30000, // Refetch every 30 seconds to catch stock updates
-    staleTime: 5000, // Consider data stale after 5 seconds for faster updates
+    staleTime: 0, // Always fresh data, no cache
     refetchOnWindowFocus: true, // Refetch when user returns to tab
     refetchOnMount: true // Always refetch when component mounts
   });
@@ -40,6 +42,7 @@ export default function Paketler() {
     onSuccess: () => {
       // Immediately invalidate and refetch plans to update stock
       queryClient.invalidateQueries({ queryKey: ["/api/user/ship-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
       
       toast({
         title: "Sepete Eklendi",
@@ -110,12 +113,6 @@ export default function Paketler() {
                   </div>
                 </div>
                 
-                {/* Title Section */}
-                <h1 className="text-5xl font-bold mb-4">
-                  <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent animate-pulse">
-                    Data Paketleri
-                  </span>
-                </h1>
                 
                 <h2 className="text-2xl font-semibold text-white mb-6">
                   AdeGloba Starlink System
@@ -135,7 +132,7 @@ export default function Paketler() {
                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping" />
                     </div>
                     <span className="text-slate-300 font-medium">Aktif Gemi:</span>
-                    <span className="text-white font-bold">{user.ship_id || 'Belirtilmemiş'}</span>
+                    <span className="text-white font-bold">{userShipPlans?.[0]?.shipName || 'Belirtilmemiş'}</span>
                   </div>
                 </div>
               </div>
@@ -370,50 +367,41 @@ export default function Paketler() {
                     </div>
                   </div>
 
-                  {/* Enhanced Purchase Button */}
+                  {/* Purchase Button with Green/Red Logic */}
                   <div className="relative group/button">
-                    <div className={`absolute inset-0 rounded-2xl blur-lg transition-all duration-500 ${
-                      plan.inStock && !addToCartMutation.isPending
-                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover/button:opacity-60'
-                        : 'opacity-0'
-                    }`} />
-                    <Button
-                      onClick={() => addToCartMutation.mutate(plan.id)}
-                      disabled={addToCartMutation.isPending || !plan.inStock}
-                      className={`relative w-full font-bold py-4 px-6 rounded-2xl transition-all duration-500 overflow-hidden group/btn ${
-                        plan.inStock 
-                          ? addToCartMutation.isPending
-                            ? 'bg-gradient-to-r from-blue-600/80 to-cyan-600/80 text-white cursor-wait'
-                            : 'bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 hover:from-blue-500 hover:via-purple-500 hover:to-cyan-500 text-white transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/40 border border-blue-400/20 hover:border-cyan-400/40'
-                          : 'bg-gradient-to-r from-slate-700 to-slate-600 text-slate-400 cursor-not-allowed border border-slate-600/30'
-                      }`}
-                      data-testid={`button-buy-${plan.id}`}
-                    >
-                      {/* Background Animation */}
-                      {plan.inStock && !addToCartMutation.isPending && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover/btn:-translate-x-full transition-transform duration-1000" />
-                      )}
-                      
-                      <div className="relative flex items-center justify-center space-x-3">
-                        {addToCartMutation.isPending ? (
-                          <>
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            <span className="text-lg">Ekleniyor...</span>
-                          </>
-                        ) : !plan.inStock ? (
-                          <>
-                            <X className="h-5 w-5" />
-                            <span className="text-lg">Stokta Yok</span>
-                          </>
-                        ) : (
-                          <>
-                            <Rocket className="h-5 w-5 group-hover/btn:scale-110 transition-transform duration-300" />
-                            <span className="text-lg">Hemen Satın Al</span>
-                            <ArrowRight className="h-5 w-5 group-hover/btn:translate-x-1 transition-transform duration-300" />
-                          </>
-                        )}
-                      </div>
-                    </Button>
+                    {plan.inStock ? (
+                      <Button
+                        onClick={() => addToCartMutation.mutate(plan.id)}
+                        disabled={addToCartMutation.isPending}
+                        className="relative w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-6 rounded-2xl shadow-lg animate-pulse transition-all duration-300 transform hover:scale-105"
+                        data-testid={`button-buy-${plan.id}`}
+                      >
+                        <div className="flex items-center justify-center space-x-3">
+                          {addToCartMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                              <span className="text-lg">Ekleniyor...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Rocket className="h-5 w-5" />
+                              <span className="text-lg">Buy Now</span>
+                            </>
+                          )}
+                        </div>
+                      </Button>
+                    ) : (
+                      <Button
+                        disabled
+                        className="relative w-full bg-red-500 text-white opacity-70 cursor-not-allowed py-4 px-6 rounded-2xl font-semibold"
+                        data-testid={`button-buy-${plan.id}`}
+                      >
+                        <div className="flex items-center justify-center space-x-3">
+                          <X className="h-5 w-5" />
+                          <span className="text-lg">Out of Stock</span>
+                        </div>
+                      </Button>
+                    )}
                   </div>
 
                 </CardContent>

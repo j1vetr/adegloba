@@ -317,15 +317,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const plans = await storage.getPlansForShip(user.ship_id);
         
-        // Add stock information to each plan
+        // Add fresh stock information to each plan with no caching
         const plansWithStock = await Promise.all(plans.map(async (plan) => {
           const availableStock = await storage.getAvailableStock(plan.id);
           return {
             ...plan,
             availableStock,
-            inStock: availableStock > 0
+            inStock: availableStock > 0,
+            shipName: user.ship?.name || 'Unknown Ship',
+            timestamp: new Date().toISOString() // Force cache bust
           };
         }));
+        
+        // Set headers to prevent caching
+        res.set({
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        });
         
         res.json(plansWithStock);
       } catch (error) {
