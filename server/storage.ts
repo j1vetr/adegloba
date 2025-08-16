@@ -837,37 +837,58 @@ export class DatabaseStorage implements IStorage {
 
   // Statistics
   async getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number }> {
-    // Total Revenue from completed orders
-    const [revenueStats] = await db
-      .select({
-        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
-        totalOrders: sql<number>`COUNT(*)`
-      })
-      .from(orders);
+    try {
+      // Total Revenue from paid and completed orders
+      const [revenueStats] = await db
+        .select({
+          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid', 'completed') THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
+          totalOrders: sql<number>`COUNT(*)`
+        })
+        .from(orders);
 
-    // Active Users - users with at least one active package (expires_at > now)
-    const [activeUsersStats] = await db
-      .select({
-        activeUsers: sql<number>`COUNT(DISTINCT ${orders.userId})`
-      })
-      .from(orders)
-      .innerJoin(orderCredentials, eq(orders.id, orderCredentials.orderId))
-      .where(gt(orderCredentials.expiresAt, new Date()));
+      // Active Users - users with at least one active package (orders with expires_at > now and status = paid/completed)
+      const [activeUsersStats] = await db
+        .select({
+          activeUsers: sql<number>`COUNT(DISTINCT ${orders.userId})`
+        })
+        .from(orders)
+        .where(
+          and(
+            or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
+            isNotNull(orders.expiresAt),
+            gt(orders.expiresAt, new Date())
+          )
+        );
 
-    // Active Packages - count of active order_credentials with expires_at > now
-    const [activePackagesStats] = await db
-      .select({
-        activePackages: sql<number>`COUNT(*)`
-      })
-      .from(orderCredentials)
-      .where(gt(orderCredentials.expiresAt, new Date()));
+      // Active Packages - count of active orders that haven't expired
+      const [activePackagesStats] = await db
+        .select({
+          activePackages: sql<number>`COUNT(*)`
+        })
+        .from(orders)
+        .where(
+          and(
+            or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
+            isNotNull(orders.expiresAt),
+            gt(orders.expiresAt, new Date())
+          )
+        );
 
-    return {
-      totalRevenue: Number(revenueStats.totalRevenue) || 0,
-      activeUsers: Number(activeUsersStats.activeUsers) || 0,
-      activePackages: Number(activePackagesStats.activePackages) || 0,
-      totalOrders: Number(revenueStats.totalOrders) || 0
-    };
+      return {
+        totalRevenue: Number(revenueStats.totalRevenue) || 0,
+        activeUsers: Number(activeUsersStats.activeUsers) || 0,
+        activePackages: Number(activePackagesStats.activePackages) || 0,
+        totalOrders: Number(revenueStats.totalOrders) || 0
+      };
+    } catch (error) {
+      console.error('Error fetching order stats:', error);
+      return {
+        totalRevenue: 0,
+        activeUsers: 0,
+        activePackages: 0,
+        totalOrders: 0
+      };
+    }
   }
 
 
