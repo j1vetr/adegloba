@@ -831,15 +831,27 @@ export default function PackagesManagement() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge 
-                              variant={plan.isActive ? "default" : "secondary"}
-                              className={plan.isActive 
-                                ? "bg-green-600/20 text-green-300 border-green-500/50" 
-                                : "bg-slate-600/20 text-slate-400 border-slate-500/50"
-                              }
-                            >
-                              {plan.isActive ? '✅ Aktif' : '❌ Pasif'}
-                            </Badge>
+                            {plan.isActive ? (
+                              <div className="flex items-center gap-2">
+                                <div className="relative">
+                                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
+                                  <div className="absolute top-0 left-0 w-3 h-3 bg-green-400 rounded-full animate-ping opacity-75"></div>
+                                </div>
+                                <Badge className="bg-green-600/20 text-green-300 border-green-500/50 animate-pulse hover:bg-green-600/30 hover:border-green-400/70 transition-all duration-300 shadow-lg shadow-green-500/20">
+                                  ✅ Aktif
+                                </Badge>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="relative">
+                                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
+                                  <div className="absolute top-0 left-0 w-3 h-3 bg-red-400 rounded-full animate-ping opacity-75"></div>
+                                </div>
+                                <Badge className="bg-red-600/20 text-red-300 border-red-500/50 animate-pulse hover:bg-red-600/30 hover:border-red-400/70 transition-all duration-300 shadow-lg shadow-red-500/20">
+                                  ❌ Pasif
+                                </Badge>
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
