@@ -388,8 +388,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { orderId } = req.params;
       const { paypalOrderId } = req.body;
 
-      const order = await orderService.completeOrder(orderId, paypalOrderId);
-      res.json(order);
+      // Use atomic payment processing for consistency
+      const result = await orderService.processPaymentCompletion(orderId, paypalOrderId);
+      
+      if (result.success) {
+        res.json({ 
+          order: result.order,
+          assignedCredentials: result.assignedCredentials,
+          success: true,
+          message: 'Order completed and credentials assigned'
+        });
+      } else {
+        res.status(400).json({ message: 'Failed to complete order' });
+      }
     } catch (error) {
       console.error("Error completing order:", error);
       res.status(400).json({ message: error.message || "Failed to complete order" });
@@ -705,11 +716,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create order with 'paid' status for consistency
+      // Create order with 'pending' status initially 
       const orderData = {
         userId,
         shipId: user.ship_id,
-        status: 'paid',
+        status: 'pending',
         currency: 'USD',
         subtotalUsd: subtotal.toFixed(2),
         discountUsd: discount.toFixed(2),
@@ -741,16 +752,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await couponService.recordCouponUsage(validatedCoupon.id, userId, order.id, discount);
       }
 
-      // Assign credentials for each order item
-      for (const cartItem of cartItems) {
-        try {
-          // Assign credentials based on quantity for each plan
-          await storage.deliverCredentialsForOrder(order.id, cartItem.planId, cartItem.quantity);
-          console.log(`Successfully assigned ${cartItem.quantity} credentials for plan ${cartItem.planId}`);
-        } catch (error) {
-          console.error(`Failed to assign credentials for plan ${cartItem.planId}:`, error);
-          // Continue with other items even if one fails
-        }
+      // Use atomic payment processing for consistency
+      const result = await orderService.processPaymentCompletion(order.id, paypalOrderId || 'manual-payment');
+      
+      if (!result.success) {
+        throw new Error('Failed to process payment and assign credentials');
       }
 
       // Clear cart after successful order creation and credential assignment
@@ -2218,54 +2224,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const payment = event.resource;
         const orderId = payment.supplementary_data?.related_ids?.order_id || payment.custom_id;
         
-        console.log(`Processing payment completion for order: ${orderId}`);
+        console.log(`🔄 Processing payment completion for order: ${orderId}`);
         
-        // Mark order as paid and assign credentials
         try {
-          const order = await storage.getOrderById(orderId);
-          if (order) {
-            // Update order status first
-            await storage.updateOrder(orderId, {
-              status: 'paid',
-              paidAt: new Date(),
-              paypalOrderId: payment.id
+          // Use atomic payment processing method for consistency
+          const result = await orderService.processPaymentCompletion(
+            orderId, 
+            payment.id, 
+            payment
+          );
+          
+          if (result.success) {
+            console.log(`✅ Payment processed successfully for order ${orderId}: ${result.assignedCredentials.length} credentials assigned`);
+            
+            // Send success response to PayPal
+            res.status(200).json({ 
+              status: 'success',
+              orderId,
+              credentialsAssigned: result.assignedCredentials.length
             });
-            console.log(`Order ${orderId} marked as paid via webhook`);
-            
-            // Get order items to assign credentials
-            const orderItems = await storage.getOrderItems(orderId);
-            console.log(`Found ${orderItems.length} items in order ${orderId}`);
-            
-            // Assign credentials for each order item
-            for (const item of orderItems) {
-              try {
-                const deliveredCredentials = await storage.deliverCredentialsForOrder(
-                  orderId, 
-                  item.planId, 
-                  item.quantity
-                );
-                console.log(`Delivered ${deliveredCredentials.length} credentials for plan ${item.planId}`);
-              } catch (credentialError) {
-                console.error(`Error delivering credentials for plan ${item.planId}:`, credentialError);
-              }
-            }
-            
-            console.log(`Completed credential assignment for order ${orderId}`);
+          } else {
+            console.error(`❌ Payment processing failed for order ${orderId}`);
+            res.status(500).json({ error: 'Payment processing failed' });
           }
-        } catch (dbError) {
-          console.error('Database error during webhook processing:', dbError);
+        } catch (processingError) {
+          console.error(`💥 Payment processing error for order ${orderId}:`, processingError);
+          
+          // Still send success to PayPal to avoid retries, but log the error
+          res.status(200).json({ 
+            status: 'error', 
+            message: processingError.message,
+            orderId 
+          });
         }
         
-        // Send success response to PayPal
-        res.status(200).json({ status: 'success' });
       } else {
         // Handle other webhook events
-        console.log(`Unhandled webhook event: ${event.event_type}`);
+        console.log(`ℹ️ Unhandled webhook event: ${event.event_type}`);
         res.status(200).json({ status: 'ignored' });
       }
       
     } catch (error) {
-      console.error('Webhook processing error:', error);
+      console.error('💥 Webhook processing error:', error);
       res.status(500).json({ error: 'Webhook processing failed' });
     }
   });

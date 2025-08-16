@@ -3,6 +3,9 @@ import type { IStorage } from "../storage";
 import { ExpiryService } from "./expiryService";
 import { CouponService } from "./couponService";
 import { getEndOfMonthIstanbul } from "../utils/dateUtils";
+import { db } from "../db";
+import { eq, and } from "drizzle-orm";
+import { orders, orderItems, credentialPools, orderCredentials } from "@shared/schema";
 
 export class OrderService {
   private expiryService: ExpiryService;
@@ -91,9 +94,162 @@ export class OrderService {
     return this.storage.updateOrder(orderId, {
       status: 'paid',
       paypalOrderId,
-      paidAt,
       expiresAt: expiryDate
-    });
+    } as any);
+  }
+
+  /**
+   * Atomically process payment completion with credential assignment and package activation
+   * This method ensures all operations happen in a single database transaction for consistency
+   */
+  async processPaymentCompletion(orderId: string, paypalOrderId: string, paymentDetails?: any): Promise<{
+    order: any;
+    assignedCredentials: any[];
+    success: boolean;
+  }> {
+    try {
+      return await db.transaction(async (tx) => {
+        // 1. Get and validate order
+        const [order] = await tx.select().from(orders).where(eq(orders.id, orderId));
+        
+        if (!order) {
+          throw new Error("Order not found");
+        }
+
+        if (order.status === 'paid') {
+          console.log(`Order ${orderId} already processed as paid`);
+          // Return existing data for idempotency
+          const existingCredentials = await this.storage.getCredentialsForOrder(orderId);
+          return {
+            order,
+            assignedCredentials: existingCredentials,
+            success: true
+          };
+        }
+
+        if (order.status !== 'pending') {
+          throw new Error(`Order status is ${order.status}, expected 'pending'`);
+        }
+
+        const paidAt = new Date();
+        const expiresAt = getEndOfMonthIstanbul(paidAt);
+
+        // 2. Update order status to paid
+        const [updatedOrder] = await tx
+          .update(orders)
+          .set({
+            status: 'paid',
+            paypalOrderId,
+            paidAt,
+            expiresAt
+          })
+          .where(eq(orders.id, orderId))
+          .returning();
+
+        // 3. Update all order items with expiration date
+        await tx
+          .update(orderItems)
+          .set({ expiresAt })
+          .where(eq(orderItems.orderId, orderId));
+
+        // 4. Get order items for credential assignment
+        const orderItemsList = await tx
+          .select()
+          .from(orderItems)
+          .where(eq(orderItems.orderId, orderId));
+
+        const assignedCredentials: any[] = [];
+
+        // 5. Assign credentials for each order item
+        for (const item of orderItemsList) {
+          console.log(`Assigning ${item.qty} credentials for plan ${item.planId}`);
+          
+          // Get available credentials for this plan with row-level locking
+          const availableCredentials = await tx
+            .select()
+            .from(credentialPools)
+            .where(
+              and(
+                eq(credentialPools.planId, item.planId),
+                eq(credentialPools.isAssigned, false)
+              )
+            )
+            .limit(item.qty)
+            .for('update'); // Row-level lock to prevent race conditions
+
+          if (availableCredentials.length < item.qty) {
+            throw new Error(
+              `Insufficient credentials for plan ${item.planId}. Need ${item.qty}, available ${availableCredentials.length}`
+            );
+          }
+
+          // Select credentials to assign
+          const credentialsToAssign = availableCredentials.slice(0, item.qty);
+
+          for (const credential of credentialsToAssign) {
+            // 6. Update credential pool with assignment
+            await tx
+              .update(credentialPools)
+              .set({
+                isAssigned: true,
+                assignedToOrderId: orderId,
+                assignedToUserId: order.userId,
+                assignedAt: paidAt,
+                updatedAt: new Date()
+              })
+              .where(eq(credentialPools.id, credential.id));
+
+            // 7. Create order credential record
+            await tx
+              .insert(orderCredentials)
+              .values({
+                orderId,
+                credentialId: credential.id,
+                deliveredAt: paidAt,
+                expiresAt
+              });
+
+            assignedCredentials.push({
+              id: credential.id,
+              username: credential.username,
+              password: credential.password,
+              planId: credential.planId,
+              assignedAt: paidAt,
+              expiresAt
+            });
+          }
+        }
+
+        console.log(
+          `✅ Payment completion processed successfully for order ${orderId}: ${assignedCredentials.length} credentials assigned`
+        );
+
+        return {
+          order: updatedOrder,
+          assignedCredentials,
+          success: true
+        };
+      });
+    } catch (error) {
+      console.error(`❌ Payment completion failed for order ${orderId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get translated order status for Turkish UI
+   */
+  getOrderStatusTurkish(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'pending': 'Beklemede',
+      'paid': 'Ödendi',
+      'completed': 'Tamamlandı',
+      'failed': 'Başarısız',
+      'refunded': 'İade Edildi',
+      'expired': 'Süresi Doldu',
+      'cancelled': 'İptal Edildi'
+    };
+    return statusMap[status] || status;
   }
 
   async getOrdersWithDetails(userId: string) {

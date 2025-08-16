@@ -153,6 +153,7 @@ export interface IStorage {
   getAllCredentialStats(): Promise<{ [planId: string]: { total: number; assigned: number; available: number } }>;
   validateStockAvailability(planId: string, requestedQuantity: number): Promise<boolean>;
   reserveStock(planId: string, quantity: number, orderId: string): Promise<boolean>;
+  getCredentialsForOrder(orderId: string): Promise<any[]>;
 
   // Statistics
   getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number; cancelledOrders: number; pendingOrders: number }>;
@@ -1600,6 +1601,24 @@ export class DatabaseStorage implements IStorage {
       console.error('Stock reservation failed:', error);
       return false;
     }
+  }
+
+  async getCredentialsForOrder(orderId: string): Promise<any[]> {
+    const results = await db
+      .select({
+        id: credentialPools.id,
+        username: credentialPools.username,
+        password: credentialPools.password,
+        planId: credentialPools.planId,
+        assignedAt: credentialPools.assignedAt,
+        deliveredAt: orderCredentials.deliveredAt,
+        expiresAt: orderCredentials.expiresAt
+      })
+      .from(credentialPools)
+      .innerJoin(orderCredentials, eq(credentialPools.id, orderCredentials.credentialId))
+      .where(eq(orderCredentials.orderId, orderId));
+    
+    return results;
   }
 }
 

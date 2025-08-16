@@ -11,6 +11,23 @@ import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import type { User, Order } from "@shared/schema";
 
+// Utility function to translate order status to Turkish
+function getOrderStatusTurkish(status: string, isActive: boolean, isExpired: boolean): string {
+  if (isActive) return 'Aktif';
+  if (isExpired) return 'Süresi Doldu';
+  
+  const statusMap: { [key: string]: string } = {
+    'pending': 'Beklemede',
+    'paid': 'Ödendi',
+    'completed': 'Tamamlandı',
+    'failed': 'Başarısız',
+    'refunded': 'İade Edildi',
+    'expired': 'Süresi Doldu',
+    'cancelled': 'İptal Edildi'
+  };
+  return statusMap[status] || status;
+}
+
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
@@ -229,15 +246,17 @@ export default function Dashboard() {
                             <div className="text-sm">
                               {order.status === 'paid' && order.daysRemaining > 0 ? (
                                 <>
-                                  <Badge className="bg-neon-green/20 text-neon-green border-transparent">Active</Badge>
+                                  <Badge className="bg-neon-green/20 text-neon-green border-transparent">Aktif</Badge>
                                   <div className="text-xs text-slate-400 mt-1">
-                                    {order.daysRemaining} days left
+                                    {order.daysRemaining} gün kaldı
                                   </div>
                                 </>
                               ) : order.status === 'expired' || order.daysRemaining <= 0 ? (
-                                <Badge variant="secondary" className="bg-slate-500/20 text-slate-400 border-transparent">Expired</Badge>
+                                <Badge variant="secondary" className="bg-slate-500/20 text-slate-400 border-transparent">Süresi Doldu</Badge>
                               ) : (
-                                <Badge className="bg-yellow-500/20 text-yellow-500 border-transparent">{order.status}</Badge>
+                                <Badge className="bg-yellow-500/20 text-yellow-500 border-transparent">
+                                  {getOrderStatusTurkish(order.status, false, false)}
+                                </Badge>
                               )}
                             </div>
                             {order.items?.[0] && (
