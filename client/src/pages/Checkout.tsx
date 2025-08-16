@@ -187,11 +187,6 @@ export default function Checkout() {
     });
   };
 
-  // Real-time total calculation
-  const currentSubtotal = getCurrentSubtotal();
-  const currentDiscount = appliedCoupon ? discount : 0;
-  const currentTotal = Math.max(0, currentSubtotal - currentDiscount);
-
   const getCurrentSubtotal = () => {
     if (orderId && orderData) {
       // For orders, use the subtotal before discount
@@ -213,6 +208,11 @@ export default function Checkout() {
     }
     return [];
   };
+
+  // Real-time total calculation
+  const currentSubtotal = getCurrentSubtotal();
+  const currentDiscount = appliedCoupon ? discount : 0;
+  const currentTotal = Math.max(0, currentSubtotal - currentDiscount);
 
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
