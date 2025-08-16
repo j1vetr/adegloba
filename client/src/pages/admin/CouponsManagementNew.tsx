@@ -627,30 +627,43 @@ export default function CouponsManagementNew() {
                   />
                 </div>
 
-                {/* Switches */}
-                <div className="flex flex-wrap gap-6">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isActive"
-                      checked={formData.isActive}
-                      onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
-                      data-testid="coupon-active-switch"
-                    />
-                    <Label htmlFor="isActive" className="text-slate-300">
-                      Aktif durumda
-                    </Label>
-                  </div>
+                {/* Options & Settings */}
+                <div className="space-y-4 p-4 bg-slate-800/30 rounded-lg border border-slate-600/50">
+                  <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-cyan-400" />
+                    Kupon Ayarları
+                  </h4>
                   
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="singleUseOnly"
-                      checked={formData.singleUseOnly}
-                      onCheckedChange={(checked) => setFormData({ ...formData, singleUseOnly: checked })}
-                      data-testid="coupon-single-use-switch"
-                    />
-                    <Label htmlFor="singleUseOnly" className="text-slate-300">
-                      Tek kullanım (kullanıcı başına bir kez)
-                    </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded border border-slate-600">
+                      <div className="space-y-1">
+                        <Label htmlFor="isActive" className="text-slate-200 font-medium">
+                          Aktif Durumda
+                        </Label>
+                        <p className="text-xs text-slate-400">Kupon kullanıma açık olsun</p>
+                      </div>
+                      <Switch
+                        id="isActive"
+                        checked={formData.isActive}
+                        onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                        data-testid="coupon-active-switch"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded border border-slate-600">
+                      <div className="space-y-1">
+                        <Label htmlFor="singleUseOnly" className="text-slate-200 font-medium">
+                          Tek Kullanım
+                        </Label>
+                        <p className="text-xs text-slate-400">Kullanıcı başına bir kez kullanılabilir</p>
+                      </div>
+                      <Switch
+                        id="singleUseOnly"
+                        checked={formData.singleUseOnly}
+                        onCheckedChange={(checked) => setFormData({ ...formData, singleUseOnly: checked })}
+                        data-testid="coupon-single-use-switch"
+                      />
+                    </div>
                   </div>
                 </div>
 
