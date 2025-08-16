@@ -2241,6 +2241,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to find incomplete paid orders
+  app.get('/api/admin/orders/incomplete-paid', isAdminAuthenticated, async (req, res) => {
+    try {
+      const incompleteOrders = await orderService.findIncompletePaidOrders();
+      res.json({
+        success: true,
+        count: incompleteOrders.length,
+        orders: incompleteOrders
+      });
+    } catch (error) {
+      console.error("Error finding incomplete paid orders:", error);
+      res.status(500).json({ success: false, message: "Failed to find incomplete orders" });
+    }
+  });
+
+  // Admin endpoint to fix specific incomplete paid order
+  app.post('/api/admin/orders/:orderId/fix-incomplete', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const result = await orderService.fixIncompletePaidOrder(orderId);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error(`Error fixing incomplete order ${req.params.orderId}:`, error);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to fix order: ${error.message}` 
+      });
+    }
+  });
+
+  // Admin endpoint to fix all incomplete paid orders
+  app.post('/api/admin/orders/fix-all-incomplete', isAdminAuthenticated, async (req, res) => {
+    try {
+      const result = await orderService.fixAllIncompletePaidOrders();
+      res.json({
+        success: true,
+        message: `Processed ${result.processed} orders, fixed ${result.fixed}`,
+        ...result
+      });
+    } catch (error) {
+      console.error("Error fixing all incomplete orders:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to fix orders: ${error.message}` 
+      });
+    }
+  });
+
+  // Public endpoint to trigger fix for a specific order (for immediate fixes)
+  app.post('/api/orders/:orderId/fix-completion', async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const result = await orderService.fixIncompletePaidOrder(orderId);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error(`Error fixing order completion ${req.params.orderId}:`, error);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to fix order completion: ${error.message}` 
+      });
+    }
+  });
+
   // PayPal webhook endpoint for payment verification
   app.post("/api/paypal/webhook", async (req, res) => {
     console.log('PayPal webhook received:', req.body);
@@ -2300,6 +2373,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Webhook processing failed' });
     }
   });
+
+  // Startup job to fix incomplete paid orders
+  async function startupIncompleteOrdersCheck() {
+    try {
+      console.log('🔍 Checking for incomplete paid orders on startup...');
+      const result = await orderService.fixAllIncompletePaidOrders();
+      
+      if (result.processed > 0) {
+        console.log(`🔧 Startup check: Fixed ${result.fixed}/${result.processed} incomplete orders`);
+        if (result.errors.length > 0) {
+          console.log('❌ Errors during startup fix:', result.errors);
+        }
+      } else {
+        console.log('✅ No incomplete paid orders found on startup');
+      }
+    } catch (error) {
+      console.error('❌ Startup incomplete orders check failed:', error);
+    }
+  }
+
+  // Enhanced cleanup that also checks for incomplete orders
+  async function enhancedOrderCleanup() {
+    try {
+      console.log('🧹 Running enhanced order cleanup...');
+      
+      // Check for incomplete paid orders
+      const incompleteOrders = await orderService.findIncompletePaidOrders();
+      if (incompleteOrders.length > 0) {
+        console.log(`🔧 Found ${incompleteOrders.length} incomplete paid orders during cleanup`);
+        const result = await orderService.fixAllIncompletePaidOrders();
+        console.log(`🔧 Cleanup fixed ${result.fixed}/${result.processed} incomplete orders`);
+      }
+    } catch (error) {
+      console.error('❌ Enhanced cleanup incomplete orders check failed:', error);
+    }
+  }
+
+  // Run startup check after a short delay
+  setTimeout(startupIncompleteOrdersCheck, 5000);
+  
+  // Set up interval to run enhanced cleanup every 30 minutes
+  setInterval(enhancedOrderCleanup, 30 * 60 * 1000);
 
   const httpServer = createServer(app);
   return httpServer;

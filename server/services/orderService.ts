@@ -4,7 +4,7 @@ import { ExpiryService } from "./expiryService";
 import { CouponService } from "./couponService";
 import { getEndOfMonthIstanbul } from "../utils/dateUtils";
 import { db } from "../db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull, or } from "drizzle-orm";
 import { orders, orderItems, credentialPools, orderCredentials } from "@shared/schema";
 
 export class OrderService {
@@ -368,5 +368,205 @@ export class OrderService {
 
   async getRecentOrders(limit: number) {
     return this.storage.getRecentOrders(limit);
+  }
+
+  /**
+   * Find orders with status='paid' but missing paid_at or expires_at
+   * These are incomplete payment completions that need to be fixed
+   */
+  async findIncompletePaidOrders(): Promise<any[]> {
+    try {
+      const incompleteOrders = await db
+        .select()
+        .from(orders)
+        .where(
+          and(
+            eq(orders.status, 'paid'),
+            or(
+              isNull(orders.paidAt),
+              isNull(orders.expiresAt)
+            )
+          )
+        );
+      
+      console.log(`Found ${incompleteOrders.length} incomplete paid orders`);
+      return incompleteOrders;
+    } catch (error) {
+      console.error('Error finding incomplete paid orders:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Fix incomplete paid orders by updating missing timestamps
+   * This handles orders that have status='paid' and credentials assigned but missing paid_at/expires_at
+   */
+  async fixIncompletePaidOrder(orderId: string): Promise<{ success: boolean; message: string; order?: any }> {
+    try {
+      return await db.transaction(async (tx) => {
+        // Get order details
+        const [order] = await tx.select().from(orders).where(eq(orders.id, orderId));
+        
+        if (!order) {
+          return { success: false, message: `Order ${orderId} not found` };
+        }
+        
+        if (order.status !== 'paid') {
+          return { success: false, message: `Order ${orderId} status is '${order.status}', not 'paid'` };
+        }
+        
+        // Check if already complete
+        if (order.paidAt && order.expiresAt) {
+          return { success: true, message: `Order ${orderId} is already complete`, order };
+        }
+        
+        // Check if credentials are assigned
+        const assignedCredentials = await tx
+          .select()
+          .from(credentialPools)
+          .where(
+            and(
+              eq(credentialPools.assignedToOrderId, orderId),
+              eq(credentialPools.isAssigned, true)
+            )
+          );
+        
+        if (assignedCredentials.length === 0) {
+          return { success: false, message: `Order ${orderId} has no assigned credentials. Use processPaymentCompletion instead.` };
+        }
+        
+        // Use earliest credential assignment date or current time for paid_at
+        const earliestAssignedAt = assignedCredentials
+          .map(c => c.assignedAt)
+          .filter(Boolean)
+          .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0];
+        
+        const paidAt = earliestAssignedAt ? new Date(earliestAssignedAt) : new Date();
+        const expiresAt = getEndOfMonthIstanbul(paidAt);
+        
+        // Update order with missing timestamps
+        const [updatedOrder] = await tx
+          .update(orders)
+          .set({
+            paidAt: order.paidAt || paidAt,
+            expiresAt: order.expiresAt || expiresAt,
+            updatedAt: new Date()
+          })
+          .where(eq(orders.id, orderId))
+          .returning();
+        
+        // Update order items with expiration date if missing
+        await tx
+          .update(orderItems)
+          .set({ 
+            expiresAt: expiresAt,
+            updatedAt: new Date()
+          })
+          .where(
+            and(
+              eq(orderItems.orderId, orderId),
+              isNull(orderItems.expiresAt)
+            )
+          );
+        
+        // Update credential pools if assignedAt is missing
+        await tx
+          .update(credentialPools)
+          .set({
+            assignedAt: paidAt,
+            updatedAt: new Date()
+          })
+          .where(
+            and(
+              eq(credentialPools.assignedToOrderId, orderId),
+              isNull(credentialPools.assignedAt)
+            )
+          );
+        
+        // Ensure order credentials records exist
+        for (const credential of assignedCredentials) {
+          const [existingOrderCredential] = await tx
+            .select()
+            .from(orderCredentials)
+            .where(
+              and(
+                eq(orderCredentials.orderId, orderId),
+                eq(orderCredentials.credentialId, credential.id)
+              )
+            );
+          
+          if (!existingOrderCredential) {
+            await tx
+              .insert(orderCredentials)
+              .values({
+                orderId,
+                credentialId: credential.id,
+                deliveredAt: paidAt,
+                expiresAt
+              });
+          }
+        }
+        
+        console.log(
+          `✅ Fixed incomplete paid order ${orderId}: set paidAt=${paidAt.toISOString()}, expiresAt=${expiresAt.toISOString()}`
+        );
+        
+        return {
+          success: true,
+          message: `Order ${orderId} completion fixed successfully. ${assignedCredentials.length} credentials confirmed.`,
+          order: updatedOrder
+        };
+      });
+    } catch (error) {
+      console.error(`❌ Failed to fix incomplete paid order ${orderId}:`, error);
+      return {
+        success: false,
+        message: `Failed to fix order ${orderId}: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Process all incomplete paid orders in batch
+   */
+  async fixAllIncompletePaidOrders(): Promise<{ 
+    processed: number; 
+    fixed: number; 
+    errors: { orderId: string; error: string }[]; 
+    results: any[]
+  }> {
+    const incompleteOrders = await this.findIncompletePaidOrders();
+    const results = [];
+    const errors = [];
+    let fixed = 0;
+    
+    console.log(`🔧 Processing ${incompleteOrders.length} incomplete paid orders...`);
+    
+    for (const order of incompleteOrders) {
+      try {
+        const result = await this.fixIncompletePaidOrder(order.id);
+        results.push(result);
+        
+        if (result.success) {
+          fixed++;
+          console.log(`✅ Fixed order ${order.id}`);
+        } else {
+          errors.push({ orderId: order.id, error: result.message });
+          console.log(`❌ Failed to fix order ${order.id}: ${result.message}`);
+        }
+      } catch (error) {
+        errors.push({ orderId: order.id, error: error.message });
+        console.log(`❌ Error processing order ${order.id}:`, error);
+      }
+    }
+    
+    console.log(`🔧 Batch completion: ${fixed}/${incompleteOrders.length} orders fixed`);
+    
+    return {
+      processed: incompleteOrders.length,
+      fixed,
+      errors,
+      results
+    };
   }
 }
