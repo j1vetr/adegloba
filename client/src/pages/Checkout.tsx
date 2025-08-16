@@ -247,16 +247,17 @@ export default function Checkout() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {items.map((item: any) => (
+                {items.map((item: any, index: number) => (
                   <div 
                     key={item.id} 
-                    className="flex items-center justify-between p-4 rounded-xl bg-slate-800/50 border border-slate-700/50"
+                    className="flex items-center justify-between p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 card-hover cart-item-entrance"
+                    style={{ animationDelay: `${index * 0.1}s` }}
                     data-testid={`checkout-item-${item.planId || item.id}`}
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="relative">
-                        <Package className="h-10 w-10 text-cyan-400" />
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full" />
+                      <div className="relative group">
+                        <Package className="h-10 w-10 text-cyan-400 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
                       </div>
                       
                       <div>
@@ -280,7 +281,7 @@ export default function Checkout() {
                     </div>
 
                     <div className="text-right">
-                      <div className="text-lg font-semibold text-cyan-400">
+                      <div className="text-lg font-semibold text-cyan-400 price-highlight">
                         {formatPrice(item.unitPriceUsd || item.plan?.priceUsd || 0)}
                         {item.quantity && item.quantity > 1 && (
                           <div className="text-xs text-slate-400">
@@ -311,33 +312,34 @@ export default function Checkout() {
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
                       disabled={!!appliedCoupon}
-                      className="flex-1 bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-500"
+                      className="flex-1 bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-500 transition-all duration-300 focus:scale-105"
                       data-testid="checkout-coupon-input"
                     />
                     <Button 
                       onClick={appliedCoupon ? removeCoupon : handleApplyCoupon}
                       disabled={validateCouponMutation.isPending || (!appliedCoupon && !couponCode.trim())}
-                      className={appliedCoupon 
-                        ? "bg-red-500 hover:bg-red-600 text-white" 
-                        : "bg-green-500 hover:bg-green-600 text-white"
-                      }
+                      className={`btn-interactive ${
+                        appliedCoupon 
+                          ? "bg-red-500 hover:bg-red-600 text-white" 
+                          : "bg-green-500 hover:bg-green-600 text-white animate-pulse-glow"
+                      }`}
                       data-testid={appliedCoupon ? "remove-coupon-button" : "apply-coupon-button"}
                     >
                       {validateCouponMutation.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : appliedCoupon ? (
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 transition-transform duration-200 hover:scale-110" />
                       ) : (
-                        <Tag className="h-4 w-4" />
+                        <Tag className="h-4 w-4 transition-transform duration-200 hover:scale-110" />
                       )}
                     </Button>
                   </div>
                   
                   {appliedCoupon && (
-                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg success-bounce">
                       <div className="flex items-center justify-between">
                         <span className="text-green-400 text-sm font-medium flex items-center">
-                          <CheckCircle className="h-4 w-4 mr-2" />
+                          <CheckCircle className="h-4 w-4 mr-2 animate-pulse" />
                           {appliedCoupon.code} uygulandı
                         </span>
                         <span className="text-green-400 text-sm font-semibold">
@@ -372,7 +374,7 @@ export default function Checkout() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-slate-300">
                     <span>Ara Toplam</span>
-                    <span className="font-semibold" data-testid="checkout-subtotal">
+                    <span className="font-semibold price-highlight" data-testid="checkout-subtotal">
                       {formatPrice(subtotal)}
                     </span>
                   </div>
@@ -380,7 +382,7 @@ export default function Checkout() {
                   {discount > 0 && (
                     <div className="flex justify-between text-green-400">
                       <span>İndirim</span>
-                      <span className="font-semibold" data-testid="checkout-discount">
+                      <span className="font-semibold text-green-400 price-highlight" data-testid="checkout-discount">
                         -{formatPrice(discount)}
                       </span>
                     </div>
@@ -390,7 +392,7 @@ export default function Checkout() {
                   
                   <div className="flex justify-between text-xl font-bold">
                     <span className="text-white">Toplam</span>
-                    <span className="text-cyan-400" data-testid="checkout-total">
+                    <span className="text-cyan-400 price-highlight font-bold" data-testid="checkout-total">
                       {formatPrice(total)}
                     </span>
                   </div>
@@ -412,7 +414,7 @@ export default function Checkout() {
                   </div>
                   
                   {total > 0 ? (
-                    <div data-testid="paypal-container">
+                    <div data-testid="paypal-container" className="animate-slide-in-up">
                       <PayPalButton
                         amount={total.toFixed(2)}
                         currency="USD"
@@ -434,13 +436,13 @@ export default function Checkout() {
                     <Button
                       onClick={() => completeOrderMutation.mutate('')}
                       disabled={completeOrderMutation.isPending}
-                      className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 rounded-xl text-lg"
+                      className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 rounded-xl text-lg btn-interactive animate-pulse-glow"
                       data-testid="free-checkout-button"
                     >
                       {completeOrderMutation.isPending ? (
                         <Loader2 className="h-5 w-5 animate-spin mr-2" />
                       ) : (
-                        <CheckCircle className="h-5 w-5 mr-2" />
+                        <CheckCircle className="h-5 w-5 mr-2 animate-pulse" />
                       )}
                       Ücretsiz Siparişi Tamamla
                     </Button>
@@ -448,8 +450,8 @@ export default function Checkout() {
                 </div>
 
                 {/* Security Notice */}
-                <div className="text-center text-xs text-slate-400 flex items-center justify-center bg-slate-800/30 p-3 rounded-lg">
-                  <div className="mr-2 text-green-400">🔒</div>
+                <div className="text-center text-xs text-slate-400 flex items-center justify-center bg-slate-800/30 p-3 rounded-lg hover:bg-slate-800/50 transition-all duration-300">
+                  <div className="mr-2 text-green-400 animate-pulse">🔒</div>
                   <div>
                     <div className="font-medium">Güvenli 256-bit SSL şifreleme</div>
                     <div>Kart bilgileriniz güvende</div>

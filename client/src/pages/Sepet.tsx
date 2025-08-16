@@ -211,6 +211,13 @@ export default function Sepet() {
   };
 
   const updateQuantity = (planId: string, newQuantity: number) => {
+    // Add bounce effect to quantity change
+    const quantityElement = document.querySelector(`[data-quantity="${planId}"]`);
+    if (quantityElement) {
+      quantityElement.classList.add('animate-bounce-in');
+      setTimeout(() => quantityElement.classList.remove('animate-bounce-in'), 500);
+    }
+    
     if (newQuantity <= 0) {
       removeItemMutation.mutate(planId);
     } else {
@@ -263,18 +270,19 @@ export default function Sepet() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
-              {cartData.items.map((item) => (
+              {cartData.items.map((item, index) => (
                 <Card 
                   key={item.id} 
-                  className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300"
+                  className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50 card-hover cart-item-entrance"
+                  style={{ animationDelay: `${index * 0.1}s` }}
                   data-testid={`cart-item-${item.planId}`}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className="relative">
-                          <Package className="h-12 w-12 text-cyan-400" />
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full" />
+                        <div className="relative group">
+                          <Package className="h-12 w-12 text-cyan-400 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
                         </div>
                         
                         <div>
@@ -284,8 +292,8 @@ export default function Sepet() {
                           <p className="text-slate-400 text-sm mb-2">
                             {item.plan?.dataLimitGb}GB - Ay sonu bitiş
                           </p>
-                          <div className="flex items-center text-cyan-400">
-                            <DollarSign className="h-4 w-4 mr-1" />
+                          <div className="flex items-center text-cyan-400 price-highlight">
+                            <DollarSign className="h-4 w-4 mr-1 animate-pulse" />
                             <span className="font-semibold">{formatPrice(item.plan?.priceUsd || 0)}</span>
                           </div>
                         </div>
@@ -299,13 +307,16 @@ export default function Sepet() {
                             variant="outline"
                             onClick={() => updateQuantity(item.planId, item.quantity - 1)}
                             disabled={updateQuantityMutation.isPending}
-                            className="h-8 w-8 p-0 border-slate-600 hover:border-cyan-500 hover:bg-cyan-500/10"
+                            className="h-8 w-8 p-0 border-slate-600 hover:border-cyan-500 hover:bg-cyan-500/10 quantity-btn btn-interactive"
                             data-testid={`decrease-quantity-${item.planId}`}
                           >
-                            <Minus className="h-4 w-4" />
+                            <Minus className="h-4 w-4 transition-transform duration-200 hover:scale-125" />
                           </Button>
                           
-                          <span className="text-white font-semibold min-w-[2rem] text-center">
+                          <span 
+                            className="text-white font-semibold min-w-[2rem] text-center transition-all duration-300 hover:scale-110 hover:text-cyan-400"
+                            data-quantity={item.planId}
+                          >
                             {item.quantity}
                           </span>
                           
@@ -314,10 +325,10 @@ export default function Sepet() {
                             variant="outline"
                             onClick={() => updateQuantity(item.planId, item.quantity + 1)}
                             disabled={updateQuantityMutation.isPending}
-                            className="h-8 w-8 p-0 border-slate-600 hover:border-cyan-500 hover:bg-cyan-500/10"
+                            className="h-8 w-8 p-0 border-slate-600 hover:border-cyan-500 hover:bg-cyan-500/10 quantity-btn btn-interactive"
                             data-testid={`increase-quantity-${item.planId}`}
                           >
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-4 w-4 transition-transform duration-200 hover:scale-125 hover:rotate-90" />
                           </Button>
                         </div>
 
@@ -325,12 +336,20 @@ export default function Sepet() {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => removeItemMutation.mutate(item.planId)}
+                          onClick={() => {
+                            const cardElement = document.querySelector(`[data-testid="cart-item-${item.planId}"]`);
+                            if (cardElement) {
+                              cardElement.classList.add('animate-shake');
+                              setTimeout(() => removeItemMutation.mutate(item.planId), 300);
+                            } else {
+                              removeItemMutation.mutate(item.planId);
+                            }
+                          }}
                           disabled={removeItemMutation.isPending}
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 btn-interactive hover:animate-wiggle"
                           data-testid={`remove-item-${item.planId}`}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 transition-transform duration-200 hover:scale-110" />
                         </Button>
                       </div>
                     </div>
@@ -344,10 +363,10 @@ export default function Sepet() {
                   variant="outline"
                   onClick={() => clearCartMutation.mutate()}
                   disabled={clearCartMutation.isPending}
-                  className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                  className="border-red-500/50 text-red-400 hover:bg-red-500/10 btn-interactive hover:animate-wiggle"
                   data-testid="clear-cart-button"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="h-4 w-4 mr-2 transition-transform duration-200 hover:scale-110" />
                   Sepeti Temizle
                 </Button>
               </div>
@@ -375,12 +394,20 @@ export default function Sepet() {
                         data-testid="coupon-input"
                       />
                       <Button 
-                        onClick={appliedCoupon ? removeCoupon : handleApplyCoupon}
+                        onClick={() => {
+                          const couponCard = document.querySelector('.coupon-success-card');
+                          if (appliedCoupon) {
+                            removeCoupon();
+                          } else {
+                            handleApplyCoupon();
+                          }
+                        }}
                         disabled={validateCouponMutation.isPending || (!appliedCoupon && !couponCode.trim())}
-                        className={appliedCoupon 
-                          ? "bg-red-500 hover:bg-red-600 text-white" 
-                          : "bg-cyan-500 hover:bg-cyan-600 text-white"
-                        }
+                        className={`btn-interactive ${
+                          appliedCoupon 
+                            ? "bg-red-500 hover:bg-red-600 text-white" 
+                            : "bg-cyan-500 hover:bg-cyan-600 text-white animate-pulse-glow"
+                        }`}
                         data-testid={appliedCoupon ? "remove-coupon-button" : "apply-coupon-button"}
                       >
                         {validateCouponMutation.isPending ? (
@@ -394,7 +421,7 @@ export default function Sepet() {
                     </div>
                     
                     {appliedCoupon && (
-                      <div className="mt-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <div className="coupon-success-card mt-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg success-bounce">
                         <div className="flex items-center justify-between">
                           <span className="text-green-400 text-sm font-medium">
                             {appliedCoupon.code} uygulandı
@@ -437,7 +464,7 @@ export default function Sepet() {
                   <Button
                     onClick={() => checkoutMutation.mutate()}
                     disabled={checkoutMutation.isPending}
-                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-xl text-lg"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-xl text-lg btn-interactive animate-pulse-glow"
                     data-testid="checkout-button"
                   >
                     {checkoutMutation.isPending ? (
