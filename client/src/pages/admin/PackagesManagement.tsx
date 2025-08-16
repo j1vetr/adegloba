@@ -242,7 +242,7 @@ export default function PackagesManagement() {
       toast({
         title: '🗑️ Başarılı',
         description: 'Paket başarıyla silindi ve sistemden kaldırıldı.',
-        className: 'bg-orange-900/90 border-orange-700 text-orange-100',
+        className: 'bg-red-900/90 border-red-700 text-red-100',
       });
     },
     onError: (error: any) => {
@@ -295,7 +295,7 @@ export default function PackagesManagement() {
           : 'Paket devre dışı bırakıldı ve satıştan kaldırıldı.',
         className: variables.isActive 
           ? 'bg-green-900/90 border-green-700 text-green-100'
-          : 'bg-yellow-900/90 border-yellow-700 text-yellow-100',
+          : 'bg-blue-900/90 border-blue-700 text-blue-100',
       });
     },
     onError: (error: any) => {
@@ -388,8 +388,8 @@ export default function PackagesManagement() {
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return <SortAsc className="h-4 w-4 opacity-30" />;
     return sortDirection === 'asc' 
-      ? <SortAsc className="h-4 w-4 text-yellow-400" />
-      : <SortDesc className="h-4 w-4 text-yellow-400" />;
+      ? <SortAsc className="h-4 w-4 text-cyan-400" />
+      : <SortDesc className="h-4 w-4 text-cyan-400" />;
   };
 
   // Filter and sort plans
@@ -486,10 +486,10 @@ export default function PackagesManagement() {
     <AdminLayout title="Paket Yönetimi">
       <div className="space-y-8 p-1">
         {/* Enhanced Header */}
-        <div className="glass-card border border-yellow-500/20 bg-gradient-to-r from-yellow-900/10 via-orange-900/10 to-amber-900/10 p-6 rounded-2xl">
+        <div className="glass-card border border-primary/20 bg-gradient-to-r from-slate-900/50 via-slate-800/50 to-slate-900/50 p-6 rounded-2xl">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="space-y-2">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-amber-400 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-primary bg-clip-text text-transparent">
                 🚀 Paket Yönetimi
               </h1>
               <p className="text-slate-300 text-lg">
@@ -497,7 +497,7 @@ export default function PackagesManagement() {
               </p>
               <div className="flex items-center gap-4 text-sm text-slate-400">
                 <span className="flex items-center gap-1">
-                  <Package className="h-4 w-4 text-yellow-400" />
+                  <Package className="h-4 w-4 text-primary" />
                   {totalPlans} Toplam Paket
                 </span>
                 <span className="flex items-center gap-1">
@@ -514,7 +514,7 @@ export default function PackagesManagement() {
               <Button 
                 onClick={() => refetchPlans()}
                 variant="outline"
-                className="glass-card border-slate-600 hover:border-yellow-500/50 text-slate-200 hover:text-yellow-400 transition-all duration-300"
+                className="glass-card border-slate-600 hover:border-primary/50 text-slate-200 hover:text-primary transition-all duration-300"
                 disabled={plansLoading}
                 data-testid="button-refresh"
               >
@@ -523,7 +523,7 @@ export default function PackagesManagement() {
               </Button>
               <Button 
                 onClick={() => setShowCreateDialog(true)}
-                className="glass-card bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 border-yellow-500/50 hover:border-yellow-400/70 text-white hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-yellow-500/20"
+                className="glass-card bg-gradient-to-r from-primary to-cyan-600 hover:from-primary/90 hover:to-cyan-500 border-primary/50 hover:border-primary/70 text-white hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-primary/20"
                 data-testid="button-create-package"
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -535,14 +535,14 @@ export default function PackagesManagement() {
 
         {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          <Card className="glass-card border-yellow-500/20 hover:border-yellow-400/40 transition-all duration-300 bg-gradient-to-br from-yellow-900/20 to-orange-900/20">
+          <Card className="glass-card border-primary/20 hover:border-primary/40 transition-all duration-300 bg-gradient-to-br from-slate-900/20 to-slate-800/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-yellow-200">Toplam Paket</CardTitle>
-              <Package className="h-5 w-5 text-yellow-400" />
+              <CardTitle className="text-sm font-medium text-slate-300">Toplam Paket</CardTitle>
+              <Package className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-white">{totalPlans}</div>
-              <p className="text-xs text-yellow-300/80">Sistemdeki tüm paketler</p>
+              <p className="text-xs text-slate-400">Sistemdeki tüm paketler</p>
             </CardContent>
           </Card>
           
@@ -590,10 +590,10 @@ export default function PackagesManagement() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-orange-500/20 hover:border-orange-400/40 transition-all duration-300 bg-gradient-to-br from-orange-900/20 to-amber-900/20">
+          <Card className="glass-card border-cyan-500/20 hover:border-cyan-400/40 transition-all duration-300 bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-orange-200">Kullanım Oranı</CardTitle>
-              <Activity className="h-5 w-5 text-orange-400" />
+              <CardTitle className="text-sm font-medium text-cyan-200">Kullanım Oranı</CardTitle>
+              <Activity className="h-5 w-5 text-cyan-400" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-white">{credentialUtilization}%</div>
@@ -605,18 +605,18 @@ export default function PackagesManagement() {
         </div>
 
         {/* Enhanced Filters */}
-        <Card className="glass-card border-yellow-500/20 bg-gradient-to-r from-slate-900/50 to-slate-800/50">
+        <Card className="glass-card border-primary/20 bg-gradient-to-r from-slate-900/50 to-slate-800/50">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-white flex items-center gap-2">
-                <Filter className="h-5 w-5 text-yellow-400" />
+                <Filter className="h-5 w-5 text-primary" />
                 Arama ve Filtreleme
               </CardTitle>
               <Button
                 onClick={() => setShowFilters(!showFilters)}
                 variant="outline"
                 size="sm"
-                className="glass-card border-slate-600 hover:border-yellow-500/50 text-slate-200 hover:text-yellow-400"
+                className="glass-card border-slate-600 hover:border-primary/50 text-slate-200 hover:text-primary"
               >
                 {showFilters ? 'Filtreleri Gizle' : 'Gelişmiş Filtreler'}
                 <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
@@ -626,12 +626,12 @@ export default function PackagesManagement() {
           <CardContent className="space-y-4">
             {/* Main Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary h-5 w-5" />
               <Input
                 placeholder="Paket adı, gemi adı veya açıklama ile ara..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-yellow-500/50 focus:ring-yellow-500/20 h-12 text-lg"
+                className="pl-12 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-primary/50 focus:ring-primary/20 h-12 text-lg"
                 data-testid="input-search-packages"
               />
             </div>
@@ -642,7 +642,7 @@ export default function PackagesManagement() {
                 <div>
                   <Label className="text-slate-300 text-sm font-medium">Gemi</Label>
                   <Select value={selectedShip} onValueChange={setSelectedShip}>
-                    <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white hover:border-yellow-500/50">
+                    <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white hover:border-primary/50">
                       <SelectValue placeholder="Gemi seçin" />
                     </SelectTrigger>
                     <SelectContent>
@@ -659,7 +659,7 @@ export default function PackagesManagement() {
                 <div>
                   <Label className="text-slate-300 text-sm font-medium">Durum</Label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white hover:border-yellow-500/50">
+                    <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white hover:border-primary/50">
                       <SelectValue placeholder="Durum seçin" />
                     </SelectTrigger>
                     <SelectContent>
@@ -673,7 +673,7 @@ export default function PackagesManagement() {
                 <div>
                   <Label className="text-slate-300 text-sm font-medium">Fiyat Aralığı</Label>
                   <Select value={priceFilter} onValueChange={setPriceFilter}>
-                    <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white hover:border-yellow-500/50">
+                    <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white hover:border-primary/50">
                       <SelectValue placeholder="Fiyat aralığı" />
                     </SelectTrigger>
                     <SelectContent>
@@ -691,7 +691,7 @@ export default function PackagesManagement() {
                     setPageSize(parseInt(value));
                     setCurrentPage(1);
                   }}>
-                    <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white hover:border-yellow-500/50">
+                    <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white hover:border-primary/50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -722,7 +722,7 @@ export default function PackagesManagement() {
                   }}
                   variant="ghost"
                   size="sm"
-                  className="text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
+                  className="text-primary hover:text-cyan-300 hover:bg-primary/10"
                 >
                   Filtreleri Temizle
                 </Button>
@@ -732,12 +732,12 @@ export default function PackagesManagement() {
         </Card>
 
         {/* Enhanced Plans Table */}
-        <Card className="glass-card border-yellow-500/20 bg-gradient-to-br from-slate-900/80 to-slate-800/80">
+        <Card className="glass-card border-primary/20 bg-gradient-to-br from-slate-900/80 to-slate-800/80">
           <CardHeader>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
                 <CardTitle className="text-white flex items-center gap-2">
-                  <Database className="h-5 w-5 text-yellow-400" />
+                  <Database className="h-5 w-5 text-primary" />
                   Paket Listesi
                 </CardTitle>
                 <CardDescription className="text-slate-300">
@@ -745,7 +745,7 @@ export default function PackagesManagement() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-yellow-400 border-yellow-500/50">
+                <Badge variant="outline" className="text-primary border-primary/50">
                   {startIndex + 1}-{endIndex} / {totalFilteredPlans}
                 </Badge>
               </div>
@@ -755,7 +755,7 @@ export default function PackagesManagement() {
             {plansLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center space-y-4">
-                  <div className="animate-spin h-12 w-12 border-3 border-yellow-500 border-t-transparent rounded-full mx-auto"></div>
+                  <div className="animate-spin h-12 w-12 border-3 border-primary border-t-transparent rounded-full mx-auto"></div>
                   <p className="text-slate-400">Paketler yükleniliyor...</p>
                 </div>
               </div>
@@ -768,7 +768,7 @@ export default function PackagesManagement() {
                 </div>
                 <Button
                   onClick={() => setShowCreateDialog(true)}
-                  className="glass-card bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500"
+                  className="glass-card bg-gradient-to-r from-primary to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   İlk Paketi Oluştur
@@ -782,7 +782,7 @@ export default function PackagesManagement() {
                     <TableHeader>
                       <TableRow className="border-slate-700 bg-slate-800/50">
                         <TableHead 
-                          className="text-yellow-300 cursor-pointer hover:text-yellow-200 transition-colors"
+                          className="text-slate-300 cursor-pointer hover:text-primary transition-colors"
                           onClick={() => handleSort('name')}
                         >
                           <div className="flex items-center gap-2">
@@ -791,7 +791,7 @@ export default function PackagesManagement() {
                           </div>
                         </TableHead>
                         <TableHead 
-                          className="text-yellow-300 cursor-pointer hover:text-yellow-200 transition-colors"
+                          className="text-slate-300 cursor-pointer hover:text-primary transition-colors"
                           onClick={() => handleSort('ship')}
                         >
                           <div className="flex items-center gap-2">
@@ -800,7 +800,7 @@ export default function PackagesManagement() {
                           </div>
                         </TableHead>
                         <TableHead 
-                          className="text-yellow-300 cursor-pointer hover:text-yellow-200 transition-colors"
+                          className="text-slate-300 cursor-pointer hover:text-primary transition-colors"
                           onClick={() => handleSort('price')}
                         >
                           <div className="flex items-center gap-2">
@@ -809,7 +809,7 @@ export default function PackagesManagement() {
                           </div>
                         </TableHead>
                         <TableHead 
-                          className="text-yellow-300 cursor-pointer hover:text-yellow-200 transition-colors"
+                          className="text-slate-300 cursor-pointer hover:text-primary transition-colors"
                           onClick={() => handleSort('dataLimit')}
                         >
                           <div className="flex items-center gap-2">
@@ -817,9 +817,9 @@ export default function PackagesManagement() {
                             {getSortIcon('dataLimit')}
                           </div>
                         </TableHead>
-                        <TableHead className="text-yellow-300">Kimlik Durumu</TableHead>
+                        <TableHead className="text-slate-300">Kimlik Durumu</TableHead>
                         <TableHead 
-                          className="text-yellow-300 cursor-pointer hover:text-yellow-200 transition-colors"
+                          className="text-slate-300 cursor-pointer hover:text-primary transition-colors"
                           onClick={() => handleSort('status')}
                         >
                           <div className="flex items-center gap-2">
@@ -827,7 +827,7 @@ export default function PackagesManagement() {
                             {getSortIcon('status')}
                           </div>
                         </TableHead>
-                        <TableHead className="text-yellow-300">İşlemler</TableHead>
+                        <TableHead className="text-slate-300">İşlemler</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -839,7 +839,7 @@ export default function PackagesManagement() {
                         >
                           <TableCell className="py-4">
                             <div className="space-y-1">
-                              <div className="font-semibold text-white group-hover:text-yellow-200 transition-colors">
+                              <div className="font-semibold text-white group-hover:text-primary transition-colors">
                                 {plan.name}
                               </div>
                               {plan.description && (
@@ -886,8 +886,8 @@ export default function PackagesManagement() {
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 rounded-full bg-orange-400"></div>
-                                  <span className="text-orange-300 text-sm">
+                                  <div className="w-2 h-2 rounded-full bg-red-400"></div>
+                                  <span className="text-red-300 text-sm">
                                     {plan.credentialStats.assigned} atanmış
                                   </span>
                                 </div>
@@ -903,7 +903,7 @@ export default function PackagesManagement() {
                                   }}
                                   size="sm"
                                   variant="outline"
-                                  className="ml-2 h-6 text-xs border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10"
+                                  className="ml-2 h-6 text-xs border-primary/50 text-primary hover:bg-primary/10"
                                 >
                                   <Plus className="h-3 w-3 mr-1" />
                                   Ekle
@@ -969,7 +969,7 @@ export default function PackagesManagement() {
                                       toggleStatusMutation.mutate({ id: plan.id, isActive: !plan.isActive })
                                     }
                                     className={plan.isActive 
-                                      ? "text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
+                                      ? "text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
                                       : "text-green-400 hover:text-green-300 hover:bg-green-500/10"
                                     }
                                   >
@@ -1019,7 +1019,7 @@ export default function PackagesManagement() {
                         disabled={currentPage === 1}
                         variant="outline"
                         size="sm"
-                        className="glass-card border-slate-600 hover:border-yellow-500/50 text-slate-200 hover:text-yellow-400 disabled:opacity-30"
+                        className="glass-card border-slate-600 hover:border-primary/50 text-slate-200 hover:text-primary disabled:opacity-30"
                       >
                         « İlk
                       </Button>
@@ -1028,7 +1028,7 @@ export default function PackagesManagement() {
                         disabled={currentPage === 1}
                         variant="outline"
                         size="sm"
-                        className="glass-card border-slate-600 hover:border-yellow-500/50 text-slate-200 hover:text-yellow-400 disabled:opacity-30"
+                        className="glass-card border-slate-600 hover:border-primary/50 text-slate-200 hover:text-primary disabled:opacity-30"
                       >
                         <ChevronLeft className="h-4 w-4" />
                         Önceki
@@ -1044,8 +1044,8 @@ export default function PackagesManagement() {
                               variant={currentPage === pageNum ? "default" : "outline"}
                               size="sm"
                               className={currentPage === pageNum
-                                ? "bg-yellow-600 border-yellow-500 text-white"
-                                : "glass-card border-slate-600 hover:border-yellow-500/50 text-slate-200 hover:text-yellow-400"
+                                ? "bg-primary border-primary text-white"
+                                : "glass-card border-slate-600 hover:border-primary/50 text-slate-200 hover:text-primary"
                               }
                             >
                               {pageNum}
@@ -1059,7 +1059,7 @@ export default function PackagesManagement() {
                         disabled={currentPage === totalPages}
                         variant="outline"
                         size="sm"
-                        className="glass-card border-slate-600 hover:border-yellow-500/50 text-slate-200 hover:text-yellow-400 disabled:opacity-30"
+                        className="glass-card border-slate-600 hover:border-primary/50 text-slate-200 hover:text-primary disabled:opacity-30"
                       >
                         Sonraki
                         <ChevronRight className="h-4 w-4" />
@@ -1069,7 +1069,7 @@ export default function PackagesManagement() {
                         disabled={currentPage === totalPages}
                         variant="outline"
                         size="sm"
-                        className="glass-card border-slate-600 hover:border-yellow-500/50 text-slate-200 hover:text-yellow-400 disabled:opacity-30"
+                        className="glass-card border-slate-600 hover:border-primary/50 text-slate-200 hover:text-primary disabled:opacity-30"
                       >
                         Son »
                       </Button>
@@ -1089,17 +1089,17 @@ export default function PackagesManagement() {
             resetForm();
           }
         }}>
-          <DialogContent className="glass-card border-yellow-500/30 bg-gradient-to-br from-slate-900/95 to-slate-800/95 max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="glass-card border-primary/30 bg-gradient-to-br from-slate-900/95 to-slate-800/95 max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent flex items-center gap-2">
+              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent flex items-center gap-2">
                 {editingPlan ? (
                   <>
-                    <Edit className="h-6 w-6 text-yellow-400" />
+                    <Edit className="h-6 w-6 text-primary" />
                     Paket Bilgilerini Düzenle
                   </>
                 ) : (
                   <>
-                    <Plus className="h-6 w-6 text-yellow-400" />
+                    <Plus className="h-6 w-6 text-primary" />
                     Yeni Veri Paketi Oluştur
                   </>
                 )}
@@ -1115,8 +1115,8 @@ export default function PackagesManagement() {
             <form onSubmit={handleSubmit} className="space-y-6 mt-6">
               {/* Package Name */}
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-yellow-200 font-medium flex items-center gap-2">
-                  <Package className="h-4 w-4 text-yellow-400" />
+                <Label htmlFor="name" className="text-cyan-200 font-medium flex items-center gap-2">
+                  <Package className="h-4 w-4 text-primary" />
                   Paket Adı *
                 </Label>
                 <Input
@@ -1128,7 +1128,7 @@ export default function PackagesManagement() {
                       setFormErrors({ ...formErrors, name: '' });
                     }
                   }}
-                  className={`bg-slate-800/50 border-slate-600 text-white h-12 text-lg placeholder:text-slate-400 focus:border-yellow-500/50 focus:ring-yellow-500/20 ${
+                  className={`bg-slate-800/50 border-slate-600 text-white h-12 text-lg placeholder:text-slate-400 focus:border-primary/50 focus:ring-primary/20 ${
                     formErrors.name ? 'border-red-500 focus:border-red-500' : ''
                   }`}
                   placeholder="Örn: Premium Starlink Paketi"
@@ -1145,15 +1145,15 @@ export default function PackagesManagement() {
               
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-yellow-200 font-medium flex items-center gap-2">
-                  <Edit className="h-4 w-4 text-yellow-400" />
+                <Label htmlFor="description" className="text-cyan-200 font-medium flex items-center gap-2">
+                  <Edit className="h-4 w-4 text-primary" />
                   Paket Açıklaması
                 </Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="bg-slate-800/50 border-slate-600 text-white min-h-20 placeholder:text-slate-400 focus:border-yellow-500/50 focus:ring-yellow-500/20"
+                  className="bg-slate-800/50 border-slate-600 text-white min-h-20 placeholder:text-slate-400 focus:border-primary/50 focus:ring-primary/20"
                   placeholder="Paketin özelliklerini ve avantajlarını açıklayın..."
                   data-testid="textarea-package-description"
                 />
@@ -1161,8 +1161,8 @@ export default function PackagesManagement() {
 
               {/* Ship Selection */}
               <div className="space-y-2">
-                <Label htmlFor="shipId" className="text-yellow-200 font-medium flex items-center gap-2">
-                  <ShipIcon className="h-4 w-4 text-yellow-400" />
+                <Label htmlFor="shipId" className="text-cyan-200 font-medium flex items-center gap-2">
+                  <ShipIcon className="h-4 w-4 text-primary" />
                   Hedef Gemi *
                 </Label>
                 <Select 
@@ -1174,7 +1174,7 @@ export default function PackagesManagement() {
                     }
                   }}
                 >
-                  <SelectTrigger className={`bg-slate-800/50 border-slate-600 text-white h-12 hover:border-yellow-500/50 ${
+                  <SelectTrigger className={`bg-slate-800/50 border-slate-600 text-white h-12 hover:border-primary/50 ${
                     formErrors.shipId ? 'border-red-500 focus:border-red-500' : ''
                   }`}>
                     <SelectValue placeholder="Bu paketin ait olduğu gemiyi seçin" />
@@ -1198,8 +1198,8 @@ export default function PackagesManagement() {
               {/* Price and Data Limit */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="priceUsd" className="text-yellow-200 font-medium flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-yellow-400" />
+                  <Label htmlFor="priceUsd" className="text-cyan-200 font-medium flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-primary" />
                     Fiyat (USD) *
                   </Label>
                   <Input
@@ -1215,7 +1215,7 @@ export default function PackagesManagement() {
                         setFormErrors({ ...formErrors, priceUsd: '' });
                       }
                     }}
-                    className={`bg-slate-800/50 border-slate-600 text-white h-12 text-lg placeholder:text-slate-400 focus:border-yellow-500/50 focus:ring-yellow-500/20 ${
+                    className={`bg-slate-800/50 border-slate-600 text-white h-12 text-lg placeholder:text-slate-400 focus:border-primary/50 focus:ring-primary/20 ${
                       formErrors.priceUsd ? 'border-red-500 focus:border-red-500' : ''
                     }`}
                     placeholder="99.99"
@@ -1231,8 +1231,8 @@ export default function PackagesManagement() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="dataLimitGb" className="text-yellow-200 font-medium flex items-center gap-2">
-                    <Database className="h-4 w-4 text-yellow-400" />
+                  <Label htmlFor="dataLimitGb" className="text-cyan-200 font-medium flex items-center gap-2">
+                    <Database className="h-4 w-4 text-primary" />
                     Veri Limiti (GB) *
                   </Label>
                   <Input
@@ -1247,7 +1247,7 @@ export default function PackagesManagement() {
                         setFormErrors({ ...formErrors, dataLimitGb: '' });
                       }
                     }}
-                    className={`bg-slate-800/50 border-slate-600 text-white h-12 text-lg placeholder:text-slate-400 focus:border-yellow-500/50 focus:ring-yellow-500/20 ${
+                    className={`bg-slate-800/50 border-slate-600 text-white h-12 text-lg placeholder:text-slate-400 focus:border-primary/50 focus:ring-primary/20 ${
                       formErrors.dataLimitGb ? 'border-red-500 focus:border-red-500' : ''
                     }`}
                     placeholder="100"
@@ -1304,7 +1304,7 @@ export default function PackagesManagement() {
                 <Button
                   type="submit"
                   disabled={createPlanMutation.isPending || updatePlanMutation.isPending}
-                  className="glass-card bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 border-yellow-500/50 text-white hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-yellow-500/20 w-full sm:w-auto"
+                  className="glass-card bg-gradient-to-r from-primary to-cyan-600 hover:from-blue-500 hover:to-cyan-500 border-primary/50 text-white hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-primary/20 w-full sm:w-auto"
                   data-testid="button-save-package"
                 >
                   {createPlanMutation.isPending || updatePlanMutation.isPending ? (
@@ -1365,12 +1365,12 @@ export default function PackagesManagement() {
                       <div className="text-sm text-green-200">Kullanılabilir</div>
                     </CardContent>
                   </Card>
-                  <Card className="glass-card border-orange-500/20 bg-gradient-to-br from-orange-900/20 to-amber-900/20">
+                  <Card className="glass-card border-red-500/20 bg-gradient-to-br from-red-900/20 to-pink-900/20">
                     <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-orange-300">
+                      <div className="text-2xl font-bold text-red-300">
                         {selectedPlanForCredentials.credentialStats.assigned}
                       </div>
-                      <div className="text-sm text-orange-200">Atanmış</div>
+                      <div className="text-sm text-red-200">Atanmış</div>
                     </CardContent>
                   </Card>
                   <Card className="glass-card border-blue-500/20 bg-gradient-to-br from-blue-900/20 to-cyan-900/20">
@@ -1407,8 +1407,8 @@ Format: kullanıcıadı,şifre`}
                   
                   <div className="bg-slate-800/30 border border-slate-600 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Shield className="h-4 w-4 text-yellow-400" />
-                      <span className="text-yellow-200 font-medium text-sm">Format Kuralları:</span>
+                      <Shield className="h-4 w-4 text-primary" />
+                      <span className="text-cyan-200 font-medium text-sm">Format Kuralları:</span>
                     </div>
                     <ul className="text-xs text-slate-400 space-y-1 ml-6">
                       <li>• Her satırda sadece bir kimlik bilgisi</li>
