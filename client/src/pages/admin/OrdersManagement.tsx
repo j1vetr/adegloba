@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import type { Ship, Plan, User as UserType, Order } from '../../../shared/schema';
+import type { Ship, Plan, User as UserType, Order } from '@shared/schema';
 
 interface OrderFormData {
   userId: string;
@@ -42,6 +42,7 @@ interface OrderStats {
   pendingOrders: number;
   paidOrders: number;
   failedOrders: number;
+  cancelledOrders: number;
   totalRevenue: number;
   monthlyRevenue: number;
 }
@@ -53,7 +54,11 @@ interface UserWithShip extends UserType {
 interface OrderWithDetails extends Order {
   user: UserType;
   ship: Ship;
-  plan: Plan;
+  orderItems: Array<{
+    id: string;
+    planId: string;
+    plan: Plan;
+  }>;
 }
 
 export default function OrdersManagement() {
@@ -61,6 +66,7 @@ export default function OrdersManagement() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<OrderWithDetails | null>(null);
   const [deleteOrder, setDeleteOrder] = useState<OrderWithDetails | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<OrderWithDetails | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [userSearchOpen, setUserSearchOpen] = useState(false);
@@ -110,9 +116,11 @@ export default function OrdersManagement() {
     pendingOrders: orders?.filter((o: OrderWithDetails) => o.status === 'pending').length || 0,
     paidOrders: orders?.filter((o: OrderWithDetails) => o.status === 'paid').length || 0,
     failedOrders: orders?.filter((o: OrderWithDetails) => o.status === 'failed').length || 0,
+    cancelledOrders: orders?.filter((o: OrderWithDetails) => o.status === 'cancelled').length || 0,
     totalRevenue: orders?.filter((o: OrderWithDetails) => o.status === 'paid')
       .reduce((sum: number, order: OrderWithDetails) => sum + parseFloat(order.totalUsd), 0) || 0,
     monthlyRevenue: orders?.filter((o: OrderWithDetails) => {
+      if (!o.createdAt) return false;
       const orderDate = new Date(o.createdAt);
       const now = new Date();
       return o.status === 'paid' && 
@@ -220,11 +228,11 @@ export default function OrdersManagement() {
   const handleEdit = (order: OrderWithDetails) => {
     setEditingOrder(order);
     setSelectedUser({ ...order.user, ship: order.ship });
-    setSelectedShip(order.shipId || '');
+    setSelectedShip(order.shipId);
     setFormData({
       userId: order.userId,
-      shipId: order.shipId || '',
-      planId: order.plan?.id || '',
+      shipId: order.shipId,
+      planId: order.orderItems?.[0]?.planId || '',
       status: order.status as any,
       subtotalUsd: order.subtotalUsd,
       discountUsd: order.discountUsd,
@@ -304,16 +312,34 @@ export default function OrdersManagement() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: { label: 'Bekliyor', className: 'bg-yellow-600 text-white' },
-      paid: { label: 'Ödendi', className: 'bg-green-600 text-white' },
-      failed: { label: 'Başarısız', className: 'bg-red-600 text-white' },
-      refunded: { label: 'İade Edildi', className: 'bg-purple-600 text-white' },
-      expired: { label: 'Süresi Doldu', className: 'bg-gray-600 text-white' },
-    };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    return <Badge className={config.className}>{config.label}</Badge>;
+    const getAnimatedBadge = (color: string, bgColor: string, shadowColor: string, label: string, icon: string) => (
+      <div className="flex items-center gap-2">
+        <div className="relative">
+          <div className={`w-3 h-3 ${bgColor} rounded-full animate-pulse shadow-lg ${shadowColor}`}></div>
+          <div className={`absolute top-0 left-0 w-3 h-3 ${color} rounded-full animate-ping opacity-75`}></div>
+        </div>
+        <Badge className={`${bgColor}/20 ${color} border-${color.replace('text-', '')}/50 animate-pulse hover:${bgColor}/30 hover:border-${color.replace('text-', '')}/70 transition-all duration-300 shadow-lg ${shadowColor}`}>
+          {icon} {label}
+        </Badge>
+      </div>
+    );
+
+    switch (status) {
+      case 'pending':
+        return getAnimatedBadge('text-yellow-300', 'bg-yellow-500', 'shadow-yellow-500/50', 'Bekliyor', '⏳');
+      case 'paid':
+        return getAnimatedBadge('text-green-300', 'bg-green-500', 'shadow-green-500/50', 'Ödendi', '✅');
+      case 'failed':
+        return getAnimatedBadge('text-red-300', 'bg-red-500', 'shadow-red-500/50', 'Başarısız', '❌');
+      case 'cancelled':
+        return getAnimatedBadge('text-gray-300', 'bg-gray-500', 'shadow-gray-500/50', 'İptal Edildi', '🚫');
+      case 'refunded':
+        return getAnimatedBadge('text-purple-300', 'bg-purple-500', 'shadow-purple-500/50', 'İade Edildi', '↩️');
+      case 'expired':
+        return getAnimatedBadge('text-slate-300', 'bg-slate-500', 'shadow-slate-500/50', 'Süresi Doldu', '⏰');
+      default:
+        return getAnimatedBadge('text-yellow-300', 'bg-yellow-500', 'shadow-yellow-500/50', 'Bekliyor', '⏳');
+    }
   };
 
   const formatPrice = (price: string | number) => {
@@ -325,7 +351,7 @@ export default function OrdersManagement() {
   };
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Sipariş Yönetimi">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -348,53 +374,53 @@ export default function OrdersManagement() {
         <Separator className="bg-gray-700" />
 
         {/* Order Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          <Card className="glass-card border-border/50">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
+          <Card className="glass-card border-border/50 hover:border-blue-400/40 transition-all duration-300 hover:scale-105">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-600/20 rounded-lg">
+                <div className="p-2 bg-blue-600/20 rounded-lg animate-pulse">
                   <ShoppingCart className="h-5 w-5 text-blue-400" />
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Toplam Sipariş</p>
-                  <p className="text-2xl font-bold text-white">{orderStats.totalOrders}</p>
+                  <p className="text-2xl font-bold text-white transition-all duration-300">{orderStats.totalOrders}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50">
+          <Card className="glass-card border-border/50 hover:border-yellow-400/40 transition-all duration-300 hover:scale-105">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-600/20 rounded-lg">
+                <div className="p-2 bg-yellow-600/20 rounded-lg animate-pulse">
                   <Clock className="h-5 w-5 text-yellow-400" />
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Bekleyen</p>
-                  <p className="text-2xl font-bold text-white">{orderStats.pendingOrders}</p>
+                  <p className="text-2xl font-bold text-white transition-all duration-300">{orderStats.pendingOrders}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50">
+          <Card className="glass-card border-border/50 hover:border-green-400/40 transition-all duration-300 hover:scale-105">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-600/20 rounded-lg">
+                <div className="p-2 bg-green-600/20 rounded-lg animate-pulse">
                   <CheckCircle className="h-5 w-5 text-green-400" />
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Ödenen</p>
-                  <p className="text-2xl font-bold text-white">{orderStats.paidOrders}</p>
+                  <p className="text-2xl font-bold text-white transition-all duration-300">{orderStats.paidOrders}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50">
+          <Card className="glass-card border-border/50 hover:border-red-400/40 transition-all duration-300">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-600/20 rounded-lg">
+                <div className="p-2 bg-red-600/20 rounded-lg animate-pulse">
                   <AlertCircle className="h-5 w-5 text-red-400" />
                 </div>
                 <div>
@@ -405,29 +431,43 @@ export default function OrdersManagement() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50">
+          <Card className="glass-card border-border/50 hover:border-gray-400/40 transition-all duration-300">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-600/20 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-purple-400" />
+                <div className="p-2 bg-gray-600/20 rounded-lg animate-pulse">
+                  <X className="h-5 w-5 text-gray-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Toplam Gelir</p>
-                  <p className="text-2xl font-bold text-white">{formatPrice(orderStats.totalRevenue)}</p>
+                  <p className="text-gray-400 text-sm">İptal Edildi</p>
+                  <p className="text-2xl font-bold text-white">{orderStats.cancelledOrders}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50">
+          <Card className="glass-card border-border/50 hover:border-purple-400/40 transition-all duration-300 hover:scale-105">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-cyan-600/20 rounded-lg">
+                <div className="p-2 bg-purple-600/20 rounded-lg animate-pulse">
+                  <TrendingUp className="h-5 w-5 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm">Toplam Gelir</p>
+                  <p className="text-2xl font-bold text-white transition-all duration-300">{formatPrice(orderStats.totalRevenue)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card border-border/50 hover:border-cyan-400/40 transition-all duration-300 hover:scale-105">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-cyan-600/20 rounded-lg animate-pulse">
                   <Calendar className="h-5 w-5 text-cyan-400" />
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Aylık Gelir</p>
-                  <p className="text-2xl font-bold text-white">{formatPrice(orderStats.monthlyRevenue)}</p>
+                  <p className="text-2xl font-bold text-white transition-all duration-300">{formatPrice(orderStats.monthlyRevenue)}</p>
                 </div>
               </div>
             </CardContent>
@@ -514,7 +554,7 @@ export default function OrdersManagement() {
                   </TableHeader>
                   <TableBody>
                     {filteredOrders.map((order: OrderWithDetails) => (
-                      <TableRow key={order.id} className="border-gray-700 hover:bg-gray-800/50">
+                      <TableRow key={order.id} className="border-gray-700 hover:bg-gray-800/50 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg hover:shadow-primary/10">
                         <TableCell className="font-mono text-sm text-cyan-400">
                           {order.id.slice(0, 8)}...
                         </TableCell>
@@ -533,7 +573,7 @@ export default function OrdersManagement() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4 text-green-400" />
-                            <span className="text-white">{order.plan?.title || 'N/A'}</span>
+                            <span className="text-white">{order.orderItems?.[0]?.plan?.name || 'N/A'}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -550,7 +590,7 @@ export default function OrdersManagement() {
                           </div>
                         </TableCell>
                         <TableCell className="text-gray-300">
-                          {formatDate(order.createdAt)}
+                          {order.createdAt ? formatDate(order.createdAt) : 'N/A'}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -564,7 +604,7 @@ export default function OrdersManagement() {
                                 <Edit className="mr-2 h-4 w-4" />
                                 Düzenle
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setViewingOrder(order)}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 Detayları Görüntüle
                               </DropdownMenuItem>
@@ -826,6 +866,146 @@ export default function OrdersManagement() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* View Details Modal */}
+        <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
+          <DialogContent className="max-w-4xl bg-slate-800 border-slate-700">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <Eye className="h-5 w-5 text-primary" />
+                Sipariş Detayları
+              </DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Sipariş ID: {viewingOrder?.id} - Detaylı sipariş bilgileri
+              </DialogDescription>
+            </DialogHeader>
+            
+            {viewingOrder && (
+              <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+                {/* Customer Information */}
+                <Card className="glass-card border-slate-600">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <User className="h-4 w-4 text-blue-400" />
+                      Müşteri Bilgileri
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-slate-300 text-sm">Ad Soyad</Label>
+                        <p className="text-white font-medium">{viewingOrder.user?.full_name || viewingOrder.user?.username || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">E-posta</Label>
+                        <p className="text-white font-medium">{viewingOrder.user?.email || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">Kullanıcı Adı</Label>
+                        <p className="text-white font-medium">{viewingOrder.user?.username || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">Adres</Label>
+                        <p className="text-white font-medium">{viewingOrder.user?.address || 'Belirtilmemiş'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Order Information */}
+                <Card className="glass-card border-slate-600">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <ShoppingCart className="h-4 w-4 text-green-400" />
+                      Sipariş Bilgileri
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-slate-300 text-sm">Gemi</Label>
+                        <div className="flex items-center gap-2">
+                          <ShipIcon className="h-4 w-4 text-blue-400" />
+                          <p className="text-white font-medium">{viewingOrder.ship?.name || 'N/A'}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">Paket</Label>
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-green-400" />
+                          <p className="text-white font-medium">{viewingOrder.orderItems?.[0]?.plan?.name || 'N/A'}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">Durum</Label>
+                        <div className="pt-1">
+                          {getStatusBadge(viewingOrder.status)}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">Oluşturulma Tarihi</Label>
+                        <p className="text-white font-medium">{viewingOrder.createdAt ? formatDate(viewingOrder.createdAt) : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">Ödenme Tarihi</Label>
+                        <p className="text-white font-medium">{viewingOrder.paidAt ? formatDate(viewingOrder.paidAt) : 'Henüz ödenmedi'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">Son Kullanma Tarihi</Label>
+                        <p className="text-white font-medium">{viewingOrder.expiresAt ? formatDate(viewingOrder.expiresAt) : 'Belirlenmedi'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Payment Information */}
+                <Card className="glass-card border-slate-600">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-green-400" />
+                      Ödeme Bilgileri
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div>
+                        <Label className="text-slate-300 text-sm">Ara Toplam</Label>
+                        <p className="text-white font-bold text-lg">{formatPrice(viewingOrder.subtotalUsd)}</p>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">İndirim</Label>
+                        <p className="text-red-400 font-bold text-lg">-{formatPrice(viewingOrder.discountUsd)}</p>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">Toplam Tutar</Label>
+                        <p className="text-green-400 font-bold text-xl">{formatPrice(viewingOrder.totalUsd)}</p>
+                      </div>
+                      <div>
+                        <Label className="text-slate-300 text-sm">Para Birimi</Label>
+                        <p className="text-white font-medium">{viewingOrder.currency || 'USD'}</p>
+                      </div>
+                    </div>
+                    {viewingOrder.paypalOrderId && (
+                      <div>
+                        <Label className="text-slate-300 text-sm">PayPal Sipariş ID</Label>
+                        <p className="text-cyan-400 font-mono text-sm">{viewingOrder.paypalOrderId}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            
+            <div className="flex justify-end pt-4">
+              <Button
+                onClick={() => setViewingOrder(null)}
+                className="bg-slate-600 hover:bg-slate-700 text-white"
+              >
+                Kapat
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
