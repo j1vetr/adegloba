@@ -485,53 +485,6 @@ export default function PackagesManagement() {
   return (
     <AdminLayout title="Paket Yönetimi">
       <div className="space-y-8 p-1">
-        {/* Enhanced Header */}
-        <div className="glass-card border border-primary/20 bg-gradient-to-r from-slate-900/50 via-slate-800/50 to-slate-900/50 p-6 rounded-2xl">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="space-y-2">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-primary bg-clip-text text-transparent">
-                🚀 Paket Yönetimi
-              </h1>
-              <p className="text-slate-300 text-lg">
-                Starlink veri paketlerini yönetin, kimlik bilgilerini düzenleyin ve satış stratejilerinizi optimize edin
-              </p>
-              <div className="flex items-center gap-4 text-sm text-slate-400">
-                <span className="flex items-center gap-1">
-                  <Package className="h-4 w-4 text-primary" />
-                  {totalPlans} Toplam Paket
-                </span>
-                <span className="flex items-center gap-1">
-                  <Activity className="h-4 w-4 text-green-400" />
-                  {activePlans} Aktif
-                </span>
-                <span className="flex items-center gap-1">
-                  <Key className="h-4 w-4 text-blue-400" />
-                  {availableCredentials} Kullanılabilir Kimlik
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
-                onClick={() => refetchPlans()}
-                variant="outline"
-                className="glass-card border-slate-600 hover:border-primary/50 text-slate-200 hover:text-primary transition-all duration-300"
-                disabled={plansLoading}
-                data-testid="button-refresh"
-              >
-                <RefreshCw className={`mr-2 h-4 w-4 ${plansLoading ? 'animate-spin' : ''}`} />
-                Yenile
-              </Button>
-              <Button 
-                onClick={() => setShowCreateDialog(true)}
-                className="glass-card bg-gradient-to-r from-primary to-cyan-600 hover:from-primary/90 hover:to-cyan-500 border-primary/50 hover:border-primary/70 text-white hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-primary/20"
-                data-testid="button-create-package"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Yeni Paket Oluştur
-              </Button>
-            </div>
-          </div>
-        </div>
 
         {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
