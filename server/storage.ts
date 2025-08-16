@@ -115,6 +115,7 @@ export interface IStorage {
   // Coupon usage operations
   createCouponUsage(usage: InsertCouponUsage): Promise<CouponUsage>;
   getCouponUsageCount(couponId: string, userId?: string): Promise<number>;
+  getCouponUsageCountForCompletedOrders(couponId: string): Promise<number>;
   getUserCouponUsage(userId: string, couponId: string): Promise<number>;
   getUserCouponUsageForCompletedOrders(userId: string, couponId: string): Promise<number>;
 
@@ -632,6 +633,7 @@ export class DatabaseStorage implements IStorage {
       validFrom: dbCoupon.startsAt ? dbCoupon.startsAt.toISOString().split('T')[0] : null,
       validUntil: dbCoupon.endsAt ? dbCoupon.endsAt.toISOString().split('T')[0] : null,
       isActive: dbCoupon.isActive,
+      singleUseOnly: dbCoupon.singleUseOnly || false,
       createdAt: dbCoupon.createdAt.toISOString(),
       updatedAt: dbCoupon.updatedAt.toISOString(),
     };
@@ -645,6 +647,7 @@ export class DatabaseStorage implements IStorage {
       minOrderAmount: frontendCoupon.minOrderAmount ? frontendCoupon.minOrderAmount.toString() : null,
       maxUses: frontendCoupon.maxUses,
       isActive: frontendCoupon.isActive,
+      singleUseOnly: frontendCoupon.singleUseOnly || false,
     };
 
     if (frontendCoupon.validFrom) {
@@ -1424,6 +1427,19 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(orders, eq(couponUsage.orderId, orders.id))
       .where(and(
         eq(couponUsage.userId, userId),
+        eq(couponUsage.couponId, couponId),
+        eq(orders.status, 'paid')
+      ));
+
+    return result[0]?.count || 0;
+  }
+
+  async getCouponUsageCountForCompletedOrders(couponId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(couponUsage)
+      .innerJoin(orders, eq(couponUsage.orderId, orders.id))
+      .where(and(
         eq(couponUsage.couponId, couponId),
         eq(orders.status, 'paid')
       ));

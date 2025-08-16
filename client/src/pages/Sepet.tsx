@@ -207,7 +207,8 @@ export default function Sepet() {
   }
 
   const formatPrice = (price: string | number) => {
-    return `$${Number(price).toFixed(2)}`;
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return `$${(numPrice || 0).toFixed(2)}`;
   };
 
   const updateQuantity = (planId: string, newQuantity: number) => {
@@ -425,15 +426,18 @@ export default function Sepet() {
                         <div className="flex items-center justify-between">
                           <span className="text-green-400 text-sm font-medium">
                             {appliedCoupon.code} uygulandı
+                            {appliedCoupon.singleUseOnly && (
+                              <span className="text-xs text-orange-300 ml-2">(Tek kullanım)</span>
+                            )}
                           </span>
                           <span className="text-green-400 text-sm font-semibold">
-                            -{formatPrice(discount)}
+                            -{formatPrice(discount || 0)}
                           </span>
                         </div>
                         <p className="text-green-300/80 text-xs mt-1">
-                          {appliedCoupon.type === 'percentage' 
-                            ? `%${appliedCoupon.value} indirim` 
-                            : `$${appliedCoupon.value} indirim`
+                          {appliedCoupon.discountType === 'percentage' 
+                            ? `%${appliedCoupon.discountValue || 0} indirim` 
+                            : `${formatPrice(appliedCoupon.discountValue || 0)} indirim`
                           }
                         </p>
                       </div>
@@ -456,7 +460,7 @@ export default function Sepet() {
                     
                     <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-600">
                       <span className="text-white">Toplam</span>
-                      <span className="text-cyan-400">{formatPrice((cartData.subtotal || 0) - discount)}</span>
+                      <span className="text-cyan-400">{formatPrice(Math.max(0, (cartData.subtotal || 0) - (discount || 0)))}</span>
                     </div>
                   </div>
 

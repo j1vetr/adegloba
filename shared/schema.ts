@@ -85,6 +85,7 @@ export const coupons = pgTable("coupons", {
   endsAt: timestamp("ends_at"),
   shipId: varchar("ship_id").references(() => ships.id, { onDelete: "cascade" }),
   isActive: boolean("is_active").notNull().default(true),
+  singleUseOnly: boolean("single_use_only").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -137,7 +138,7 @@ export const orders = pgTable("orders", {
   subtotalUsd: decimal("subtotal_usd", { precision: 10, scale: 2 }).notNull(),
   discountUsd: decimal("discount_usd", { precision: 10, scale: 2 }).notNull().default('0'),
   totalUsd: decimal("total_usd", { precision: 10, scale: 2 }).notNull(),
-  couponId: varchar("coupon_id").references(() => coupons.id),
+  couponId: varchar("coupon_id").references(() => coupons.id, { onDelete: "set null" }),
   paypalOrderId: varchar("paypal_order_id"),
   assignedCredentialId: varchar("assigned_credential_id"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -413,6 +414,7 @@ export const insertCouponSchema = z.object({
   validFrom: z.string().optional().nullable(),
   validUntil: z.string().optional().nullable(),
   isActive: z.boolean().default(true),
+  singleUseOnly: z.boolean().default(false),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({

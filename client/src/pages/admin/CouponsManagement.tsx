@@ -38,6 +38,7 @@ type Coupon = {
   validFrom: string | null;
   validUntil: string | null;
   isActive: boolean;
+  singleUseOnly: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -58,6 +59,7 @@ export default function CouponsManagement() {
     validFrom: null,
     validUntil: null,
     isActive: true,
+    singleUseOnly: false,
   });
 
   const { data: coupons, isLoading } = useQuery({
@@ -140,6 +142,7 @@ export default function CouponsManagement() {
       validFrom: null,
       validUntil: null,
       isActive: true,
+      singleUseOnly: false,
     });
   };
 
@@ -159,6 +162,7 @@ export default function CouponsManagement() {
       validFrom: coupon.validFrom ? new Date(coupon.validFrom).toISOString().split('T')[0] : null,
       validUntil: coupon.validUntil ? new Date(coupon.validUntil).toISOString().split('T')[0] : null,
       isActive: coupon.isActive,
+      singleUseOnly: coupon.singleUseOnly || false,
     });
     setEditingCoupon(coupon);
     setIsFormOpen(true);
@@ -266,6 +270,11 @@ export default function CouponsManagement() {
                     <div className="text-sm font-semibold text-cyan-400 flex items-center gap-1">
                       <Users className="h-4 w-4" />
                       {coupon.usedCount}{coupon.maxUses ? ` / ${coupon.maxUses}` : ''}
+                      {coupon.singleUseOnly && (
+                        <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded ml-2">
+                          Tek Kullanım
+                        </span>
+                      )}
                     </div>
                   </div>
                   
@@ -470,16 +479,30 @@ export default function CouponsManagement() {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
-                  data-testid="coupon-active-switch"
-                />
-                <Label htmlFor="isActive" className="text-slate-300">
-                  Aktif durumda
-                </Label>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isActive"
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                    data-testid="coupon-active-switch"
+                  />
+                  <Label htmlFor="isActive" className="text-slate-300">
+                    Aktif durumda
+                  </Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="singleUseOnly"
+                    checked={formData.singleUseOnly}
+                    onCheckedChange={(checked) => setFormData({ ...formData, singleUseOnly: checked })}
+                    data-testid="coupon-single-use-switch"
+                  />
+                  <Label htmlFor="singleUseOnly" className="text-slate-300">
+                    Tek kullanım (kullanıcı başına bir kez)
+                  </Label>
+                </div>
               </div>
             </form>
 

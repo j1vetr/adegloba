@@ -33,8 +33,8 @@ export class CouponService {
       throw new Error(`Minimum sipariş tutarı $${coupon.minOrderAmount.toFixed(2)} olmalıdır`);
     }
 
-    // Check total usage limit
-    const totalUsage = await this.storage.getCouponUsageCount(coupon.id);
+    // Check total usage limit (only count completed orders)
+    const totalUsage = await this.storage.getCouponUsageCountForCompletedOrders(coupon.id);
     if (coupon.maxUses && totalUsage >= coupon.maxUses) {
       throw new Error("Kupon kullanım limiti dolmuş");
     }
@@ -42,7 +42,7 @@ export class CouponService {
     // Check per-user usage limit - only count completed orders
     if (userId) {
       const userUsage = await this.storage.getUserCouponUsageForCompletedOrders(userId, coupon.id);
-      if (userUsage > 0) {
+      if (coupon.singleUseOnly && userUsage > 0) {
         throw new Error("Bu kuponu daha önce kullandınız");
       }
     }
