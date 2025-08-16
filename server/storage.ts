@@ -842,7 +842,7 @@ export class DatabaseStorage implements IStorage {
       const [revenueStats] = await db
         .select({
           totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid', 'completed') THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
-          totalOrders: sql<number>`COUNT(*)`
+          totalOrders: sql<number>`COUNT(CASE WHEN ${orders.status} = 'completed' THEN 1 END)`
         })
         .from(orders);
 
