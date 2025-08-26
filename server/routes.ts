@@ -1141,7 +1141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/users/:id/assign-package", isAdminAuthenticated, async (req, res) => {
     try {
       const { id: userId } = req.params;
-      const { planId, validityDays = 30, note } = req.body;
+      const { planId, note } = req.body;
 
       if (!planId) {
         return res.status(400).json({ message: "Plan ID is required" });
@@ -1165,7 +1165,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.createManualPackageAssignment({
         userId,
         planId,
-        validityDays,
         note,
         adminId: req.session.adminUser.id
       });
@@ -1180,7 +1179,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: {
           planId,
           planName: plan.name,
-          validityDays,
           note,
           username: user.username
         },
@@ -1617,6 +1615,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting plan:', error);
       res.status(500).json({ message: 'Failed to delete plan' });
+    }
+  });
+
+  // Get all plans (for admin manual assignment)
+  app.get("/api/plans", async (req, res) => {
+    try {
+      const plans = await storage.getAllPlans();
+      res.json(plans);
+    } catch (error: any) {
+      console.error("Error fetching plans:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 

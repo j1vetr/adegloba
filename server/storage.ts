@@ -48,7 +48,7 @@ import {
   type CouponUsage,
   type InsertCouponUsage,
 } from "@shared/schema";
-import { getDaysRemainingIstanbul, isExpiredIstanbul } from './utils/dateUtils';
+import { getDaysRemainingIstanbul, isExpiredIstanbul, getEndOfMonthIstanbul } from './utils/dateUtils';
 import { db } from "./db";
 import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt, lt } from "drizzle-orm";
 
@@ -1252,13 +1252,11 @@ export class DatabaseStorage implements IStorage {
   async createManualPackageAssignment({
     userId,
     planId,
-    validityDays,
     note,
     adminId
   }: {
     userId: string;
     planId: string;
-    validityDays: number;
     note?: string;
     adminId: string;
   }): Promise<{
@@ -1274,11 +1272,9 @@ export class DatabaseStorage implements IStorage {
         throw new Error("Plan not found");
       }
 
-      // Calculate expiry date based on validity days
+      // Calculate expiry date to end of current month (Istanbul timezone)
       const paidAt = new Date();
-      const expiresAt = new Date(paidAt);
-      expiresAt.setDate(expiresAt.getDate() + validityDays);
-      expiresAt.setHours(23, 59, 59, 999);
+      const expiresAt = getEndOfMonthIstanbul(paidAt);
 
       // Create manual order
       const [order] = await tx

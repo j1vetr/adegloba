@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Label } from '@/components/ui/label';
-import type { User, Ship, Order, OrderItem, Plan } from '../../../shared/schema';
+import type { User, Ship, Order, OrderItem, Plan } from '@shared/schema';
 
 interface UserWithDetails extends User {
   ship: Ship;
@@ -541,7 +541,6 @@ interface ManualPackageAssignmentButtonProps {
 function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssignmentButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
-  const [validityDays, setValidityDays] = useState<string>("30");
   const [note, setNote] = useState<string>("");
   const { toast } = useToast();
 
@@ -553,12 +552,8 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
 
   // Manuel paket atama mutation
   const assignPackageMutation = useMutation({
-    mutationFn: async (data: { planId: string; validityDays: number; note?: string }) => {
-      return apiRequest(`/api/admin/users/${userId}/assign-package`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
-      });
+    mutationFn: async (data: { planId: string; note?: string }) => {
+      return apiRequest(`/api/admin/users/${userId}/assign-package`, 'POST', data);
     },
     onSuccess: () => {
       toast({
@@ -568,7 +563,6 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
       });
       setIsOpen(false);
       setSelectedPlanId("");
-      setValidityDays("30");
       setNote("");
       // Kullanıcı siparişlerini yenile
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users", userId, "orders"] });
@@ -593,19 +587,8 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
       return;
     }
 
-    const days = parseInt(validityDays);
-    if (days < 1 || days > 365) {
-      toast({
-        title: "Hata", 
-        description: "Geçerlilik süresi 1-365 gün arasında olmalıdır.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     assignPackageMutation.mutate({
       planId: selectedPlanId,
-      validityDays: days,
       note: note || undefined
     });
   };
@@ -627,7 +610,7 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
           <DialogHeader>
             <DialogTitle className="text-white">Manuel Paket Atama</DialogTitle>
             <DialogDescription className="text-slate-400">
-              {username} kullanıcısına manuel olarak paket atayın.
+              {username} kullanıcısına manuel olarak paket atayın. Paket ay sonuna kadar geçerli olacak.
             </DialogDescription>
           </DialogHeader>
 
@@ -644,7 +627,7 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
                   <SelectValue placeholder="Bir paket seçin..." />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-700 border-slate-600">
-                  {allPlans.map((plan: Plan) => (
+                  {(allPlans as Plan[]).map((plan: Plan) => (
                     <SelectItem key={plan.id} value={plan.id} className="text-white hover:bg-slate-600">
                       {plan.name} - ${plan.priceUsd}
                     </SelectItem>
@@ -653,23 +636,6 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
               </Select>
             </div>
 
-            {/* Geçerlilik Süresi */}
-            <div className="space-y-2">
-              <Label className="text-gray-300">Geçerlilik Süresi (Gün)</Label>
-              <Select value={validityDays} onValueChange={setValidityDays}>
-                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-700 border-slate-600">
-                  <SelectItem value="7" className="text-white hover:bg-slate-600">7 Gün</SelectItem>
-                  <SelectItem value="15" className="text-white hover:bg-slate-600">15 Gün</SelectItem>
-                  <SelectItem value="30" className="text-white hover:bg-slate-600">30 Gün</SelectItem>
-                  <SelectItem value="60" className="text-white hover:bg-slate-600">60 Gün</SelectItem>
-                  <SelectItem value="90" className="text-white hover:bg-slate-600">90 Gün</SelectItem>
-                  <SelectItem value="365" className="text-white hover:bg-slate-600">365 Gün</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             {/* Not */}
             <div className="space-y-2">
