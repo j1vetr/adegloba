@@ -219,12 +219,6 @@ export default function Paketler() {
                     )}
                   </Button>
 
-                  {/* Active Badge */}
-                  <div className="absolute top-4 right-4">
-                    <Badge className="bg-green-600/20 text-green-400 border-green-500/30">
-                      Aktif
-                    </Badge>
-                  </div>
                 </CardContent>
 
                 {/* Hover Glow Effect */}
