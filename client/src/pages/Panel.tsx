@@ -6,15 +6,34 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive, Zap } from "lucide-react";
+import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive, Zap, Copy } from "lucide-react";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
+import { useToast } from "@/hooks/use-toast";
 import type { Order, User, Ship } from "@shared/schema";
 
 export default function Panel() {
   const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }, isLoading: boolean };
+  const { toast } = useToast();
   const [expiredPage, setExpiredPage] = useState(1);
   const expiredPageSize = 6;
+
+  const copyToClipboard = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Kopyalandı",
+        description: `${type} panoya kopyalandı`,
+        variant: "default"
+      });
+    } catch (err) {
+      toast({
+        title: "Hata",
+        description: "Kopyalama işlemi başarısız",
+        variant: "destructive"
+      });
+    }
+  };
 
   const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/user/orders"],
@@ -254,11 +273,29 @@ export default function Panel() {
                                 <div className="space-y-3">
                                   <div className="flex items-center justify-between">
                                     <span className="text-slate-400 text-sm font-medium">Kullanıcı Adı:</span>
-                                    <span className="text-white font-mono text-sm bg-slate-800/50 px-2 py-1 rounded">{pkg.username}</span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-white font-mono text-sm bg-slate-800/50 px-2 py-1 rounded">{pkg.username}</span>
+                                      <button
+                                        onClick={() => copyToClipboard(pkg.username, "Kullanıcı adı")}
+                                        className="p-1 text-slate-400 hover:text-cyan-400 transition-colors duration-200 hover:bg-slate-700/50 rounded"
+                                        data-testid={`copy-username-${pkg.credentialId}`}
+                                      >
+                                        <Copy className="h-4 w-4" />
+                                      </button>
+                                    </div>
                                   </div>
                                   <div className="flex items-center justify-between">
                                     <span className="text-slate-400 text-sm font-medium">Şifre:</span>
-                                    <span className="text-white font-mono text-sm bg-slate-800/50 px-2 py-1 rounded">{pkg.password}</span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-white font-mono text-sm bg-slate-800/50 px-2 py-1 rounded">{pkg.password}</span>
+                                      <button
+                                        onClick={() => copyToClipboard(pkg.password, "Şifre")}
+                                        className="p-1 text-slate-400 hover:text-cyan-400 transition-colors duration-200 hover:bg-slate-700/50 rounded"
+                                        data-testid={`copy-password-${pkg.credentialId}`}
+                                      >
+                                        <Copy className="h-4 w-4" />
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
