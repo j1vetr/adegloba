@@ -1288,12 +1288,13 @@ export class DatabaseStorage implements IStorage {
           userId,
           shipId: plan.shipId,
           status: 'paid',
-          totalAmount: plan.priceUsd,
+          subtotalUsd: plan.priceUsd,
+          totalUsd: plan.priceUsd,
+          currency: 'USD',
           paidAt,
           expiresAt,
           paypalOrderId: `MANUAL_${Date.now()}_${adminId.slice(-8)}`,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: new Date()
         })
         .returning();
 
@@ -1302,13 +1303,12 @@ export class DatabaseStorage implements IStorage {
         .insert(orderItems)
         .values({
           orderId: order.id,
+          shipId: plan.shipId,
           planId,
           qty: 1,
           unitPriceUsd: plan.priceUsd,
           lineTotalUsd: plan.priceUsd,
-          expiresAt,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          expiresAt
         })
         .returning();
 
