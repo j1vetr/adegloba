@@ -728,44 +728,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create order with 'pending' status initially 
-      const orderData = {
-        userId,
-        shipId: user.ship_id,
-        status: 'pending',
-        currency: 'USD',
-        subtotalUsd: subtotal.toFixed(2),
-        discountUsd: discount.toFixed(2),
-        totalUsd: total.toFixed(2),
-        couponId: validatedCoupon?.id || null,
-        paypalOrderId: paypalOrderId || null,
-      };
+      // Find existing pending order for this user instead of creating new one
+      const pendingOrders = await storage.getOrdersByUserId(userId);
+      const pendingOrder = pendingOrders.find(order => order.status === 'pending');
+      
+      if (!pendingOrder) {
+        return res.status(400).json({ message: 'No pending order found. Please restart checkout process.' });
+      }
 
-      const order = await storage.createOrder(orderData);
+      // Update the existing order with PayPal order ID
+      await storage.updateOrder(pendingOrder.id, {
+        paypalOrderId: paypalOrderId || 'manual-payment'
+      });
 
-      // Create order items for all cart items
-      for (const cartItem of cartItems) {
-        // Get plan details for pricing
-        const plan = await storage.getPlanById(cartItem.planId);
-        if (plan) {
-          await storage.createOrderItem({
-            orderId: order.id,
-            shipId: user.ship_id,
-            planId: cartItem.planId,
-            qty: cartItem.quantity,
-            unitPriceUsd: plan.priceUsd,
-            lineTotalUsd: (parseFloat(plan.priceUsd) * cartItem.quantity).toFixed(2),
-          });
+      // Record coupon usage if coupon was applied 
+      // (Note: Duplicate coupon usage will be handled by coupon service constraints)
+      if (validatedCoupon && discount > 0) {
+        try {
+          await couponService.recordCouponUsage(validatedCoupon.id, userId, pendingOrder.id, discount);
+        } catch (error) {
+          // Ignore if coupon usage already exists (idempotency)
+          console.log('Coupon usage might already exist:', error.message);
         }
       }
 
-      // Record coupon usage if coupon was applied
-      if (validatedCoupon && discount > 0) {
-        await couponService.recordCouponUsage(validatedCoupon.id, userId, order.id, discount);
-      }
-
       // Use atomic payment processing for consistency
-      const result = await orderService.processPaymentCompletion(order.id, paypalOrderId || 'manual-payment');
+      const result = await orderService.processPaymentCompletion(pendingOrder.id, paypalOrderId || 'manual-payment');
       
       if (!result.success) {
         throw new Error('Failed to process payment and assign credentials');
@@ -775,8 +763,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.clearCart(userId);
 
       res.json({ 
-        id: order.id, 
-        orderId: order.id,
+        id: pendingOrder.id, 
+        orderId: pendingOrder.id,
         success: true,
         message: 'Order completed and credentials assigned',
         totalUsd: total.toFixed(2)
