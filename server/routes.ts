@@ -317,14 +317,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const plans = await storage.getPlansForShip(user.ship_id);
         
-        // Add stock information to each plan
-        const plansWithStock = await Promise.all(plans.map(async (plan) => {
-          const availableStock = await storage.getAvailableStock(plan.id);
-          return {
-            ...plan,
-            availableStock,
-            inStock: availableStock > 0
-          };
+        // Always mark plans as available (stock checking removed)
+        const plansWithStock = plans.map((plan) => ({
+          ...plan,
+          availableStock: 999, // Dummy high number to indicate always available
+          inStock: true
         }));
         
         res.json(plansWithStock);
@@ -517,15 +514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Plan ID is required' });
       }
 
-      // Check stock availability
-      const availableStock = await storage.getAvailableStock(planId);
-      if (quantity > availableStock) {
-        return res.status(400).json({ 
-          message: 'Stokta yeterli ürün yok', 
-          availableStock,
-          requestedQuantity: quantity
-        });
-      }
+      // Stock checking removed - packages always available for purchase
 
       const cartItem = await storage.addToCart(userId, planId, quantity);
       res.json(cartItem);
@@ -549,15 +538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Quantity must be greater than 0' });
       }
 
-      // Check stock availability
-      const availableStock = await storage.getAvailableStock(planId);
-      if (quantity > availableStock) {
-        return res.status(400).json({ 
-          message: 'Stokta yeterli ürün yok', 
-          availableStock,
-          requestedQuantity: quantity
-        });
-      }
+      // Stock checking removed - packages always available for purchase
 
       const cartItem = await storage.updateCartItem(userId, planId, quantity);
       res.json(cartItem);
