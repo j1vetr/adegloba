@@ -101,13 +101,11 @@ export class OrderService {
   /**
    * Atomically process payment completion with credential assignment and package activation
    * This method ensures all operations happen in a single database transaction for consistency
-   * Includes comprehensive error handling, rollback mechanisms, and race condition protection
    */
   async processPaymentCompletion(orderId: string, paypalOrderId: string, paymentDetails?: any): Promise<{
     order: any;
     assignedCredentials: any[];
     success: boolean;
-    error?: string;
   }> {
     try {
       return await db.transaction(async (tx) => {
@@ -180,10 +178,9 @@ export class OrderService {
             .for('update'); // Row-level lock to prevent race conditions
 
           if (availableCredentials.length < item.qty) {
-            // Detailed error for debugging
-            const errorMsg = `Insufficient stock: Plan ${item.planId} needs ${item.qty} credentials, only ${availableCredentials.length} available. Order: ${orderId}`;
-            console.error(`❌ Stock validation failed: ${errorMsg}`);
-            throw new Error(errorMsg);
+            throw new Error(
+              `Insufficient credentials for plan ${item.planId}. Need ${item.qty}, available ${availableCredentials.length}`
+            );
           }
 
           // Select credentials to assign

@@ -63,6 +63,7 @@ export interface IStorage {
   getUserActivePackages(userId: string): Promise<any[]>;
   getUserExpiredPackages(userId: string, offset: number, pageSize: number): Promise<any[]>;
   getUserExpiredPackagesCount(userId: string): Promise<number>;
+  getShipPlans(shipId: string): Promise<Plan[]>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<(User & { ship?: Ship })[]>;
   getAllUsersWithShips(): Promise<any[]>;
@@ -100,7 +101,7 @@ export interface IStorage {
   getAvailableCredentials(shipId: string): Promise<CredentialPool[]>;
   createCredentialPool(credential: InsertCredentialPool): Promise<CredentialPool>;
   createCredentialPoolBatch(credentials: InsertCredentialPool[]): Promise<CredentialPool[]>;
-  assignCredentialToOrder(credentialId: string, orderId: string, userId: string): Promise<CredentialPool | undefined>;
+  assignCredentialToOrder(orderId: string, shipId: string): Promise<CredentialPool | null>;
   unassignCredential(credentialId: string): Promise<void>;
   deleteCredential(id: string): Promise<void>;
 
@@ -231,7 +232,15 @@ export class DatabaseStorage implements IStorage {
   }
 
 
-  // Consolidated into getPlansForShip method for consistency
+  async getShipPlans(shipId: string): Promise<Plan[]> {
+    const results = await db
+      .select()
+      .from(plans)
+      .where(and(eq(plans.shipId, shipId), eq(plans.isActive, true)))
+      .orderBy(plans.sortOrder);
+    
+    return results;
+  }
 
   async getUserOrders(userId: string): Promise<any[]> {
     const results = await db
@@ -608,8 +617,18 @@ export class DatabaseStorage implements IStorage {
   }
 
 
-  // NOTE: shipPlans table was removed - plans are now directly associated with ships
-  // These methods are deprecated and removed
+  async updateShipPlan(shipId: string, planId: string, updates: Partial<InsertShipPlan>): Promise<void> {
+    await db
+      .update(shipPlans)
+      .set(updates)
+      .where(and(eq(shipPlans.shipId, shipId), eq(shipPlans.planId, planId)));
+  }
+
+  async removeShipPlan(shipId: string, planId: string): Promise<void> {
+    await db
+      .delete(shipPlans)
+      .where(and(eq(shipPlans.shipId, shipId), eq(shipPlans.planId, planId)));
+  }
 
   // Coupon transformation functions
   private transformDbCouponToFrontend(dbCoupon: any): any {

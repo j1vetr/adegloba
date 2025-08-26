@@ -177,7 +177,7 @@ export function setupUserAuth(app: Express) {
         return res.status(400).json({ message: 'User has no assigned ship' });
       }
 
-      const shipPlans = await storage.getPlansForShip(user.ship_id);
+      const shipPlans = await storage.getShipPlans(user.ship_id);
       res.json(shipPlans);
     } catch (error) {
       console.error('Error fetching ship plans:', error);

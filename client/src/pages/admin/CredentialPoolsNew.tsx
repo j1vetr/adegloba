@@ -74,16 +74,16 @@ export default function CredentialPoolsNew() {
   });
 
   // Fetch credentials with plan and ship details
-  const { data: credentials = [], isLoading: credentialsLoading } = useQuery<any[]>({
+  const { data: credentials, isLoading: credentialsLoading } = useQuery({
     queryKey: ["/api/admin/credentials"],
   });
 
   // Fetch ships and plans for filters
-  const { data: ships = [], isLoading: shipsLoading } = useQuery<any[]>({
+  const { data: ships, isLoading: shipsLoading } = useQuery({
     queryKey: ["/api/admin/ships"],
   });
 
-  const { data: plans = [], isLoading: plansLoading } = useQuery<any[]>({
+  const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: ["/api/admin/plans"],
   });
 
@@ -128,16 +128,12 @@ export default function CredentialPoolsNew() {
       return await apiRequest("POST", "/api/admin/credentials", data);
     },
     onSuccess: () => {
-      // Force complete cache refresh for immediate stock updates
-      queryClient.resetQueries({ queryKey: ["/api/admin/credentials"] });
-      queryClient.removeQueries({ queryKey: ["/api/user/ship-plans"], exact: false });
-      queryClient.resetQueries({ queryKey: ["/api/admin/plans"] });
-      
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
       setIsFormOpen(false);
       resetForm();
       toast({
         title: "Başarılı",
-        description: "Kimlik bilgisi başarıyla oluşturuldu. Stok güncellenmiştir.",
+        description: "Kimlik bilgisi başarıyla oluşturuldu.",
       });
     },
     onError: (error: Error) => {
@@ -155,20 +151,13 @@ export default function CredentialPoolsNew() {
       return await apiRequest("POST", "/api/admin/credentials/import", data);
     },
     onSuccess: (data) => {
-      // Force complete cache refresh for immediate stock updates
-      queryClient.resetQueries({ queryKey: ["/api/admin/credentials"] });
-      queryClient.removeQueries({ queryKey: ["/api/user/ship-plans"], exact: false });
-      queryClient.resetQueries({ queryKey: ["/api/admin/plans"] });
-      
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
       setIsImportOpen(false);
       setImportText('');
       setSelectedPlanForImport('');
-      
-      console.log('📦 Stock updated after credential import:', data.updatedStock, 'for plan', selectedPlanForImport);
-      
       toast({
         title: "Başarılı",
-        description: `${data.created || data.count || 'Birkaç'} kimlik bilgisi başarıyla içe aktarıldı. Stok güncellenmiştir.`,
+        description: `${data.created} kimlik bilgisi başarıyla içe aktarıldı.`,
       });
     },
     onError: (error: Error) => {
@@ -190,17 +179,13 @@ export default function CredentialPoolsNew() {
       });
     },
     onSuccess: () => {
-      // Force complete cache refresh for immediate stock updates
-      queryClient.resetQueries({ queryKey: ["/api/admin/credentials"] });
-      queryClient.removeQueries({ queryKey: ["/api/user/ship-plans"], exact: false });
-      queryClient.resetQueries({ queryKey: ["/api/admin/plans"] });
-      
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
       setShowEditDialog(false);
       setEditingCredential(null);
       resetForm();
       toast({
         title: "Başarılı",
-        description: "Kimlik bilgisi başarıyla güncellendi. Stok güncellenmiştir.",
+        description: "Kimlik bilgisi başarıyla güncellendi.",
       });
     },
     onError: (error: Error) => {
@@ -218,16 +203,12 @@ export default function CredentialPoolsNew() {
       return await apiRequest("DELETE", "/api/admin/credentials/bulk", { ids });
     },
     onSuccess: () => {
-      // Invalidate both admin and user package queries to update stock
       queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/ship-plans"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
-      
       setDeleteCredentials([]);
       setSelectedCredentials([]);
       toast({
         title: "Başarılı",
-        description: "Seçili kimlik bilgileri başarıyla silindi. Stok güncellenmiştir.",
+        description: "Seçili kimlik bilgileri başarıyla silindi.",
       });
     },
     onError: (error: Error) => {

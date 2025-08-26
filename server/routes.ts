@@ -311,45 +311,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userId = req.session.userId;
         const user = await storage.getUserWithShip(userId);
         
-        console.log('User data:', { userId, user: { ...user, ship: user?.ship } });
-        
         if (!user || !user.ship_id) {
           return res.status(400).json({ message: "User has no assigned ship" });
         }
         
         const plans = await storage.getPlansForShip(user.ship_id);
         
-        // Get ship name - ensure it's properly extracted
-        const shipName = user.ship?.name || 'Gemi Atanmamış';
-        console.log('Ship name being used:', shipName);
-        
-        // Add fresh stock information to each plan with no caching
+        // Add stock information to each plan
         const plansWithStock = await Promise.all(plans.map(async (plan) => {
-          const availableCount = await storage.getAvailableStock(plan.id);
+          const availableStock = await storage.getAvailableStock(plan.id);
           return {
             ...plan,
-            availableCount,
-            availableStock: availableCount, // For backwards compatibility
-            inStock: availableCount > 0,
-            shipName: shipName,
-            timestamp: new Date().toISOString() // Force cache bust
+            availableStock,
+            inStock: availableStock > 0
           };
         }));
-        
-        console.log('Returning plans with ship name:', plansWithStock[0]?.shipName);
-        
-        // Set aggressive headers to completely prevent caching
-        res.set({
-          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, private',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          'Surrogate-Control': 'no-store',
-          'Vary': '*'
-        });
-        
-        // Remove any ETag to prevent conditional requests
-        res.removeHeader('ETag');
-        res.removeHeader('Last-Modified');
         
         res.json(plansWithStock);
       } catch (error) {
@@ -1128,16 +1104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Return fresh stock data after import
-      const updatedStock = await storage.getAvailableStock(planId);
-      console.log(`📦 Stock updated for plan ${planId}: ${updatedStock} available`);
-      
-      res.json({ 
-        created, 
-        total: credentials.length,
-        updatedStock,
-        timestamp: new Date().toISOString()
-      });
+      res.json({ created, total: credentials.length });
     } catch (error: any) {
       console.error("Error importing credentials:", error);
       res.status(500).json({ message: error.message });
@@ -2068,7 +2035,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/ship-plans/:shipId', isAdminAuthenticated, async (req, res) => {
     try {
       const { shipId } = req.params;
-      const plans = await storage.getPlansForShip(shipId);
+      const plans = await storage.getShipPlans(shipId);
       res.json(plans);
     } catch (error) {
       console.error('Error fetching ship plans:', error);
@@ -2169,17 +2136,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const results = await storage.createCredentialPoolBatch(credentials);
-      
-      // Get updated stock information for affected plans
-      const updatedStockInfo = await storage.getAllCredentialStats();
-      console.log(`📦 Bulk import completed: ${results.length} credentials added`);
-      
       res.status(201).json({ 
         success: results.length, 
         errors,
-        credentials: results,
-        stockUpdate: updatedStockInfo,
-        timestamp: new Date().toISOString()
+        credentials: results 
       });
     } catch (error) {
       console.error('Error bulk importing credentials:', error);
@@ -2202,19 +2162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       await storage.unassignCredential(id);
-      
-      // Force cache refresh for immediate stock updates
-      res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'X-Stock-Updated': Date.now().toString()
-      });
-      
-      res.status(200).json({ 
-        message: 'Credential unassigned successfully',
-        timestamp: new Date().toISOString()
-      });
+      res.status(200).json({ message: 'Credential unassigned successfully' });
     } catch (error) {
       console.error('Error unassigning credential:', error);
       res.status(500).json({ message: 'Failed to unassign credential' });
@@ -2342,28 +2290,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         message: `Failed to fix orders: ${error.message}` 
-      });
-    }
-  });
-
-  // Admin endpoint to refresh stock cache (triggers real-time updates)
-  app.post('/api/admin/refresh-stock', isAdminAuthenticated, async (req, res) => {
-    try {
-      // Get all credential stats to verify stock levels
-      const stats = await storage.getAllCredentialStats();
-      console.log('📊 Stock levels refreshed:', Object.keys(stats).length, 'plans updated');
-      
-      res.json({
-        success: true,
-        message: 'Stock cache refreshed successfully',
-        stats: Object.keys(stats).length,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Error refreshing stock cache:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: `Failed to refresh stock: ${error.message}` 
       });
     }
   });

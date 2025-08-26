@@ -47,15 +47,8 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
     queryKey: ["/api/admin/users", user.id, "orders"],
   });
 
-  const formatPrice = (price: string | number | null | undefined) => {
-    if (price === null || price === undefined) {
-      return '$0.00';
-    }
-    const numValue = typeof price === 'string' ? parseFloat(price) : price;
-    if (isNaN(numValue)) {
-      return '$0.00';
-    }
-    return `$${numValue.toFixed(2)}`;
+  const formatPrice = (price: string | number) => {
+    return `$${parseFloat(price.toString()).toFixed(2)}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -337,15 +330,8 @@ export default function UsersManagementNew() {
     },
   });
 
-  const formatPrice = (price: string | number | null | undefined) => {
-    if (price === null || price === undefined) {
-      return '$0.00';
-    }
-    const numValue = typeof price === 'string' ? parseFloat(price) : price;
-    if (isNaN(numValue)) {
-      return '$0.00';
-    }
-    return `$${numValue.toFixed(2)}`;
+  const formatPrice = (price: string | number) => {
+    return `$${parseFloat(price.toString()).toFixed(2)}`;
   };
 
   const formatDate = (dateString: string) => {
