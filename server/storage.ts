@@ -415,6 +415,34 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async resetUserPassword(id: string): Promise<{ newPassword: string; user: User } | null> {
+    try {
+      // Generate new password (8 characters, alphanumeric)
+      const newPassword = Math.random().toString(36).slice(2, 10);
+      
+      // Hash the password
+      const bcrypt = await import('bcrypt');
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          password_hash: passwordHash,
+        })
+        .where(eq(users.id, id))
+        .returning();
+      
+      if (!updatedUser) {
+        return null;
+      }
+      
+      return { newPassword, user: updatedUser };
+    } catch (error) {
+      console.error("Error resetting user password:", error);
+      return null;
+    }
+  }
+
   async deleteUser(id: string): Promise<boolean> {
     try {
       return await db.transaction(async (tx) => {

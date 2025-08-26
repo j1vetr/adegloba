@@ -1236,6 +1236,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reset user password
+  app.post("/api/admin/users/:id/reset-password", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Get user info for logging
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const result = await storage.resetUserPassword(id);
+      if (!result) {
+        return res.status(500).json({ message: "Failed to reset password" });
+      }
+      
+      // Create system log for password reset
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'reset_user_password',
+        adminId: req.session.adminUser.id,
+        entityType: 'user',
+        entityId: id,
+        details: {
+          username: user.username,
+          email: user.email
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+      
+      res.json({ 
+        message: "Password reset successfully",
+        newPassword: result.newPassword,
+        username: user.username
+      });
+    } catch (error: any) {
+      console.error("Error resetting user password:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Cron job endpoint for expiry processing
   app.post('/api/cron/process-expired-orders', async (req, res) => {
     try {

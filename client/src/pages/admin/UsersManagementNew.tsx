@@ -16,7 +16,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Separator } from '@/components/ui/separator';
 import { 
   Users, Search, MoreHorizontal, Edit, Trash2, Eye, 
-  UserCheck, UserX, Ship as ShipIcon, Mail, Calendar, DollarSign, Package, ShoppingCart, TrendingUp, History, ArrowLeft, Plus, Key 
+  UserCheck, UserX, Ship as ShipIcon, Mail, Calendar, DollarSign, Package, ShoppingCart, TrendingUp, History, ArrowLeft, Plus, Key, RotateCcw, Copy, CheckCircle 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -37,6 +37,143 @@ interface OrderWithDetails extends Order {
   orderItems: OrderItem[];
   ship: Ship;
   totalAmount: number;
+}
+
+// Password Reset Button Component
+interface PasswordResetButtonProps {
+  userId: string;
+  username: string;
+}
+
+function PasswordResetButton({ userId, username }: PasswordResetButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(`/api/admin/users/${userId}/reset-password`, {
+        method: 'POST'
+      });
+      return response;
+    },
+    onSuccess: (data) => {
+      setNewPassword(data.newPassword);
+      toast({
+        title: "Şifre Sıfırlandı",
+        description: `${username} kullanıcısının şifresi başarıyla sıfırlandı.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Hata",
+        description: error.message || "Şifre sıfırlanırken bir hata oluştu.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleCopyPassword = async () => {
+    if (newPassword) {
+      await navigator.clipboard.writeText(newPassword);
+      setCopied(true);
+      toast({
+        title: "Kopyalandı",
+        description: "Yeni şifre panoya kopyalandı.",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setNewPassword(null);
+    setCopied(false);
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setIsOpen(true)}
+        className="bg-slate-800/50 border-slate-600 hover:bg-slate-700/50 text-white"
+        data-testid={`button-reset-password-${userId}`}
+      >
+        <RotateCcw className="h-3 w-3 mr-1" />
+        Şifre Sıfırla
+      </Button>
+
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="bg-slate-900 border-slate-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Şifre Sıfırla - {username}</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Bu kullanıcının şifresini sıfırlamak istediğinizden emin misiniz? Yeni bir şifre otomatik olarak oluşturulacak.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!newPassword ? (
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                className="flex-1 bg-slate-800 border-slate-600 hover:bg-slate-700 text-white"
+                data-testid="button-cancel-reset"
+              >
+                İptal
+              </Button>
+              <Button
+                onClick={() => resetPasswordMutation.mutate()}
+                disabled={resetPasswordMutation.isPending}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                data-testid="button-confirm-reset"
+              >
+                {resetPasswordMutation.isPending ? "Sıfırlanıyor..." : "Evet, Sıfırla"}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4 pt-4">
+              <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="h-5 w-5 text-green-400" />
+                  <span className="text-green-400 font-medium">Şifre Başarıyla Sıfırlandı</span>
+                </div>
+                <p className="text-sm text-gray-300 mb-3">
+                  Kullanıcının yeni şifresi:
+                </p>
+                <div className="flex items-center gap-2 p-3 bg-slate-800 rounded border border-slate-600">
+                  <code className="text-green-400 font-mono text-lg flex-1" data-testid="text-new-password">
+                    {newPassword}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyPassword}
+                    className="bg-slate-700 border-slate-500 hover:bg-slate-600 text-white"
+                    data-testid="button-copy-password"
+                  >
+                    {copied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Bu şifreyi kullanıcıya güvenli bir şekilde iletin.
+                </p>
+              </div>
+              <Button
+                onClick={handleClose}
+                className="w-full bg-slate-700 hover:bg-slate-600 text-white"
+                data-testid="button-close-modal"
+              >
+                Kapat
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
 
 interface UserDetailsProps {
@@ -181,11 +318,14 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
               </div>
               <div>
                 <Label className="text-gray-300 text-sm">Şifre</Label>
-                <p className="text-white font-medium flex items-center gap-2">
-                  <Key className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-400">••••••••••••</span>
-                  <span className="text-xs text-gray-500">(Güvenlik nedeniyle gizli)</span>
-                </p>
+                <div className="flex items-center gap-3">
+                  <p className="text-white font-medium flex items-center gap-2">
+                    <Key className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-400">••••••••••••</span>
+                    <span className="text-xs text-gray-500">(Güvenlik nedeniyle gizli)</span>
+                  </p>
+                  <PasswordResetButton userId={user.id} username={user.username} />
+                </div>
               </div>
             </div>
             <div className="space-y-4">
