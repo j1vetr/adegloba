@@ -9,18 +9,20 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import AdminLayout from '@/components/AdminLayout';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Separator } from '@/components/ui/separator';
 import { 
   Users, Search, MoreHorizontal, Edit, Trash2, Eye, 
-  UserCheck, UserX, Ship as ShipIcon, Mail, Calendar, DollarSign, Package, ShoppingCart, TrendingUp, History, ArrowLeft 
+  UserCheck, UserX, Ship as ShipIcon, Mail, Calendar, DollarSign, Package, ShoppingCart, TrendingUp, History, ArrowLeft, Plus 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Label } from '@/components/ui/label';
-import type { User, Ship, Order, OrderItem } from '../../../shared/schema';
+import type { User, Ship, Order, OrderItem, Plan } from '../../../shared/schema';
 
 interface UserWithDetails extends User {
   ship: Ship;
@@ -199,6 +201,9 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
                   <p className="text-white font-medium">{user.address}</p>
                 </div>
               )}
+              <div className="pt-2">
+                <ManualPackageAssignmentButton userId={user.id} username={user.username} />
+              </div>
             </div>
           </div>
         </CardContent>
@@ -524,5 +529,185 @@ export default function UsersManagementNew() {
         </AlertDialog>
       </div>
     </AdminLayout>
+  );
+}
+
+// Manuel Paket Atama Bileşeni
+interface ManualPackageAssignmentButtonProps {
+  userId: string;
+  username: string;
+}
+
+function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssignmentButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  const [validityDays, setValidityDays] = useState<string>("30");
+  const [note, setNote] = useState<string>("");
+  const { toast } = useToast();
+
+  // Tüm paketleri getir
+  const { data: allPlans = [], isLoading: plansLoading } = useQuery({
+    queryKey: ["/api/plans"],
+    enabled: isOpen,
+  });
+
+  // Manuel paket atama mutation
+  const assignPackageMutation = useMutation({
+    mutationFn: async (data: { planId: string; validityDays: number; note?: string }) => {
+      return apiRequest(`/api/admin/users/${userId}/assign-package`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Başarılı",
+        description: `${username} kullanıcısına paket başarıyla atandı.`,
+        variant: "default",
+      });
+      setIsOpen(false);
+      setSelectedPlanId("");
+      setValidityDays("30");
+      setNote("");
+      // Kullanıcı siparişlerini yenile
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users", userId, "orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users-with-stats"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Hata",
+        description: error.message || "Paket ataması sırasında bir hata oluştu.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleAssign = () => {
+    if (!selectedPlanId) {
+      toast({
+        title: "Hata",
+        description: "Lütfen bir paket seçin.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const days = parseInt(validityDays);
+    if (days < 1 || days > 365) {
+      toast({
+        title: "Hata", 
+        description: "Geçerlilik süresi 1-365 gün arasında olmalıdır.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    assignPackageMutation.mutate({
+      planId: selectedPlanId,
+      validityDays: days,
+      note: note || undefined
+    });
+  };
+
+  return (
+    <>
+      <Button
+        onClick={() => setIsOpen(true)}
+        className="bg-blue-600 hover:bg-blue-700 text-white"
+        size="sm"
+        data-testid="manual-package-assignment-button"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Manuel Paket Ekle
+      </Button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="bg-slate-800 border-slate-700 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">Manuel Paket Atama</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {username} kullanıcısına manuel olarak paket atayın.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Paket Seçimi */}
+            <div className="space-y-2">
+              <Label className="text-gray-300">Paket Seçin</Label>
+              <Select 
+                value={selectedPlanId} 
+                onValueChange={setSelectedPlanId}
+                disabled={plansLoading || assignPackageMutation.isPending}
+              >
+                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                  <SelectValue placeholder="Bir paket seçin..." />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-700 border-slate-600">
+                  {allPlans.map((plan: Plan) => (
+                    <SelectItem key={plan.id} value={plan.id} className="text-white hover:bg-slate-600">
+                      {plan.name} - ${plan.priceUsd}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Geçerlilik Süresi */}
+            <div className="space-y-2">
+              <Label className="text-gray-300">Geçerlilik Süresi (Gün)</Label>
+              <Select value={validityDays} onValueChange={setValidityDays}>
+                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-700 border-slate-600">
+                  <SelectItem value="7" className="text-white hover:bg-slate-600">7 Gün</SelectItem>
+                  <SelectItem value="15" className="text-white hover:bg-slate-600">15 Gün</SelectItem>
+                  <SelectItem value="30" className="text-white hover:bg-slate-600">30 Gün</SelectItem>
+                  <SelectItem value="60" className="text-white hover:bg-slate-600">60 Gün</SelectItem>
+                  <SelectItem value="90" className="text-white hover:bg-slate-600">90 Gün</SelectItem>
+                  <SelectItem value="365" className="text-white hover:bg-slate-600">365 Gün</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Not */}
+            <div className="space-y-2">
+              <Label className="text-gray-300">Not (Opsiyonel)</Label>
+              <Textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Bu atama hakkında not ekleyin..."
+                className="bg-slate-700 border-slate-600 text-white placeholder-gray-400 resize-none"
+                rows={3}
+                disabled={assignPackageMutation.isPending}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
+              disabled={assignPackageMutation.isPending}
+            >
+              İptal
+            </Button>
+            <Button
+              onClick={handleAssign}
+              disabled={assignPackageMutation.isPending || !selectedPlanId}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              data-testid="confirm-assign-package-button"
+            >
+              {assignPackageMutation.isPending && (
+                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+              )}
+              Paketi Ata
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

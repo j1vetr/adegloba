@@ -1137,6 +1137,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual package assignment to user
+  app.post("/api/admin/users/:id/assign-package", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id: userId } = req.params;
+      const { planId, validityDays = 30, note } = req.body;
+
+      if (!planId) {
+        return res.status(400).json({ message: "Plan ID is required" });
+      }
+
+      // Get user and plan details
+      const [user, plan] = await Promise.all([
+        storage.getUser(userId),
+        storage.getPlan(planId)
+      ]);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!plan) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      // Create manual order
+      const result = await storage.createManualPackageAssignment({
+        userId,
+        planId,
+        validityDays,
+        note,
+        adminId: req.session.adminUser.id
+      });
+
+      // Create system log
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'manual_package_assignment',
+        adminId: req.session.adminUser.id,
+        entityType: 'user',
+        entityId: userId,
+        details: {
+          planId,
+          planName: plan.name,
+          validityDays,
+          note,
+          username: user.username
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+
+      res.json({ 
+        message: "Package assigned successfully",
+        assignment: result
+      });
+
+    } catch (error: any) {
+      console.error("Error assigning manual package:", error);
+      res.status(500).json({ message: error.message || "Failed to assign package" });
+    }
+  });
+
   app.delete("/api/admin/users/:id", isAdminAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;

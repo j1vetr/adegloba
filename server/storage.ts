@@ -1248,6 +1248,120 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  // Manual package assignment
+  async createManualPackageAssignment({
+    userId,
+    planId,
+    validityDays,
+    note,
+    adminId
+  }: {
+    userId: string;
+    planId: string;
+    validityDays: number;
+    note?: string;
+    adminId: string;
+  }): Promise<{
+    order: Order;
+    orderItem: OrderItem;
+    credentials: CredentialPool[];
+    orderCredentials: any[];
+  }> {
+    return await db.transaction(async (tx) => {
+      // Get plan details
+      const [plan] = await tx.select().from(plans).where(eq(plans.id, planId));
+      if (!plan) {
+        throw new Error("Plan not found");
+      }
+
+      // Calculate expiry date based on validity days
+      const paidAt = new Date();
+      const expiresAt = new Date(paidAt);
+      expiresAt.setDate(expiresAt.getDate() + validityDays);
+      expiresAt.setHours(23, 59, 59, 999);
+
+      // Create manual order
+      const [order] = await tx
+        .insert(orders)
+        .values({
+          userId,
+          shipId: plan.shipId,
+          status: 'paid',
+          totalAmount: plan.priceUsd,
+          paidAt,
+          expiresAt,
+          paypalOrderId: `MANUAL_${Date.now()}_${adminId.slice(-8)}`,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      // Create order item
+      const [orderItem] = await tx
+        .insert(orderItems)
+        .values({
+          orderId: order.id,
+          planId,
+          qty: 1,
+          unitPriceUsd: plan.priceUsd,
+          lineTotalUsd: plan.priceUsd,
+          expiresAt,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      // Get available credentials for the plan
+      const availableCredentials = await tx
+        .select()
+        .from(credentialPools)
+        .where(
+          and(
+            eq(credentialPools.planId, planId),
+            eq(credentialPools.isAssigned, false)
+          )
+        )
+        .limit(1)
+        .for('update');
+
+      if (availableCredentials.length === 0) {
+        throw new Error("No available credentials for this plan");
+      }
+
+      const credential = availableCredentials[0];
+
+      // Assign credential to order
+      await tx
+        .update(credentialPools)
+        .set({
+          isAssigned: true,
+          assignedToOrderId: order.id,
+          assignedToUserId: userId,
+          assignedAt: paidAt,
+          updatedAt: new Date()
+        })
+        .where(eq(credentialPools.id, credential.id));
+
+      // Create order credentials record
+      const [orderCredential] = await tx
+        .insert(orderCredentials)
+        .values({
+          orderId: order.id,
+          credentialId: credential.id,
+          deliveredAt: paidAt,
+          expiresAt
+        })
+        .returning();
+
+      return {
+        order,
+        orderItem,
+        credentials: [credential],
+        orderCredentials: [orderCredential]
+      };
+    });
+  }
+
   // System logs implementation
   async createSystemLog(logData: InsertSystemLog): Promise<SystemLog> {
     const [log] = await db.insert(systemLogs).values(logData).returning();
