@@ -53,10 +53,8 @@ function PasswordResetButton({ userId, username }: PasswordResetButtonProps) {
 
   const resetPasswordMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(`/api/admin/users/${userId}/reset-password`, {
-        method: 'POST'
-      });
-      return response;
+      const response = await apiRequest('POST', `/api/admin/users/${userId}/reset-password`);
+      return response.json();
     },
     onSuccess: (data) => {
       setNewPassword(data.newPassword);
