@@ -300,6 +300,8 @@ export default function UsersManagementNew() {
   // Fetch users with order statistics
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ["/api/admin/users-with-stats"],
+    staleTime: 0, // Force fresh data
+    refetchOnMount: true,
   });
 
   // Filter users

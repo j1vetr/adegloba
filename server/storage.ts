@@ -1219,6 +1219,7 @@ export class DatabaseStorage implements IStorage {
       const userOrders = allOrders.filter(o => o.userId === user.id && o.status === 'paid');
       
       const totalAmountPaid = userOrders.reduce((sum, order) => sum + parseFloat(order.totalUsd || '0'), 0);
+      console.log(`User ${user.username} - Orders: ${userOrders.length}, Total Amount: ${totalAmountPaid}`);
       const lastOrderDate = userOrders.length > 0 
         ? userOrders.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())[0].createdAt
         : null;
