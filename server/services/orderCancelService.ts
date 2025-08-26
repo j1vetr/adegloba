@@ -12,20 +12,20 @@ export class OrderCancelService {
   }
 
   /**
-   * Cancels pending orders that are older than 20 minutes
+   * Cancels pending orders that are older than 10 minutes
    */
   async cancelExpiredPendingOrders(): Promise<number> {
     try {
-      const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000); // 20 minutes ago
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
       
-      // Find pending orders older than 20 minutes
+      // Find pending orders older than 10 minutes
       const expiredOrders = await db
         .select()
         .from(orders)
         .where(
           and(
             eq(orders.status, 'pending'),
-            lt(orders.createdAt, twentyMinutesAgo)
+            lt(orders.createdAt, tenMinutesAgo)
           )
         );
 
@@ -43,7 +43,7 @@ export class OrderCancelService {
         .where(
           and(
             eq(orders.status, 'pending'),
-            lt(orders.createdAt, twentyMinutesAgo)
+            lt(orders.createdAt, tenMinutesAgo)
           )
         );
 
@@ -63,7 +63,7 @@ export class OrderCancelService {
               orderId: order.id,
               userId: order.userId,
               createdAt: order.createdAt,
-              reason: 'Payment not received within 20 minutes',
+              reason: 'Payment not received within 10 minutes',
               autoCancel: true
             },
             ipAddress: 'system',

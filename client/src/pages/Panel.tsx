@@ -353,9 +353,19 @@ export default function Panel() {
                             <div className="text-right">
                               <p className="font-semibold text-white">{formatPrice(order.totalUsd)}</p>
                               <Badge 
-                                className={order.paidAt ? "bg-green-600 text-white" : "bg-yellow-600 text-white"}
+                                className={
+                                  order.status === 'cancelled' 
+                                    ? "bg-red-600 text-white" 
+                                    : order.paidAt 
+                                      ? "bg-green-600 text-white" 
+                                      : "bg-yellow-600 text-white"
+                                }
                               >
-                                {order.paidAt ? "Ödendi" : "Beklemede"}
+                                {order.status === 'cancelled' 
+                                  ? "İptal Edildi" 
+                                  : order.paidAt 
+                                    ? "Ödendi" 
+                                    : "Beklemede"}
                               </Badge>
                             </div>
                           </div>
