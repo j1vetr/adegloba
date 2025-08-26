@@ -667,6 +667,13 @@ export default function PackagesManagement() {
                 <Badge variant="outline" className="text-primary border-primary/50">
                   {startIndex + 1}-{endIndex} / {totalFilteredPlans}
                 </Badge>
+                <Button
+                  onClick={() => setShowCreateDialog(true)}
+                  className="glass-card bg-gradient-to-r from-primary to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Yeni Paket
+                </Button>
               </div>
             </div>
           </CardHeader>
