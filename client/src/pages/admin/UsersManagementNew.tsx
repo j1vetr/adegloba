@@ -587,6 +587,7 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
       return;
     }
 
+    console.log('Assigning package:', { planId: selectedPlanId, note, userId });
     assignPackageMutation.mutate({
       planId: selectedPlanId,
       note: note || undefined

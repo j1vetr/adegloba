@@ -1142,6 +1142,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id: userId } = req.params;
       const { planId, note } = req.body;
+      
+      console.log('Manual package assignment request:', { userId, planId, note });
 
       if (!planId) {
         return res.status(400).json({ message: "Plan ID is required" });

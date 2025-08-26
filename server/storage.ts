@@ -481,6 +481,11 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(plans).orderBy(plans.sortOrder, plans.name);
   }
 
+  async getPlan(id: string): Promise<Plan | undefined> {
+    const [plan] = await db.select().from(plans).where(eq(plans.id, id));
+    return plan;
+  }
+
   async getActivePlans(): Promise<Plan[]> {
     return db.select().from(plans).where(eq(plans.isActive, true)).orderBy(plans.sortOrder, plans.name);
   }
