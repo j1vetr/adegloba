@@ -1216,7 +1216,7 @@ export class DatabaseStorage implements IStorage {
 
     return allUsers.map(user => {
       const ship = allShips.find(s => s.id === user.ship_id);
-      const userOrders = allOrders.filter(o => o.userId === user.id && o.status === 'paid');
+      const userOrders = allOrders.filter(o => o.userId === user.id && (o.status === 'paid' || o.status === 'completed'));
       
       const totalAmountPaid = userOrders.reduce((sum, order) => sum + parseFloat(order.totalUsd || '0'), 0);
       console.log(`User ${user.username} - Orders: ${userOrders.length}, Total Amount: ${totalAmountPaid}`);
