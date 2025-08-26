@@ -729,7 +729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Find existing pending order for this user instead of creating new one
-      const pendingOrders = await storage.getOrdersByUserId(userId);
+      const pendingOrders = await storage.getUserOrders(userId);
       const pendingOrder = pendingOrders.find(order => order.status === 'pending');
       
       if (!pendingOrder) {
