@@ -396,15 +396,19 @@ export class DatabaseStorage implements IStorage {
 
   async updateUser(id: string, data: any): Promise<User | undefined> {
     try {
+      // Build update object dynamically to include only provided fields
+      const updateObject: any = {};
+      
+      if (data.username !== undefined) updateObject.username = data.username;
+      if (data.email !== undefined) updateObject.email = data.email;
+      if (data.full_name !== undefined) updateObject.full_name = data.full_name;
+      if (data.ship_id !== undefined) updateObject.ship_id = data.ship_id;
+      if (data.address !== undefined) updateObject.address = data.address;
+      if (data.password_hash !== undefined) updateObject.password_hash = data.password_hash;
+      
       const [updatedUser] = await db
         .update(users)
-        .set({
-          username: data.username,
-          email: data.email,
-          full_name: data.full_name,
-          ship_id: data.ship_id,
-          address: data.address,
-        })
+        .set(updateObject)
         .where(eq(users.id, id))
         .returning();
       
