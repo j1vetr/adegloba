@@ -1147,7 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      await storage.deleteUser(id);
+      const success = await storage.deleteUser(id);
       
       // Create system log for user deletion
       await storage.createSystemLog({
@@ -1570,16 +1570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin - Users for order assignment
-  app.get('/api/admin/users', isAdminAuthenticated, async (req, res) => {
-    try {
-      const users = await storage.getAllUsers();
-      res.json(users);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      res.status(500).json({ message: 'Failed to fetch users' });
-    }
-  });
+  // Admin - Users for order assignment - Removed duplicate route
 
   // Enhanced Admin CRUD Routes for Coupons with filtering and pagination
   app.get('/api/admin/coupons', isAdminAuthenticated, async (req, res) => {
@@ -1733,16 +1724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin Users
-  app.get('/api/admin/users', isAdminAuthenticated, async (req, res) => {
-    try {
-      const users = await storage.getAllUsers();
-      res.json(users);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      res.status(500).json({ message: 'Failed to fetch users' });
-    }
-  });
+  // Admin Users - Removed duplicate route
 
   // Admin Settings
   app.get('/api/admin/settings', isAdminAuthenticated, async (req, res) => {

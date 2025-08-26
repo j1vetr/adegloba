@@ -1213,9 +1213,9 @@ export class DatabaseStorage implements IStorage {
       const ship = allShips.find(s => s.id === user.ship_id);
       const userOrders = allOrders.filter(o => o.userId === user.id && o.status === 'paid');
       
-      const totalAmountPaid = userOrders.reduce((sum, order) => sum + parseFloat(order.totalAmount), 0);
+      const totalAmountPaid = userOrders.reduce((sum, order) => sum + parseFloat(order.totalAmount || '0'), 0);
       const lastOrderDate = userOrders.length > 0 
-        ? userOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].createdAt
+        ? userOrders.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())[0].createdAt
         : null;
 
       return {
@@ -1243,7 +1243,7 @@ export class DatabaseStorage implements IStorage {
         ...order,
         orderItems: items,
         ship,
-        totalAmount: parseFloat(order.totalAmount),
+        totalAmount: parseFloat(order.totalAmount || '0'),
       };
     });
   }
