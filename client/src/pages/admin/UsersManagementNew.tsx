@@ -16,7 +16,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Separator } from '@/components/ui/separator';
 import { 
   Users, Search, MoreHorizontal, Edit, Trash2, Eye, 
-  UserCheck, UserX, Ship as ShipIcon, Mail, Calendar, DollarSign, Package, ShoppingCart, TrendingUp, History, ArrowLeft, Plus 
+  UserCheck, UserX, Ship as ShipIcon, Mail, Calendar, DollarSign, Package, ShoppingCart, TrendingUp, History, ArrowLeft, Plus, Key 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -177,6 +177,14 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
                 <p className="text-white font-medium flex items-center gap-2">
                   <Mail className="h-4 w-4 text-gray-400" />
                   {user.email}
+                </p>
+              </div>
+              <div>
+                <Label className="text-gray-300 text-sm">Şifre</Label>
+                <p className="text-white font-medium flex items-center gap-2">
+                  <Key className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-400">••••••••••••</span>
+                  <span className="text-xs text-gray-500">(Güvenlik nedeniyle gizli)</span>
                 </p>
               </div>
             </div>
