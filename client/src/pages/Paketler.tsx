@@ -127,12 +127,19 @@ export default function Paketler() {
                       <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   </div>
-                  <CardTitle className="text-xl font-bold mb-2 transition-colors duration-300 text-white group-hover:text-blue-300">
+                  <CardTitle className="text-xl font-bold mb-3 transition-colors duration-300 text-white group-hover:text-blue-300">
                     {plan.name}
                   </CardTitle>
-                  <div className="flex items-center justify-center">
-                    <span className="text-3xl font-bold text-white">{plan.dataLimitGb}</span>
-                    <span className="text-xl text-slate-400 ml-1">GB</span>
+                  
+                  {/* GB Display - More Prominent */}
+                  <div className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl p-4 mb-4 border border-blue-500/30">
+                    <div className="text-center">
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl font-bold text-white">{plan.dataLimitGb}</span>
+                        <span className="text-2xl text-blue-400 font-semibold">GB</span>
+                      </div>
+                      <p className="text-blue-300 text-sm mt-1 font-medium">Yüksek Hızlı Data</p>
+                    </div>
                   </div>
                 </CardHeader>
 
@@ -155,11 +162,38 @@ export default function Paketler() {
                     </div>
                   </div>
 
-                  {/* Features */}
+                  {/* Features - More Detailed */}
                   <div className="space-y-3 text-sm">
+                    {/* Data Limit Feature */}
+                    <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
+                      <Package className="h-4 w-4 mr-2 flex-shrink-0 text-blue-400" />
+                      <div>
+                        <span className="font-medium text-white">{plan.dataLimitGb} GB İnternet</span>
+                        <p className="text-xs text-slate-400 mt-1">Yüksek hızlı deniz interneti</p>
+                      </div>
+                    </div>
+                    
+                    {/* Validity Feature */}
+                    <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
+                      <Calendar className="h-4 w-4 mr-2 flex-shrink-0 text-green-400" />
+                      <div>
+                        <span className="font-medium text-white">Ay Sonu Geçerlilik</span>
+                        <p className="text-xs text-slate-400 mt-1">Paket ay sonuna kadar aktif</p>
+                      </div>
+                    </div>
+                    
+                    {/* Speed Feature */}
+                    <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
+                      <Zap className="h-4 w-4 mr-2 flex-shrink-0 text-yellow-400" />
+                      <div>
+                        <span className="font-medium text-white">Starlink Teknolojisi</span>
+                        <p className="text-xs text-slate-400 mt-1">Düşük gecikme, yüksek hız</p>
+                      </div>
+                    </div>
+                    
                     {plan.description && (
                       <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
-                        <Calendar className="h-4 w-4 mr-2 flex-shrink-0 text-green-400" />
+                        <Info className="h-4 w-4 mr-2 flex-shrink-0 text-cyan-400" />
                         <span>{plan.description}</span>
                       </div>
                     )}

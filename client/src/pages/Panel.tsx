@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive } from "lucide-react";
+import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive, Zap } from "lucide-react";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import type { Order, User, Ship } from "@shared/schema";
@@ -167,9 +167,19 @@ export default function Panel() {
                       return (
                         <Card key={pkg.credentialId} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10" data-testid={`package-card-${pkg.credentialId}`}>
                           <CardContent className="p-6">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="font-semibold text-white text-lg">{pkg.planName}</h3>
-                              <Badge className={`text-white border-0 ${
+                            <div className="text-center mb-6">
+                              <h3 className="font-bold text-white text-xl mb-3">{pkg.planName}</h3>
+                              
+                              {/* GB Display - Prominent */}
+                              <div className="bg-gradient-to-r from-blue-600/30 to-cyan-600/30 rounded-xl p-4 mb-4 border border-blue-500/50">
+                                <div className="flex items-baseline justify-center gap-1">
+                                  <span className="text-4xl font-bold text-white">{pkg.dataLimitGb}</span>
+                                  <span className="text-2xl text-blue-400 font-semibold">GB</span>
+                                </div>
+                                <p className="text-blue-300 text-sm mt-1 font-medium">Starlink Data Paketi</p>
+                              </div>
+                              
+                              <Badge className={`text-white border-0 px-4 py-1 text-sm font-semibold ${
                                 daysRemaining > 7 
                                   ? 'bg-gradient-to-r from-green-600 to-emerald-600' 
                                   : daysRemaining > 3 
@@ -181,19 +191,28 @@ export default function Panel() {
                             </div>
                             
                             <div className="space-y-4">
-                              <div className="flex items-center gap-3 text-slate-300">
-                                <Package className="h-4 w-4 text-blue-400" />
-                                <span className="font-medium">{pkg.dataLimitGb} GB Data Paketi</span>
-                              </div>
                               
                               <div className="space-y-3">
-                                <div className="bg-slate-700/30 rounded-lg p-3 space-y-2">
-                                  <div className="flex items-center gap-2 text-xs text-cyan-400">
-                                    <Info className="h-3 w-3" />
-                                    <span className="font-medium">Ay sonu bitiş sistemi</span>
+                                {/* Package Features */}
+                                <div className="grid grid-cols-1 gap-3">
+                                  <div className="bg-slate-700/30 rounded-lg p-3">
+                                    <div className="flex items-center gap-2 text-sm text-white mb-1">
+                                      <Zap className="h-4 w-4 text-yellow-400" />
+                                      <span className="font-medium">Yüksek Hızlı İnternet</span>
+                                    </div>
+                                    <div className="text-xs text-slate-400">
+                                      Starlink uydu teknolojisi ile düşük gecikme
+                                    </div>
                                   </div>
-                                  <div className="text-xs text-slate-400">
-                                    Bu paket {formatDate(expirationDate.toISOString())} tarihinde sona erecek
+                                  
+                                  <div className="bg-slate-700/30 rounded-lg p-3">
+                                    <div className="flex items-center gap-2 text-sm text-white mb-1">
+                                      <Info className="h-4 w-4 text-cyan-400" />
+                                      <span className="font-medium">Ay Sonu Bitiş Sistemi</span>
+                                    </div>
+                                    <div className="text-xs text-slate-400">
+                                      Bu paket {formatDate(expirationDate.toISOString())} tarihinde sona erecek
+                                    </div>
                                   </div>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
@@ -226,14 +245,21 @@ export default function Panel() {
                                 </div>
                               </div>
                               
-                              <div className="bg-slate-700/30 rounded-lg p-3 space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-slate-400 text-xs font-medium">Kullanıcı Adı:</span>
-                                  <span className="text-white font-mono text-sm">{pkg.username}</span>
+                              {/* Credentials Section */}
+                              <div className="bg-gradient-to-r from-slate-700/40 to-slate-600/40 rounded-lg p-4 border border-slate-600/50">
+                                <div className="flex items-center gap-2 text-sm text-cyan-400 mb-3">
+                                  <Package className="h-4 w-4" />
+                                  <span className="font-medium">Bağlantı Bilgileri</span>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-slate-400 text-xs font-medium">Şifre:</span>
-                                  <span className="text-white font-mono text-sm">{pkg.password}</span>
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 text-sm font-medium">Kullanıcı Adı:</span>
+                                    <span className="text-white font-mono text-sm bg-slate-800/50 px-2 py-1 rounded">{pkg.username}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 text-sm font-medium">Şifre:</span>
+                                    <span className="text-white font-mono text-sm bg-slate-800/50 px-2 py-1 rounded">{pkg.password}</span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
