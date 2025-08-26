@@ -417,11 +417,26 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: string): Promise<boolean> {
     try {
-      const result = await db
-        .delete(users)
-        .where(eq(users.id, id));
-      
-      return result.rowCount > 0;
+      return await db.transaction(async (tx) => {
+        // First, unassign any credentials assigned to this user
+        await tx
+          .update(credentialPools)
+          .set({
+            isAssigned: false,
+            assignedToUserId: null,
+            assignedToOrderId: null,
+            assignedAt: null,
+            updatedAt: new Date()
+          })
+          .where(eq(credentialPools.assignedToUserId, id));
+
+        // Then delete the user
+        const result = await tx
+          .delete(users)
+          .where(eq(users.id, id));
+        
+        return result.rowCount > 0;
+      });
     } catch (error) {
       console.error("Error deleting user:", error);
       return false;
