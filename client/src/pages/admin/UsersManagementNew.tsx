@@ -553,7 +553,7 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
   // Manuel paket atama mutation
   const assignPackageMutation = useMutation({
     mutationFn: async (data: { planId: string; note?: string }) => {
-      return apiRequest(`/api/admin/users/${userId}/assign-package`, 'POST', data);
+      return apiRequest('POST', `/api/admin/users/${userId}/assign-package`, data);
     },
     onSuccess: () => {
       toast({
