@@ -17,14 +17,9 @@ import { Request, Response } from "express";
 
 /* PayPal Controllers Setup */
 
+// PayPal credentials will be loaded dynamically from database settings
+// Environment variables are used as fallback only
 const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } = process.env;
-
-if (!PAYPAL_CLIENT_ID) {
-  throw new Error("Missing PAYPAL_CLIENT_ID");
-}
-if (!PAYPAL_CLIENT_SECRET) {
-  throw new Error("Missing PAYPAL_CLIENT_SECRET");
-}
 const client = new Client({
   clientCredentialsAuthCredentials: {
     oAuthClientId: PAYPAL_CLIENT_ID,
