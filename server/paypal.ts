@@ -14,43 +14,61 @@ import {
   OrdersController,
 } from "@paypal/paypal-server-sdk";
 import { Request, Response } from "express";
+import { storage } from "./storage";
 
 /* PayPal Controllers Setup */
 
-// PayPal credentials will be loaded dynamically from database settings
-// Environment variables are used as fallback only
-const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } = process.env;
-const client = new Client({
-  clientCredentialsAuthCredentials: {
-    oAuthClientId: PAYPAL_CLIENT_ID || 'placeholder',
-    oAuthClientSecret: PAYPAL_CLIENT_SECRET || 'placeholder',
-  },
-  timeout: 0,
-  environment:
-                process.env.NODE_ENV === "production"
-                  ? Environment.Production
-                  : Environment.Sandbox,
-  logging: {
-    logLevel: LogLevel.Info,
-    logRequest: {
-      logBody: true,
+// PayPal settings are loaded dynamically from database
+async function getPayPalSettings() {
+  const settings = await storage.getSettingsByCategory('payment');
+  const clientId = settings.find(s => s.key === 'PAYPAL_CLIENT_ID')?.value;
+  const clientSecret = settings.find(s => s.key === 'PAYPAL_CLIENT_SECRET')?.value;
+  const environment = settings.find(s => s.key === 'PAYPAL_ENV')?.value || 'sandbox';
+  
+  return {
+    clientId: clientId || process.env.PAYPAL_CLIENT_ID || 'placeholder',
+    clientSecret: clientSecret || process.env.PAYPAL_CLIENT_SECRET || 'placeholder',
+    environment: environment
+  };
+}
+
+// Create PayPal client dynamically
+async function createPayPalClient() {
+  const settings = await getPayPalSettings();
+  
+  return new Client({
+    clientCredentialsAuthCredentials: {
+      oAuthClientId: settings.clientId,
+      oAuthClientSecret: settings.clientSecret,
     },
-    logResponse: {
-      logHeaders: true,
+    timeout: 0,
+    environment: settings.environment === "live" 
+      ? Environment.Production 
+      : Environment.Sandbox,
+    logging: {
+      logLevel: LogLevel.Info,
+      logRequest: {
+        logBody: true,
+      },
+      logResponse: {
+        logHeaders: true,
+      },
     },
-  },
-});
-const ordersController = new OrdersController(client);
-const oAuthAuthorizationController = new OAuthAuthorizationController(client);
+  });
+}
 
 /* Token generation helpers */
 
 export async function getClientToken() {
+  const settings = await getPayPalSettings();
+  const client = await createPayPalClient();
+  const oAuthController = new OAuthAuthorizationController(client);
+  
   const auth = Buffer.from(
-    `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`,
+    `${settings.clientId}:${settings.clientSecret}`,
   ).toString("base64");
 
-  const { result } = await oAuthAuthorizationController.requestToken(
+  const { result } = await oAuthController.requestToken(
     {
       authorization: `Basic ${auth}`,
     },
@@ -86,6 +104,10 @@ export async function createPaypalOrder(req: Request, res: Response) {
         .json({ error: "Invalid intent. Intent is required." });
     }
 
+    // Create PayPal client dynamically from database settings
+    const client = await createPayPalClient();
+    const ordersController = new OrdersController(client);
+
     const collect = {
       body: {
         intent: intent,
@@ -117,6 +139,11 @@ export async function createPaypalOrder(req: Request, res: Response) {
 export async function capturePaypalOrder(req: Request, res: Response) {
   try {
     const { orderID } = req.params;
+    
+    // Create PayPal client dynamically from database settings
+    const client = await createPayPalClient();
+    const ordersController = new OrdersController(client);
+    
     const collect = {
       id: orderID,
       prefer: "return=minimal",
@@ -130,15 +157,20 @@ export async function capturePaypalOrder(req: Request, res: Response) {
 
     res.status(httpStatusCode).json(jsonResponse);
   } catch (error) {
-    console.error("Failed to create order:", error);
+    console.error("Failed to capture order:", error);
     res.status(500).json({ error: "Failed to capture order." });
   }
 }
 
 export async function loadPaypalDefault(req: Request, res: Response) {
-  const clientToken = await getClientToken();
-  res.json({
-    clientToken,
-  });
+  try {
+    const clientToken = await getClientToken();
+    res.json({
+      clientToken,
+    });
+  } catch (error) {
+    console.error("Failed to load PayPal default:", error);
+    res.status(500).json({ error: "Failed to load PayPal configuration." });
+  }
 }
 // <END_EXACT_CODE>

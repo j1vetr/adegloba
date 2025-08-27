@@ -136,6 +136,7 @@ export interface IStorage {
   // Settings operations
   getAllSettings(): Promise<Setting[]>;
   getSetting(key: string): Promise<Setting | null>;
+  getSettingsByCategory(category: string): Promise<Setting[]>;
   upsertSetting(key: string, value: string, category?: string): Promise<Setting>;
 
   // Ticket operations
@@ -929,6 +930,10 @@ export class DatabaseStorage implements IStorage {
   async getSetting(key: string): Promise<Setting | null> {
     const [setting] = await db.select().from(settings).where(eq(settings.key, key));
     return setting || null;
+  }
+
+  async getSettingsByCategory(category: string): Promise<Setting[]> {
+    return db.select().from(settings).where(eq(settings.category, category));
   }
 
 
