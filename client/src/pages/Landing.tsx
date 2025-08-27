@@ -90,9 +90,9 @@ export default function Landing() {
                 </h1>
                 
                 <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-light px-4">
-                  <span className="text-amber-400 font-semibold">AdeGloba Starlink System</span> ile denizcilik sektörünün 
-                  gelecegini yaşayın. <span className="text-slate-200">Yüksek hızlı uydu internet</span> çözümleri 
-                  artık gemilerde!
+                  <span className="text-amber-400 font-semibold">AdeGloba Starlink System</span> ile geminizde 
+                  kesintisiz internet bağlantısının keyfini çıkarın. <span className="text-slate-200">Crew ekibi olarak</span> 
+                  hemen sisteme dahil olun!
                 </p>
               </div>
 
@@ -120,19 +120,19 @@ export default function Landing() {
                     className="w-full sm:w-auto bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 hover:from-amber-700 hover:via-amber-600 hover:to-yellow-600 text-slate-900 px-6 sm:px-8 md:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold shadow-2xl hover:shadow-amber-500/25 transition-all duration-300 hover:scale-105 border-0"
                   >
                     <Anchor className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
-                    Gemini Kaydet
+                    Kayıt Ol
                     <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6 ml-2 sm:ml-3" />
                   </Button>
                 </Link>
                 
-                <Link to="/paketler" data-testid="link-packages">
+                <Link to="/giris" data-testid="link-login">
                   <Button 
                     variant="outline" 
                     size="lg" 
                     className="w-full sm:w-auto border-2 border-slate-400/50 text-slate-300 hover:bg-slate-800/50 hover:text-white hover:border-slate-300 px-6 sm:px-8 md:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold transition-all duration-300 hover:scale-105 bg-transparent backdrop-blur-sm"
                   >
-                    <Globe className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
-                    Paketleri Keşfet
+                    <Navigation className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
+                    Giriş Yap
                   </Button>
                 </Link>
               </div>
