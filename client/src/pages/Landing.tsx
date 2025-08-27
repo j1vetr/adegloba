@@ -91,8 +91,7 @@ export default function Landing() {
                 
                 <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-light px-4">
                   <span className="text-amber-400 font-semibold">AdeGloba Starlink System</span> ile geminizde 
-                  kesintisiz internet bağlantısının keyfini çıkarın. <span className="text-slate-200">Crew ekibi olarak</span> 
-                  hemen sisteme dahil olun!
+                  kesintisiz internet bağlantısının keyfini çıkarın.
                 </p>
               </div>
 
