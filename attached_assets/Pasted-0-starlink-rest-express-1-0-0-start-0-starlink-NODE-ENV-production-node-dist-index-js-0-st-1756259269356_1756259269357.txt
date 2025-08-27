@@ -1,0 +1,398 @@
+0|starlink | > rest-express@1.0.0 start
+0|starlink | > NODE_ENV=production node dist/index.js
+0|starlink |
+0|starlink |
+0|starlink | > rest-express@1.0.0 start
+0|starlink | > NODE_ENV=production node dist/index.js
+0|starlink |
+0|starlink |
+0|starlink | > rest-express@1.0.0 start
+0|starlink | > NODE_ENV=production node dist/index.js
+0|starlink |
+0|starlink |
+0|starlink | > rest-express@1.0.0 start
+0|starlink | > NODE_ENV=production node dist/index.js
+0|starlink |
+
+/root/.pm2/logs/starlink-system-error.log last 15 lines:
+0|starlink |     at async ModuleLoader.import (node:internal/modules/esm/loader:                                                                                                                                                             540:24)
+0|starlink |     at async asyncRunEntryPointWithESMLoader (node:internal/modules                                                                                                                                                             /run_main:117:5)
+0|starlink |
+0|starlink | Node.js v20.19.4
+0|starlink | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink |   throw new Error("Environment variable REPLIT_DOMAINS not provided                                                                                                                                                             ");
+0|starlink |         ^
+0|starlink |
+0|starlink | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink |     at async ModuleLoader.import (node:internal/modules/esm/loader:                                                                                                                                                             540:24)
+0|starlink |     at async asyncRunEntryPointWithESMLoader (node:internal/modules                                                                                                                                                             /run_main:117:5)
+0|starlink |
+0|starlink | Node.js v20.19.4
+
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not                                                                                                                                                              provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:                                                                                                                                                             263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm                                                                                                                                                             /loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal                                                                                                                                                             /modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
+0|starlink-system  | file:///var/www/starlink-system/dist/index.js:2078
+0|starlink-system  |   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+0|starlink-system  |         ^
+0|starlink-system  | Error: Environment variable REPLIT_DOMAINS not provided
+0|starlink-system  |     at file:///var/www/starlink-system/dist/index.js:2078:9
+0|starlink-system  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | Node.js v20.19.4
+0|starlink-system  | > rest-express@1.0.0 start
+0|starlink-system  | > NODE_ENV=production node dist/index.js
