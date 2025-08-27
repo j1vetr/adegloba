@@ -17,7 +17,8 @@ import {
   ChevronUp,
   HelpCircle,
   FileText,
-  Key
+  Key,
+  Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -62,6 +63,7 @@ const navigationCategories = [
     name: 'Sistem',
     items: [
       { name: 'Ayarlar', href: '/admin/settings', icon: Settings },
+      { name: 'E-Mail Ayarları', href: '/admin/email-settings', icon: Mail },
       { name: 'Sistem Logları', href: '/admin/logs', icon: FileText },
     ]
   }

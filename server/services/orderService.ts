@@ -2,6 +2,7 @@ import { storage } from "../storage";
 import type { IStorage } from "../storage";
 import { ExpiryService } from "./expiryService";
 import { CouponService } from "./couponService";
+import { emailService } from "../emailService";
 import { getEndOfMonthIstanbul } from "../utils/dateUtils";
 import { db } from "../db";
 import { eq, and, isNull, or } from "drizzle-orm";
@@ -224,6 +225,11 @@ export class OrderService {
           `✅ Payment completion processed successfully for order ${orderId}: ${assignedCredentials.length} credentials assigned`
         );
 
+        // Send email notifications asynchronously (don't block the payment process)
+        this.sendOrderNotifications(updatedOrder, orderItemsList, assignedCredentials).catch(error => {
+          console.error('📧 Email notification failed for order:', orderId, error);
+        });
+
         return {
           order: updatedOrder,
           assignedCredentials,
@@ -233,6 +239,77 @@ export class OrderService {
     } catch (error) {
       console.error(`❌ Payment completion failed for order ${orderId}:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Send email notifications for order completion
+   */
+  private async sendOrderNotifications(order: any, orderItems: any[], assignedCredentials: any[]) {
+    try {
+      // Get user and ship details
+      const [user, ships, plans] = await Promise.all([
+        this.storage.getUserById(order.userId),
+        this.storage.getShips(),
+        this.storage.getPlans()
+      ]);
+
+      if (!user) {
+        console.error('📧 User not found for order notifications:', order.userId);
+        return;
+      }
+
+      // Get order details for email
+      const orderItemsHtml = orderItems.map(item => {
+        const ship = ships.find(s => s.id === item.shipId);
+        const plan = plans.find(p => p.id === item.planId);
+        const shipName = ship?.name || 'Bilinmeyen Gemi';
+        const planName = plan?.name || 'Bilinmeyen Paket';
+        const dataLimit = plan?.dataLimitGb || 0;
+        const price = parseFloat(item.unitPriceUsd || '0');
+        
+        return `<li><strong>${shipName}</strong> - ${planName} (${dataLimit}GB) - $${price.toFixed(2)}</li>`;
+      }).join('');
+
+      const shipName = ships.find(s => s.id === orderItems[0]?.shipId)?.name || 'Bilinmeyen Gemi';
+
+      // 1. Send order confirmation to customer
+      const customerEmailSuccess = await emailService.sendEmail(
+        user.email,
+        'Sipariş Onayı - AdeGloba Starlink System',
+        'order_confirm',
+        {
+          userName: user.full_name || user.username,
+          orderNumber: order.id.substring(0, 8).toUpperCase(),
+          orderItems: orderItemsHtml,
+          totalAmount: parseFloat(order.totalUsd || '0').toFixed(2),
+          dashboardUrl: process.env.BASE_URL || 'http://localhost:5000',
+        }
+      );
+
+      console.log(`📧 Customer order confirmation email: ${customerEmailSuccess ? 'sent' : 'failed'} to ${user.email}`);
+
+      // 2. Send admin notification
+      const adminEmail = 'admin@adegloba.com'; // TODO: Make this configurable
+      const adminEmailSuccess = await emailService.sendEmail(
+        adminEmail,
+        'Yeni Sipariş Bildirimi - AdeGloba Starlink System',
+        'admin_new_order',
+        {
+          orderNumber: order.id.substring(0, 8).toUpperCase(),
+          customerName: user.full_name || user.username,
+          customerEmail: user.email,
+          shipName,
+          totalAmount: parseFloat(order.totalUsd || '0').toFixed(2),
+          orderItems: orderItemsHtml,
+          adminUrl: (process.env.BASE_URL || 'http://localhost:5000') + '/admin',
+        }
+      );
+
+      console.log(`📧 Admin notification email: ${adminEmailSuccess ? 'sent' : 'failed'} to ${adminEmail}`);
+
+    } catch (error) {
+      console.error('📧 Error sending order notifications:', error);
     }
   }
 

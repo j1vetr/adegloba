@@ -503,6 +503,64 @@ export const insertSystemLogSchema = createInsertSchema(systemLogs).omit({
 export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
 export type SystemLog = typeof systemLogs.$inferSelect;
 
+// Email settings table - stores email configuration in database
+export const emailSettings = pgTable("email_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  provider: varchar("provider").notNull().default('smtp'), // 'smtp', 'sendgrid', 'mailgun'
+  
+  // SMTP settings
+  smtpHost: varchar("smtp_host"),
+  smtpPort: integer("smtp_port"),
+  smtpUser: varchar("smtp_user"),
+  smtpPass: varchar("smtp_pass"), // encrypted in storage
+  
+  // SendGrid settings
+  sendgridKey: varchar("sendgrid_key"), // encrypted in storage
+  
+  // Mailgun settings
+  mailgunDomain: varchar("mailgun_domain"),
+  mailgunKey: varchar("mailgun_key"), // encrypted in storage
+  
+  // Common settings
+  fromEmail: varchar("from_email"),
+  fromName: varchar("from_name"),
+  replyTo: varchar("reply_to"),
+  
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Email logs table - tracks all sent emails
+export const emailLogs = pgTable("email_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  toEmail: varchar("to_email").notNull(),
+  ccEmail: varchar("cc_email"),
+  bccEmail: varchar("bcc_email"),
+  subject: varchar("subject").notNull(),
+  template: varchar("template").notNull(),
+  provider: varchar("provider").notNull(),
+  status: varchar("status").notNull().default('pending'), // 'pending', 'sent', 'failed'
+  errorMessage: text("error_message"),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEmailSettingSchema = createInsertSchema(emailSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertEmailSetting = z.infer<typeof insertEmailSettingSchema>;
+export type EmailSetting = typeof emailSettings.$inferSelect;
+
+export const insertEmailLogSchema = createInsertSchema(emailLogs).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertEmailLog = z.infer<typeof insertEmailLogSchema>;
+export type EmailLog = typeof emailLogs.$inferSelect;
+
 export const systemLogsRelations = relations(systemLogs, ({ one }) => ({
   adminUser: one(admin_users, { fields: [systemLogs.adminId], references: [admin_users.id] }),
 }));

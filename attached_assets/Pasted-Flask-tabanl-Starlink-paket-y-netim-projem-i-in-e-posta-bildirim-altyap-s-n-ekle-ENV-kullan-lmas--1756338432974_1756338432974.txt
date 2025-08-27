@@ -1,0 +1,48 @@
+Flask tabanlı Starlink paket yönetim projem için e-posta bildirim altyapısını ekle. ENV kullanılmasın; tüm e-posta ayarları DB’de (EmailSettings tablosu) saklansın ve admin panelinden yönetilsin.
+
+İstediğim özellikler:
+1. Admin panelinde “E-Mail Ayarları” sayfası olsun:
+   - Sağlayıcı seçimi: smtp | sendgrid | mailgun
+   - SMTP ayar alanları: host, port, user, pass, from, from_name, reply_to
+   - SendGrid key, Mailgun domain + key alanları
+   - “Kaydet” + “Test Mail Gönder” butonu (hedef e-posta input’uyla)
+   - Şifre/anahtar alanları DB’de şifreli saklansın, UI’da maskeli görünsün
+   - Varsayılan ayarlar: boş olursa gönderim iptal edilsin
+
+2. E-posta gönderim servisi (emailer.py):
+   - DB’den ayarları çekip provider’a göre mail göndersin
+   - send_email(to, subject, template, cc=None, bcc=None, **ctx) şeklinde ortak fonksiyon
+   - email_logs tablosuna kaydedilsin
+
+3. Kullanıcı bildirimleri:
+   - Kayıt olduğunda: welcome mail
+   - Sipariş tamamlandığında: order_confirm mail
+   - Admin’e her siparişte: admin_new_order mail
+   - Admin’e her ay başı: admin_monthly_report mail (gemilere göre paket adedi + toplam GB)
+
+4. Şablonlar:
+   - templates/email/welcome.html
+   - templates/email/order_confirm.html
+   - templates/email/admin_new_order.html
+   - templates/email/admin_monthly_report.html
+   - Ortak base template: logo, renkler, footer (support email, telefon, adres, telif)
+   - Tema: koyu arka plan (#111827), sarı vurgu (#FACC15), şirket adı “Dijita / Starlink Servis”, destek e-postası support@domain.com, telefon +90 5xx xxx xx xx
+
+5. Aylık rapor:
+   - APScheduler ile her ayın 1’i 09:10’da çalışsın
+   - Her gemi için sipariş adedi ve toplam GB sorgulansın
+   - admin_monthly_report şablonuyla admin’e mail gitsin
+
+6. Test rotaları:
+   - /_test/email/welcome?to=...
+   - /_test/email/order?to=...
+   - /_test/email/admin/order
+   - /_test/email/admin/report
+   Hepsi gerçek mail göndersin, ekranda “OK” dönsün.
+
+Kabul kriterleri:
+- ENV değişkeni kullanılmıyor, tüm ayarlar admin panelinden yapılabiliyor
+- Test maili başarılı çalışıyor
+- Sipariş olduğunda otomatik kullanıcıya + admin’e mail gidiyor
+- Aylık rapor otomatik gidiyor
+- Tüm gönderimler email_logs’a kaydediliyor

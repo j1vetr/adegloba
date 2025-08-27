@@ -33,6 +33,7 @@ import UsersManagementNew from "@/pages/admin/UsersManagementNew";
 import SettingsManagement from "@/pages/admin/SettingsManagement";
 import TicketManagement from "@/pages/admin/TicketManagement";
 import SystemLogs from "@/pages/admin/SystemLogs";
+import { EmailSettings } from "@/pages/admin/EmailSettings";
 import UserTickets from "@/pages/UserTickets";
 import TicketDetail from "@/pages/TicketDetail";
 import Profil from "@/pages/Profil";
@@ -113,6 +114,12 @@ function Router() {
       <Route path="/admin/logs">
         <AdminProtectedRoute>
           <SystemLogs />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/email-settings">
+        <AdminProtectedRoute>
+          <EmailSettings />
         </AdminProtectedRoute>
       </Route>
       

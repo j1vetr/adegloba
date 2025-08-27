@@ -3,6 +3,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import { registerRoutes } from "./routes";
+import { startEmailScheduler } from "./emailScheduler";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth, seedDefaultAdmin } from "./auth";
 import { logCleanupService } from "./services/logCleanupService";
@@ -80,6 +81,9 @@ app.use((req, res, next) => {
   // Start order auto-cancel service
   const orderCancelService = new OrderCancelService(storage);
   orderCancelService.start();
+  
+  // Start email scheduler for monthly reports
+  startEmailScheduler();
   
   const server = await registerRoutes(app);
 

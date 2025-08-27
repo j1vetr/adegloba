@@ -7,7 +7,8 @@ import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./payp
 import { OrderService } from "./services/orderService";
 import { CouponService } from "./services/couponService";
 import { ExpiryService } from "./services/expiryService";
-import { insertShipSchema, insertPlanSchema, insertCouponSchema } from "@shared/schema";
+import { emailService, EmailService } from "./emailService";
+import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema } from "@shared/schema";
 import { z } from "zod";
 
 const orderService = new OrderService(storage);
@@ -1848,6 +1849,209 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error saving setting:', error);
       res.status(500).json({ message: 'Failed to save setting' });
+    }
+  });
+
+  // Email Settings Routes
+  app.get('/api/admin/email-settings', isAdminAuthenticated, async (req, res) => {
+    try {
+      const settings = await storage.getEmailSettings();
+      
+      // Mask sensitive data before sending to frontend
+      if (settings) {
+        const maskedSettings = {
+          ...settings,
+          smtpPass: settings.smtpPass ? '••••••••' : '',
+          sendgridKey: settings.sendgridKey ? '••••••••' : '',
+          mailgunKey: settings.mailgunKey ? '••••••••' : '',
+        };
+        res.json(maskedSettings);
+      } else {
+        res.json(null);
+      }
+    } catch (error) {
+      console.error('Error fetching email settings:', error);
+      res.status(500).json({ message: 'Failed to fetch email settings' });
+    }
+  });
+
+  app.post('/api/admin/email-settings', isAdminAuthenticated, async (req, res) => {
+    try {
+      const settingsData = insertEmailSettingSchema.parse(req.body);
+      
+      // Encrypt sensitive fields before storing
+      const encryptedData = {
+        ...settingsData,
+        smtpPass: settingsData.smtpPass ? EmailService.encryptSensitiveData(settingsData.smtpPass) : null,
+        sendgridKey: settingsData.sendgridKey ? EmailService.encryptSensitiveData(settingsData.sendgridKey) : null,
+        mailgunKey: settingsData.mailgunKey ? EmailService.encryptSensitiveData(settingsData.mailgunKey) : null,
+      };
+      
+      const settings = await storage.upsertEmailSettings(encryptedData);
+      
+      // Mask sensitive data before sending response
+      const maskedSettings = {
+        ...settings,
+        smtpPass: settings.smtpPass ? '••••••••' : '',
+        sendgridKey: settings.sendgridKey ? '••••••••' : '',
+        mailgunKey: settings.mailgunKey ? '••••••••' : '',
+      };
+      
+      res.json(maskedSettings);
+    } catch (error) {
+      console.error('Error saving email settings:', error);
+      res.status(500).json({ message: 'Failed to save email settings' });
+    }
+  });
+
+  app.post('/api/admin/email-settings/test', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { testEmail } = req.body;
+      
+      if (!testEmail) {
+        return res.status(400).json({ message: 'Test email address is required' });
+      }
+      
+      const success = await emailService.sendTestEmail(testEmail);
+      
+      if (success) {
+        res.json({ success: true, message: 'Test email sent successfully!' });
+      } else {
+        res.status(400).json({ success: false, message: 'Failed to send test email' });
+      }
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      res.status(500).json({ success: false, message: 'Failed to send test email' });
+    }
+  });
+
+  app.get('/api/admin/email-logs', isAdminAuthenticated, async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 50;
+      const status = req.query.status as string;
+      const template = req.query.template as string;
+      
+      const result = await storage.getEmailLogs({
+        page,
+        pageSize,
+        status,
+        template,
+      });
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching email logs:', error);
+      res.status(500).json({ message: 'Failed to fetch email logs' });
+    }
+  });
+
+  // Test Email Routes
+  app.get('/_test/email/welcome', async (req, res) => {
+    try {
+      const { to } = req.query;
+      if (!to) {
+        return res.status(400).json({ message: 'to parameter is required' });
+      }
+      
+      const success = await emailService.sendEmail(
+        to as string,
+        'Hoş Geldiniz - AdeGloba Starlink System',
+        'welcome',
+        {
+          userName: 'Test User',
+          loginUrl: process.env.BASE_URL || 'http://localhost:5000',
+        }
+      );
+      
+      res.json({ success, message: success ? 'Welcome email sent' : 'Failed to send welcome email' });
+    } catch (error) {
+      console.error('Test welcome email error:', error);
+      res.status(500).json({ message: 'Failed to send test email' });
+    }
+  });
+
+  app.get('/_test/email/order', async (req, res) => {
+    try {
+      const { to } = req.query;
+      if (!to) {
+        return res.status(400).json({ message: 'to parameter is required' });
+      }
+      
+      const success = await emailService.sendEmail(
+        to as string,
+        'Sipariş Onayı - AdeGloba Starlink System',
+        'order_confirm',
+        {
+          userName: 'Test User',
+          orderNumber: 'TEST-12345',
+          orderItems: '<li>50GB Veri Paketi - $29.99</li><li>100GB Veri Paketi - $49.99</li>',
+          totalAmount: '79.98',
+          dashboardUrl: process.env.BASE_URL || 'http://localhost:5000',
+        }
+      );
+      
+      res.json({ success, message: success ? 'Order confirmation email sent' : 'Failed to send order email' });
+    } catch (error) {
+      console.error('Test order email error:', error);
+      res.status(500).json({ message: 'Failed to send test email' });
+    }
+  });
+
+  app.get('/_test/email/admin/order', async (req, res) => {
+    try {
+      const adminEmail = 'admin@adegloba.com'; // Replace with actual admin email
+      
+      const success = await emailService.sendEmail(
+        adminEmail,
+        'Yeni Sipariş Bildirimi - AdeGloba Starlink System',
+        'admin_new_order',
+        {
+          orderNumber: 'TEST-12345',
+          customerName: 'Test Customer',
+          customerEmail: 'test@example.com',
+          shipName: 'Test Vessel',
+          totalAmount: '79.98',
+          orderItems: '<li>50GB Veri Paketi - $29.99</li><li>100GB Veri Paketi - $49.99</li>',
+          adminUrl: (process.env.BASE_URL || 'http://localhost:5000') + '/admin',
+        }
+      );
+      
+      res.json({ success, message: success ? 'Admin order notification sent' : 'Failed to send admin notification' });
+    } catch (error) {
+      console.error('Test admin order email error:', error);
+      res.status(500).json({ message: 'Failed to send test email' });
+    }
+  });
+
+  app.get('/_test/email/admin/report', async (req, res) => {
+    try {
+      const adminEmail = 'admin@adegloba.com'; // Replace with actual admin email
+      
+      const success = await emailService.sendEmail(
+        adminEmail,
+        'Aylık Sipariş Raporu - AdeGloba Starlink System',
+        'admin_monthly_report',
+        {
+          reportMonth: 'Ağustos 2024',
+          shipStats: `
+            <ul>
+              <li><strong>Test Vessel 1:</strong> 15 sipariş, 750GB toplam veri</li>
+              <li><strong>Test Vessel 2:</strong> 8 sipariş, 400GB toplam veri</li>
+              <li><strong>Test Vessel 3:</strong> 12 sipariş, 600GB toplam veri</li>
+            </ul>
+          `,
+          totalOrders: '35',
+          totalRevenue: '1,750.00',
+          totalDataGB: '1,750',
+          adminUrl: (process.env.BASE_URL || 'http://localhost:5000') + '/admin',
+        }
+      );
+      
+      res.json({ success, message: success ? 'Monthly report sent' : 'Failed to send monthly report' });
+    } catch (error) {
+      console.error('Test monthly report email error:', error);
+      res.status(500).json({ message: 'Failed to send test email' });
     }
   });
 

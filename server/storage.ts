@@ -13,6 +13,8 @@ import {
   tickets,
   ticketMessages,
   ticketAttachments,
+  emailSettings,
+  emailLogs,
   type User,
   type InsertUser,
   type AdminUser,
@@ -41,6 +43,10 @@ import {
   type InsertTicketAttachment,
   type SystemLog,
   type InsertSystemLog,
+  type EmailSetting,
+  type InsertEmailSetting,
+  type EmailLog,
+  type InsertEmailLog,
   cartItems,
   couponUsage,
   type CartItem,
@@ -173,6 +179,19 @@ export interface IStorage {
     search?: string;
   }): Promise<any[]>;
   deleteOldLogs(cutoffDate: Date): Promise<number>;
+
+  // Email operations
+  getEmailSettings(): Promise<EmailSetting | null>;
+  upsertEmailSettings(settings: InsertEmailSetting): Promise<EmailSetting>;
+  createEmailLog(logData: InsertEmailLog): Promise<EmailLog>;
+  getEmailLogs(options?: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    template?: string;
+  }): Promise<{ logs: EmailLog[]; total: number }>;
+  getOrdersByShipAndDateRange(shipId: string, startDate: Date, endDate: Date): Promise<Order[]>;
+  getOrderItems(orderId: string): Promise<OrderItem[]>;
 
   // Cart operations
   getCartItems(userId: string): Promise<CartItem[]>;
@@ -1884,6 +1903,111 @@ export class DatabaseStorage implements IStorage {
       console.error('Error counting expired packages:', error);
       return 0;
     }
+  }
+
+  // Email operations
+  async getEmailSettings(): Promise<EmailSetting | null> {
+    const [settings] = await db.select().from(emailSettings).limit(1);
+    return settings || null;
+  }
+
+  async upsertEmailSettings(settings: InsertEmailSetting): Promise<EmailSetting> {
+    const existing = await this.getEmailSettings();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(emailSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date(),
+        })
+        .where(eq(emailSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(emailSettings).values(settings).returning();
+      return created;
+    }
+  }
+
+  async createEmailLog(logData: InsertEmailLog): Promise<EmailLog> {
+    const [log] = await db.insert(emailLogs).values(logData).returning();
+    return log;
+  }
+
+  async getEmailLogs(options: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    template?: string;
+  } = {}): Promise<{ logs: EmailLog[]; total: number }> {
+    const { page = 1, pageSize = 50, status, template } = options;
+    const offset = (page - 1) * pageSize;
+
+    let whereConditions = [];
+    if (status) {
+      whereConditions.push(eq(emailLogs.status, status));
+    }
+    if (template) {
+      whereConditions.push(eq(emailLogs.template, template));
+    }
+
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+    const [logs, totalResult] = await Promise.all([
+      db
+        .select()
+        .from(emailLogs)
+        .where(whereClause)
+        .orderBy(desc(emailLogs.createdAt))
+        .limit(pageSize)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(emailLogs)
+        .where(whereClause),
+    ]);
+
+    return {
+      logs,
+      total: Number(totalResult[0]?.count || 0),
+    };
+  }
+
+  async getOrdersByShipAndDateRange(shipId: string, startDate: Date, endDate: Date): Promise<Order[]> {
+    try {
+      const ordersData = await db
+        .select()
+        .from(orders)
+        .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+        .innerJoin(plans, eq(orderItems.planId, plans.id))
+        .where(
+          and(
+            eq(plans.shipId, shipId),
+            gte(orders.createdAt, startDate),
+            lt(orders.createdAt, endDate)
+          )
+        )
+        .groupBy(orders.id);
+
+      // Extract unique orders
+      const uniqueOrders = ordersData.reduce((acc, row) => {
+        const order = row.orders;
+        if (!acc.find(o => o.id === order.id)) {
+          acc.push(order);
+        }
+        return acc;
+      }, [] as Order[]);
+
+      return uniqueOrders;
+    } catch (error) {
+      console.error('Error fetching orders by ship and date range:', error);
+      return [];
+    }
+  }
+
+  async getOrderItems(orderId: string): Promise<OrderItem[]> {
+    return db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
   }
 }
 
