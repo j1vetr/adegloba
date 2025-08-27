@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
+import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
 
 interface UserNavigationProps {
   className?: string;
@@ -84,12 +85,11 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
           <div className="flex items-center">
             <Link href="/panel">
               <div className="flex items-center gap-3 cursor-pointer">
-                <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">AG</span>
-                </div>
-                <span className="text-xl font-bold text-white">
-                  AdeGloba Starlink System
-                </span>
+                <img 
+                  src={adeGlobaLogo} 
+                  alt="AdeGloba Limited" 
+                  className="h-8 object-contain filter drop-shadow-lg"
+                />
               </div>
             </Link>
           </div>
