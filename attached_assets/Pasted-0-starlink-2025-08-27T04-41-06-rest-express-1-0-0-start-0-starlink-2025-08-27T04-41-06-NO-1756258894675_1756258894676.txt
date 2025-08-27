@@ -1,0 +1,183 @@
+0|starlink | 2025-08-27T04:41:06: > rest-express@1.0.0 start
+0|starlink | 2025-08-27T04:41:06: > NODE_ENV=production node dist/index.js
+0|starlink | 2025-08-27T04:41:06:
+0|starlink | 2025-08-27T04:41:06:
+0|starlink | 2025-08-27T04:41:06: > rest-express@1.0.0 start
+0|starlink | 2025-08-27T04:41:06: > NODE_ENV=production node dist/index.js
+0|starlink | 2025-08-27T04:41:06:
+0|starlink | 2025-08-27T04:41:07:
+0|starlink | 2025-08-27T04:41:07: > rest-express@1.0.0 start
+0|starlink | 2025-08-27T04:41:07: > NODE_ENV=production node dist/index.js
+0|starlink | 2025-08-27T04:41:07:
+0|starlink | 2025-08-27T04:41:08:
+0|starlink | 2025-08-27T04:41:08: > rest-express@1.0.0 start
+0|starlink | 2025-08-27T04:41:08: > NODE_ENV=production node dist/index.js
+0|starlink | 2025-08-27T04:41:08:
+
+0|starlink-system  | 2025-08-27T04:41:09: file:///var/www/starlink-system/dist/index.js:546
+0|starlink-system  | 2025-08-27T04:41:09:       throw new Error(
+0|starlink-system  | 2025-08-27T04:41:09:             ^
+0|starlink-system  | 2025-08-27T04:41:09:
+0|starlink-system  | 2025-08-27T04:41:09: Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|starlink-system  | 2025-08-27T04:41:09:     at server/db.ts (file:///var/www/starlink-system/dist/index.js:546:13)
+0|starlink-system  | 2025-08-27T04:41:09:     at __init (file:///var/www/starlink-system/dist/index.js:4:56)
+0|starlink-system  | 2025-08-27T04:41:09:     at file:///var/www/starlink-system/dist/index.js:2059:1
+0|starlink-system  | 2025-08-27T04:41:09:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  | 2025-08-27T04:41:09:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  | 2025-08-27T04:41:09:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | 2025-08-27T04:41:09:
+0|starlink-system  | 2025-08-27T04:41:09: Node.js v20.19.4
+0|starlink-system  | 2025-08-27T04:41:09:
+0|starlink-system  | 2025-08-27T04:41:09: > rest-express@1.0.0 start
+0|starlink-system  | 2025-08-27T04:41:09: > NODE_ENV=production node dist/index.js
+0|starlink-system  | 2025-08-27T04:41:09:
+0|starlink-system  | 2025-08-27T04:41:10: file:///var/www/starlink-system/dist/index.js:546
+0|starlink-system  | 2025-08-27T04:41:10:       throw new Error(
+0|starlink-system  | 2025-08-27T04:41:10:             ^
+0|starlink-system  | 2025-08-27T04:41:10:
+0|starlink-system  | 2025-08-27T04:41:10: Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|starlink-system  | 2025-08-27T04:41:10:     at server/db.ts (file:///var/www/starlink-system/dist/index.js:546:13)
+0|starlink-system  | 2025-08-27T04:41:10:     at __init (file:///var/www/starlink-system/dist/index.js:4:56)
+0|starlink-system  | 2025-08-27T04:41:10:     at file:///var/www/starlink-system/dist/index.js:2059:1
+0|starlink-system  | 2025-08-27T04:41:10:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  | 2025-08-27T04:41:10:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  | 2025-08-27T04:41:10:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | 2025-08-27T04:41:10:
+0|starlink-system  | 2025-08-27T04:41:10: Node.js v20.19.4
+0|starlink-system  | 2025-08-27T04:41:10:
+0|starlink-system  | 2025-08-27T04:41:10: > rest-express@1.0.0 start
+0|starlink-system  | 2025-08-27T04:41:10: > NODE_ENV=production node dist/index.js
+0|starlink-system  | 2025-08-27T04:41:10:
+0|starlink-system  | 2025-08-27T04:41:11: file:///var/www/starlink-system/dist/index.js:546
+0|starlink-system  | 2025-08-27T04:41:11:       throw new Error(
+0|starlink-system  | 2025-08-27T04:41:11:             ^
+0|starlink-system  | 2025-08-27T04:41:11:
+0|starlink-system  | 2025-08-27T04:41:11: Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|starlink-system  | 2025-08-27T04:41:11:     at server/db.ts (file:///var/www/starlink-system/dist/index.js:546:13)
+0|starlink-system  | 2025-08-27T04:41:11:     at __init (file:///var/www/starlink-system/dist/index.js:4:56)
+0|starlink-system  | 2025-08-27T04:41:11:     at file:///var/www/starlink-system/dist/index.js:2059:1
+0|starlink-system  | 2025-08-27T04:41:11:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  | 2025-08-27T04:41:11:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  | 2025-08-27T04:41:11:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | 2025-08-27T04:41:11:
+0|starlink-system  | 2025-08-27T04:41:11: Node.js v20.19.4
+0|starlink-system  | 2025-08-27T04:41:11:
+0|starlink-system  | 2025-08-27T04:41:11: > rest-express@1.0.0 start
+0|starlink-system  | 2025-08-27T04:41:11: > NODE_ENV=production node dist/index.js
+0|starlink-system  | 2025-08-27T04:41:11:
+0|starlink-system  | 2025-08-27T04:41:11: file:///var/www/starlink-system/dist/index.js:546
+0|starlink-system  | 2025-08-27T04:41:11:       throw new Error(
+0|starlink-system  | 2025-08-27T04:41:11:             ^
+0|starlink-system  | 2025-08-27T04:41:11:
+0|starlink-system  | 2025-08-27T04:41:11: Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|starlink-system  | 2025-08-27T04:41:11:     at server/db.ts (file:///var/www/starlink-system/dist/index.js:546:13)
+0|starlink-system  | 2025-08-27T04:41:11:     at __init (file:///var/www/starlink-system/dist/index.js:4:56)
+0|starlink-system  | 2025-08-27T04:41:11:     at file:///var/www/starlink-system/dist/index.js:2059:1
+0|starlink-system  | 2025-08-27T04:41:11:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  | 2025-08-27T04:41:11:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  | 2025-08-27T04:41:11:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | 2025-08-27T04:41:11:
+0|starlink-system  | 2025-08-27T04:41:11: Node.js v20.19.4
+0|starlink-system  | 2025-08-27T04:41:12:
+0|starlink-system  | 2025-08-27T04:41:12: > rest-express@1.0.0 start
+0|starlink-system  | 2025-08-27T04:41:12: > NODE_ENV=production node dist/index.js
+0|starlink-system  | 2025-08-27T04:41:12:
+0|starlink-system  | 2025-08-27T04:41:12: file:///var/www/starlink-system/dist/index.js:546
+0|starlink-system  | 2025-08-27T04:41:12:       throw new Error(
+0|starlink-system  | 2025-08-27T04:41:12:             ^
+0|starlink-system  | 2025-08-27T04:41:12:
+0|starlink-system  | 2025-08-27T04:41:12: Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|starlink-system  | 2025-08-27T04:41:12:     at server/db.ts (file:///var/www/starlink-system/dist/index.js:546:13)
+0|starlink-system  | 2025-08-27T04:41:12:     at __init (file:///var/www/starlink-system/dist/index.js:4:56)
+0|starlink-system  | 2025-08-27T04:41:12:     at file:///var/www/starlink-system/dist/index.js:2059:1
+0|starlink-system  | 2025-08-27T04:41:12:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  | 2025-08-27T04:41:12:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  | 2025-08-27T04:41:12:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | 2025-08-27T04:41:12:
+0|starlink-system  | 2025-08-27T04:41:12: Node.js v20.19.4
+0|starlink-system  | 2025-08-27T04:41:12:
+0|starlink-system  | 2025-08-27T04:41:12: > rest-express@1.0.0 start
+0|starlink-system  | 2025-08-27T04:41:12: > NODE_ENV=production node dist/index.js
+0|starlink-system  | 2025-08-27T04:41:12:
+0|starlink-system  | 2025-08-27T04:41:13: file:///var/www/starlink-system/dist/index.js:546
+0|starlink-system  | 2025-08-27T04:41:13:       throw new Error(
+0|starlink-system  | 2025-08-27T04:41:13:             ^
+0|starlink-system  | 2025-08-27T04:41:13:
+0|starlink-system  | 2025-08-27T04:41:13: Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|starlink-system  | 2025-08-27T04:41:13:     at server/db.ts (file:///var/www/starlink-system/dist/index.js:546:13)
+0|starlink-system  | 2025-08-27T04:41:13:     at __init (file:///var/www/starlink-system/dist/index.js:4:56)
+0|starlink-system  | 2025-08-27T04:41:13:     at file:///var/www/starlink-system/dist/index.js:2059:1
+0|starlink-system  | 2025-08-27T04:41:13:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  | 2025-08-27T04:41:13:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  | 2025-08-27T04:41:13:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | 2025-08-27T04:41:13:
+0|starlink-system  | 2025-08-27T04:41:13: Node.js v20.19.4
+0|starlink-system  | 2025-08-27T04:41:13:
+0|starlink-system  | 2025-08-27T04:41:13: > rest-express@1.0.0 start
+0|starlink-system  | 2025-08-27T04:41:13: > NODE_ENV=production node dist/index.js
+0|starlink-system  | 2025-08-27T04:41:13:
+0|starlink-system  | 2025-08-27T04:41:14: file:///var/www/starlink-system/dist/index.js:546
+0|starlink-system  | 2025-08-27T04:41:14:       throw new Error(
+0|starlink-system  | 2025-08-27T04:41:14:             ^
+0|starlink-system  | 2025-08-27T04:41:14:
+0|starlink-system  | 2025-08-27T04:41:14: Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|starlink-system  | 2025-08-27T04:41:14:     at server/db.ts (file:///var/www/starlink-system/dist/index.js:546:13)
+0|starlink-system  | 2025-08-27T04:41:14:     at __init (file:///var/www/starlink-system/dist/index.js:4:56)
+0|starlink-system  | 2025-08-27T04:41:14:     at file:///var/www/starlink-system/dist/index.js:2059:1
+0|starlink-system  | 2025-08-27T04:41:14:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  | 2025-08-27T04:41:14:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  | 2025-08-27T04:41:14:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | 2025-08-27T04:41:14:
+0|starlink-system  | 2025-08-27T04:41:14: Node.js v20.19.4
+0|starlink-system  | 2025-08-27T04:41:14:
+0|starlink-system  | 2025-08-27T04:41:14: > rest-express@1.0.0 start
+0|starlink-system  | 2025-08-27T04:41:14: > NODE_ENV=production node dist/index.js
+0|starlink-system  | 2025-08-27T04:41:14:
+0|starlink-system  | 2025-08-27T04:41:15: file:///var/www/starlink-system/dist/index.js:546
+0|starlink-system  | 2025-08-27T04:41:15:       throw new Error(
+0|starlink-system  | 2025-08-27T04:41:15:             ^
+0|starlink-system  | 2025-08-27T04:41:15:
+0|starlink-system  | 2025-08-27T04:41:15: Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|starlink-system  | 2025-08-27T04:41:15:     at server/db.ts (file:///var/www/starlink-system/dist/index.js:546:13)
+0|starlink-system  | 2025-08-27T04:41:15:     at __init (file:///var/www/starlink-system/dist/index.js:4:56)
+0|starlink-system  | 2025-08-27T04:41:15:     at file:///var/www/starlink-system/dist/index.js:2059:1
+0|starlink-system  | 2025-08-27T04:41:15:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  | 2025-08-27T04:41:15:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  | 2025-08-27T04:41:15:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | 2025-08-27T04:41:15:
+0|starlink-system  | 2025-08-27T04:41:15: Node.js v20.19.4
+0|starlink-system  | 2025-08-27T04:41:15:
+0|starlink-system  | 2025-08-27T04:41:15: > rest-express@1.0.0 start
+0|starlink-system  | 2025-08-27T04:41:15: > NODE_ENV=production node dist/index.js
+0|starlink-system  | 2025-08-27T04:41:15:
+0|starlink-system  | 2025-08-27T04:41:15: file:///var/www/starlink-system/dist/index.js:546
+0|starlink-system  | 2025-08-27T04:41:15:       throw new Error(
+0|starlink-system  | 2025-08-27T04:41:15:             ^
+0|starlink-system  | 2025-08-27T04:41:15:
+0|starlink-system  | 2025-08-27T04:41:15: Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|starlink-system  | 2025-08-27T04:41:15:     at server/db.ts (file:///var/www/starlink-system/dist/index.js:546:13)
+0|starlink-system  | 2025-08-27T04:41:15:     at __init (file:///var/www/starlink-system/dist/index.js:4:56)
+0|starlink-system  | 2025-08-27T04:41:15:     at file:///var/www/starlink-system/dist/index.js:2059:1
+0|starlink-system  | 2025-08-27T04:41:15:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  | 2025-08-27T04:41:15:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  | 2025-08-27T04:41:15:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | 2025-08-27T04:41:15:
+0|starlink-system  | 2025-08-27T04:41:15: Node.js v20.19.4
+0|starlink-system  | 2025-08-27T04:41:16:
+0|starlink-system  | 2025-08-27T04:41:16: > rest-express@1.0.0 start
+0|starlink-system  | 2025-08-27T04:41:16: > NODE_ENV=production node dist/index.js
+0|starlink-system  | 2025-08-27T04:41:16:
+0|starlink-system  | 2025-08-27T04:41:16: file:///var/www/starlink-system/dist/index.js:546
+0|starlink-system  | 2025-08-27T04:41:16:       throw new Error(
+0|starlink-system  | 2025-08-27T04:41:16:             ^
+0|starlink-system  | 2025-08-27T04:41:16:
+0|starlink-system  | 2025-08-27T04:41:16: Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|starlink-system  | 2025-08-27T04:41:16:     at server/db.ts (file:///var/www/starlink-system/dist/index.js:546:13)
+0|starlink-system  | 2025-08-27T04:41:16:     at __init (file:///var/www/starlink-system/dist/index.js:4:56)
+0|starlink-system  | 2025-08-27T04:41:16:     at file:///var/www/starlink-system/dist/index.js:2059:1
+0|starlink-system  | 2025-08-27T04:41:16:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+0|starlink-system  | 2025-08-27T04:41:16:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+0|starlink-system  | 2025-08-27T04:41:16:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|starlink-system  | 2025-08-27T04:41:16:
+0|starlink-system  | 2025-08-27T04:41:16: Node.js v20.19.4
+
