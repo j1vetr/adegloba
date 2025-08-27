@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive, Zap, Copy } from "lucide-react";
-import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useToast } from "@/hooks/use-toast";
@@ -115,16 +114,9 @@ export default function Panel() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
           <div className="flex-1">
-            <div className="flex items-center gap-4 mb-2">
-              <img 
-                src={adeGlobaLogo} 
-                alt="AdeGloba Limited" 
-                className="h-8 lg:h-10 object-contain"
-              />
-              <h1 className="text-2xl lg:text-3xl font-bold text-white">
-                AdeGloba Starlink System - Kontrol Paneli
-              </h1>
-            </div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
+              AdeGloba Starlink System - Kontrol Paneli
+            </h1>
             <p className="text-slate-400 text-sm lg:text-base">
               Hoş geldiniz, <span className="text-white font-medium">{user.username}</span>
               {user.ship && (
