@@ -90,21 +90,21 @@ export function setupAuth(app: Express) {
 export async function seedDefaultAdmin() {
   try {
     // Check if admin user already exists
-    const existingAdmin = await storage.getAdminUserByUsername('emir');
+    const existingAdmin = await storage.getAdminUserByUsername('Toov');
     if (existingAdmin) {
       console.log('Admin user already exists');
       return;
     }
 
     // Create default admin user
-    const passwordHash = await hashPassword('test');
+    const passwordHash = await hashPassword('StarlinkAde1453@@');
     await storage.createAdminUser({
-      username: 'emir',
+      username: 'Toov',
       password_hash: passwordHash,
       role: 'admin'
     });
 
-    console.log('Default admin user created: username=emir, password=test');
+    console.log('Default admin user created: username=Toov, password=StarlinkAde1453@@');
   } catch (error) {
     console.error('Error seeding default admin:', error);
   }
