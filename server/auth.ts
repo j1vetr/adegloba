@@ -55,7 +55,7 @@ export function setupAuth(app: Express) {
         role: user.role
       };
 
-      const { passwordHash, ...userWithoutPassword } = user;
+      const { password_hash, ...userWithoutPassword } = user;
       res.json({ 
         success: true, 
         user: userWithoutPassword 
