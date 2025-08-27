@@ -45,6 +45,7 @@ export default function PayPalButton({
         }
         
         const data = await response.json();
+        console.log('PayPal settings loaded:', data);
         setSettings(data);
       } catch (error) {
         console.error('Failed to load PayPal settings:', error);
