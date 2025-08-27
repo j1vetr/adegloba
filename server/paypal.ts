@@ -18,17 +18,21 @@ import { storage } from "./storage";
 
 /* PayPal Controllers Setup */
 
-// PayPal settings are loaded dynamically from database
+// PayPal settings are loaded exclusively from database
 async function getPayPalSettings() {
   const settings = await storage.getSettingsByCategory('payment');
   const clientId = settings.find(s => s.key === 'PAYPAL_CLIENT_ID')?.value;
   const clientSecret = settings.find(s => s.key === 'PAYPAL_CLIENT_SECRET')?.value;
   const environment = settings.find(s => s.key === 'PAYPAL_ENV')?.value || 'sandbox';
   
+  if (!clientId || !clientSecret) {
+    throw new Error('PayPal credentials not configured in database. Please configure in admin panel.');
+  }
+  
   return {
-    clientId: clientId || process.env.PAYPAL_CLIENT_ID || 'placeholder',
-    clientSecret: clientSecret || process.env.PAYPAL_CLIENT_SECRET || 'placeholder',
-    environment: environment
+    clientId,
+    clientSecret,
+    environment
   };
 }
 
