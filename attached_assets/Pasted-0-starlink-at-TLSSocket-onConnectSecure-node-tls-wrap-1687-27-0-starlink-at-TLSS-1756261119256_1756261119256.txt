@@ -1,0 +1,62 @@
+0|starlink |       at TLSSocket.onConnectSecure (node:_tls_wrap:1687:27)
+0|starlink |       at TLSSocket.emit (node:events:524:28)
+0|starlink |       at TLSSocket._finishInit (node:_tls_wrap:1076:8)
+0|starlink |       at ssl.onhandshakedone (node:_tls_wrap:862:12) {
+0|starlink |     code: 'ERR_TLS_CERT_ALTNAME_INVALID',
+0|starlink |     reason: "Host: localhost. is not in the cert's altnames: DNS:adegloba.toov.com.tr, DNS:www.adegloba.toov.com.tr",
+0|starlink |     host: 'localhost',
+0|starlink |     cert: {
+0|starlink |       subject: [Object: null prototype],
+0|starlink |       issuer: [Object: null prototype],
+0|starlink |       subjectaltname: 'DNS:adegloba.toov.com.tr, DNS:www.adegloba.toov.com.tr',
+0|starlink |       infoAccess: [Object: null prototype],
+0|starlink |       ca: false,
+0|starlink |       bits: 256,
+0|starlink |       pubkey: <Buffer 04 6b 92 38 f3 cf e1 26 a1 fb ca 6f ea 04 c1 f5 b7 54 09 c9 c9 20 11 64 8c 1c 5e e2 6a cf e4 34 90 b5 45 a3 71 a2 02 d3 89 06 18 3b 49 7b 05 d4 6b 2f ... 15 more bytes>,
+0|starlink |       asn1Curve: 'prime256v1',
+0|starlink |       nistCurve: 'P-256',
+0|starlink |       valid_from: 'Aug 27 00:38:38 2025 GMT',
+0|starlink |       valid_to: 'Nov 25 00:38:37 2025 GMT',
+0|starlink |       fingerprint: '50:73:A3:4E:13:D4:ED:0B:92:96:70:C8:EA:62:E7:1C:DC:36:37:CA',
+0|starlink |       fingerprint256: 'F5:61:1B:9B:FA:9C:1D:0D:78:5B:14:7B:F8:D3:47:60:0A:04:D8:CF:8A:CD:0A:49:2B:F8:F1:B2:BD:15:20:0E',
+0|starlink |       fingerprint512: '19:F7:00:BC:73:E5:3A:18:94:87:90:B5:1C:00:F3:0D:2B:69:F1:A9:D0:EE:3A:E9:C0:55:29:55:DF:04:A2:1F:AD:25:2D:5B:DF:A7:6E:BD:5F:DC:64:D5:56:07:81:DE:F4:C6:1E:4D:66:3A:FB:55:02:2C:25:E9:1B:74:46:04',
+0|starlink |       ext_key_usage: [Array],
+0|starlink |       serialNumber: '061D9270D9BFFAB634793AB40DB5D179838A',
+0|starlink |       raw: <Buffer 30 82 03 af 30 82 03 35 a0 03 02 01 02 02 12 06 1d 92 70 d9 bf fa b6 34 79 3a b4 0d b5 d1 79 83 8a 30 0a 06 08 2a 86 48 ce 3d 04 03 03 30 32 31 0b 30 ... 897 more bytes>,
+0|starlink |       issuerCertificate: [Object]
+0|starlink |     }
+0|starlink |   },
+0|starlink |   [Symbol(kMessage)]: "Hostname/IP does not match certificate's altnames: Host: localhost. is not in the cert's altnames: DNS:adegloba.toov.com.tr, DNS:www.adegloba.toov.com.tr"
+0|starlink | }
+
+/root/.pm2/logs/starlink-system-out-0.log last 30 lines:
+0|starlink | ✅ No incomplete paid orders found on startup
+0|starlink | 4:58:51 AM [express] POST /api/user/login 500 in 9ms :: {"success":false,"message":"Giriş işlemi sır…
+0|starlink | 4:58:53 AM [express] POST /api/user/login 500 in 6ms :: {"success":false,"message":"Giriş işlemi sır…
+0|starlink | 4:58:56 AM [express] GET /api/ships/active 500 in 9ms :: {"message":"Failed to fetch active ships"}
+0|starlink | 4:59:14 AM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|starlink | 4:59:14 AM [express] GET /api/admin/me 401 in 1ms :: {"message":"Unauthorized"}
+0|starlink | 4:59:14 AM [express] GET /api/admin/me 401 in 0ms :: {"message":"Unauthorized"}
+0|starlink | 4:59:34 AM [express] POST /api/auth/login 500 in 6ms :: {"message":"Giriş işlemi başarısız"}
+0|starlink | 5:00:26 AM [express] POST /api/auth/login 500 in 8ms :: {"message":"Giriş işlemi başarısız"}
+0|starlink |
+0|starlink | > rest-express@1.0.0 start
+0|starlink | > NODE_ENV=production node dist/index.js
+0|starlink |
+0|starlink | Seeding initial ships...
+0|starlink | 🗑️  Starting log cleanup scheduler - will delete logs older than 7 days
+0|starlink | 🗑️  Running log cleanup - deleting logs older than 2025-08-20T02:17:17.994Z
+0|starlink | 🚀 Starting order auto-cancel service - checking every 5 minutes
+0|starlink | 5:17:18 AM [express] serving on port 5000
+0|starlink | 5:17:21 AM [express] GET /api/auth/user 401 in 2ms :: {"message":"Unauthorized"}
+0|starlink | 5:17:21 AM [express] GET /api/user/me 401 in 0ms :: {"message":"Unauthorized"}
+0|starlink | 🔍 Checking for incomplete paid orders on startup...
+0|starlink | 🔧 Processing 0 incomplete paid orders...
+0|starlink | 🔧 Batch completion: 0/0 orders fixed
+0|starlink | ✅ No incomplete paid orders found on startup
+0|starlink | 5:17:35 AM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized"}
+0|starlink | 5:17:35 AM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|starlink | 5:18:03 AM [express] GET /api/admin/me 401 in 1ms :: {"message":"Unauthorized"}
+0|starlink | 5:18:03 AM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|starlink | 5:18:03 AM [express] GET /api/admin/me 401 in 0ms :: {"message":"Unauthorized"}
+0|starlink | 5:18:10 AM [express] POST /api/auth/login 500 in 9ms :: {"message":"Giriş işlemi başarısız"}
