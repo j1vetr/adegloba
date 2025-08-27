@@ -11,6 +11,7 @@ import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useToast } from "@/hooks/use-toast";
 import type { Order, User, Ship } from "@shared/schema";
+import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
 
 export default function Panel() {
   const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }, isLoading: boolean };
@@ -114,13 +115,20 @@ export default function Panel() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
           <div className="flex-1">
-            <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
-              AdeGloba Starlink System - Kontrol Paneli
-            </h1>
+            <div className="flex items-center gap-4 mb-3">
+              <img 
+                src={adeGlobaLogo} 
+                alt="AdeGloba Limited" 
+                className="h-8 sm:h-10 lg:h-12 object-contain filter drop-shadow-lg"
+              />
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                Kontrol Paneli
+              </h1>
+            </div>
             <p className="text-slate-400 text-sm lg:text-base">
               Hoş geldiniz, <span className="text-white font-medium">{user.username}</span>
               {user.ship && (
-                <> • <span className="text-blue-400 font-medium">Gemi: {user.ship.name}</span></>
+                <> • <span className="text-amber-400 font-medium">Gemi: {user.ship.name}</span></>
               )}
             </p>
           </div>
