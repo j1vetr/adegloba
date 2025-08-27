@@ -1,0 +1,105 @@
+/root/.pm2/logs/starlink-system-out.log last 15 lines:
+0|starlink | 5:09:54 AM [express] POST /api/auth/login 500 in 8ms :: {"message":"Giriş işlemi başarısız"}
+0|starlink | 5:10:03 AM [express] POST /api/auth/login 500 in 10ms :: {"message":"Giriş işlemi başarısız"}
+0|starlink | 5:10:23 AM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|starlink | 5:10:23 AM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized"}
+0|starlink | 5:10:33 AM [express] POST /api/user/login 500 in 9ms :: {"success":false,"message":"Giriş işlemi s                                                                                                                              ır…
+0|starlink | 5:10:34 AM [express] POST /api/user/login 500 in 8ms :: {"success":false,"message":"Giriş işlemi s                                                                                                                              ır…
+0|starlink |
+0|starlink | > rest-express@1.0.0 start
+0|starlink | > NODE_ENV=production node dist/index.js
+0|starlink |
+0|starlink | Seeding initial ships...
+0|starlink | 🗑️  Starting log cleanup scheduler - will delete logs older than 7 days
+0|starlink | 🗑️  Running log cleanup - deleting logs older than 2025-08-20T02:16:18.170Z
+0|starlink | 🚀 Starting order auto-cancel service - checking every 5 minutes
+0|starlink | 5:16:18 AM [express] serving on port 5000
+
+/root/.pm2/logs/starlink-system-error.log last 15 lines:
+0|starlink |       asn1Curve: 'prime256v1',
+0|starlink |       nistCurve: 'P-256',
+0|starlink |       valid_from: 'Aug 27 00:38:38 2025 GMT',
+0|starlink |       valid_to: 'Nov 25 00:38:37 2025 GMT',
+0|starlink |       fingerprint: '50:73:A3:4E:13:D4:ED:0B:92:96:70:C8:EA:62:E7:1C:DC:36:37:CA',
+0|starlink |       fingerprint256: 'F5:61:1B:9B:FA:9C:1D:0D:78:5B:14:7B:F8:D3:47:60:0A:04:D8:CF:8A:CD:0A:49:2B:                                                                                                                              F8:F1:B2:BD:15:20:0E',
+0|starlink |       fingerprint512: '19:F7:00:BC:73:E5:3A:18:94:87:90:B5:1C:00:F3:0D:2B:69:F1:A9:D0:EE:3A:E9:C0:                                                                                                                              55:29:55:DF:04:A2:1F:AD:25:2D:5B:DF:A7:6E:BD:5F:DC:64:D5:56:07:81:DE:F4:C6:1E:4D:66:3A:FB:55:02:2C:25:E9:1B:74:                                                                                                                              46:04',
+0|starlink |       ext_key_usage: [Array],
+0|starlink |       serialNumber: '061D9270D9BFFAB634793AB40DB5D179838A',
+0|starlink |       raw: <Buffer 30 82 03 af 30 82 03 35 a0 03 02 01 02 02 12 06 1d 92 70 d9 bf fa b6 34 79 3a b                                                                                                                              4 0d b5 d1 79 83 8a 30 0a 06 08 2a 86 48 ce 3d 04 03 03 30 32 31 0b 30 ... 897 more bytes>,
+0|starlink |       issuerCertificate: [Object]
+0|starlink |     }
+0|starlink |   },
+0|starlink |   [Symbol(kMessage)]: "Hostname/IP does not match certificate's altnames: Host: localhost. is not                                                                                                                               in the cert's altnames: DNS:adegloba.toov.com.tr, DNS:www.adegloba.toov.com.tr"
+0|starlink | }
+
+0|starlink-system  | 🔍 Checking for incomplete paid orders on startup...
+0|starlink-system  | Error finding incomplete paid orders: ErrorEvent {
+0|starlink-system  |   [Symbol(kTarget)]: WebSocket {
+0|starlink-system  |     _events: [Object: null prototype] {
+0|starlink-system  |       error: [Function],
+0|starlink-system  |       message: [Function],
+0|starlink-system  |       close: [Function],
+0|starlink-system  |       open: [Function]
+0|starlink-system  |     },
+0|starlink-system  |     _eventsCount: 4,
+0|starlink-system  |     _maxListeners: undefined,
+0|starlink-system  |     _binaryType: 'arraybuffer',
+0|starlink-system  |     _closeCode: 1006,
+0|starlink-system  |     _closeFrameReceived: false,
+0|starlink-system  |     _closeFrameSent: false,
+0|starlink-system  |     _closeMessage: <Buffer >,
+0|starlink-system  |     _closeTimer: null,
+0|starlink-system  |     _errorEmitted: true,
+0|starlink-system  |     _extensions: {},
+0|starlink-system  |     _paused: false,
+0|starlink-system  |     _protocol: '',
+0|starlink-system  |     _readyState: 3,
+0|starlink-system  |     _receiver: null,
+0|starlink-system  |     _sender: null,
+0|starlink-system  |     _socket: null,
+0|starlink-system  |     _bufferedAmount: 0,
+0|starlink-system  |     _isServer: false,
+0|starlink-system  |     _redirects: 0,
+0|starlink-system  |     _autoPong: true,
+0|starlink-system  |     _url: 'wss://localhost/v2',
+0|starlink-system  |     _req: null,
+0|starlink-system  |     [Symbol(shapeMode)]: false,
+0|starlink-system  |     [Symbol(kCapture)]: false
+0|starlink-system  |   },
+0|starlink-system  |   [Symbol(kType)]: 'error',
+0|starlink-system  |   [Symbol(kError)]: Error [ERR_TLS_CERT_ALTNAME_INVALID]: Hostname/IP does not match certi                                                                                                                              ficate's altnames: Host: localhost. is not in the cert's altnames: DNS:adegloba.toov.com.tr, DNS:www.adegloba.t                                                                                                                              oov.com.tr
+0|starlink-system  |       at Object.checkServerIdentity (node:tls:316:12)
+0|starlink-system  |       at TLSSocket.onConnectSecure (node:_tls_wrap:1687:27)
+0|starlink-system  |       at TLSSocket.emit (node:events:524:28)
+0|starlink-system  |       at TLSSocket._finishInit (node:_tls_wrap:1076:8)
+0|starlink-system  |       at ssl.onhandshakedone (node:_tls_wrap:862:12) {
+0|starlink-system  |     code: 'ERR_TLS_CERT_ALTNAME_INVALID',
+0|starlink-system  |     reason: "Host: localhost. is not in the cert's altnames: DNS:adegloba.toov.com.tr, DNS                                                                                                                              :www.adegloba.toov.com.tr",
+0|starlink-system  |     host: 'localhost',
+0|starlink-system  |     cert: {
+0|starlink-system  |       subject: [Object: null prototype],
+0|starlink-system  |       issuer: [Object: null prototype],
+0|starlink-system  |       subjectaltname: 'DNS:adegloba.toov.com.tr, DNS:www.adegloba.toov.com.tr',
+0|starlink-system  |       infoAccess: [Object: null prototype],
+0|starlink-system  |       ca: false,
+0|starlink-system  |       bits: 256,
+0|starlink-system  |       pubkey: <Buffer 04 6b 92 38 f3 cf e1 26 a1 fb ca 6f ea 04 c1 f5 b7 54 09 c9 c9 20 11                                                                                                                               64 8c 1c 5e e2 6a cf e4 34 90 b5 45 a3 71 a2 02 d3 89 06 18 3b 49 7b 05 d4 6b 2f ... 15 more bytes>,
+0|starlink-system  |       asn1Curve: 'prime256v1',
+0|starlink-system  |       nistCurve: 'P-256',
+0|starlink-system  |       valid_from: 'Aug 27 00:38:38 2025 GMT',
+0|starlink-system  |       valid_to: 'Nov 25 00:38:37 2025 GMT',
+0|starlink-system  |       fingerprint: '50:73:A3:4E:13:D4:ED:0B:92:96:70:C8:EA:62:E7:1C:DC:36:37:CA',
+0|starlink-system  |       fingerprint256: 'F5:61:1B:9B:FA:9C:1D:0D:78:5B:14:7B:F8:D3:47:60:0A:04:D8:CF:8A:CD:0                                                                                                                              A:49:2B:F8:F1:B2:BD:15:20:0E',
+0|starlink-system  |       fingerprint512: '19:F7:00:BC:73:E5:3A:18:94:87:90:B5:1C:00:F3:0D:2B:69:F1:A9:D0:EE:3                                                                                                                              A:E9:C0:55:29:55:DF:04:A2:1F:AD:25:2D:5B:DF:A7:6E:BD:5F:DC:64:D5:56:07:81:DE:F4:C6:1E:4D:66:3A:FB:55:02:2C:25:E                                                                                                                              9:1B:74:46:04',
+0|starlink-system  |       ext_key_usage: [Array],
+0|starlink-system  |       serialNumber: '061D9270D9BFFAB634793AB40DB5D179838A',
+0|starlink-system  |       raw: <Buffer 30 82 03 af 30 82 03 35 a0 03 02 01 02 02 12 06 1d 92 70 d9 bf fa b6 34                                                                                                                               79 3a b4 0d b5 d1 79 83 8a 30 0a 06 08 2a 86 48 ce 3d 04 03 03 30 32 31 0b 30 ... 897 more bytes>,
+0|starlink-system  |       issuerCertificate: [Object]
+0|starlink-system  |     }
+0|starlink-system  |   },
+0|starlink-system  |   [Symbol(kMessage)]: "Hostname/IP does not match certificate's altnames: Host: localhost.                                                                                                                               is not in the cert's altnames: DNS:adegloba.toov.com.tr, DNS:www.adegloba.toov.com.tr"
+0|starlink-system  | }
+0|starlink-system  | 🔧 Processing 0 incomplete paid orders...
+0|starlink-system  | 🔧 Batch completion: 0/0 orders fixed
+0|starlink-system  | ✅ No incomplete paid orders found on startup
+
