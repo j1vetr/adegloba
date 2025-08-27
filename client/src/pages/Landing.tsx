@@ -154,12 +154,9 @@ export default function Landing() {
             <div className="text-center mb-20">
               <h2 className="text-4xl md:text-6xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-orange-400 to-cyan-400 bg-clip-text text-transparent">
-                  Denizde Teknolojinin Zirvesi
+                  Neden AdeGloba?
                 </span>
               </h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                Maritime sektörü için özel olarak geliştirilen Starlink çözümleri
-              </p>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -249,7 +246,7 @@ export default function Landing() {
           <div className="max-w-7xl mx-auto text-center">
             <h2 className="text-4xl md:text-6xl font-bold mb-16">
               <span className="bg-gradient-to-r from-cyan-400 to-orange-400 bg-clip-text text-transparent">
-                Denizlerde Güvenilen İsim
+                Rakamlarla AdeGloba
               </span>
             </h2>
             
@@ -291,13 +288,12 @@ export default function Landing() {
             <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl border border-orange-500/20 rounded-3xl p-12 md:p-16">
               <h2 className="text-4xl md:text-6xl font-bold mb-8">
                 <span className="bg-gradient-to-r from-orange-400 to-cyan-400 bg-clip-text text-transparent">
-                  Gemini Geleceğe Hazır mı?
+                  Hemen Başla
                 </span>
               </h2>
               
               <p className="text-xl md:text-2xl text-gray-300 mb-12 leading-relaxed">
-                AdeGloba Starlink System ile denizcilik operasyonlarınızı 
-                dijital çağa taşıyın. Hemen başlayın!
+                Gemini kaydet, paketi seç, internete bağlan!
               </p>
               
               <div className="flex flex-col sm:flex-row gap-6 justify-center">
