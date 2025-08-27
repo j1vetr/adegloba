@@ -22,8 +22,8 @@ import { Request, Response } from "express";
 const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } = process.env;
 const client = new Client({
   clientCredentialsAuthCredentials: {
-    oAuthClientId: PAYPAL_CLIENT_ID,
-    oAuthClientSecret: PAYPAL_CLIENT_SECRET,
+    oAuthClientId: PAYPAL_CLIENT_ID || 'placeholder',
+    oAuthClientSecret: PAYPAL_CLIENT_SECRET || 'placeholder',
   },
   timeout: 0,
   environment:
