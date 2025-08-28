@@ -85,16 +85,23 @@ export function setupUserAuth(app: Express) {
     }
   });
 
-  // User Login (separate from admin login)
+  // User Login (separate from admin login) - supports both username and email
   app.post("/api/user/login", async (req: Request, res: Response) => {
     try {
       const { username, password } = loginSchema.parse(req.body);
 
-      const user = await storage.getUserByUsername(username);
+      // Try to find user by username first, then by email
+      let user = await storage.getUserByUsername(username);
+      
+      // If not found by username, try email (check if input looks like an email)
+      if (!user && username.includes('@')) {
+        user = await storage.getUserByEmail(username);
+      }
+
       if (!user) {
         return res.status(401).json({ 
           success: false, 
-          message: "Geçersiz kullanıcı adı veya şifre" 
+          message: "Geçersiz kullanıcı adı/e-posta veya şifre" 
         });
       }
 
@@ -102,7 +109,7 @@ export function setupUserAuth(app: Express) {
       if (!validPassword) {
         return res.status(401).json({ 
           success: false, 
-          message: "Geçersiz kullanıcı adı veya şifre" 
+          message: "Geçersiz kullanıcı adı/e-posta veya şifre" 
         });
       }
 
