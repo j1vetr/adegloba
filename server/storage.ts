@@ -967,9 +967,9 @@ export class DatabaseStorage implements IStorage {
       { key: 'LOGO_URL', value: '', category: 'general' },
       
       // Payment Settings
-      { key: 'PAYPAL_CLIENT_ID', value: '', category: 'payment' },
-      { key: 'PAYPAL_CLIENT_SECRET', value: '', category: 'payment' },
-      { key: 'PAYPAL_ENV', value: 'sandbox', category: 'payment' },
+      { key: 'paypalClientId', value: '', category: 'payment' },
+      { key: 'paypalClientSecret', value: '', category: 'payment' },
+      { key: 'paypalEnvironment', value: 'sandbox', category: 'payment' },
       
       // Support Settings
       { key: 'WHATSAPP_NUMBER', value: '', category: 'support' },

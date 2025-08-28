@@ -86,8 +86,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get PayPal settings from database for validation
       const settings = await storage.getSettingsByCategory('payment');
-      const paypalClientId = settings.find(s => s.key === 'PAYPAL_CLIENT_ID')?.value;
-      const paypalSecret = settings.find(s => s.key === 'PAYPAL_CLIENT_SECRET')?.value;
+      const paypalClientId = settings.find(s => s.key === 'paypalClientId')?.value;
+      const paypalSecret = settings.find(s => s.key === 'paypalClientSecret')?.value;
       
       if (!paypalClientId || !paypalSecret || paypalClientId.trim() === '' || paypalSecret.trim() === '') {
         return res.status(400).json({ 
@@ -129,8 +129,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get PayPal settings from database
       const settings = await storage.getSettingsByCategory('payment');
-      const paypalClientId = settings.find(s => s.key === 'PAYPAL_CLIENT_ID')?.value;
-      const paypalSecret = settings.find(s => s.key === 'PAYPAL_CLIENT_SECRET')?.value;
+      const paypalClientId = settings.find(s => s.key === 'paypalClientId')?.value;
+      const paypalSecret = settings.find(s => s.key === 'paypalClientSecret')?.value;
       
       if (!paypalClientId || !paypalSecret || paypalClientId.trim() === '' || paypalSecret.trim() === '') {
         return res.status(400).json({ 
@@ -170,12 +170,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Database settings data:', settingsData);
       
       const paymentSettings = {
-        paypal_client_id: settingsData.find(s => s.key === 'PAYPAL_CLIENT_ID')?.value || 
-                         settingsData.find(s => s.key === 'paypal_client_id')?.value || '',
-        paypal_environment: settingsData.find(s => s.key === 'PAYPAL_ENV')?.value || 
-                           settingsData.find(s => s.key === 'paypal_environment')?.value || 'sandbox',
-        paypal_secret: settingsData.find(s => s.key === 'PAYPAL_CLIENT_SECRET')?.value || 
-                      settingsData.find(s => s.key === 'paypal_secret')?.value || '',
+        paypal_client_id: settingsData.find(s => s.key === 'paypalClientId')?.value || '',
+        paypal_environment: settingsData.find(s => s.key === 'paypalEnvironment')?.value || 'sandbox',
+        paypal_secret: settingsData.find(s => s.key === 'paypalClientSecret')?.value || '',
       };
       
       console.log('Returning payment settings:', paymentSettings);

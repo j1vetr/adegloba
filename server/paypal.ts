@@ -21,9 +21,9 @@ import { storage } from "./storage";
 // PayPal settings are loaded exclusively from database
 async function getPayPalSettings() {
   const settings = await storage.getSettingsByCategory('payment');
-  const clientId = settings.find(s => s.key === 'PAYPAL_CLIENT_ID')?.value;
-  const clientSecret = settings.find(s => s.key === 'PAYPAL_CLIENT_SECRET')?.value;
-  const environment = settings.find(s => s.key === 'PAYPAL_ENV')?.value || 'sandbox';
+  const clientId = settings.find(s => s.key === 'paypalClientId')?.value;
+  const clientSecret = settings.find(s => s.key === 'paypalClientSecret')?.value;
+  const environment = settings.find(s => s.key === 'paypalEnvironment')?.value || 'sandbox';
   
   if (!clientId || !clientSecret) {
     throw new Error('PayPal credentials not configured in database. Please configure in admin panel.');
