@@ -124,17 +124,26 @@ export class EmailService {
     bcc?: string
   ): Promise<boolean> {
     try {
+      const smtpPort = settings.smtpPort || 587;
+      const isSecure = smtpPort === 465;
+      
       const transporter = nodemailer.createTransport({
         host: settings.smtpHost,
-        port: settings.smtpPort || 587,
-        secure: (settings.smtpPort || 587) === 465,
-        tls: {
-          rejectUnauthorized: false // Allow self-signed certificates
-        },
+        port: smtpPort,
+        secure: isSecure, // true for 465 (SSL), false for other ports (STARTTLS)
         auth: {
           user: settings.smtpUser,
           pass: decrypt(settings.smtpPass || ''),
         },
+        tls: {
+          rejectUnauthorized: false, // Allow self-signed certificates
+          ciphers: 'SSLv3' // For older SSL servers if needed
+        },
+        connectionTimeout: 10000, // 10 seconds timeout
+        greetingTimeout: 5000,
+        socketTimeout: 10000,
+        debug: true, // Enable debug logs
+        logger: true
       });
 
       const mailOptions = {
