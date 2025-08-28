@@ -1099,8 +1099,8 @@ export class DatabaseStorage implements IStorage {
           shipName: ships.name,
           totalOrders: sql<number>`COUNT(DISTINCT ${orders.id})`,
           totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
-          totalDataGB: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN ${plans.dataGB} * ${orderItems.quantity} ELSE 0 END), 0)`,
-          packagesSold: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN ${orderItems.quantity} ELSE 0 END), 0)`
+          totalDataGB: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN ${plans.dataLimitGb} * ${orderItems.qty} ELSE 0 END), 0)`,
+          packagesSold: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN ${orderItems.qty} ELSE 0 END), 0)`
         })
         .from(ships)
         .leftJoin(orders, eq(ships.id, orders.shipId))
@@ -1126,7 +1126,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       if (conditions.length > 0) {
-        query = query.where(and(...conditions));
+        query = query.where(and(...conditions)) as any;
       }
 
       const result = await query;
