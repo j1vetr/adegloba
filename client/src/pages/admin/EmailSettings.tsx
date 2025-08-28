@@ -43,10 +43,49 @@ export function EmailSettings() {
     queryFn: () => apiRequest('GET', '/api/admin/email-settings'),
   });
 
-  // Update form when settings are loaded
+  // Manual data fetching - test without React Query
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log('🔍 Manual fetch starting...');
+        const response = await fetch('/api/admin/email-settings', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        console.log('📦 Manual fetch result:', data);
+        
+        if (data) {
+          // Map database fields to form fields
+          const mappedSettings = {
+            id: data.id,
+            provider: 'smtp' as const,
+            smtpHost: data.smtp_host || '',
+            smtpPort: data.smtp_port || 587,
+            smtpUser: data.smtp_user || '',
+            smtpPass: '', // Don't show password for security
+            fromEmail: data.from_email || '',
+            fromName: data.from_name || '',
+            replyTo: data.reply_to || '',
+            adminEmail: data.adminEmail || '',
+            isActive: data.is_active ?? true,
+          };
+          
+          console.log('✅ MAPPED SETTINGS:', mappedSettings);
+          setFormData(mappedSettings);
+          console.log('✅ Form data updated with manual fetch!');
+        }
+      } catch (error) {
+        console.error('❌ Manual fetch error:', error);
+      }
+    };
+    
+    fetchData();
+  }, []); // Run once on mount
+
+  // Update form when settings are loaded (React Query)
   useEffect(() => {
     if (settings) {
-      console.log('🔍 RAW API RESPONSE:', settings);
+      console.log('🔍 RAW API RESPONSE (React Query):', settings);
       console.log('📋 Current formData before update:', formData);
       
       const data = settings as any; // Cast to avoid TypeScript errors
@@ -66,7 +105,7 @@ export function EmailSettings() {
         isActive: data.is_active ?? data.isActive ?? true,
       };
       
-      console.log('✅ MAPPED SETTINGS:', mappedSettings);
+      console.log('✅ MAPPED SETTINGS (React Query):', mappedSettings);
       console.log('📝 Setting form data...');
       setFormData(mappedSettings); // Direct set instead of merge
       console.log('✅ Form data updated!');
