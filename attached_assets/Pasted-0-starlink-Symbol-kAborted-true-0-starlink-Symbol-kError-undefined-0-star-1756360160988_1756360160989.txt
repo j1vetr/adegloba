@@ -1,0 +1,43 @@
+0|starlink |       [Symbol(kAborted)]: true,
+0|starlink |       [Symbol(kError)]: undefined
+0|starlink |     },
+0|starlink |     [Symbol(shapeMode)]: false,
+0|starlink |     [Symbol(kCapture)]: false
+0|starlink |   },
+0|starlink |   [Symbol(kType)]: 'error',
+0|starlink |   [Symbol(kError)]: Error: Unexpected server response: 200
+0|starlink |       at ClientRequest.<anonymous> (/var/www/starlink-system/node_modules/ws/lib/websocket.js:913:7)
+0|starlink |       at ClientRequest.emit (node:events:524:28)
+0|starlink |       at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+0|starlink |       at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+0|starlink |       at TLSSocket.socketOnData (node:_http_client:544:22)
+0|starlink |       at TLSSocket.emit (node:events:524:28)
+0|starlink |       at addChunk (node:internal/streams/readable:561:12)
+0|starlink |       at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+0|starlink |       at Readable.push (node:internal/streams/readable:392:5)
+0|starlink |       at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23),
+0|starlink |   [Symbol(kMessage)]: 'Unexpected server response: 200'
+0|starlink | }
+
+/root/.pm2/logs/starlink-system-out-0.log last 20 lines:
+0|starlink | 🔍 Checking for incomplete paid orders on startup...
+0|starlink | 🔧 Processing 0 incomplete paid orders...
+0|starlink | 🔧 Batch completion: 0/0 orders fixed
+0|starlink | ✅ No incomplete paid orders found on startup
+0|starlink |
+0|starlink | > rest-express@1.0.0 start
+0|starlink | > NODE_ENV=production node dist/index.js
+0|starlink |
+0|starlink | Seeding initial ships...
+0|starlink | 🗑️  Starting log cleanup scheduler - will delete logs older than 7 days
+0|starlink | 🗑️  Running log cleanup - deleting logs older than 2025-08-21T05:46:17.122Z
+0|starlink | 🚀 Starting order auto-cancel service - checking every 5 minutes
+0|starlink | 📧 Starting email scheduler...
+0|starlink | ✅ Email scheduler started - Monthly reports will be sent on 1st of each month at 09:10
+0|starlink | 8:46:17 AM [express] serving on port 5000
+0|starlink | 🔍 Checking for incomplete paid orders on startup...
+0|starlink | 🔧 Processing 0 incomplete paid orders...
+0|starlink | 🔧 Batch completion: 0/0 orders fixed
+0|starlink | ✅ No incomplete paid orders found on startup
+0|starlink | 8:47:52 AM [express] GET /api/ships/active 500 in 15ms :: {"message":"Failed to fetch active ships"}
+
