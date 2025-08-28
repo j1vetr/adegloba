@@ -8,7 +8,8 @@ import {
   LogOut,
   Menu,
   X,
-  ShoppingCart
+  ShoppingCart,
+  BookOpen
 } from "lucide-react";
 import { useState } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
@@ -40,6 +41,12 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
       href: "/sepet",
       icon: ShoppingCart,
       active: location === "/sepet"
+    },
+    {
+      name: "Kullanım Kılavuzu",
+      href: "/kilavuz",
+      icon: BookOpen,
+      active: location === "/kilavuz"
     },
     {
       name: "Destek",

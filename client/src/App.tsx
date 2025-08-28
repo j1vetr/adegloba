@@ -37,6 +37,7 @@ import { EmailSettings } from "@/pages/admin/EmailSettings";
 import UserTickets from "@/pages/UserTickets";
 import TicketDetail from "@/pages/TicketDetail";
 import Profil from "@/pages/Profil";
+import KullanimKilavuzu from "@/pages/KullanimKilavuzu";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
 
@@ -169,6 +170,12 @@ function Router() {
       <Route path="/profil">
         <UserProtectedRoute>
           <Profil />
+        </UserProtectedRoute>
+      </Route>
+      
+      <Route path="/kilavuz">
+        <UserProtectedRoute>
+          <KullanimKilavuzu />
         </UserProtectedRoute>
       </Route>
       
