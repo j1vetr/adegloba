@@ -14,7 +14,6 @@ import {
 import { useState } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useQuery } from "@tanstack/react-query";
-import { NavigationHelp } from "@/components/ContextualHelp";
 
 interface UserNavigationProps {
   className?: string;
@@ -23,7 +22,7 @@ interface UserNavigationProps {
 export function UserNavigation({ className = "" }: UserNavigationProps) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { } = useUserAuth();
+  const { logout } = useUserAuth();
 
   // Get cart data for badge
   const { data: cartData } = useQuery({
@@ -36,44 +35,38 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
       name: "Ana Sayfa",
       href: "/panel",
       icon: Home,
-      active: location === "/panel",
-      tooltip: "Ana kontrol panelinize dönün ve aktif paketlerinizi görüntüleyin"
+      active: location === "/panel"
     },
     {
       name: "Paketler",
       href: "/paketler",
       icon: Package,
-      active: location === "/paketler",
-      tooltip: "Mevcut Starlink data paketlerini inceleyin ve satın alın"
+      active: location === "/paketler"
     },
     {
       name: "Kullanım Kılavuzu",
       href: "/kilavuz",
       icon: BookOpen,
-      active: location === "/kilavuz",
-      tooltip: "Adım adım platform kullanım rehberini görüntüleyin"
+      active: location === "/kilavuz"
     },
     {
       name: "Destek",
       href: "/destek",
       icon: MessageSquare,
-      active: location === "/destek" || location.startsWith("/destek/"),
-      tooltip: "Teknik destek için bilet oluşturun veya mevcut biletlerinizi görüntüleyin"
+      active: location === "/destek" || location.startsWith("/destek/")
     },
     {
       name: "Profil",
       href: "/profil",
       icon: User,
-      active: location === "/profil",
-      tooltip: "Hesap bilgilerinizi düzenleyin ve şifrenizi değiştirin"
+      active: location === "/profil"
     },
     {
       name: "Sepet",
       href: "/sepet",
       icon: ShoppingCart,
       active: location === "/sepet",
-      badge: (cartData as any)?.itemCount > 0 ? (cartData as any).itemCount : undefined,
-      tooltip: "Seçtiğiniz paketleri görüntüleyin ve ödeme işlemini tamamlayın"
+      badge: cartData?.itemCount > 0 ? cartData.itemCount : undefined
     }
   ];
 
@@ -118,27 +111,25 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
             {navigation.map((item) => {
               const Icon = item.icon;
               return (
-                <NavigationHelp content={(item as any).tooltip} key={item.name}>
-                  <Link href={item.href}>
-                    <Button
-                      variant={item.active ? "default" : "ghost"}
-                      className={`relative ${
-                        item.active
-                          ? "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
-                          : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                      } transition-all duration-200`}
-                      data-testid={`nav-${item.name.toLowerCase().replace(' ', '-')}`}
-                    >
-                      <Icon className="h-4 w-4 mr-2" />
-                      {item.name}
-                      {(item as any).badge && (item as any).badge > 0 && (
-                        <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs font-bold w-5 h-5 flex items-center justify-center">
-                          {(item as any).badge}
-                        </span>
-                      )}
-                    </Button>
-                  </Link>
-                </NavigationHelp>
+                <Link key={item.name} href={item.href}>
+                  <Button
+                    variant={item.active ? "default" : "ghost"}
+                    className={`relative ${
+                      item.active
+                        ? "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    } transition-all duration-200`}
+                    data-testid={`nav-${item.name.toLowerCase().replace(' ', '-')}`}
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {item.name}
+                    {(item as any).badge && (item as any).badge > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs font-bold w-5 h-5 flex items-center justify-center">
+                        {(item as any).badge}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
               );
             })}
             
@@ -177,28 +168,26 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <NavigationHelp content={(item as any).tooltip} key={item.name}>
-                    <Link href={item.href}>
-                      <Button
-                        variant={item.active ? "default" : "ghost"}
-                        className={`w-full justify-start relative ${
-                          item.active
-                            ? "bg-cyan-500/20 text-cyan-400"
-                            : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                        }`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        data-testid={`mobile-nav-${item.name.toLowerCase().replace(' ', '-')}`}
-                      >
-                        <Icon className="h-4 w-4 mr-2" />
-                        {item.name}
-                        {(item as any).badge && (item as any).badge > 0 && (
-                          <span className="ml-auto bg-red-500 text-white rounded-full text-xs font-bold w-5 h-5 flex items-center justify-center">
-                            {(item as any).badge}
-                          </span>
-                        )}
-                      </Button>
-                    </Link>
-                  </NavigationHelp>
+                  <Link key={item.name} href={item.href}>
+                    <Button
+                      variant={item.active ? "default" : "ghost"}
+                      className={`w-full justify-start relative ${
+                        item.active
+                          ? "bg-cyan-500/20 text-cyan-400"
+                          : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      data-testid={`mobile-nav-${item.name.toLowerCase().replace(' ', '-')}`}
+                    >
+                      <Icon className="h-4 w-4 mr-2" />
+                      {item.name}
+                      {(item as any).badge && (item as any).badge > 0 && (
+                        <span className="ml-auto bg-red-500 text-white rounded-full text-xs font-bold w-5 h-5 flex items-center justify-center">
+                          {(item as any).badge}
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
                 );
               })}
               

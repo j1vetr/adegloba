@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ShoppingCart, Package, Trash2, Plus, Minus, DollarSign, Tag } from "lucide-react";
-import { ContextualHelp } from "@/components/ContextualHelp";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
@@ -171,9 +170,8 @@ export default function Sepet() {
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-4 flex items-center justify-center gap-2">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-4">
             Sepetim
-            <ContextualHelp content="Seçtiğiniz paketler burada listelenir. Miktarlarını değiştirebilir, silebilir veya ödeme işlemine geçebilirsiniz." />
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
             Paketlerinizi inceleyin ve ödeme işlemine geçin
@@ -337,12 +335,11 @@ export default function Sepet() {
                   </div>
 
                   {/* Checkout Button */}
-                  <ContextualHelp content="Ödeme sayfasına geçmek için bu butona tıklayın. PayPal veya kredi kartı ile güvenli ödeme yapabilirsiniz.">
-                    <Button
-                      onClick={() => checkoutMutation.mutate()}
-                      disabled={checkoutMutation.isPending}
-                      className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-xl text-lg btn-interactive animate-pulse-glow"
-                      data-testid="checkout-button"
+                  <Button
+                    onClick={() => checkoutMutation.mutate()}
+                    disabled={checkoutMutation.isPending}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-xl text-lg btn-interactive animate-pulse-glow"
+                    data-testid="checkout-button"
                   >
                     {checkoutMutation.isPending ? (
                       <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -350,8 +347,7 @@ export default function Sepet() {
                       <ShoppingCart className="h-5 w-5 mr-2" />
                     )}
                     Ödemeye Geç
-                    </Button>
-                  </ContextualHelp>
+                  </Button>
 
                   {/* Security Notice */}
                   <div className="text-center text-xs text-slate-400 flex items-center justify-center">

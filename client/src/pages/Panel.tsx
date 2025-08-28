@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive, Zap, Copy } from "lucide-react";
-import { ContextualHelp } from "@/components/ContextualHelp";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useToast } from "@/hooks/use-toast";
@@ -179,7 +178,6 @@ export default function Panel() {
                 <CardTitle className="text-white flex items-center gap-2 text-lg">
                   <Package className="h-5 w-5 text-blue-400" />
                   Aktif Paketlerim {(activePackages as any)?.length ? `(${(activePackages as any).length})` : ''}
-                  <ContextualHelp content="Şu anda aktif olan tüm data paketlerinizi buradan görüntüleyebilirsiniz. Her paket için kalan süre, veri miktarı ve giriş bilgileri listelenir." />
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -279,7 +277,6 @@ export default function Panel() {
                                 <div className="flex items-center gap-2 text-sm text-cyan-400 mb-3">
                                   <Package className="h-4 w-4" />
                                   <span className="font-medium">Bağlantı Bilgileri</span>
-                                  <ContextualHelp content="Bu bilgileri Starlink terminalinizde veya cihazınızda internete bağlanmak için kullanın. Kullanıcı adı ve şifreyi kopyalamak için yanındaki ikona tıklayın." />
                                 </div>
                                 <div className="space-y-3">
                                   <div className="flex items-center justify-between">
