@@ -142,7 +142,7 @@ export class EmailService {
         requireTLS: !isSecure, // Force STARTTLS for non-SSL ports
         auth: {
           user: settings.smtpUser,
-          pass: await decrypt(settings.smtpPass || ''),
+          pass: settings.smtpPass || '',
         },
         tls: {
           rejectUnauthorized: false, // Allow self-signed certificates
