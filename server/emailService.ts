@@ -167,16 +167,6 @@ export class EmailService {
       return true;
     } catch (error) {
       console.error('SMTP sending error:', error);
-      
-      // Mock email for testing (remove in production)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📧 MOCK EMAIL SENT (development mode):');
-        console.log(`📧 To: ${to}`);
-        console.log(`📧 Subject: ${subject}`);
-        console.log(`📧 HTML: ${html.substring(0, 200)}...`);
-        return true; // Return success for testing
-      }
-      
       return false;
     }
   }
