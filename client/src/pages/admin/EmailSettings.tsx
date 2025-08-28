@@ -54,22 +54,24 @@ export function EmailSettings() {
       console.log('Loaded settings:', settings);
       console.log('Current formData before update:', formData);
       
+      const data = settings as any; // Cast to avoid TypeScript errors
+      
       // Map database fields to form fields
       const mappedSettings = {
-        id: settings.id,
-        provider: settings.provider || 'smtp',
-        smtpHost: settings.smtp_host || settings.smtpHost,
-        smtpPort: settings.smtp_port || settings.smtpPort,
-        smtpUser: settings.smtp_user || settings.smtpUser,
-        smtpPass: settings.smtp_pass || settings.smtpPass,
-        sendgridKey: settings.sendgrid_key || settings.sendgridKey,
-        mailgunDomain: settings.mailgun_domain || settings.mailgunDomain,
-        mailgunKey: settings.mailgun_key || settings.mailgunKey,
-        fromEmail: settings.from_email || settings.fromEmail,
-        fromName: settings.from_name || settings.fromName,
-        replyTo: settings.reply_to || settings.replyTo,
-        adminEmail: settings.adminEmail,
-        isActive: settings.is_active ?? settings.isActive ?? true,
+        id: data.id,
+        provider: data.provider || 'smtp',
+        smtpHost: data.smtp_host || data.smtpHost,
+        smtpPort: data.smtp_port || data.smtpPort,
+        smtpUser: data.smtp_user || data.smtpUser,
+        smtpPass: data.smtp_pass || data.smtpPass,
+        sendgridKey: data.sendgrid_key || data.sendgridKey,
+        mailgunDomain: data.mailgun_domain || data.mailgunDomain,
+        mailgunKey: data.mailgun_key || data.mailgunKey,
+        fromEmail: data.from_email || data.fromEmail,
+        fromName: data.from_name || data.fromName,
+        replyTo: data.reply_to || data.replyTo,
+        adminEmail: data.adminEmail,
+        isActive: data.is_active ?? data.isActive ?? true,
       };
       
       console.log('Mapped settings:', mappedSettings);
@@ -134,7 +136,7 @@ export function EmailSettings() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <AdminLayout title="E-posta Ayarları">
         <div className="p-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -148,7 +150,7 @@ export function EmailSettings() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout title="E-posta Ayarları">
       <div className="space-y-6">
         <div className="flex items-center space-x-2">
           <Mail className="h-6 w-6 text-blue-400" />
