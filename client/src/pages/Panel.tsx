@@ -177,7 +177,7 @@ export default function Panel() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 text-lg">
                   <Package className="h-5 w-5 text-blue-400" />
-                  Aktif Paketlerim
+                  Aktif Paketlerim {(activePackages as any)?.length ? `(${(activePackages as any).length})` : ''}
                 </CardTitle>
               </CardHeader>
               <CardContent>
