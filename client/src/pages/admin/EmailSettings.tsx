@@ -5,10 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, CheckCircle, Eye, EyeOff, Send, Mail, Settings } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -16,14 +14,11 @@ import { apiRequest } from '@/lib/queryClient';
 
 interface EmailSettings {
   id?: string;
-  provider: 'smtp' | 'sendgrid' | 'mailgun';
+  provider: 'smtp';
   smtpHost?: string;
   smtpPort?: number;
   smtpUser?: string;
   smtpPass?: string;
-  sendgridKey?: string;
-  mailgunDomain?: string;
-  mailgunKey?: string;
   fromEmail?: string;
   fromName?: string;
   replyTo?: string;
@@ -59,18 +54,15 @@ export function EmailSettings() {
       // Map database fields to form fields
       const mappedSettings = {
         id: data.id,
-        provider: data.provider || 'smtp',
-        smtpHost: data.smtp_host || data.smtpHost,
-        smtpPort: data.smtp_port || data.smtpPort,
-        smtpUser: data.smtp_user || data.smtpUser,
-        smtpPass: data.smtp_pass || data.smtpPass,
-        sendgridKey: data.sendgrid_key || data.sendgridKey,
-        mailgunDomain: data.mailgun_domain || data.mailgunDomain,
-        mailgunKey: data.mailgun_key || data.mailgunKey,
-        fromEmail: data.from_email || data.fromEmail,
-        fromName: data.from_name || data.fromName,
-        replyTo: data.reply_to || data.replyTo,
-        adminEmail: data.adminEmail,
+        provider: 'smtp' as const,
+        smtpHost: data.smtp_host || data.smtpHost || '',
+        smtpPort: data.smtp_port || data.smtpPort || 587,
+        smtpUser: data.smtp_user || data.smtpUser || '',
+        smtpPass: '', // Don't show password for security
+        fromEmail: data.from_email || data.fromEmail || '',
+        fromName: data.from_name || data.fromName || '',
+        replyTo: data.reply_to || data.replyTo || '',
+        adminEmail: data.adminEmail || '',
         isActive: data.is_active ?? data.isActive ?? true,
       };
       
@@ -169,22 +161,12 @@ export function EmailSettings() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Provider Selection */}
+              {/* SMTP Provider (Fixed) */}
               <div className="space-y-2">
-                <Label htmlFor="provider" className="text-white">E-posta Sağlayıcı</Label>
-                <Select 
-                  value={formData.provider} 
-                  onValueChange={(value) => updateFormData('provider', value)}
-                >
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                    <SelectValue placeholder="Sağlayıcı seçin" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="smtp">SMTP</SelectItem>
-                    <SelectItem value="sendgrid">SendGrid</SelectItem>
-                    <SelectItem value="mailgun">Mailgun</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-white">E-posta Sağlayıcı</Label>
+                <div className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-md">
+                  <span className="text-white">SMTP</span>
+                </div>
               </div>
 
               {/* Common Settings */}
@@ -238,10 +220,9 @@ export function EmailSettings() {
                 </div>
               </div>
 
-              {/* Provider Specific Settings */}
-              <Tabs value={formData.provider} className="w-full">
-                <TabsContent value="smtp" className="space-y-4">
-                  <h3 className="text-lg font-semibold text-white">SMTP Ayarları</h3>
+              {/* SMTP Settings */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white">SMTP Ayarları</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="smtpHost" className="text-white">SMTP Sunucu</Label>
@@ -297,68 +278,7 @@ export function EmailSettings() {
                       </div>
                     </div>
                   </div>
-                </TabsContent>
-
-                <TabsContent value="sendgrid" className="space-y-4">
-                  <h3 className="text-lg font-semibold text-white">SendGrid Ayarları</h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="sendgridKey" className="text-white">API Anahtarı</Label>
-                    <div className="relative">
-                      <Input
-                        id="sendgridKey"
-                        type={showPasswords ? "text" : "password"}
-                        value={formData.sendgridKey || ''}
-                        onChange={(e) => updateFormData('sendgridKey', e.target.value)}
-                        className="bg-gray-700 border-gray-600 text-white pr-10"
-                        placeholder="SG.••••••••"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPasswords(!showPasswords)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                      >
-                        {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="mailgun" className="space-y-4">
-                  <h3 className="text-lg font-semibold text-white">Mailgun Ayarları</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="mailgunDomain" className="text-white">Domain</Label>
-                      <Input
-                        id="mailgunDomain"
-                        value={formData.mailgunDomain || ''}
-                        onChange={(e) => updateFormData('mailgunDomain', e.target.value)}
-                        className="bg-gray-700 border-gray-600 text-white"
-                        placeholder="mg.domain.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="mailgunKey" className="text-white">API Anahtarı</Label>
-                      <div className="relative">
-                        <Input
-                          id="mailgunKey"
-                          type={showPasswords ? "text" : "password"}
-                          value={formData.mailgunKey || ''}
-                          onChange={(e) => updateFormData('mailgunKey', e.target.value)}
-                          className="bg-gray-700 border-gray-600 text-white pr-10"
-                          placeholder="key-••••••••"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswords(!showPasswords)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                        >
-                          {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+                </div>
 
               {/* Active Switch */}
               <div className="flex items-center space-x-2">
