@@ -139,9 +139,10 @@ export class EmailService {
         host: settings.smtpHost,
         port: smtpPort,
         secure: isSecure, // true for 465 (SSL), false for other ports (STARTTLS)
+        requireTLS: !isSecure, // Force STARTTLS for non-SSL ports
         auth: {
           user: settings.smtpUser,
-          pass: decrypt(settings.smtpPass || ''),
+          pass: await decrypt(settings.smtpPass || ''),
         },
         tls: {
           rejectUnauthorized: false, // Allow self-signed certificates
