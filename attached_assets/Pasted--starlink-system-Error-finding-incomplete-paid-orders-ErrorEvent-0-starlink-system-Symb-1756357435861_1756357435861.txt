@@ -1,0 +1,115 @@
+|starlink-system  | Error finding incomplete paid orders: ErrorEvent {
+0|starlink-system  |   [Symbol(kTarget)]: WebSocket {
+0|starlink-system  |     _events: [Object: null prototype] {
+0|starlink-system  |       error: [Function],
+0|starlink-system  |       message: [Function],
+0|starlink-system  |       close: [Function],
+0|starlink-system  |       open: [Function]
+0|starlink-system  |     },
+0|starlink-system  |     _eventsCount: 4,
+0|starlink-system  |     _maxListeners: undefined,
+0|starlink-system  |     _binaryType: 'arraybuffer',
+0|starlink-system  |     _closeCode: 1006,
+0|starlink-system  |     _closeFrameReceived: false,
+0|starlink-system  |     _closeFrameSent: false,
+0|starlink-system  |     _closeMessage: <Buffer >,
+0|starlink-system  |     _closeTimer: null,
+0|starlink-system  |     _errorEmitted: true,
+0|starlink-system  |     _extensions: {},
+0|starlink-system  |     _paused: false,
+0|starlink-system  |     _protocol: '',
+0|starlink-system  |     _readyState: 3,
+0|starlink-system  |     _receiver: null,
+0|starlink-system  |     _sender: null,
+0|starlink-system  |     _socket: null,
+0|starlink-system  |     _bufferedAmount: 0,
+0|starlink-system  |     _isServer: false,
+0|starlink-system  |     _redirects: 0,
+0|starlink-system  |     _autoPong: true,
+0|starlink-system  |     _url: 'wss://localhost/v2',
+0|starlink-system  |     _req: ClientRequest {
+0|starlink-system  |       _events: [Object: null prototype],
+0|starlink-system  |       _eventsCount: 4,
+0|starlink-system  |       _maxListeners: undefined,
+0|starlink-system  |       outputData: [],
+0|starlink-system  |       outputSize: 0,
+0|starlink-system  |       writable: true,
+0|starlink-system  |       destroyed: true,
+0|starlink-system  |       _last: true,
+0|starlink-system  |       chunkedEncoding: false,
+0|starlink-system  |       shouldKeepAlive: true,
+0|starlink-system  |       maxRequestsOnConnectionReached: false,
+0|starlink-system  |       _defaultKeepAlive: true,
+0|starlink-system  |       useChunkedEncodingByDefault: false,
+0|starlink-system  |       sendDate: false,
+0|starlink-system  |       _removedConnection: false,
+0|starlink-system  |       _removedContLen: false,
+0|starlink-system  |       _removedTE: false,
+0|starlink-system  |       strictContentLength: false,
+0|starlink-system  |       _contentLength: 0,
+0|starlink-system  |       _hasBody: true,
+0|starlink-system  |       _trailer: '',
+0|starlink-system  |       finished: true,
+0|starlink-system  |       _headerSent: true,
+0|starlink-system  |       _closed: true,
+0|starlink-system  |       socket: [TLSSocket],
+0|starlink-system  |       _header: 'GET /v2 HTTP/1.1\r\n' +
+0|starlink-system  |         'Sec-WebSocket-Version: 13\r\n' +
+0|starlink-system  |         'Sec-WebSocket-Key: 5eBFsYS3w7vpCDmd2lYVRw==\r\n' +
+0|starlink-system  |         'Connection: Upgrade\r\n' +
+0|starlink-system  |         'Upgrade: websocket\r\n' +
+0|starlink-system  |         'Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n' +
+0|starlink-system  |         'Host: localhost\r\n' +
+0|starlink-system  |         '\r\n',
+0|starlink-system  |       _keepAliveTimeout: 0,
+0|starlink-system  |       _onPendingData: [Function: nop],
+0|starlink-system  |       agent: undefined,
+0|starlink-system  |       socketPath: undefined,
+0|starlink-system  |       method: 'GET',
+0|starlink-system  |       maxHeaderSize: undefined,
+0|starlink-system  |       insecureHTTPParser: undefined,
+0|starlink-system  |       joinDuplicateHeaders: undefined,
+0|starlink-system  |       path: '/v2',
+0|starlink-system  |       _ended: true,
+0|starlink-system  |       res: [IncomingMessage],
+0|starlink-system  |       aborted: true,
+0|starlink-system  |       timeoutCb: null,
+0|starlink-system  |       upgradeOrConnect: false,
+0|starlink-system  |       parser: null,
+0|starlink-system  |       maxHeadersCount: null,
+0|starlink-system  |       reusedSocket: false,
+0|starlink-system  |       host: 'localhost',
+0|starlink-system  |       protocol: 'https:',
+0|starlink-system  |       [Symbol(shapeMode)]: false,
+0|starlink-system  |       [Symbol(kCapture)]: false,
+0|starlink-system  |       [Symbol(kBytesWritten)]: 0,
+0|starlink-system  |       [Symbol(kNeedDrain)]: false,
+0|starlink-system  |       [Symbol(corked)]: 0,
+0|starlink-system  |       [Symbol(kOutHeaders)]: [Object: null prototype],
+0|starlink-system  |       [Symbol(errored)]: null,
+0|starlink-system  |       [Symbol(kHighWaterMark)]: 16384,
+0|starlink-system  |       [Symbol(kRejectNonStandardBodyWrites)]: false,
+0|starlink-system  |       [Symbol(kUniqueHeaders)]: null,
+0|starlink-system  |       [Symbol(kAborted)]: true,
+0|starlink-system  |       [Symbol(kError)]: undefined
+0|starlink-system  |     },
+0|starlink-system  |     [Symbol(shapeMode)]: false,
+0|starlink-system  |     [Symbol(kCapture)]: false
+0|starlink-system  |   },
+0|starlink-system  |   [Symbol(kType)]: 'error',
+0|starlink-system  |   [Symbol(kError)]: Error: Unexpected server response: 502
+0|starlink-system  |       at ClientRequest.<anonymous> (/var/www/starlink-system/node_modules/ws/lib/websocket.js:913:7)
+0|starlink-system  |       at ClientRequest.emit (node:events:524:28)
+0|starlink-system  |       at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+0|starlink-system  |       at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+0|starlink-system  |       at TLSSocket.socketOnData (node:_http_client:544:22)
+0|starlink-system  |       at TLSSocket.emit (node:events:524:28)
+0|starlink-system  |       at addChunk (node:internal/streams/readable:561:12)
+0|starlink-system  |       at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+0|starlink-system  |       at Readable.push (node:internal/streams/readable:392:5)
+0|starlink-system  |       at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23),
+0|starlink-system  |   [Symbol(kMessage)]: 'Unexpected server response: 502'
+0|starlink-system  | }
+0|starlink-system  | 🔧 Processing 0 incomplete paid orders...
+0|starlink-system  | 🔧 Batch completion: 0/0 orders fixed
+0|starlink-system  | ✅ No incomplete paid orders found on startup
