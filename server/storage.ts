@@ -1097,7 +1097,7 @@ export class DatabaseStorage implements IStorage {
         .select({
           shipId: ships.id,
           shipName: ships.name,
-          totalOrders: sql<number>`COUNT(DISTINCT ${orders.id})`,
+          totalOrders: sql<number>`COUNT(DISTINCT CASE WHEN ${orders.status} = 'completed' THEN ${orders.id} END)`,
           totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
           totalDataGB: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN ${plans.dataLimitGb} * ${orderItems.qty} ELSE 0 END), 0)`,
           packagesSold: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN ${orderItems.qty} ELSE 0 END), 0)`

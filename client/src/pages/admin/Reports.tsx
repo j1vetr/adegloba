@@ -114,7 +114,7 @@ export default function Reports() {
                   <Package className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Toplam Sipariş</p>
+                  <p className="text-sm text-slate-400">Ödenen Siparişler</p>
                   <p className="text-2xl font-bold text-white">{totalStats.totalOrders}</p>
                 </div>
               </div>
@@ -126,7 +126,7 @@ export default function Reports() {
                   <DollarSign className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Toplam Gelir</p>
+                  <p className="text-sm text-slate-400">Net Gelir</p>
                   <p className="text-2xl font-bold text-white">${totalStats.totalRevenue.toFixed(2)}</p>
                 </div>
               </div>
@@ -138,7 +138,7 @@ export default function Reports() {
                   <TrendingUp className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Paket Satışı</p>
+                  <p className="text-sm text-slate-400">Satılan Paketler</p>
                   <p className="text-2xl font-bold text-white">{totalStats.packagesSold}</p>
                 </div>
               </div>
@@ -150,7 +150,7 @@ export default function Reports() {
                   <BarChart3 className="w-5 h-5 text-yellow-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Toplam Veri (GB)</p>
+                  <p className="text-sm text-slate-400">Satılan Veri (GB)</p>
                   <p className="text-2xl font-bold text-white">{totalStats.totalDataGB}</p>
                 </div>
               </div>
@@ -240,10 +240,10 @@ export default function Reports() {
                 <thead>
                   <tr className="border-b border-slate-600">
                     <th className="text-left py-3 px-2 text-slate-300 font-medium">Gemi Adı</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Sipariş Sayısı</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Paket Satışı</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Toplam Veri (GB)</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Gelir ($)</th>
+                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Ödenen Siparişler</th>
+                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Satılan Paketler</th>
+                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Satılan Veri (GB)</th>
+                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Net Gelir ($)</th>
                   </tr>
                 </thead>
                 <tbody>
