@@ -57,7 +57,7 @@ export function EmailSettings() {
   // Save email settings mutation
   const saveSettingsMutation = useMutation({
     mutationFn: (data: EmailSettings) => 
-      apiRequest('/api/admin/email-settings', { method: 'POST', body: JSON.stringify(data) }),
+      apiRequest('POST', '/api/admin/email-settings', data),
     onSuccess: () => {
       toast({ title: 'E-posta ayarları başarıyla kaydedildi!' });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/email-settings'] });
@@ -74,10 +74,7 @@ export function EmailSettings() {
   // Test email mutation
   const testEmailMutation = useMutation({
     mutationFn: (email: string) => 
-      apiRequest('/api/admin/email-settings/test', { 
-        method: 'POST', 
-        body: JSON.stringify({ testEmail: email })
-      }),
+      apiRequest('POST', '/api/admin/email-settings/test', { testEmail: email }),
     onSuccess: () => {
       toast({ title: 'Test e-postası başarıyla gönderildi!' });
       setTestEmail('');
