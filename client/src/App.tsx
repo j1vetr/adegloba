@@ -31,6 +31,7 @@ import CouponsManagementNew from "@/pages/admin/CouponsManagementNew";
 import OrdersManagement from "@/pages/admin/OrdersManagement";
 import UsersManagementNew from "@/pages/admin/UsersManagementNew";
 import SettingsManagement from "@/pages/admin/SettingsManagement";
+import SiteSettings from "@/pages/admin/SiteSettings";
 import TicketManagement from "@/pages/admin/TicketManagement";
 import SystemLogs from "@/pages/admin/SystemLogs";
 import { EmailSettings } from "@/pages/admin/EmailSettings";
@@ -103,6 +104,12 @@ function Router() {
       <Route path="/admin/settings">
         <AdminProtectedRoute>
           <SettingsManagement />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/site-settings">
+        <AdminProtectedRoute>
+          <SiteSettings />
         </AdminProtectedRoute>
       </Route>
       
