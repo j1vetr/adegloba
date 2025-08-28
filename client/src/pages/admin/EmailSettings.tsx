@@ -73,7 +73,6 @@ export function EmailSettings() {
           console.log('✅ MAPPED SETTINGS:', mappedSettings);
           setFormData(mappedSettings);
           console.log('✅ Form data updated with manual fetch!');
-          console.log('📝 Updated formData state:', formData);
         }
       } catch (error) {
         console.error('❌ Manual fetch error:', error);
@@ -294,7 +293,6 @@ export function EmailSettings() {
                         placeholder="smtp.gmail.com"
                         data-testid="input-smtp-host"
                       />
-                      <div className="text-xs text-yellow-400">Debug: {formData.smtpHost}</div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="smtpPort" className="text-white">Port</Label>
@@ -319,7 +317,6 @@ export function EmailSettings() {
                         placeholder="your-email@gmail.com"
                         data-testid="input-smtp-user"
                       />
-                      <div className="text-xs text-yellow-400">Debug: {formData.smtpUser}</div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="smtpPass" className="text-white">Şifre</Label>
