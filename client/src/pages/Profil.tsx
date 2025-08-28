@@ -69,7 +69,6 @@ export default function Profil() {
     { code: "+257", country: "Burundi", flag: "🇧🇮" },
     { code: "+855", country: "Kamboçya", flag: "🇰🇭" },
     { code: "+237", country: "Kamerun", flag: "🇨🇲" },
-    { code: "+1", country: "Kanada", flag: "🇨🇦" },
     { code: "+238", country: "Cabo Verde", flag: "🇨🇻" },
     { code: "+1345", country: "Cayman Adaları", flag: "🇰🇾" },
     { code: "+236", country: "Orta Afrika Cumhuriyeti", flag: "🇨🇫" },
