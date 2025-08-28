@@ -251,31 +251,200 @@ export class EmailService {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{{subject}}</title>
         <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #111827; color: #fff; }
-            .container { max-width: 600px; margin: 0 auto; background-color: #1f2937; }
-            .header { background-color: #0f172a; padding: 20px; text-align: center; }
-            .logo { color: #facc15; font-size: 24px; font-weight: bold; }
-            .content { padding: 30px; }
-            .button { display: inline-block; padding: 12px 24px; background-color: #facc15; color: #000; text-decoration: none; border-radius: 6px; font-weight: bold; }
-            .footer { background-color: #0f172a; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af; }
-            .footer a { color: #facc15; text-decoration: none; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                margin: 0; padding: 20px; 
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                color: #ffffff; 
+                line-height: 1.6; 
+            }
+            .email-container { 
+                max-width: 650px; 
+                margin: 0 auto; 
+                background: linear-gradient(145deg, #1e293b, #0f172a);
+                border: 1px solid #334155;
+                border-radius: 16px; 
+                overflow: hidden;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1) inset;
+            }
+            .header { 
+                background: linear-gradient(135deg, #facc15, #f59e0b);
+                padding: 30px 20px; 
+                text-align: center; 
+                position: relative;
+                overflow: hidden;
+            }
+            .header::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+                animation: shimmer 3s infinite;
+            }
+            @keyframes shimmer {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .logo { 
+                color: #0f172a; 
+                font-size: 28px; 
+                font-weight: 900; 
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                letter-spacing: 1px;
+                position: relative;
+                z-index: 1;
+            }
+            .subtitle {
+                color: #1e293b;
+                font-size: 14px;
+                font-weight: 600;
+                margin-top: 5px;
+                position: relative;
+                z-index: 1;
+            }
+            .content { 
+                padding: 40px 30px; 
+                background: rgba(30, 41, 59, 0.5);
+                backdrop-filter: blur(10px);
+            }
+            .content h1, .content h2 { 
+                color: #facc15; 
+                margin-bottom: 20px; 
+                font-weight: 700;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            }
+            .content h1 { font-size: 24px; }
+            .content h2 { font-size: 22px; }
+            .content p { 
+                color: #e2e8f0; 
+                margin-bottom: 16px; 
+                font-size: 16px; 
+            }
+            .highlight { 
+                background: linear-gradient(90deg, #facc15, #f59e0b);
+                color: #0f172a;
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-weight: 600;
+            }
+            .button { 
+                display: inline-block; 
+                padding: 16px 32px; 
+                background: linear-gradient(135deg, #facc15, #f59e0b);
+                color: #0f172a; 
+                text-decoration: none; 
+                border-radius: 12px; 
+                font-weight: 700; 
+                font-size: 16px;
+                margin: 20px 0;
+                transition: all 0.3s ease;
+                box-shadow: 0 8px 16px rgba(250, 204, 21, 0.3);
+                text-align: center;
+                letter-spacing: 0.5px;
+            }
+            .button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 12px 24px rgba(250, 204, 21, 0.4);
+            }
+            .order-details {
+                background: rgba(15, 23, 42, 0.6);
+                border: 1px solid #334155;
+                border-radius: 12px;
+                padding: 20px;
+                margin: 20px 0;
+            }
+            .order-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid #334155;
+                color: #e2e8f0;
+            }
+            .order-item:last-child {
+                border-bottom: none;
+            }
+            .price {
+                color: #facc15;
+                font-weight: 700;
+                font-size: 18px;
+            }
+            .footer { 
+                background: linear-gradient(135deg, #0f172a, #1e293b);
+                padding: 30px 20px; 
+                text-align: center; 
+                border-top: 1px solid #334155;
+            }
+            .footer-brand {
+                color: #facc15;
+                font-size: 18px;
+                font-weight: 700;
+                margin-bottom: 15px;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            }
+            .footer-links {
+                color: #94a3b8;
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+            .footer-links a { 
+                color: #facc15; 
+                text-decoration: none;
+                font-weight: 600;
+                margin: 0 5px;
+            }
+            .footer-links a:hover {
+                text-shadow: 0 0 8px #facc15;
+            }
+            .footer-copyright {
+                color: #64748b;
+                font-size: 12px;
+                margin-top: 15px;
+                padding-top: 15px;
+                border-top: 1px solid #334155;
+            }
+            .status-badge {
+                display: inline-block;
+                padding: 6px 16px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            @media (max-width: 600px) {
+                .email-container { margin: 10px; border-radius: 12px; }
+                .content { padding: 30px 20px; }
+                .header { padding: 25px 15px; }
+                .logo { font-size: 24px; }
+                .button { padding: 14px 24px; width: 100%; }
+            }
         </style>
     </head>
     <body>
-        <div class="container">
+        <div class="email-container">
             <div class="header">
                 <div class="logo">AdeGloba Starlink System</div>
+                <div class="subtitle">Maritime Satellite Internet Solutions</div>
             </div>
             <div class="content">
                 {{content}}
             </div>
             <div class="footer">
-                <p><strong>Dijita / Starlink Servis</strong></p>
-                <p>
-                    Destek: <a href="mailto:support@domain.com">support@domain.com</a> | 
+                <div class="footer-brand">Dijita / Starlink Servis</div>
+                <div class="footer-links">
+                    Destek: <a href="mailto:starlink@adegloba.space">starlink@adegloba.space</a> | 
                     Tel: <a href="tel:+905xxxxxxxxx">+90 5xx xxx xx xx</a>
-                </p>
-                <p>&copy; 2024 AdeGloba. Tüm hakları saklıdır.</p>
+                </div>
+                <div class="footer-copyright">
+                    © 2025 AdeGloba. Tüm hakları saklıdır. | Güvenilir Denizcilik İnternet Çözümleri
+                </div>
             </div>
         </div>
     </body>
@@ -285,24 +454,41 @@ export class EmailService {
     switch (template) {
       case 'welcome':
         return baseTemplate.replace('{{content}}', `
-          <h2>Hoş Geldiniz!</h2>
-          <p>Merhaba {{userName}},</p>
-          <p>AdeGloba Starlink sistemine başarıyla kayıt oldunuz. Artık yüksek hızlı internet paketlerimizden faydalanabilirsiniz.</p>
-          <p>Hesabınıza giriş yapmak için aşağıdaki butona tıklayın:</p>
-          <p><a href="{{loginUrl}}" class="button">Giriş Yap</a></p>
-          <p>İyi günler dileriz!</p>
+          <h2>🌟 Hoş Geldiniz!</h2>
+          <p>Merhaba <span class="highlight">{{userName}}</span>,</p>
+          <p>AdeGloba Starlink sistemine başarıyla kayıt oldunuz! Artık denizlerde kesintisiz, yüksek hızlı internet bağlantısının keyfini çıkarabilirsiniz.</p>
+          <div class="order-details">
+            <div class="status-badge">✅ Hesap Aktif</div>
+            <p style="margin-top: 15px; color: #94a3b8;">Maritime internet çözümlerimiz ile her zaman bağlı kalın</p>
+          </div>
+          <p>Hesabınıza giriş yapmak ve paketlerinizi yönetmek için:</p>
+          <div style="text-align: center;">
+            <a href="{{loginUrl}}" class="button">🚀 Kontrol Paneline Giriş Yap</a>
+          </div>
+          <p>İyi denizler dileriz! ⚓</p>
         `);
 
       case 'order_confirm':
         return baseTemplate.replace('{{content}}', `
-          <h2>Sipariş Onayı</h2>
-          <p>Merhaba {{userName}},</p>
-          <p>Sipariş numarası <strong>{{orderNumber}}</strong> başarıyla tamamlandı.</p>
-          <h3>Sipariş Detayları:</h3>
-          <ul>{{orderItems}}</ul>
-          <p><strong>Toplam Tutar:</strong> ${{totalAmount}}</p>
-          <p>Giriş bilgileriniz kısa süre içinde e-posta adresinize gönderilecektir.</p>
-          <p><a href="{{dashboardUrl}}" class="button">Hesabıma Git</a></p>
+          <h2>🎉 Sipariş Onaylandı</h2>
+          <p>Merhaba <span class="highlight">{{userName}}</span>,</p>
+          <p>Sipariş numarası <span class="highlight">{{orderNumber}}</span> başarıyla tamamlandı ve ödemeniz alındı!</p>
+          
+          <div class="order-details">
+            <h3 style="color: #facc15; margin-bottom: 15px;">📦 Sipariş Detayları</h3>
+            <div style="color: #e2e8f0;">{{orderItems}}</div>
+            <div class="order-item" style="border-top: 2px solid #facc15; margin-top: 15px; padding-top: 15px;">
+              <strong style="color: #facc15;">Toplam Tutar:</strong>
+              <span class="price">${{totalAmount}}</span>
+            </div>
+          </div>
+          
+          <div class="status-badge">🚀 Paketler Aktifleştiriliyor</div>
+          <p style="margin-top: 20px;">Internet paketleriniz 15-30 dakika içerisinde aktif hale gelecek. Gemici Wi-Fi ağınızdan bağlanabilirsiniz.</p>
+          
+          <div style="text-align: center;">
+            <a href="{{dashboardUrl}}" class="button">📊 Kontrol Panelim</a>
+          </div>
         `);
 
       case 'admin_new_order':
