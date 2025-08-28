@@ -8,7 +8,8 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-if (!process.env.REPLIT_DOMAINS) {
+// Skip Replit auth in production if REPL_ID is 'production-server'
+if (!process.env.REPLIT_DOMAINS && process.env.REPL_ID !== 'production-server') {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
@@ -71,6 +72,12 @@ export async function setupAuth(app: Express) {
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Skip OIDC config in production
+  if (process.env.REPL_ID === 'production-server') {
+    console.log('🏭 Production mode: Skipping Replit OIDC setup');
+    return;
+  }
 
   const config = await getOidcConfig();
 
