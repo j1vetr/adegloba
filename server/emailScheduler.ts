@@ -34,7 +34,7 @@ async function generateAndSendMonthlyReport() {
     console.log('📊 Generating monthly report...');
     
     // Get admin email from settings (you might want to add this to email settings)
-    const adminEmail = 'admin@adegloba.com'; // TODO: Make this configurable
+    const adminEmail = 'support@adegloba.space'; // TODO: Make this configurable
     
     // Get previous month's data
     const now = new Date();

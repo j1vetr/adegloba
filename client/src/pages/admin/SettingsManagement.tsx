@@ -402,7 +402,7 @@ export default function SettingsManagement() {
                     value={settings.whatsappNumber || ''}
                     onChange={(e) => updateSetting('whatsappNumber', e.target.value)}
                     className="admin-input"
-                    placeholder="+90 XXX XXX XX XX"
+                    placeholder="+44 744 022 5375"
                   />
                   {savingStates.whatsappNumber && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
@@ -418,7 +418,7 @@ export default function SettingsManagement() {
                     value={settings.supportEmail || ''}
                     onChange={(e) => updateSetting('supportEmail', e.target.value)}
                     className="admin-input"
-                    placeholder="support@adegloba.com"
+                    placeholder="support@adegloba.space"
                   />
                   {savingStates.supportEmail && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />

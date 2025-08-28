@@ -291,7 +291,7 @@ export class OrderService {
 
       // 2. Send admin notification
       const adminEmailSetting = await this.storage.getSetting('admin_email');
-      const adminEmail = adminEmailSetting?.value || 'admin@adegloba.com';
+      const adminEmail = adminEmailSetting?.value || 'support@adegloba.space';
       const adminEmailSuccess = await emailService.sendEmail(
         adminEmail,
         'Yeni Sipariş Bildirimi - AdeGloba Starlink System',

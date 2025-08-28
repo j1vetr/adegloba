@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 
 export default function WhatsAppButton() {
   const handleClick = () => {
-    const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '+1234567890';
+    const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '+447440225375';
     const message = 'Hello! I need support with StarLink Marine data packages.';
     const url = `https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');

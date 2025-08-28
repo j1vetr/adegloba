@@ -197,7 +197,7 @@ export default function OrderSuccess() {
           </p>
           <div className="flex justify-center space-x-4 text-xs text-slate-500">
             <span>📧 support@adegloba.space</span>
-            <span>📱 WhatsApp Destek</span>
+            <span>📱 +44 744 022 5375</span>
           </div>
         </div>
       </div>

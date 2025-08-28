@@ -195,8 +195,8 @@ export default function OrderCancel() {
             Sorun devam ederse destek ekibimizle iletişime geçin
           </p>
           <div className="flex justify-center space-x-4 text-xs text-slate-500">
-            <span>📧 support@adegloba.com</span>
-            <span>📱 WhatsApp Destek</span>
+            <span>📧 support@adegloba.space</span>
+            <span>📱 +44 744 022 5375</span>
             <span>📞 7/24 Teknik Destek</span>
           </div>
         </div>

@@ -1916,7 +1916,7 @@ export class DatabaseStorage implements IStorage {
     
     return {
       ...settings,
-      adminEmail: adminEmailSetting?.value || 'admin@adegloba.com'
+      adminEmail: adminEmailSetting?.value || 'support@adegloba.space'
     };
   }
 

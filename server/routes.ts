@@ -1997,7 +1997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/_test/email/admin/order', async (req, res) => {
     try {
-      const adminEmail = 'admin@adegloba.com'; // Replace with actual admin email
+      const adminEmail = 'support@adegloba.space'; // Replace with actual admin email
       
       const success = await emailService.sendEmail(
         adminEmail,
@@ -2023,7 +2023,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/_test/email/admin/report', async (req, res) => {
     try {
-      const adminEmail = 'admin@adegloba.com'; // Replace with actual admin email
+      const adminEmail = 'support@adegloba.space'; // Replace with actual admin email
       
       const success = await emailService.sendEmail(
         adminEmail,

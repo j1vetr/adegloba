@@ -14,7 +14,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState({
     siteName: 'StarLink Marine',
-    whatsappNumber: '+1234567890',
+    whatsappNumber: '+447440225375',
     paypalClientId: '',
     paypalSecret: '',
     paypalEnvironment: 'sandbox',
