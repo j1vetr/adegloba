@@ -1873,7 +1873,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.upsertSetting('smtp_password', settingsData.smtpPass || '', 'email');
       await storage.upsertSetting('from_email', settingsData.fromEmail || '', 'email');
       await storage.upsertSetting('from_name', settingsData.fromName || 'AdeGloba Starlink', 'email');
+      await storage.upsertSetting('reply_to', settingsData.replyTo || '', 'email');
       await storage.upsertSetting('admin_email', settingsData.adminEmail || '', 'email');
+      await storage.upsertSetting('email_active', (settingsData.isActive || true).toString(), 'email');
       
       // Return masked settings
       const maskedSettings = {
