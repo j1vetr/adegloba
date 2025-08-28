@@ -290,7 +290,8 @@ export class OrderService {
       console.log(`📧 Customer order confirmation email: ${customerEmailSuccess ? 'sent' : 'failed'} to ${user.email}`);
 
       // 2. Send admin notification
-      const adminEmail = 'admin@adegloba.com'; // TODO: Make this configurable
+      const adminEmailSetting = await this.storage.getSetting('admin_email');
+      const adminEmail = adminEmailSetting?.value || 'admin@adegloba.com';
       const adminEmailSuccess = await emailService.sendEmail(
         adminEmail,
         'Yeni Sipariş Bildirimi - AdeGloba Starlink System',

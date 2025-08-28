@@ -187,16 +187,30 @@ export function EmailSettings() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="replyTo" className="text-white">Yanıt Adresi</Label>
-                <Input
-                  id="replyTo"
-                  type="email"
-                  value={formData.replyTo || ''}
-                  onChange={(e) => updateFormData('replyTo', e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  placeholder="support@domain.com"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="replyTo" className="text-white">Yanıt Adresi</Label>
+                  <Input
+                    id="replyTo"
+                    type="email"
+                    value={formData.replyTo || ''}
+                    onChange={(e) => updateFormData('replyTo', e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="support@domain.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="adminEmail" className="text-white">Admin E-posta</Label>
+                  <Input
+                    id="adminEmail"
+                    type="email"
+                    value={formData.adminEmail || ''}
+                    onChange={(e) => updateFormData('adminEmail', e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="admin@adegloba.com"
+                  />
+                  <p className="text-xs text-gray-400">Sipariş bildirimleri bu adrese gönderilir</p>
+                </div>
               </div>
 
               {/* Provider Specific Settings */}

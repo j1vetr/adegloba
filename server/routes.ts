@@ -2680,6 +2680,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
+  // Email Settings Management
+  app.get('/api/admin/email-settings', async (req: any, res) => {
+    if (!req.session?.user?.is_admin) {
+      return res.status(401).json({ message: 'Admin access required' });
+    }
+
+    try {
+      const emailSettings = await storage.getEmailSettings();
+      res.json(emailSettings);
+    } catch (error) {
+      console.error('Error fetching email settings:', error);
+      res.status(500).json({ message: 'Failed to fetch email settings' });
+    }
+  });
+
+  app.post('/api/admin/email-settings', async (req: any, res) => {
+    if (!req.session?.user?.is_admin) {
+      return res.status(401).json({ message: 'Admin access required' });
+    }
+
+    try {
+      const settings = req.body;
+      
+      // Save email settings
+      await storage.saveEmailSettings(settings);
+      
+      // Also save admin email to general settings
+      if (settings.adminEmail) {
+        await storage.upsertSetting('admin_email', settings.adminEmail, 'email');
+      }
+
+      res.json({ success: true, message: 'Email settings saved successfully' });
+    } catch (error) {
+      console.error('Error saving email settings:', error);
+      res.status(500).json({ message: 'Failed to save email settings' });
+    }
+  });
+
+  app.post('/api/admin/email-settings/test', async (req: any, res) => {
+    if (!req.session?.user?.is_admin) {
+      return res.status(401).json({ message: 'Admin access required' });
+    }
+
+    try {
+      const { testEmail } = req.body;
+      
+      if (!testEmail) {
+        return res.status(400).json({ message: 'Test email address required' });
+      }
+
+      const success = await emailService.sendEmail(
+        testEmail,
+        'Test E-postası - AdeGloba Starlink System',
+        'test',
+        {
+          testMessage: 'Bu bir test e-postasıdır. E-posta ayarlarınız doğru şekilde yapılandırılmıştır.',
+          adminUrl: (process.env.BASE_URL || 'http://localhost:5000') + '/admin'
+        }
+      );
+
+      if (success) {
+        res.json({ success: true, message: 'Test email sent successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to send test email' });
+      }
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      res.status(500).json({ message: 'Failed to send test email' });
+    }
+  });
+
   // Run startup check after a short delay
   setTimeout(startupIncompleteOrdersCheck, 5000);
   
