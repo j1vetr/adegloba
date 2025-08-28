@@ -29,6 +29,11 @@ export function startEmailScheduler() {
   console.log('✅ Email scheduler started - Monthly reports will be sent on 1st of each month at 09:10');
 }
 
+async function getBaseUrl(): Promise<string> {
+  const baseUrlSetting = await storage.getSetting('base_url');
+  return baseUrlSetting?.value || 'https://adegloba.toov.com.tr';
+}
+
 async function generateAndSendMonthlyReport() {
   try {
     console.log('📊 Generating monthly report...');
@@ -73,7 +78,7 @@ async function generateAndSendMonthlyReport() {
         totalOrders: totals.totalOrders.toString(),
         totalRevenue: totals.totalRevenue.toFixed(2),
         totalDataGB: totals.totalDataGB.toString(),
-        adminUrl: (process.env.BASE_URL || 'http://localhost:5000') + '/admin',
+        adminUrl: (await getBaseUrl()) + '/admin',
       }
     );
     

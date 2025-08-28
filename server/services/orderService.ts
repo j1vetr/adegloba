@@ -17,6 +17,11 @@ export class OrderService {
     this.couponService = new CouponService(storage);
   }
 
+  private async getBaseUrl(): Promise<string> {
+    const baseUrlSetting = await this.storage.getSetting('base_url');
+    return baseUrlSetting?.value || 'https://adegloba.toov.com.tr';
+  }
+
   async createOrder(userId: string, shipId: string, planId: string, couponCode?: string) {
     // Get ship and plan
     const [ship, plan] = await Promise.all([
@@ -283,7 +288,7 @@ export class OrderService {
           orderNumber: order.id.substring(0, 8).toUpperCase(),
           orderItems: orderItemsHtml,
           totalAmount: parseFloat(order.totalUsd || '0').toFixed(2),
-          dashboardUrl: process.env.BASE_URL || 'http://localhost:5000',
+          dashboardUrl: await this.getBaseUrl(),
         }
       );
 
@@ -303,7 +308,7 @@ export class OrderService {
           shipName,
           totalAmount: parseFloat(order.totalUsd || '0').toFixed(2),
           orderItems: orderItemsHtml,
-          adminUrl: (process.env.BASE_URL || 'http://localhost:5000') + '/admin',
+          adminUrl: (await this.getBaseUrl()) + '/admin',
         }
       );
 

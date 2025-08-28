@@ -15,6 +15,7 @@ export default function Settings() {
   const [settings, setSettings] = useState({
     siteName: 'StarLink Marine',
     whatsappNumber: '+447440225375',
+    baseUrl: 'https://adegloba.toov.com.tr',
     paypalClientId: '',
     paypalSecret: '',
     paypalEnvironment: 'sandbox',
@@ -101,6 +102,7 @@ export default function Settings() {
       paypalEnvironment: { key: 'paypalEnvironment', category: 'payment' },
       siteName: { key: 'siteName', category: 'general' },
       whatsappNumber: { key: 'whatsappNumber', category: 'general' },
+      baseUrl: { key: 'base_url', category: 'general' },
       defaultLanguage: { key: 'defaultLanguage', category: 'general' },
       timezone: { key: 'timezone', category: 'general' },
       privacyPolicy: { key: 'privacyPolicy', category: 'general' },
@@ -178,6 +180,28 @@ export default function Settings() {
               </select>
             </div>
             
+            <div className="space-y-2">
+              <Label className="text-slate-300">Site URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={settings.baseUrl}
+                  onChange={(e) => setSettings({ ...settings, baseUrl: e.target.value })}
+                  className="glassmorphism border-slate-600 text-white flex-1"
+                  placeholder="https://adegloba.toov.com.tr"
+                  data-testid="base-url-input"
+                />
+                <Button
+                  onClick={() => handleSaveSetting('baseUrl', settings.baseUrl, 'general')}
+                  disabled={updateSettingMutation.isPending}
+                  size="sm"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  data-testid="save-base-url"
+                >
+                  {updateSettingMutation.isPending ? '💫' : '✓'}
+                </Button>
+              </div>
+            </div>
+
             <div>
               <Label className="text-slate-300">WhatsApp Number</Label>
               <Input

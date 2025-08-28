@@ -50,6 +50,11 @@ export class EmailService {
     return this.emailSettings;
   }
 
+  private async getBaseUrl(): Promise<string> {
+    const baseUrlSetting = await storage.getSetting('base_url');
+    return baseUrlSetting?.value || 'https://adegloba.toov.com.tr';
+  }
+
   async sendEmail(
     to: string,
     subject: string,
@@ -534,13 +539,16 @@ export class EmailService {
 
   // Test email method
   async sendTestEmail(to: string): Promise<boolean> {
+    const baseUrl = await this.getBaseUrl();
     return await this.sendEmail(
       to,
       'AdeGloba Test Mail',
       'welcome',
       {
         userName: 'Test User',
-        loginUrl: process.env.BASE_URL || 'http://localhost:5000',
+        loginUrl: baseUrl,
+        dashboardUrl: baseUrl + '/dashboard',
+        adminUrl: baseUrl + '/admin'
       }
     );
   }
