@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function OrderSuccess() {
   const [, setLocation] = useLocation();
-  const [countdown, setCountdown] = useState(8);
+  const [countdown, setCountdown] = useState(5);
   const [orderDetails, setOrderDetails] = useState<any>(null);
 
   // Parse URL parameters for order details
@@ -161,7 +161,7 @@ export default function OrderSuccess() {
             <div className="w-full bg-slate-700 rounded-full h-2 mb-6">
               <div 
                 className="bg-gradient-to-r from-cyan-400 to-blue-500 h-2 rounded-full transition-all duration-1000 ease-linear"
-                style={{ width: `${((8 - countdown) / 8) * 100}%` }}
+                style={{ width: `${((5 - countdown) / 5) * 100}%` }}
               />
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function OrderSuccess() {
               data-testid="redirect-now-button"
             >
               <ArrowRight className="w-5 h-5 mr-2" />
-              Ana sayfaya dön
+              Müşteri Paneline Git
             </Button>
             
             <div className="text-center">
