@@ -46,8 +46,8 @@ export function EmailSettings() {
   // Update form when settings are loaded
   useEffect(() => {
     if (settings) {
-      console.log('Loaded settings:', settings);
-      console.log('Current formData before update:', formData);
+      console.log('🔍 RAW API RESPONSE:', settings);
+      console.log('📋 Current formData before update:', formData);
       
       const data = settings as any; // Cast to avoid TypeScript errors
       
@@ -66,8 +66,10 @@ export function EmailSettings() {
         isActive: data.is_active ?? data.isActive ?? true,
       };
       
-      console.log('Mapped settings:', mappedSettings);
-      setFormData(prev => ({ ...prev, ...mappedSettings }));
+      console.log('✅ MAPPED SETTINGS:', mappedSettings);
+      console.log('📝 Setting form data...');
+      setFormData(mappedSettings); // Direct set instead of merge
+      console.log('✅ Form data updated!');
     }
   }, [settings]);
 
