@@ -82,6 +82,32 @@ export function setupUserAuth(app: Express) {
         // Don't fail registration if email fails
       }
 
+      // Send admin notification about new user
+      try {
+        const adminEmailSetting = await storage.getSetting('admin_email');
+        const adminEmail = adminEmailSetting?.value || 'support@adegloba.space';
+        const ship = await storage.getShips().then(ships => ships.find(s => s.id === user.ship_id));
+        
+        await emailService.sendEmail(
+          adminEmail,
+          'Yeni Kullanıcı Kaydı - AdeGloba Starlink System',
+          'admin_new_user',
+          {
+            userName: user.full_name || user.username,
+            username: user.username,
+            userEmail: user.email,
+            userPhone: user.phone || 'Belirtilmemiş',
+            shipName: ship?.name || 'Bilinmeyen Gemi',
+            userAddress: user.address || 'Belirtilmemiş',
+            adminUrl: baseUrl + '/admin'
+          }
+        );
+        console.log(`📧 Admin notification sent for new user: ${user.email}`);
+      } catch (emailError) {
+        console.error('📧 Failed to send admin notification:', emailError);
+        // Don't fail registration if email fails
+      }
+
       // Automatically log in the user after successful registration
       req.session.userId = user.id;
       req.session.isAuthenticated = true;

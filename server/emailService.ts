@@ -512,6 +512,31 @@ export class EmailService {
           <p><a href="{{adminUrl}}" class="button">Admin Paneline Git</a></p>
         `);
 
+      case 'admin_new_user':
+        return baseTemplate.replace('{{content}}', `
+          <h2>🆕 Yeni Kullanıcı Kaydı</h2>
+          <p>Sisteme yeni bir kullanıcı kayıt oldu:</p>
+          
+          <div class="order-details">
+            <h3 style="color: #facc15; margin-bottom: 15px;">👤 Kullanıcı Bilgileri</h3>
+            <div style="color: #e2e8f0;">
+              <div class="order-item"><strong>Ad Soyad:</strong> <span class="highlight">{{userName}}</span></div>
+              <div class="order-item"><strong>Kullanıcı Adı:</strong> <span class="highlight">{{username}}</span></div>
+              <div class="order-item"><strong>E-posta:</strong> <span class="highlight">{{userEmail}}</span></div>
+              <div class="order-item"><strong>Telefon:</strong> <span class="highlight">{{userPhone}}</span></div>
+              <div class="order-item"><strong>Gemi:</strong> <span class="highlight">{{shipName}}</span></div>
+              <div class="order-item"><strong>Adres:</strong> <span class="highlight">{{userAddress}}</span></div>
+            </div>
+          </div>
+          
+          <div class="status-badge">✅ Kayıt Tamamlandı</div>
+          <p style="margin-top: 20px;">Kullanıcı otomatik olarak sisteme giriş yaptı ve hoşgeldin e-postası gönderildi.</p>
+          
+          <div style="text-align: center;">
+            <a href="{{adminUrl}}" class="button">🔧 Admin Paneline Git</a>
+          </div>
+        `);
+
       case 'admin_monthly_report':
         return baseTemplate.replace('{{content}}', `
           <h2>Aylık Sipariş Raporu</h2>
