@@ -437,13 +437,13 @@ export class EmailService {
                 {{content}}
             </div>
             <div class="footer">
-                <div class="footer-brand">Dijita / Starlink Servis</div>
+                <div class="footer-brand">Ade Globa</div>
                 <div class="footer-links">
                     Destek: <a href="mailto:starlink@adegloba.space">starlink@adegloba.space</a> | 
-                    Tel: <a href="tel:+905xxxxxxxxx">+90 5xx xxx xx xx</a>
+                    Tel & WhatsApp: <a href="tel:+447440225375">+44 744 022 5375</a>
                 </div>
                 <div class="footer-copyright">
-                    © 2025 AdeGloba. Tüm hakları saklıdır. | Güvenilir Denizcilik İnternet Çözümleri
+                    © 2025 Ade Globa. Tüm hakları saklıdır. | Güvenilir Denizcilik İnternet Çözümleri
                 </div>
             </div>
         </div>
