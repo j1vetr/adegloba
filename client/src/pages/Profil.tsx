@@ -76,8 +76,8 @@ export default function Profil() {
     { code: "+235", country: "Çad", flag: "🇹🇩" },
     { code: "+56", country: "Şili", flag: "🇨🇱" },
     { code: "+86", country: "Çin", flag: "🇨🇳" },
-    { code: "+61", country: "Christmas Adası", flag: "🇨🇽" },
-    { code: "+61", country: "Cocos Adaları", flag: "🇨🇨" },
+    { code: "+6161", country: "Christmas Adası", flag: "🇨🇽" },
+    { code: "+6162", country: "Cocos Adaları", flag: "🇨🇨" },
     { code: "+57", country: "Kolombiya", flag: "🇨🇴" },
     { code: "+269", country: "Komorlar", flag: "🇰🇲" },
     { code: "+682", country: "Cook Adaları", flag: "🇨🇰" },
@@ -204,7 +204,6 @@ export default function Profil() {
     { code: "+1787", country: "Porto Riko", flag: "🇵🇷" },
     { code: "+974", country: "Katar", flag: "🇶🇦" },
     { code: "+242", country: "Kongo Cumhuriyeti", flag: "🇨🇬" },
-    { code: "+262", country: "Réunion", flag: "🇷🇪" },
     { code: "+40", country: "Romanya", flag: "🇷🇴" },
     { code: "+7", country: "Rusya", flag: "🇷🇺" },
     { code: "+250", country: "Ruanda", flag: "🇷🇼" },
@@ -263,10 +262,8 @@ export default function Profil() {
     { code: "+379", country: "Vatikan", flag: "🇻🇦" },
     { code: "+58", country: "Venezuela", flag: "🇻🇪" },
     { code: "+84", country: "Vietnam", flag: "🇻🇳" },
-    { code: "+1284", country: "Virgin Adaları (İngiliz)", flag: "🇻🇬" },
     { code: "+1340", country: "Virgin Adaları (ABD)", flag: "🇻🇮" },
     { code: "+681", country: "Wallis ve Futuna", flag: "🇼🇫" },
-    { code: "+212", country: "Batı Sahara", flag: "🇪🇭" },
     { code: "+967", country: "Yemen", flag: "🇾🇪" },
     { code: "+260", country: "Zambiya", flag: "🇿🇲" },
     { code: "+263", country: "Zimbabve", flag: "🇿🇼" }
@@ -282,7 +279,6 @@ export default function Profil() {
     { code: "+39", country: "İtalya", flag: "🇮🇹" },
     { code: "+34", country: "İspanya", flag: "🇪🇸" },
     { code: "+31", country: "Hollanda", flag: "🇳🇱" },
-    { code: "+7", country: "Rusya", flag: "🇷🇺" },
     { code: "+86", country: "Çin", flag: "🇨🇳" }
   ];
 
@@ -293,11 +289,11 @@ export default function Profil() {
     country.code.includes(countrySearch)
   ).sort((a, b) => a.country.localeCompare(b.country, 'tr'));
 
-  // Final liste: popüler + filtrelenmiş (popülerler hariç)
+  // Final liste: popüler + filtrelenmiş (popülerler hariç)  
   const countryCodes = countrySearch ? filteredCountries : [
     ...popularCountries,
     ...allCountryCodes.filter(country => 
-      !popularCountries.some(pop => pop.code === country.code)
+      !popularCountries.some(pop => pop.code === country.code && pop.country === country.country)
     ).sort((a, b) => a.country.localeCompare(b.country, 'tr'))
   ];
 
@@ -586,8 +582,8 @@ export default function Profil() {
                               <div className="p-2 text-xs text-amber-400 font-medium border-b border-slate-700">
                                 Popüler Ülkeler
                               </div>
-                              {popularCountries.map((country) => (
-                                <SelectItem key={`popular-${country.code}`} value={country.code} className="text-white hover:bg-slate-700">
+                              {popularCountries.map((country, index) => (
+                                <SelectItem key={`popular-${index}-${country.code}`} value={country.code} className="text-white hover:bg-slate-700">
                                   <div className="flex items-center gap-2">
                                     <span>{country.flag}</span>
                                     <span>{country.code}</span>
@@ -602,8 +598,8 @@ export default function Profil() {
                           )}
                           {countryCodes.filter(country => 
                             countrySearch || !popularCountries.some(pop => pop.code === country.code)
-                          ).map((country) => (
-                            <SelectItem key={country.code} value={country.code} className="text-white hover:bg-slate-700">
+                          ).map((country, index) => (
+                            <SelectItem key={`all-${index}-${country.code}`} value={country.code} className="text-white hover:bg-slate-700">
                               <div className="flex items-center gap-2">
                                 <span>{country.flag}</span>
                                 <span>{country.code}</span>
