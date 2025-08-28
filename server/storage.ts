@@ -953,11 +953,6 @@ export class DatabaseStorage implements IStorage {
     return setting || null;
   }
 
-  async getSettingsByCategory(category: string): Promise<Setting[]> {
-    return db.select().from(settings).where(eq(settings.category, category));
-  }
-
-
   async initializeDefaultSettings(): Promise<void> {
     const defaultSettings = [
       // General Settings
@@ -2047,10 +2042,6 @@ export class DatabaseStorage implements IStorage {
       console.error('Error fetching orders by ship and date range:', error);
       return [];
     }
-  }
-
-  async getOrderItems(orderId: string): Promise<OrderItem[]> {
-    return db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
   }
 }
 
