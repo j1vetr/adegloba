@@ -1940,15 +1940,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async saveEmailSettings(settings: any): Promise<EmailSetting> {
-    const { adminEmail, ...emailSettings } = settings;
+    const { adminEmail, ...otherSettings } = settings;
     
     // Save admin email to settings table if provided
     if (adminEmail) {
       await this.upsertSetting('admin_email', adminEmail, 'email');
     }
     
+    // Map frontend fields to database fields
+    const emailSettingsData = {
+      provider: otherSettings.provider || 'smtp',
+      smtp_host: otherSettings.smtpHost,
+      smtp_port: otherSettings.smtpPort,
+      smtp_user: otherSettings.smtpUser,
+      smtp_pass: otherSettings.smtpPass,
+      from_email: otherSettings.fromEmail,
+      from_name: otherSettings.fromName,
+      reply_to: otherSettings.replyTo,
+      is_active: otherSettings.isActive ?? true,
+      sendgrid_key: null, // We removed SendGrid
+      mailgun_domain: null, // We removed Mailgun
+      mailgun_key: null, // We removed Mailgun
+    };
+    
+    console.log('💾 Saving email settings to database:', emailSettingsData);
+    
     // Save email settings
-    return this.upsertEmailSettings(emailSettings);
+    return this.upsertEmailSettings(emailSettingsData);
   }
 
   async createEmailLog(logData: InsertEmailLog): Promise<EmailLog> {
