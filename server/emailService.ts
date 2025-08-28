@@ -4,19 +4,25 @@ import crypto from 'crypto-js';
 import { storage } from './storage';
 import type { EmailSetting, InsertEmailLog } from '@shared/schema';
 
-// Encryption key for sensitive data (use env var in production)
-const ENCRYPTION_KEY = process.env.EMAIL_ENCRYPTION_KEY || 'AdeGloba-2024-Email-Key';
+// Encryption key will be loaded from database settings
 
 // Utility functions for encryption/decryption
-function encrypt(text: string): string {
-  if (!text) return '';
-  return crypto.AES.encrypt(text, ENCRYPTION_KEY).toString();
+async function getEncryptionKey(): Promise<string> {
+  const setting = await storage.getSetting('EMAIL_ENCRYPTION_KEY');
+  return setting?.value || 'AdeGloba-2024-Email-Key-Default';
 }
 
-function decrypt(encryptedText: string): string {
+async function encrypt(text: string): Promise<string> {
+  if (!text) return '';
+  const key = await getEncryptionKey();
+  return crypto.AES.encrypt(text, key).toString();
+}
+
+async function decrypt(encryptedText: string): Promise<string> {
   if (!encryptedText) return '';
   try {
-    const bytes = crypto.AES.decrypt(encryptedText, ENCRYPTION_KEY);
+    const key = await getEncryptionKey();
+    const bytes = crypto.AES.decrypt(encryptedText, key);
     return bytes.toString(crypto.enc.Utf8);
   } catch (error) {
     console.error('Decryption error:', error);
@@ -335,8 +341,8 @@ export class EmailService {
   }
 
   // Utility method to encrypt sensitive data before storing
-  static encryptSensitiveData(data: string): string {
-    return encrypt(data);
+  static async encryptSensitiveData(data: string): Promise<string> {
+    return await encrypt(data);
   }
 
   // Test email method

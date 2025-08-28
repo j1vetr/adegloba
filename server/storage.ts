@@ -986,7 +986,10 @@ export class DatabaseStorage implements IStorage {
       { key: 'RADIUS_DB_PORT', value: '3306', category: 'radius' },
       { key: 'RADIUS_DB_USER', value: '', category: 'radius' },
       { key: 'RADIUS_DB_PASS', value: '', category: 'radius' },
-      { key: 'RADIUS_DB_NAME', value: '', category: 'radius' }
+      { key: 'RADIUS_DB_NAME', value: '', category: 'radius' },
+      
+      // Email Security Settings
+      { key: 'EMAIL_ENCRYPTION_KEY', value: 'AdeGloba-2024-Email-Key-Default', category: 'email_security' }
     ];
 
     for (const setting of defaultSettings) {
