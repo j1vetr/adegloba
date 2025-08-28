@@ -18,7 +18,8 @@ import {
   HelpCircle,
   FileText,
   Key,
-  Mail
+  Mail,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -51,6 +52,12 @@ const navigationCategories = [
     name: 'Kullanıcı Yönetimi',
     items: [
       { name: 'Kullanıcılar', href: '/admin/users', icon: Users },
+    ]
+  },
+  {
+    name: 'Finans',
+    items: [
+      { name: 'Raporlama', href: '/admin/reports', icon: BarChart3 },
     ]
   },
   {

@@ -942,6 +942,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin - Reports
+  app.get('/api/admin/reports', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { ship, range } = req.query;
+      
+      // Calculate date range
+      const now = new Date();
+      let startDate: Date;
+      let endDate: Date = now;
+
+      switch (range) {
+        case 'last7days':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'thisMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'lastMonth':
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          startDate = lastMonth;
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          break;
+        case 'thisYear':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        case 'lastYear':
+          startDate = new Date(now.getFullYear() - 1, 0, 1);
+          endDate = new Date(now.getFullYear() - 1, 11, 31);
+          break;
+        default:
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      }
+
+      const reportData = await storage.getReportData(
+        ship === 'all' ? undefined : ship as string,
+        startDate,
+        endDate
+      );
+
+      res.json(reportData);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
   // Admin authentication routes (using session-based auth)
   app.get('/api/admin/me', isAdminAuthenticated, async (req: any, res) => {
     try {

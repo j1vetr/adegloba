@@ -168,6 +168,7 @@ export interface IStorage {
   getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number; cancelledOrders: number; pendingOrders: number }>;
   getCancelledOrdersCount(): Promise<number>;
   getPendingOrdersCount(): Promise<number>;
+  getReportData(shipId?: string, startDate?: Date, endDate?: Date): Promise<any[]>;
   
   // System logs operations
   createSystemLog(logData: InsertSystemLog): Promise<SystemLog>;
@@ -1086,6 +1087,62 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error fetching pending orders count:', error);
       return 0;
+    }
+  }
+
+  async getReportData(shipId?: string, startDate?: Date, endDate?: Date): Promise<any[]> {
+    try {
+      // Base query with joins
+      let query = db
+        .select({
+          shipId: ships.id,
+          shipName: ships.name,
+          totalOrders: sql<number>`COUNT(DISTINCT ${orders.id})`,
+          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
+          totalDataGB: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN ${plans.dataGB} * ${orderItems.quantity} ELSE 0 END), 0)`,
+          packagesSold: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN ${orderItems.quantity} ELSE 0 END), 0)`
+        })
+        .from(ships)
+        .leftJoin(orders, eq(ships.id, orders.shipId))
+        .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+        .leftJoin(plans, eq(orderItems.planId, plans.id))
+        .groupBy(ships.id, ships.name)
+        .orderBy(ships.name);
+
+      // Apply filters
+      const conditions: any[] = [];
+
+      if (shipId) {
+        conditions.push(eq(ships.id, shipId));
+      }
+
+      if (startDate && endDate) {
+        conditions.push(
+          and(
+            gte(orders.createdAt, startDate),
+            lte(orders.createdAt, endDate)
+          )
+        );
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+
+      const result = await query;
+
+      return result.map(row => ({
+        shipId: row.shipId,
+        shipName: row.shipName,
+        totalOrders: Number(row.totalOrders) || 0,
+        totalRevenue: Number(row.totalRevenue) || 0,
+        totalDataGB: Number(row.totalDataGB) || 0,
+        packagesSold: Number(row.packagesSold) || 0
+      }));
+
+    } catch (error) {
+      console.error('Error fetching report data:', error);
+      return [];
     }
   }
 
