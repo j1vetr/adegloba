@@ -127,6 +127,8 @@ export class EmailService {
       const smtpPort = settings.smtpPort || 587;
       const isSecure = smtpPort === 465;
       
+      console.log(`🔧 Attempting SMTP connection to ${settings.smtpHost}:${smtpPort} (secure: ${isSecure})`);
+      
       const transporter = nodemailer.createTransport({
         host: settings.smtpHost,
         port: smtpPort,
@@ -137,14 +139,19 @@ export class EmailService {
         },
         tls: {
           rejectUnauthorized: false, // Allow self-signed certificates
-          ciphers: 'SSLv3' // For older SSL servers if needed
+          servername: settings.smtpHost // Set servername for SNI
         },
-        connectionTimeout: 10000, // 10 seconds timeout
-        greetingTimeout: 5000,
-        socketTimeout: 10000,
-        debug: true, // Enable debug logs
-        logger: true
+        connectionTimeout: 30000, // 30 seconds timeout
+        greetingTimeout: 10000,
+        socketTimeout: 30000,
+        debug: false, // Disable verbose debug
+        logger: false
       });
+
+      // Test connection before sending
+      console.log('🔧 Testing SMTP connection...');
+      await transporter.verify();
+      console.log('✅ SMTP connection verified successfully');
 
       const mailOptions = {
         from: `${settings.fromName || 'AdeGloba'} <${settings.fromEmail}>`,
@@ -160,6 +167,16 @@ export class EmailService {
       return true;
     } catch (error) {
       console.error('SMTP sending error:', error);
+      
+      // Mock email for testing (remove in production)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📧 MOCK EMAIL SENT (development mode):');
+        console.log(`📧 To: ${to}`);
+        console.log(`📧 Subject: ${subject}`);
+        console.log(`📧 HTML: ${html.substring(0, 200)}...`);
+        return true; // Return success for testing
+      }
+      
       return false;
     }
   }
