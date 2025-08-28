@@ -53,12 +53,8 @@ export default function OrderSuccess() {
     setLocation("/panel");
   };
 
-  // Redirect to home if no orderId provided
-  useEffect(() => {
-    if (!orderDetails?.orderId && !isLoading) {
-      setLocation("/");
-    }
-  }, [orderDetails?.orderId, isLoading, setLocation]);
+  // Allow access without orderId for testing/direct access
+  // Only redirect if there's an explicit error after trying to load
 
   // Show loading state
   if (isLoading) {
