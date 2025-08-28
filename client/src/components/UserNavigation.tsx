@@ -66,7 +66,7 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
       href: "/sepet",
       icon: ShoppingCart,
       active: location === "/sepet",
-      badge: cartData?.itemCount || 0
+      badge: cartData?.itemCount > 0 ? cartData.itemCount : undefined
     }
   ];
 
