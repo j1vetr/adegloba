@@ -33,6 +33,7 @@ export const users = pgTable("users", {
   email: varchar("email").notNull().unique(),
   password_hash: varchar("password_hash").notNull(),
   full_name: varchar("full_name"), // İsim Soyisim field
+  phone: varchar("phone"), // Telefon numarası field
   ship_id: varchar("ship_id").references(() => ships.id),
   address: text("address"),
   created_at: timestamp("created_at").defaultNow(),
@@ -365,6 +366,7 @@ export const registerSchema = createInsertSchema(users, {
   username: z.string().min(3, "Kullanıcı adı en az 3 karakter olmalı"),
   email: z.string().email("Geçerli bir e-posta adresi girin"),
   password_hash: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+  phone: z.string().min(10, "Telefon numarası en az 10 haneli olmalı").regex(/^[0-9+\-\s()]+$/, "Geçerli bir telefon numarası girin"),
   ship_id: z.string().min(1, "Gemi seçimi gerekli"),
   address: z.string().min(10, "Adres en az 10 karakter olmalı"),
 }).omit({

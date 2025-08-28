@@ -273,135 +273,24 @@ export default function CreditCardDrawer({
                 </div>
               </div>
 
-              {/* Billing Information Section */}
+              {/* Billing Information Section - Simplified */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-white">Fatura Adresi</h3>
+                <h3 className="text-lg font-medium text-white">Kart Sahibi Bilgileri</h3>
                 
-                {/* Name and Surname */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-slate-300">Ad</Label>
-                    <Input
-                      type="text"
-                      placeholder="Adınız"
-                      value={formData.cardholderName}
-                      onChange={(e) => handleInputChange('cardholderName', e.target.value)}
-                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardholderName ? 'border-red-500' : ''}`}
-                    />
-                    {errors.cardholderName && (
-                      <p className="text-red-400 text-sm mt-1">{errors.cardholderName}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <Label className="text-slate-300">Soyad</Label>
-                    <Input
-                      type="text"
-                      placeholder="Soyadınız"
-                      value={formData.surname}
-                      onChange={(e) => handleInputChange('surname', e.target.value)}
-                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.surname ? 'border-red-500' : ''}`}
-                    />
-                    {errors.surname && (
-                      <p className="text-red-400 text-sm mt-1">{errors.surname}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Address */}
+                {/* Name */}
                 <div>
-                  <Label className="text-slate-300">Adres Satırı 1</Label>
+                  <Label className="text-slate-300">Kart Üzerindeki İsim</Label>
                   <Input
                     type="text"
-                    placeholder="Ana adres bilginiz"
-                    value={formData.addressLine1}
-                    onChange={(e) => handleInputChange('addressLine1', e.target.value)}
-                    className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                    placeholder="Kartınızdaki isim ve soyisim"
+                    value={formData.cardholderName}
+                    onChange={(e) => handleInputChange('cardholderName', e.target.value)}
+                    className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardholderName ? 'border-red-500' : ''}`}
                   />
-                </div>
-
-                <div>
-                  <Label className="text-slate-300">Adres Satırı 2 (Opsiyonel)</Label>
-                  <Input
-                    type="text"
-                    placeholder="Bina, daire vb."
-                    value={formData.addressLine2}
-                    onChange={(e) => handleInputChange('addressLine2', e.target.value)}
-                    className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
-                  />
-                </div>
-
-                {/* City, Region, Postal Code */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-slate-300">Şehir</Label>
-                    <Input
-                      type="text"
-                      placeholder="İstanbul"
-                      value={formData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-slate-300">Bölge</Label>
-                    <Input
-                      type="text"
-                      placeholder="Marmara"
-                      value={formData.region}
-                      onChange={(e) => handleInputChange('region', e.target.value)}
-                      className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-slate-300">Posta Kodu</Label>
-                  <Input
-                    type="text"
-                    placeholder="34000"
-                    value={formData.postalCode}
-                    onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                    className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
-                  />
-                </div>
-
-                {/* Contact Information */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-slate-300">Cep Telefonu</Label>
-                    <Input
-                      type="tel"
-                      placeholder="5xxxxxxxxx"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-slate-300">E-posta</Label>
-                    <Input
-                      type="email"
-                      placeholder="ornek@email.com"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.email ? 'border-red-500' : ''}`}
-                    />
-                    {errors.email && (
-                      <p className="text-red-400 text-sm mt-1">{errors.email}</p>
-                    )}
-                  </div>
+                  {errors.cardholderName && (
+                    <p className="text-red-400 text-sm mt-1">{errors.cardholderName}</p>
+                  )}
                 </div>
               </div>
             </form>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, User, Mail, Lock, Ship as ShipIcon, MapPin, UserPlus } from "lucide-react";
+import { Loader2, User, Mail, Lock, Ship as ShipIcon, MapPin, UserPlus, Phone } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import type { Ship } from "@shared/schema";
@@ -21,6 +21,7 @@ export default function Kayit() {
     username: "",
     email: "",
     password: "",
+    phone: "",
     ship_id: "",
     address: ""
   });
@@ -206,6 +207,24 @@ export default function Kayit() {
                   className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
                   placeholder="Şifrenizi girin (en az 6 karakter)"
                   data-testid="input-password"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-slate-300 flex items-center gap-2 font-medium">
+                  <Phone className="h-4 w-4 text-amber-400" />
+                  Telefon Numarası *
+                </Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required
+                  className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
+                  placeholder="Telefon numaranızı girin (ör: +90 532 123 45 67)"
+                  data-testid="input-phone"
                 />
               </div>
 

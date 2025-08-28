@@ -21,6 +21,7 @@ export function setupUserAuth(app: Express) {
         username: req.body.username,
         email: req.body.email,
         password_hash: req.body.password,
+        phone: req.body.phone,
         ship_id: req.body.ship_id,
         address: req.body.address
       });
@@ -54,6 +55,7 @@ export function setupUserAuth(app: Express) {
         username: validatedData.username,
         email: validatedData.email,
         password_hash: hashedPassword,
+        phone: validatedData.phone,
         ship_id: validatedData.ship_id,
         address: validatedData.address,
       });
