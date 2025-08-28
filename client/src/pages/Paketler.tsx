@@ -3,7 +3,8 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRight, X } from "lucide-react";
+import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRight, X, Info } from "lucide-react";
+import { ContextualHelp } from "@/components/ContextualHelp";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
@@ -85,6 +86,7 @@ export default function Paketler() {
             <span className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
               Data Paketleri
             </span>
+            <ContextualHelp content="Geminiz için uygun olan tüm Starlink data paketleri burada listelenir. Her paket farklı veri miktarı ve süre sunar." />
           </div>
           <div className="text-center">
             <h1 className="text-4xl font-bold text-white mb-4">
@@ -200,12 +202,13 @@ export default function Paketler() {
                   </div>
 
                   {/* Purchase Button */}
-                  <Button
-                    onClick={() => addToCartMutation.mutate(plan.id)}
-                    disabled={addToCartMutation.isPending}
-                    className="w-full font-semibold py-3 rounded-xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 group-hover:shadow-xl group-hover:shadow-blue-500/30"
-                    data-testid={`button-buy-${plan.id}`}
-                  >
+                  <ContextualHelp content="Bu paketi sepetinize eklemek için tıklayın. Ardından sepet sayfasında ödeme işlemini tamamlayabilirsiniz.">
+                    <Button
+                      onClick={() => addToCartMutation.mutate(plan.id)}
+                      disabled={addToCartMutation.isPending}
+                      className="w-full font-semibold py-3 rounded-xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 group-hover:shadow-xl group-hover:shadow-blue-500/30"
+                      data-testid={`button-buy-${plan.id}`}
+                    >
                     {addToCartMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -217,7 +220,8 @@ export default function Paketler() {
                         <Package className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                       </>
                     )}
-                  </Button>
+                    </Button>
+                  </ContextualHelp>
 
                 </CardContent>
 
