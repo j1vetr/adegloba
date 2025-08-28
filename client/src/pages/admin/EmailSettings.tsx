@@ -52,7 +52,28 @@ export function EmailSettings() {
   useEffect(() => {
     if (settings) {
       console.log('Loaded settings:', settings);
-      setFormData(prev => ({ ...prev, ...settings }));
+      console.log('Current formData before update:', formData);
+      
+      // Map database fields to form fields
+      const mappedSettings = {
+        id: settings.id,
+        provider: settings.provider || 'smtp',
+        smtpHost: settings.smtp_host || settings.smtpHost,
+        smtpPort: settings.smtp_port || settings.smtpPort,
+        smtpUser: settings.smtp_user || settings.smtpUser,
+        smtpPass: settings.smtp_pass || settings.smtpPass,
+        sendgridKey: settings.sendgrid_key || settings.sendgridKey,
+        mailgunDomain: settings.mailgun_domain || settings.mailgunDomain,
+        mailgunKey: settings.mailgun_key || settings.mailgunKey,
+        fromEmail: settings.from_email || settings.fromEmail,
+        fromName: settings.from_name || settings.fromName,
+        replyTo: settings.reply_to || settings.replyTo,
+        adminEmail: settings.adminEmail,
+        isActive: settings.is_active ?? settings.isActive ?? true,
+      };
+      
+      console.log('Mapped settings:', mappedSettings);
+      setFormData(prev => ({ ...prev, ...mappedSettings }));
     }
   }, [settings]);
 
