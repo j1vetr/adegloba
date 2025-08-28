@@ -67,7 +67,7 @@ export function EmailSettings() {
             fromEmail: data.from_email || '',
             fromName: data.from_name || '',
             replyTo: data.reply_to || '',
-            adminEmail: data.adminEmail || '',
+            adminEmail: data.admin_email || '',
             isActive: data.is_active ?? true,
           });
         }
