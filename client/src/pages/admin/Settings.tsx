@@ -40,13 +40,13 @@ export default function Settings() {
       const settingsObj: any = {};
       currentSettings.forEach((setting: any) => {
         switch (setting.key) {
-          case 'PAYPAL_CLIENT_ID':
+          case 'paypalClientId':
             settingsObj.paypalClientId = setting.value || '';
             break;
-          case 'PAYPAL_CLIENT_SECRET':
+          case 'paypalClientSecret':
             settingsObj.paypalSecret = setting.value || '';
             break;
-          case 'PAYPAL_ENV':
+          case 'paypalEnvironment':
             settingsObj.paypalEnvironment = setting.value || 'sandbox';
             break;
           default:
@@ -96,9 +96,9 @@ export default function Settings() {
   const handleSaveAll = () => {
     // Save PayPal settings with proper keys and categories
     const settingsMap = {
-      paypalClientId: { key: 'PAYPAL_CLIENT_ID', category: 'payment' },
-      paypalSecret: { key: 'PAYPAL_CLIENT_SECRET', category: 'payment' },
-      paypalEnvironment: { key: 'PAYPAL_ENV', category: 'payment' },
+      paypalClientId: { key: 'paypalClientId', category: 'payment' },
+      paypalSecret: { key: 'paypalClientSecret', category: 'payment' },
+      paypalEnvironment: { key: 'paypalEnvironment', category: 'payment' },
       siteName: { key: 'siteName', category: 'general' },
       whatsappNumber: { key: 'whatsappNumber', category: 'general' },
       defaultLanguage: { key: 'defaultLanguage', category: 'general' },
