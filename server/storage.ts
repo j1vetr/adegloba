@@ -1907,16 +1907,36 @@ export class DatabaseStorage implements IStorage {
 
   // Email operations
   async getEmailSettings(): Promise<EmailSetting | null> {
-    const [settings] = await db.select().from(emailSettings).limit(1);
-    if (!settings) return null;
+    // Read email settings from settings table instead of email_settings
+    const smtpHost = await this.getSetting('smtp_host');
+    const smtpPort = await this.getSetting('smtp_port');
+    const smtpUser = await this.getSetting('smtp_user');
+    const smtpPassword = await this.getSetting('smtp_password');
+    const fromEmail = await this.getSetting('from_email');
+    const fromName = await this.getSetting('from_name');
+    const adminEmail = await this.getSetting('admin_email');
     
-    // Also get admin email from settings table
-    const adminEmailSetting = await this.getSetting('admin_email');
+    // Check if we have minimum required settings
+    if (!smtpHost?.value || !smtpUser?.value || !fromEmail?.value) {
+      console.log('Email sending disabled - missing required SMTP settings');
+      return null;
+    }
     
     return {
-      ...settings,
-      adminEmail: adminEmailSetting?.value || 'support@adegloba.space'
-    };
+      id: 'settings-based',
+      provider: 'smtp',
+      smtpHost: smtpHost.value,
+      smtpPort: parseInt(smtpPort?.value || '587'),
+      smtpUser: smtpUser.value,
+      smtpPass: smtpPassword?.value || '',
+      fromEmail: fromEmail.value,
+      fromName: fromName?.value || 'AdeGloba Starlink',
+      replyTo: fromEmail.value,
+      isActive: true,
+      adminEmail: adminEmail?.value || 'support@adegloba.space',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as EmailSetting;
   }
 
   async upsertEmailSettings(settings: InsertEmailSetting): Promise<EmailSetting> {

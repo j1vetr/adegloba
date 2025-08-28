@@ -1864,24 +1864,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/email-settings', isAdminAuthenticated, async (req, res) => {
     try {
-      const settingsData = insertEmailSettingSchema.parse(req.body);
+      const settingsData = req.body;
       
-      // Encrypt sensitive fields before storing
-      const encryptedData = {
-        ...settingsData,
-        smtpPass: settingsData.smtpPass ? EmailService.encryptSensitiveData(settingsData.smtpPass) : null,
-        sendgridKey: settingsData.sendgridKey ? EmailService.encryptSensitiveData(settingsData.sendgridKey) : null,
-        mailgunKey: settingsData.mailgunKey ? EmailService.encryptSensitiveData(settingsData.mailgunKey) : null,
-      };
+      // Save each setting to the settings table
+      await storage.upsertSetting('smtp_host', settingsData.smtpHost || '', 'email');
+      await storage.upsertSetting('smtp_port', (settingsData.smtpPort || 587).toString(), 'email');
+      await storage.upsertSetting('smtp_user', settingsData.smtpUser || '', 'email');
+      await storage.upsertSetting('smtp_password', settingsData.smtpPass || '', 'email');
+      await storage.upsertSetting('from_email', settingsData.fromEmail || '', 'email');
+      await storage.upsertSetting('from_name', settingsData.fromName || 'AdeGloba Starlink', 'email');
+      await storage.upsertSetting('admin_email', settingsData.adminEmail || '', 'email');
       
-      const settings = await storage.upsertEmailSettings(encryptedData);
-      
-      // Mask sensitive data before sending response
+      // Return masked settings
       const maskedSettings = {
-        ...settings,
-        smtpPass: settings.smtpPass ? '••••••••' : '',
-        sendgridKey: settings.sendgridKey ? '••••••••' : '',
-        mailgunKey: settings.mailgunKey ? '••••••••' : '',
+        id: 'settings-based',
+        provider: 'smtp',
+        smtpHost: settingsData.smtpHost || '',
+        smtpPort: settingsData.smtpPort || 587,
+        smtpUser: settingsData.smtpUser || '',
+        smtpPass: settingsData.smtpPass ? '••••••••' : '',
+        fromEmail: settingsData.fromEmail || '',
+        fromName: settingsData.fromName || 'AdeGloba Starlink',
+        adminEmail: settingsData.adminEmail || '',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
       
       res.json(maskedSettings);
