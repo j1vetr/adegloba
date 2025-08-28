@@ -183,6 +183,7 @@ export interface IStorage {
   // Email operations
   getEmailSettings(): Promise<EmailSetting | null>;
   upsertEmailSettings(settings: InsertEmailSetting): Promise<EmailSetting>;
+  saveEmailSettings(settings: any): Promise<EmailSetting>;
   createEmailLog(logData: InsertEmailLog): Promise<EmailLog>;
   getEmailLogs(options?: {
     page?: number;
@@ -1908,7 +1909,15 @@ export class DatabaseStorage implements IStorage {
   // Email operations
   async getEmailSettings(): Promise<EmailSetting | null> {
     const [settings] = await db.select().from(emailSettings).limit(1);
-    return settings || null;
+    if (!settings) return null;
+    
+    // Also get admin email from settings table
+    const adminEmailSetting = await this.getSetting('admin_email');
+    
+    return {
+      ...settings,
+      adminEmail: adminEmailSetting?.value || 'admin@adegloba.com'
+    };
   }
 
   async upsertEmailSettings(settings: InsertEmailSetting): Promise<EmailSetting> {
@@ -1928,6 +1937,18 @@ export class DatabaseStorage implements IStorage {
       const [created] = await db.insert(emailSettings).values(settings).returning();
       return created;
     }
+  }
+
+  async saveEmailSettings(settings: any): Promise<EmailSetting> {
+    const { adminEmail, ...emailSettings } = settings;
+    
+    // Save admin email to settings table if provided
+    if (adminEmail) {
+      await this.upsertSetting('admin_email', adminEmail, 'email');
+    }
+    
+    // Save email settings
+    return this.upsertEmailSettings(emailSettings);
   }
 
   async createEmailLog(logData: InsertEmailLog): Promise<EmailLog> {

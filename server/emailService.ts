@@ -124,7 +124,7 @@ export class EmailService {
     bcc?: string
   ): Promise<boolean> {
     try {
-      const transporter = nodemailer.createTransporter({
+      const transporter = nodemailer.createTransport({
         host: settings.smtpHost,
         port: settings.smtpPort || 587,
         secure: (settings.smtpPort || 587) === 465,

@@ -27,6 +27,7 @@ interface EmailSettings {
   fromEmail?: string;
   fromName?: string;
   replyTo?: string;
+  adminEmail?: string;
   isActive: boolean;
 }
 
@@ -44,7 +45,7 @@ export function EmailSettings() {
   // Fetch email settings
   const { data: settings, isLoading } = useQuery({
     queryKey: ['/api/admin/email-settings'],
-    queryFn: () => apiRequest('/api/admin/email-settings'),
+    queryFn: () => apiRequest('GET', '/api/admin/email-settings'),
   });
 
   // Update form when settings are loaded
