@@ -423,6 +423,7 @@ export class DatabaseStorage implements IStorage {
       if (data.username !== undefined) updateObject.username = data.username;
       if (data.email !== undefined) updateObject.email = data.email;
       if (data.full_name !== undefined) updateObject.full_name = data.full_name;
+      if (data.phone !== undefined) updateObject.phone = data.phone;
       if (data.ship_id !== undefined) updateObject.ship_id = data.ship_id;
       if (data.address !== undefined) updateObject.address = data.address;
       if (data.password_hash !== undefined) updateObject.password_hash = data.password_hash;

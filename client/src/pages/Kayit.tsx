@@ -21,10 +21,59 @@ export default function Kayit() {
     username: "",
     email: "",
     password: "",
-    phone: "",
+    phoneCountryCode: "+90",
+    phoneNumber: "",
     ship_id: "",
     address: ""
   });
+
+  const countryCodes = [
+    { code: "+90", country: "Türkiye", flag: "🇹🇷" },
+    { code: "+1", country: "ABD/Kanada", flag: "🇺🇸" },
+    { code: "+44", country: "İngiltere", flag: "🇬🇧" },
+    { code: "+49", country: "Almanya", flag: "🇩🇪" },
+    { code: "+33", country: "Fransa", flag: "🇫🇷" },
+    { code: "+39", country: "İtalya", flag: "🇮🇹" },
+    { code: "+34", country: "İspanya", flag: "🇪🇸" },
+    { code: "+31", country: "Hollanda", flag: "🇳🇱" },
+    { code: "+32", country: "Belçika", flag: "🇧🇪" },
+    { code: "+41", country: "İsviçre", flag: "🇨🇭" },
+    { code: "+43", country: "Avusturya", flag: "🇦🇹" },
+    { code: "+30", country: "Yunanistan", flag: "🇬🇷" },
+    { code: "+351", country: "Portekiz", flag: "🇵🇹" },
+    { code: "+46", country: "İsveç", flag: "🇸🇪" },
+    { code: "+47", country: "Norveç", flag: "🇳🇴" },
+    { code: "+45", country: "Danimarka", flag: "🇩🇰" },
+    { code: "+358", country: "Finlandiya", flag: "🇫🇮" },
+    { code: "+7", country: "Rusya", flag: "🇷🇺" },
+    { code: "+86", country: "Çin", flag: "🇨🇳" },
+    { code: "+81", country: "Japonya", flag: "🇯🇵" },
+    { code: "+82", country: "Güney Kore", flag: "🇰🇷" },
+    { code: "+91", country: "Hindistan", flag: "🇮🇳" },
+    { code: "+61", country: "Avustralya", flag: "🇦🇺" },
+    { code: "+55", country: "Brezilya", flag: "🇧🇷" },
+    { code: "+52", country: "Meksika", flag: "🇲🇽" },
+    { code: "+27", country: "Güney Afrika", flag: "🇿🇦" },
+    { code: "+20", country: "Mısır", flag: "🇪🇬" },
+    { code: "+971", country: "BAE", flag: "🇦🇪" },
+    { code: "+966", country: "Suudi Arabistan", flag: "🇸🇦" },
+    { code: "+962", country: "Ürdün", flag: "🇯🇴" },
+    { code: "+974", country: "Katar", flag: "🇶🇦" },
+    { code: "+965", country: "Kuveyt", flag: "🇰🇼" },
+    { code: "+968", country: "Umman", flag: "🇴🇲" },
+    { code: "+973", country: "Bahreyn", flag: "🇧🇭" },
+    { code: "+964", country: "Irak", flag: "🇮🇶" },
+    { code: "+98", country: "İran", flag: "🇮🇷" },
+    { code: "+92", country: "Pakistan", flag: "🇵🇰" },
+    { code: "+880", country: "Bangladeş", flag: "🇧🇩" },
+    { code: "+94", country: "Sri Lanka", flag: "🇱🇰" },
+    { code: "+60", country: "Malezya", flag: "🇲🇾" },
+    { code: "+65", country: "Singapur", flag: "🇸🇬" },
+    { code: "+66", country: "Tayland", flag: "🇹🇭" },
+    { code: "+84", country: "Vietnam", flag: "🇻🇳" },
+    { code: "+63", country: "Filipinler", flag: "🇵🇭" },
+    { code: "+62", country: "Endonezya", flag: "🇮🇩" }
+  ];
 
   const { user, isLoading: authLoading } = useUserAuth();
   
@@ -62,7 +111,10 @@ export default function Kayit() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          phone: `${formData.phoneCountryCode}${formData.phoneNumber}`
+        }),
       });
 
       const data = await response.json();
@@ -88,6 +140,13 @@ export default function Kayit() {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleCountryCodeChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      phoneCountryCode: value
     }));
   };
 
@@ -215,17 +274,35 @@ export default function Kayit() {
                   <Phone className="h-4 w-4 text-amber-400" />
                   Telefon Numarası *
                 </Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
-                  placeholder="Telefon numaranızı girin (ör: +90 532 123 45 67)"
-                  data-testid="input-phone"
-                />
+                <div className="flex gap-2">
+                  <Select onValueChange={handleCountryCodeChange} defaultValue="+90">
+                    <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white w-[140px] h-12 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm" data-testid="select-country-code">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800/95 border-slate-600 backdrop-blur-xl max-h-60">
+                      {countryCodes.map((country) => (
+                        <SelectItem key={country.code} value={country.code} className="text-white hover:bg-slate-700">
+                          <div className="flex items-center gap-2">
+                            <span>{country.flag}</span>
+                            <span>{country.code}</span>
+                            <span className="text-sm text-slate-400">{country.country}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    type="tel"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    required
+                    className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm flex-1"
+                    placeholder="532 123 45 67"
+                    data-testid="input-phone-number"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">

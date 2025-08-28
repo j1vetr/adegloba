@@ -167,6 +167,58 @@ export function setupUserAuth(app: Express) {
     }
   });
 
+  // Update User Profile
+  app.put("/api/user/profile", async (req: Request, res: Response) => {
+    if (!req.session.userId || !req.session.isAuthenticated) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const { full_name, email, phone, ship_id, address, currentPassword, newPassword } = req.body;
+      
+      // Get current user
+      const currentUser = await storage.getUserById(req.session.userId);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // If password change is requested
+      if (newPassword && currentPassword) {
+        const validCurrentPassword = await bcrypt.compare(currentPassword, currentUser.password_hash);
+        if (!validCurrentPassword) {
+          return res.status(400).json({ message: "Mevcut şifre hatalı" });
+        }
+        
+        // Hash new password
+        const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+        
+        // Update user with new password
+        await storage.updateUser(req.session.userId, {
+          full_name,
+          email,
+          phone,
+          ship_id,
+          address,
+          password_hash: hashedNewPassword
+        });
+      } else {
+        // Update user without password change
+        await storage.updateUser(req.session.userId, {
+          full_name,
+          email,
+          phone,
+          ship_id,
+          address
+        });
+      }
+
+      res.json({ message: "Profil başarıyla güncellendi" });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get user's ship plans
   app.get('/api/user/ship-plans', async (req: any, res) => {
     if (!req.session.userId || !req.session.isAuthenticated) {

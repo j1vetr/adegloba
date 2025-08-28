@@ -19,7 +19,8 @@ import {
   Save,
   X,
   Lock,
-  Key
+  Key,
+  Phone
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -30,9 +31,59 @@ export default function Profil() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
+  
+  const countryCodes = [
+    { code: "+90", country: "Türkiye", flag: "🇹🇷" },
+    { code: "+1", country: "ABD/Kanada", flag: "🇺🇸" },
+    { code: "+44", country: "İngiltere", flag: "🇬🇧" },
+    { code: "+49", country: "Almanya", flag: "🇩🇪" },
+    { code: "+33", country: "Fransa", flag: "🇫🇷" },
+    { code: "+39", country: "İtalya", flag: "🇮🇹" },
+    { code: "+34", country: "İspanya", flag: "🇪🇸" },
+    { code: "+31", country: "Hollanda", flag: "🇳🇱" },
+    { code: "+32", country: "Belçika", flag: "🇧🇪" },
+    { code: "+41", country: "İsviçre", flag: "🇨🇭" },
+    { code: "+43", country: "Avusturya", flag: "🇦🇹" },
+    { code: "+30", country: "Yunanistan", flag: "🇬🇷" },
+    { code: "+351", country: "Portekiz", flag: "🇵🇹" },
+    { code: "+46", country: "İsveç", flag: "🇸🇪" },
+    { code: "+47", country: "Norveç", flag: "🇳🇴" },
+    { code: "+45", country: "Danimarka", flag: "🇩🇰" },
+    { code: "+358", country: "Finlandiya", flag: "🇫🇮" },
+    { code: "+7", country: "Rusya", flag: "🇷🇺" },
+    { code: "+86", country: "Çin", flag: "🇨🇳" },
+    { code: "+81", country: "Japonya", flag: "🇯🇵" },
+    { code: "+82", country: "Güney Kore", flag: "🇰🇷" },
+    { code: "+91", country: "Hindistan", flag: "🇮🇳" },
+    { code: "+61", country: "Avustralya", flag: "🇦🇺" },
+    { code: "+55", country: "Brezilya", flag: "🇧🇷" },
+    { code: "+52", country: "Meksika", flag: "🇲🇽" },
+    { code: "+27", country: "Güney Afrika", flag: "🇿🇦" },
+    { code: "+20", country: "Mısır", flag: "🇪🇬" },
+    { code: "+971", country: "BAE", flag: "🇦🇪" },
+    { code: "+966", country: "Suudi Arabistan", flag: "🇸🇦" },
+    { code: "+962", country: "Ürdün", flag: "🇯🇴" },
+    { code: "+974", country: "Katar", flag: "🇶🇦" },
+    { code: "+965", country: "Kuveyt", flag: "🇰🇼" },
+    { code: "+968", country: "Umman", flag: "🇴🇲" },
+    { code: "+973", country: "Bahreyn", flag: "🇧🇭" },
+    { code: "+964", country: "Irak", flag: "🇮🇶" },
+    { code: "+98", country: "İran", flag: "🇮🇷" },
+    { code: "+92", country: "Pakistan", flag: "🇵🇰" },
+    { code: "+880", country: "Bangladeş", flag: "🇧🇩" },
+    { code: "+94", country: "Sri Lanka", flag: "🇱🇰" },
+    { code: "+60", country: "Malezya", flag: "🇲🇾" },
+    { code: "+65", country: "Singapur", flag: "🇸🇬" },
+    { code: "+66", country: "Tayland", flag: "🇹🇭" },
+    { code: "+84", country: "Vietnam", flag: "🇻🇳" },
+    { code: "+63", country: "Filipinler", flag: "🇵🇭" },
+    { code: "+62", country: "Endonezya", flag: "🇮🇩" }
+  ];
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
+    phoneCountryCode: "+90",
+    phoneNumber: "",
     ship_id: "",
     address: "",
     currentPassword: "",
@@ -71,7 +122,13 @@ export default function Profil() {
         }
       }
 
-      const response = await apiRequest('PUT', '/api/user/profile', data);
+      // Combine phone country code and number
+      const submitData = {
+        ...data,
+        phone: `${data.phoneCountryCode}${data.phoneNumber}`
+      };
+      
+      const response = await apiRequest('PUT', '/api/user/profile', submitData);
       return response.json();
     },
     onSuccess: () => {
@@ -102,9 +159,27 @@ export default function Profil() {
   // Initialize form data when user data loads
   React.useEffect(() => {
     if (user) {
+      // Parse phone number
+      const phone = user.phone || "";
+      let phoneCountryCode = "+90";
+      let phoneNumber = "";
+      
+      if (phone) {
+        // Find matching country code
+        const matchingCountry = countryCodes.find(country => phone.startsWith(country.code));
+        if (matchingCountry) {
+          phoneCountryCode = matchingCountry.code;
+          phoneNumber = phone.substring(matchingCountry.code.length);
+        } else {
+          phoneNumber = phone;
+        }
+      }
+      
       setFormData({
         full_name: user.full_name || "",
         email: user.email || "",
+        phoneCountryCode,
+        phoneNumber,
         ship_id: user.ship_id || "",
         address: user.address || "",
         currentPassword: "",
@@ -126,9 +201,26 @@ export default function Profil() {
   };
 
   const handleCancel = () => {
+    // Parse phone number
+    const phone = user?.phone || "";
+    let phoneCountryCode = "+90";
+    let phoneNumber = "";
+    
+    if (phone) {
+      const matchingCountry = countryCodes.find(country => phone.startsWith(country.code));
+      if (matchingCountry) {
+        phoneCountryCode = matchingCountry.code;
+        phoneNumber = phone.substring(matchingCountry.code.length);
+      } else {
+        phoneNumber = phone;
+      }
+    }
+    
     setFormData({
       full_name: user?.full_name || "",
       email: user?.email || "",
+      phoneCountryCode,
+      phoneNumber,
       ship_id: user?.ship_id || "",
       address: user?.address || "",
       currentPassword: "",
@@ -242,6 +334,45 @@ export default function Profil() {
                   ) : (
                     <div className="text-white bg-slate-800/50 p-3 rounded-lg border border-slate-600">
                       {user?.full_name || "Henüz girilmemiş"}
+                    </div>
+                  )}
+                </div>
+
+                {/* Editable Phone field */}
+                <div className="space-y-2">
+                  <Label className="text-slate-400 flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-amber-400" />
+                    Telefon Numarası
+                  </Label>
+                  {isEditing ? (
+                    <div className="flex gap-2">
+                      <Select value={formData.phoneCountryCode} onValueChange={(value) => handleInputChange('phoneCountryCode', value)}>
+                        <SelectTrigger className="bg-slate-700 border-slate-600 text-white w-[140px]" data-testid="select-country-code">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800/95 border-slate-600 backdrop-blur-xl max-h-60">
+                          {countryCodes.map((country) => (
+                            <SelectItem key={country.code} value={country.code} className="text-white hover:bg-slate-700">
+                              <div className="flex items-center gap-2">
+                                <span>{country.flag}</span>
+                                <span>{country.code}</span>
+                                <span className="text-sm text-slate-400">{country.country}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={formData.phoneNumber}
+                        onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                        placeholder="532 123 45 67"
+                        className="bg-slate-700 border-slate-600 text-white flex-1"
+                        data-testid="input-phone-number"
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-white bg-slate-800/50 p-3 rounded-lg border border-slate-600">
+                      {user?.phone || "Henüz girilmemiş"}
                     </div>
                   )}
                 </div>
