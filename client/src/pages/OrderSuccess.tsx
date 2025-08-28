@@ -183,11 +183,20 @@ export default function OrderSuccess() {
 
         {/* Additional Info */}
         <div className="mt-6 text-center">
+          {/* AdeGloba Logo */}
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/attached_assets/adegloba-1_1756252463127.png" 
+              alt="AdeGloba Logo" 
+              className="h-8 w-auto opacity-80 hover:opacity-100 transition-opacity"
+            />
+          </div>
+          
           <p className="text-slate-400 text-sm mb-2">
             Herhangi bir sorun yaşarsanız destek ekibimizle iletişime geçin
           </p>
           <div className="flex justify-center space-x-4 text-xs text-slate-500">
-            <span>📧 support@adegloba.com</span>
+            <span>📧 support@adegloba.space</span>
             <span>📱 WhatsApp Destek</span>
           </div>
         </div>
