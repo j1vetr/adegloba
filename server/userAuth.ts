@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { Express, Request, Response } from "express";
 import { storage } from "./storage";
 import { registerSchema, loginSchema } from "@shared/schema";
+import { emailService } from "./emailService";
 
 // Extend the session type to include our custom fields
 declare module "express-session" {
@@ -59,6 +60,27 @@ export function setupUserAuth(app: Express) {
         ship_id: validatedData.ship_id,
         address: validatedData.address,
       });
+
+      // Send welcome email
+      try {
+        const baseUrlSetting = await storage.getSetting('base_url');
+        const baseUrl = baseUrlSetting?.value || 'https://adegloba.toov.com.tr';
+        await emailService.sendEmail(
+          user.email,
+          'Hoş Geldiniz - AdeGloba Starlink System',
+          'welcome',
+          {
+            userName: user.full_name || user.username,
+            loginUrl: baseUrl,
+            dashboardUrl: baseUrl + '/dashboard',
+            adminUrl: baseUrl + '/admin'
+          }
+        );
+        console.log(`📧 Welcome email sent to: ${user.email}`);
+      } catch (emailError) {
+        console.error('📧 Failed to send welcome email:', emailError);
+        // Don't fail registration if email fails
+      }
 
       // Automatically log in the user after successful registration
       req.session.userId = user.id;
