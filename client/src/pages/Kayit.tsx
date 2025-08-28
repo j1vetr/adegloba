@@ -27,8 +27,6 @@ export default function Kayit() {
     address: ""
   });
 
-  const [countrySearch, setCountrySearch] = useState("");
-
   const allCountryCodes = [
     { code: "+93", country: "Afganistan", flag: "🇦🇫" },
     { code: "+355", country: "Arnavutluk", flag: "🇦🇱" },
@@ -272,44 +270,6 @@ export default function Kayit() {
     { code: "+263", country: "Zimbabve", flag: "🇿🇼" }
   ];
 
-  // Popüler ülkeler - en üstte gösterilecek
-  const popularCountries = [
-    { code: "+90", country: "Türkiye", flag: "🇹🇷" },
-    { code: "+1", country: "Amerika Birleşik Devletleri", flag: "🇺🇸" },
-    { code: "+44", country: "Birleşik Krallık", flag: "🇬🇧" },
-    { code: "+49", country: "Almanya", flag: "🇩🇪" },
-    { code: "+33", country: "Fransa", flag: "🇫🇷" },
-    { code: "+39", country: "İtalya", flag: "🇮🇹" },
-    { code: "+34", country: "İspanya", flag: "🇪🇸" },
-    { code: "+31", country: "Hollanda", flag: "🇳🇱" },
-    { code: "+86", country: "Çin", flag: "🇨🇳" }
-  ];
-
-
-  // Tekrarlı kodları kaldır - her kod için sadece ilk ülkeyi tut
-  const uniqueCountries = allCountryCodes.reduce((acc, country) => {
-    if (!acc.find(c => c.code === country.code)) {
-      acc.push(country);
-    }
-    return acc;
-  }, [] as typeof allCountryCodes);
-  
-  // Popüler ülkeleri de benzersiz yap
-  const uniquePopularCountries = popularCountries.filter(pop => 
-    uniqueCountries.some(c => c.code === pop.code && c.country === pop.country)
-  );
-  
-  // Final liste: popüler + filtrelenmiş (popülerler hariç)
-  const countryCodes = countrySearch ? 
-    uniqueCountries.filter(country => 
-      country.country.toLowerCase().includes(countrySearch.toLowerCase()) ||
-      country.code.includes(countrySearch)
-    ).sort((a, b) => a.country.localeCompare(b.country, 'tr')) : [
-    ...uniquePopularCountries,
-    ...uniqueCountries.filter(country => 
-      !uniquePopularCountries.some(pop => pop.code === country.code && pop.country === country.country)
-    ).sort((a, b) => a.country.localeCompare(b.country, 'tr'))
-  ];
 
   const { user, isLoading: authLoading } = useUserAuth();
   
@@ -506,67 +466,21 @@ export default function Kayit() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-slate-300 flex items-center gap-2 font-medium">
+                <Label htmlFor="phoneCountryCode" className="text-slate-300 flex items-center gap-2 font-medium">
                   <Phone className="h-4 w-4 text-amber-400" />
                   Telefon Numarası *
                 </Label>
                 <div className="flex gap-2">
-                  <Select onValueChange={handleCountryCodeChange} defaultValue="+90">
-                    <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white w-[140px] h-12 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm" data-testid="select-country-code">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800/95 border-slate-600 backdrop-blur-xl max-h-80">
-                      <div className="p-2 border-b border-slate-700">
-                        <Input
-                          placeholder="Ülke ara..."
-                          value={countrySearch}
-                          onChange={(e) => setCountrySearch(e.target.value)}
-                          className="h-8 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                        />
-                      </div>
-                      {!countrySearch && popularCountries.length > 0 && (
-                        <>
-                          <div className="p-2 text-xs text-amber-400 font-medium border-b border-slate-700">
-                            Popüler Ülkeler
-                          </div>
-                          {popularCountries.map((country, index) => {
-                            const uniqueKey = `popular-${country.code}-${country.country.toLowerCase().replace(/[^a-z0-9]/g, '')}-${index}`;
-                            return (
-                              <SelectItem key={uniqueKey} value={country.code} className="text-white hover:bg-slate-700">
-                                <div className="flex items-center gap-2">
-                                  <span>{country.flag}</span>
-                                  <span>{country.code}</span>
-                                  <span className="text-sm text-slate-400">{country.country}</span>
-                                </div>
-                              </SelectItem>
-                            );
-                          })}
-                          <div className="p-2 text-xs text-slate-500 font-medium border-b border-slate-700">
-                            Tüm Ülkeler (Alfabetik)
-                          </div>
-                        </>
-                      )}
-                      {countryCodes.filter(country => 
-                        countrySearch || !popularCountries.some(pop => pop.code === country.code && pop.country === country.country)
-                      ).map((country, index) => {
-                        const uniqueKey = `all-${country.code}-${country.country.toLowerCase().replace(/[^a-z0-9]/g, '')}-${index}`;
-                        return (
-                          <SelectItem key={uniqueKey} value={country.code} className="text-white hover:bg-slate-700">
-                            <div className="flex items-center gap-2">
-                              <span>{country.flag}</span>
-                              <span>{country.code}</span>
-                              <span className="text-sm text-slate-400">{country.country}</span>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                      {countrySearch && countryCodes.length === 0 && (
-                        <div className="p-3 text-center text-slate-400 text-sm">
-                          Aradığınız ülke bulunamadı
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id="phoneCountryCode"
+                    name="phoneCountryCode"
+                    type="text"
+                    value={formData.phoneCountryCode}
+                    onChange={handleChange}
+                    className="bg-slate-800/50 border-slate-600/50 text-white w-[80px] h-12 text-center placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
+                    placeholder="+90"
+                    data-testid="input-country-code"
+                  />
                   <Input
                     id="phoneNumber"
                     name="phoneNumber"
