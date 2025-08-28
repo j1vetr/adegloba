@@ -75,9 +75,27 @@ export function EmailSettings() {
   const saveSettingsMutation = useMutation({
     mutationFn: (data: EmailSettings) => 
       apiRequest('POST', '/api/admin/email-settings', data),
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast({ title: 'E-posta ayarları başarıyla kaydedildi!' });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/email-settings'] });
+      
+      // Update form data with saved response (preserve password field)
+      const data = response as any;
+      const updatedData = {
+        id: data.id,
+        provider: 'smtp' as const,
+        smtpHost: data.smtp_host || data.smtpHost || '',
+        smtpPort: data.smtp_port || data.smtpPort || 587,
+        smtpUser: data.smtp_user || data.smtpUser || '',
+        smtpPass: formData.smtpPass, // Keep current password to prevent clearing
+        fromEmail: data.from_email || data.fromEmail || '',
+        fromName: data.from_name || data.fromName || '',
+        replyTo: data.reply_to || data.replyTo || '',
+        adminEmail: data.adminEmail || '',
+        isActive: data.is_active ?? data.isActive ?? true,
+      };
+      
+      setFormData(prev => ({ ...prev, ...updatedData }));
+      // Don't invalidate cache immediately to prevent form reset
     },
     onError: (error: any) => {
       toast({ 
