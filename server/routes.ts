@@ -2688,7 +2688,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const emailSettings = await storage.getEmailSettings();
-      res.json(emailSettings);
+      
+      if (emailSettings) {
+        // Transform database fields to frontend format
+        const transformedSettings = {
+          id: emailSettings.id,
+          provider: emailSettings.provider || 'smtp',
+          smtp_host: emailSettings.smtp_host,
+          smtp_port: emailSettings.smtp_port,
+          smtp_user: emailSettings.smtp_user,
+          smtp_pass: '', // Don't send password for security
+          from_email: emailSettings.from_email,
+          from_name: emailSettings.from_name,
+          reply_to: emailSettings.reply_to,
+          adminEmail: emailSettings.adminEmail,
+          is_active: emailSettings.is_active,
+        };
+        
+        console.log('📧 Email settings response:', transformedSettings);
+        res.json(transformedSettings);
+      } else {
+        res.json(null);
+      }
     } catch (error) {
       console.error('Error fetching email settings:', error);
       res.status(500).json({ message: 'Failed to fetch email settings' });
