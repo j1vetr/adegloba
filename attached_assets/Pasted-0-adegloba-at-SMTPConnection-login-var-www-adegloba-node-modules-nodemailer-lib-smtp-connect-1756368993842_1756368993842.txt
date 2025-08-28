@@ -1,0 +1,32 @@
+0|adegloba |     at SMTPConnection.login (/var/www/adegloba/node_modules/nodemailer/lib/smtp-connection/index.js:454:38)
+0|adegloba |     at /var/www/adegloba/node_modules/nodemailer/lib/smtp-transport/index.js:375:32
+0|adegloba |     at SMTPConnection.<anonymous> (/var/www/adegloba/node_modules/nodemailer/lib/smtp-connection/index.js:215:17)
+0|adegloba |     at Object.onceWrapper (node:events:638:28)
+0|adegloba |     at SMTPConnection.emit (node:events:524:28)
+0|adegloba |     at SMTPConnection._actionEHLO (/var/www/adegloba/node_modules/nodemailer/lib/smtp-connection/index.js:1371:14)
+0|adegloba |     at SMTPConnection._processResponse (/var/www/adegloba/node_modules/nodemailer/lib/smtp-connection/index.js:993:20)
+0|adegloba |     at SMTPConnection._onData (/var/www/adegloba/node_modules/nodemailer/lib/smtp-connection/index.js:774:14)
+0|adegloba |     at SMTPConnection._onSocketData (/var/www/adegloba/node_modules/nodemailer/lib/smtp-connection/index.js:195:44) {
+0|adegloba |   code: 'EAUTH',
+0|adegloba |   command: 'API'
+0|adegloba | }
+0|adegloba | 📧 Failed to send admin notification: ReferenceError: baseUrl is not defined
+0|adegloba |     at file:///var/www/adegloba/dist/index.js:2577:23
+0|adegloba |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+/root/.pm2/logs/adegloba-out.log last 15 lines:
+0|adegloba |   phone: '+90530 861 67 85',
+0|adegloba |   ship_id: 'd6b03e35-74f1-4ea9-8039-07aa6c5d6d8f',
+0|adegloba |   address: 'Molla Mehmet Sokak No:7 asdasd'
+0|adegloba | }
+0|adegloba | 🔧 Attempting SMTP connection to posta.kumsaati.com.tr:587 (secure: false)
+0|adegloba | 🔧 Testing SMTP connection...
+0|adegloba | ✅ SMTP connection verified successfully
+0|adegloba | 📧 Welcome email sent to: emirsimseekk@gmail.com
+0|adegloba | 11:13:55 AM [express] POST /api/user/register 201 in 1530ms :: {"success":true,"message":"Kayıt başar…
+0|adegloba | 11:13:55 AM [express] GET /api/user/me 200 in 3ms :: {"id":"c88820e8-888e-472c-b925-e1e27a72b327","us…
+0|adegloba | 11:13:55 AM [express] GET /api/cart 304 in 8ms :: {"items":[],"subtotal":0,"total":0,"itemCount":0,"s…
+0|adegloba | 11:13:55 AM [express] GET /api/user/orders 304 in 3ms :: []
+0|adegloba | Found 0 active packages for user c88820e8-888e-472c-b925-e1e27a72b327
+0|adegloba | 11:13:55 AM [express] GET /api/user/active-packages 304 in 2ms :: []
+0|adegloba | 11:13:55 AM [express] GET /api/user/expired-packages 304 in 3ms :: {"packages":[],"pagination":{"curr…

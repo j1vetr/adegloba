@@ -84,6 +84,8 @@ export function setupUserAuth(app: Express) {
 
       // Send admin notification about new user
       try {
+        const baseUrlSetting = await storage.getSetting('base_url');
+        const baseUrl = baseUrlSetting?.value || 'https://adegloba.toov.com.tr';
         const adminEmailSetting = await storage.getSetting('admin_email');
         const adminEmail = adminEmailSetting?.value || 'support@adegloba.space';
         const ship = await storage.getShips().then(ships => ships.find(s => s.id === user.ship_id));
