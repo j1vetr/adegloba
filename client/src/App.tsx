@@ -144,15 +144,15 @@ function Router() {
         </UserProtectedRoute>
       </Route>
       
+      <Route path="/order-success" component={OrderSuccess} />
+      <Route path="/checkout/success" component={OrderSuccess} />
+      <Route path="/checkout/cancel" component={OrderCancel} />
+      
       <Route path="/checkout">
         <UserProtectedRoute>
           <Checkout />
         </UserProtectedRoute>
       </Route>
-      
-      <Route path="/checkout/success" component={OrderSuccess} />
-      <Route path="/checkout/cancel" component={OrderCancel} />
-      <Route path="/order-success" component={OrderSuccess} />
       
       <Route path="/destek">
         <UserProtectedRoute>
