@@ -283,17 +283,29 @@ export default function Profil() {
   ];
 
   const [countrySearch, setCountrySearch] = useState("");
-  // Arama ve filtreleme
-  const filteredCountries = allCountryCodes.filter(country => 
-    country.country.toLowerCase().includes(countrySearch.toLowerCase()) ||
-    country.code.includes(countrySearch)
-  ).sort((a, b) => a.country.localeCompare(b.country, 'tr'));
 
-  // Final liste: popüler + filtrelenmiş (popülerler hariç)  
-  const countryCodes = countrySearch ? filteredCountries : [
-    ...popularCountries,
-    ...allCountryCodes.filter(country => 
-      !popularCountries.some(pop => pop.code === country.code && pop.country === country.country)
+  // Tekrarlı kodları kaldır - her kod için sadece ilk ülkeyi tut
+  const uniqueCountries = allCountryCodes.reduce((acc, country) => {
+    if (!acc.find(c => c.code === country.code)) {
+      acc.push(country);
+    }
+    return acc;
+  }, [] as typeof allCountryCodes);
+  
+  // Popüler ülkeleri de benzersiz yap
+  const uniquePopularCountries = popularCountries.filter(pop => 
+    uniqueCountries.some(c => c.code === pop.code && c.country === pop.country)
+  );
+  
+  // Final liste: popüler + filtrelenmiş (popülerler hariç)
+  const countryCodes = countrySearch ? 
+    uniqueCountries.filter(country => 
+      country.country.toLowerCase().includes(countrySearch.toLowerCase()) ||
+      country.code.includes(countrySearch)
+    ).sort((a, b) => a.country.localeCompare(b.country, 'tr')) : [
+    ...uniquePopularCountries,
+    ...uniqueCountries.filter(country => 
+      !uniquePopularCountries.some(pop => pop.code === country.code && pop.country === country.country)
     ).sort((a, b) => a.country.localeCompare(b.country, 'tr'))
   ];
 
@@ -582,32 +594,38 @@ export default function Profil() {
                               <div className="p-2 text-xs text-amber-400 font-medium border-b border-slate-700">
                                 Popüler Ülkeler
                               </div>
-                              {popularCountries.map((country, index) => (
-                                <SelectItem key={`popular-${index}-${country.code}`} value={country.code} className="text-white hover:bg-slate-700">
-                                  <div className="flex items-center gap-2">
-                                    <span>{country.flag}</span>
-                                    <span>{country.code}</span>
-                                    <span className="text-sm text-slate-400">{country.country}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
+                              {popularCountries.map((country, index) => {
+                                const uniqueKey = `popular-${country.code}-${country.country.toLowerCase().replace(/[^a-z0-9]/g, '')}-${index}`;
+                                return (
+                                  <SelectItem key={uniqueKey} value={country.code} className="text-white hover:bg-slate-700">
+                                    <div className="flex items-center gap-2">
+                                      <span>{country.flag}</span>
+                                      <span>{country.code}</span>
+                                      <span className="text-sm text-slate-400">{country.country}</span>
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
                               <div className="p-2 text-xs text-slate-500 font-medium border-b border-slate-700">
                                 Tüm Ülkeler (Alfabetik)
                               </div>
                             </>
                           )}
                           {countryCodes.filter(country => 
-                            countrySearch || !popularCountries.some(pop => pop.code === country.code)
-                          ).map((country, index) => (
-                            <SelectItem key={`all-${index}-${country.code}`} value={country.code} className="text-white hover:bg-slate-700">
-                              <div className="flex items-center gap-2">
-                                <span>{country.flag}</span>
-                                <span>{country.code}</span>
-                                <span className="text-sm text-slate-400">{country.country}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                          {countrySearch && filteredCountries.length === 0 && (
+                            countrySearch || !popularCountries.some(pop => pop.code === country.code && pop.country === country.country)
+                          ).map((country, index) => {
+                            const uniqueKey = `all-${country.code}-${country.country.toLowerCase().replace(/[^a-z0-9]/g, '')}-${index}`;
+                            return (
+                              <SelectItem key={uniqueKey} value={country.code} className="text-white hover:bg-slate-700">
+                                <div className="flex items-center gap-2">
+                                  <span>{country.flag}</span>
+                                  <span>{country.code}</span>
+                                  <span className="text-sm text-slate-400">{country.country}</span>
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
+                          {countrySearch && countryCodes.length === 0 && (
                             <div className="p-3 text-center text-slate-400 text-sm">
                               Aradığınız ülke bulunamadı
                             </div>
