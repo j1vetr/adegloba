@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import AdminLayout from '@/components/AdminLayout';
+import { AdminLayout } from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +9,6 @@ import { Switch } from '@/components/ui/switch';
 import { AlertCircle, CheckCircle, Eye, EyeOff, Send, Mail, Settings } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
 
 interface EmailSettings {
   id?: string;
@@ -28,159 +26,140 @@ interface EmailSettings {
 
 export function EmailSettings() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
+
+  // Form data state
   const [formData, setFormData] = useState<EmailSettings>({
     provider: 'smtp',
+    smtpHost: '',
+    smtpPort: 587,
+    smtpUser: '',
+    smtpPass: '',
+    fromEmail: '',
+    fromName: '',
+    replyTo: '',
+    adminEmail: '',
     isActive: true,
   });
-  const [showPasswords, setShowPasswords] = useState(false);
-  const [testEmail, setTestEmail] = useState('');
-  const [isTestingEmail, setIsTestingEmail] = useState(false);
 
-  // Fetch email settings
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ['/api/admin/email-settings'],
-    queryFn: () => apiRequest('GET', '/api/admin/email-settings'),
-  });
-
-  // Manual data fetching - test without React Query
+  // Load email settings from database
   useEffect(() => {
-    const fetchData = async () => {
+    const loadSettings = async () => {
       try {
-        console.log('🔍 Manual fetch starting...');
         const response = await fetch('/api/admin/email-settings', {
           credentials: 'include'
         });
-        const data = await response.json();
-        console.log('📦 Manual fetch result:', data);
         
-        if (data) {
-          // Map database fields to form fields
-          const mappedSettings = {
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Update form with database values
+          setFormData({
             id: data.id,
-            provider: 'smtp' as const,
+            provider: 'smtp',
             smtpHost: data.smtp_host || '',
             smtpPort: data.smtp_port || 587,
             smtpUser: data.smtp_user || '',
-            smtpPass: '', // Don't show password for security
+            smtpPass: '', // Never show password
             fromEmail: data.from_email || '',
             fromName: data.from_name || '',
             replyTo: data.reply_to || '',
             adminEmail: data.adminEmail || '',
             isActive: data.is_active ?? true,
-          };
-          
-          console.log('✅ MAPPED SETTINGS:', mappedSettings);
-          setFormData(mappedSettings);
-          console.log('✅ Form data updated with manual fetch!');
+          });
         }
       } catch (error) {
-        console.error('❌ Manual fetch error:', error);
+        console.error('Error loading email settings:', error);
+        toast({
+          title: "Hata",
+          description: "E-posta ayarları yüklenemedi",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
-    
-    fetchData();
-  }, []); // Run once on mount
 
-  // Update form when settings are loaded (React Query)
-  useEffect(() => {
-    if (settings) {
-      console.log('🔍 RAW API RESPONSE (React Query):', settings);
-      console.log('📋 Current formData before update:', formData);
-      
-      const data = settings as any; // Cast to avoid TypeScript errors
-      
-      // Map database fields to form fields
-      const mappedSettings = {
-        id: data.id,
-        provider: 'smtp' as const,
-        smtpHost: data.smtp_host || data.smtpHost || '',
-        smtpPort: data.smtp_port || data.smtpPort || 587,
-        smtpUser: data.smtp_user || data.smtpUser || '',
-        smtpPass: '', // Don't show password for security
-        fromEmail: data.from_email || data.fromEmail || '',
-        fromName: data.from_name || data.fromName || '',
-        replyTo: data.reply_to || data.replyTo || '',
-        adminEmail: data.adminEmail || '',
-        isActive: data.is_active ?? data.isActive ?? true,
-      };
-      
-      console.log('✅ MAPPED SETTINGS (React Query):', mappedSettings);
-      console.log('📝 Setting form data...');
-      setFormData(mappedSettings); // Direct set instead of merge
-      console.log('✅ Form data updated!');
-    }
-  }, [settings]);
+    loadSettings();
+  }, [toast]);
 
-  // Save email settings mutation
-  const saveSettingsMutation = useMutation({
-    mutationFn: (data: EmailSettings) => 
-      apiRequest('POST', '/api/admin/email-settings', data),
-    onSuccess: (response) => {
-      toast({ title: 'E-posta ayarları başarıyla kaydedildi!' });
-      
-      // Update form data with saved response (preserve password field)
-      const data = response as any;
-      const updatedData = {
-        id: data.id,
-        provider: 'smtp' as const,
-        smtpHost: data.smtp_host || data.smtpHost || '',
-        smtpPort: data.smtp_port || data.smtpPort || 587,
-        smtpUser: data.smtp_user || data.smtpUser || '',
-        smtpPass: formData.smtpPass, // Keep current password to prevent clearing
-        fromEmail: data.from_email || data.fromEmail || '',
-        fromName: data.from_name || data.fromName || '',
-        replyTo: data.reply_to || data.replyTo || '',
-        adminEmail: data.adminEmail || '',
-        isActive: data.is_active ?? data.isActive ?? true,
-      };
-      
-      setFormData(prev => ({ ...prev, ...updatedData }));
-      // Don't invalidate cache immediately to prevent form reset
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: 'Hata', 
-        description: error?.message || 'Ayarlar kaydedilemedi',
-        variant: 'destructive'
-      });
-    },
-  });
-
-  // Test email mutation
-  const testEmailMutation = useMutation({
-    mutationFn: (email: string) => 
-      apiRequest('POST', '/api/admin/email-settings/test', { testEmail: email }),
-    onSuccess: () => {
-      toast({ title: 'Test e-postası başarıyla gönderildi!' });
-      setTestEmail('');
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: 'Hata', 
-        description: error?.message || 'Test e-postası gönderilemedi',
-        variant: 'destructive'
-      });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle form submit
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    saveSettingsMutation.mutate(formData);
+    setIsSaving(true);
+
+    try {
+      const response = await fetch('/api/admin/email-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Başarılı",
+          description: "E-posta ayarları kaydedildi",
+        });
+      } else {
+        throw new Error('Kaydetme başarısız');
+      }
+    } catch (error) {
+      toast({
+        title: "Hata",
+        description: "E-posta ayarları kaydedilemedi",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleTestEmail = () => {
+  // Handle test email
+  const handleTestEmail = async () => {
     if (!testEmail) {
-      toast({ 
-        title: 'Hata', 
-        description: 'Test için e-posta adresi gerekli',
-        variant: 'destructive'
+      toast({
+        title: "Hata",
+        description: "Test için e-posta adresi gerekli",
+        variant: "destructive"
       });
       return;
     }
-    testEmailMutation.mutate(testEmail);
+
+    try {
+      const response = await fetch('/api/admin/email-settings/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ testEmail }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Başarılı",
+          description: "Test e-postası gönderildi",
+        });
+        setTestEmail('');
+      } else {
+        throw new Error('Test başarısız');
+      }
+    } catch (error) {
+      toast({
+        title: "Hata",
+        description: "Test e-postası gönderilemedi",
+        variant: "destructive"
+      });
+    }
   };
 
+  // Update form field
   const updateFormData = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -208,14 +187,14 @@ export function EmailSettings() {
           <h1 className="text-2xl font-bold text-white">E-posta Ayarları</h1>
         </div>
 
-        <Card className="bg-gray-800/50 border-gray-700">
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
+            <CardTitle className="flex items-center space-x-2 text-white">
               <Settings className="h-5 w-5" />
               <span>E-posta Sağlayıcı Yapılandırması</span>
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Sistem e-postalarını göndermek için e-posta sağlayıcınızı yapılandırın.
+              Sistem e-postalarını göndermek için SMTP ayarları yapılandırın
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -235,45 +214,48 @@ export function EmailSettings() {
                   <Input
                     id="fromEmail"
                     type="email"
-                    value={formData.fromEmail || ''}
+                    value={formData.fromEmail}
                     onChange={(e) => updateFormData('fromEmail', e.target.value)}
                     className="bg-gray-700 border-gray-600 text-white"
-                    placeholder="no-reply@domain.com"
+                    placeholder="noreply@domain.com"
                   />
+                  <p className="text-xs text-gray-400">Sistem e-postalarında gözükecek gönderen adresi</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="fromName" className="text-white">Gönderen Adı</Label>
+                  <Label htmlFor="fromName" className="text-white">Gönderen İsmi</Label>
                   <Input
                     id="fromName"
-                    value={formData.fromName || ''}
+                    value={formData.fromName}
                     onChange={(e) => updateFormData('fromName', e.target.value)}
                     className="bg-gray-700 border-gray-600 text-white"
                     placeholder="AdeGloba Starlink System"
                   />
+                  <p className="text-xs text-gray-400">E-postalarda görünecek gönderen ismi</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="replyTo" className="text-white">Yanıt Adresi</Label>
+                  <Label htmlFor="replyTo" className="text-white">Yanıtla Adresi</Label>
                   <Input
                     id="replyTo"
                     type="email"
-                    value={formData.replyTo || ''}
+                    value={formData.replyTo}
                     onChange={(e) => updateFormData('replyTo', e.target.value)}
                     className="bg-gray-700 border-gray-600 text-white"
                     placeholder="support@domain.com"
                   />
+                  <p className="text-xs text-gray-400">Kullanıcılar yanıt verdiğinde bu adrese gidecek</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="adminEmail" className="text-white">Admin E-posta</Label>
                   <Input
                     id="adminEmail"
                     type="email"
-                    value={formData.adminEmail || ''}
+                    value={formData.adminEmail}
                     onChange={(e) => updateFormData('adminEmail', e.target.value)}
                     className="bg-gray-700 border-gray-600 text-white"
-                    placeholder="admin@adegloba.com"
+                    placeholder="admin@domain.com"
                   />
                   <p className="text-xs text-gray-400">Sipariş bildirimleri bu adrese gönderilir</p>
                 </div>
@@ -282,64 +264,62 @@ export function EmailSettings() {
               {/* SMTP Settings */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white">SMTP Ayarları</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="smtpHost" className="text-white">SMTP Sunucu</Label>
-                      <Input
-                        id="smtpHost"
-                        value={formData.smtpHost || ''}
-                        onChange={(e) => updateFormData('smtpHost', e.target.value)}
-                        className="bg-gray-700 border-gray-600 text-white"
-                        placeholder="smtp.gmail.com"
-                        data-testid="input-smtp-host"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="smtpPort" className="text-white">Port</Label>
-                      <Input
-                        id="smtpPort"
-                        type="number"
-                        value={formData.smtpPort || ''}
-                        onChange={(e) => updateFormData('smtpPort', parseInt(e.target.value))}
-                        className="bg-gray-700 border-gray-600 text-white"
-                        placeholder="587"
-                      />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="smtpHost" className="text-white">SMTP Sunucu</Label>
+                    <Input
+                      id="smtpHost"
+                      value={formData.smtpHost}
+                      onChange={(e) => updateFormData('smtpHost', e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="smtp.gmail.com"
+                    />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="smtpUser" className="text-white">Kullanıcı Adı</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="smtpPort" className="text-white">Port</Label>
+                    <Input
+                      id="smtpPort"
+                      type="number"
+                      value={formData.smtpPort || ''}
+                      onChange={(e) => updateFormData('smtpPort', parseInt(e.target.value))}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="587"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="smtpUser" className="text-white">Kullanıcı Adı</Label>
+                    <Input
+                      id="smtpUser"
+                      value={formData.smtpUser}
+                      onChange={(e) => updateFormData('smtpUser', e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      placeholder="your-email@gmail.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="smtpPass" className="text-white">Şifre</Label>
+                    <div className="relative">
                       <Input
-                        id="smtpUser"
-                        value={formData.smtpUser || ''}
-                        onChange={(e) => updateFormData('smtpUser', e.target.value)}
-                        className="bg-gray-700 border-gray-600 text-white"
-                        placeholder="your-email@gmail.com"
-                        data-testid="input-smtp-user"
+                        id="smtpPass"
+                        type={showPasswords ? "text" : "password"}
+                        value={formData.smtpPass}
+                        onChange={(e) => updateFormData('smtpPass', e.target.value)}
+                        className="bg-gray-700 border-gray-600 text-white pr-10"
+                        placeholder="••••••••"
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="smtpPass" className="text-white">Şifre</Label>
-                      <div className="relative">
-                        <Input
-                          id="smtpPass"
-                          type={showPasswords ? "text" : "password"}
-                          value={formData.smtpPass || ''}
-                          onChange={(e) => updateFormData('smtpPass', e.target.value)}
-                          className="bg-gray-700 border-gray-600 text-white pr-10"
-                          placeholder="••••••••"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswords(!showPasswords)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                        >
-                          {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords(!showPasswords)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                      >
+                        {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
                   </div>
                 </div>
+              </div>
 
               {/* Active Switch */}
               <div className="flex items-center space-x-2">
@@ -351,82 +331,52 @@ export function EmailSettings() {
                 <Label htmlFor="isActive" className="text-white">E-posta gönderimi aktif</Label>
               </div>
 
-              {/* Save Button */}
-              <Button 
-                type="submit" 
-                disabled={saveSettingsMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {saveSettingsMutation.isPending ? (
-                  <>
-                    <Settings className="h-4 w-4 mr-2 animate-spin" />
-                    Kaydediliyor...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Ayarları Kaydet
-                  </>
-                )}
-              </Button>
+              {/* Submit Button */}
+              <div className="flex justify-end">
+                <Button 
+                  type="submit" 
+                  disabled={isSaving}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isSaving ? 'Kaydediliyor...' : 'Ayarları Kaydet'}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
 
         {/* Test Email Section */}
-        <Card className="bg-gray-800/50 border-gray-700">
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
+            <CardTitle className="flex items-center space-x-2 text-white">
               <Send className="h-5 w-5" />
-              <span>Test E-postası Gönder</span>
+              <span>E-posta Testi</span>
             </CardTitle>
             <CardDescription className="text-gray-400">
-              E-posta ayarlarınızı test etmek için bir test e-postası gönderin.
+              E-posta ayarlarınızı test etmek için bir test e-postası gönderin
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex space-x-2">
-              <Input
-                type="email"
-                value={testEmail}
-                onChange={(e) => setTestEmail(e.target.value)}
-                placeholder="test@example.com"
-                className="bg-gray-700 border-gray-600 text-white flex-1"
-              />
+            <div className="flex space-x-4">
+              <div className="flex-1">
+                <Input
+                  type="email"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  placeholder="test@example.com"
+                  className="bg-gray-700 border-gray-600 text-white"
+                />
+              </div>
               <Button 
                 onClick={handleTestEmail}
-                disabled={testEmailMutation.isPending || !testEmail}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                variant="outline"
+                className="border-gray-600 text-white hover:bg-gray-700"
               >
-                {testEmailMutation.isPending ? (
-                  <>
-                    <Mail className="h-4 w-4 mr-2 animate-spin" />
-                    Gönderiliyor...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Test Gönder
-                  </>
-                )}
+                Test Gönder
               </Button>
             </div>
           </CardContent>
         </Card>
-
-        {/* Information Alert */}
-        <Alert className="bg-blue-900/20 border-blue-500">
-          <AlertCircle className="h-4 w-4 text-blue-400" />
-          <AlertDescription className="text-blue-100">
-            <strong>Bilgi:</strong> E-posta ayarları kaydedildikten sonra sistem otomatik olarak:
-            <ul className="mt-2 list-disc list-inside space-y-1">
-              <li>Kullanıcı kaydında hoş geldin e-postası gönderir</li>
-              <li>Sipariş tamamlandığında onay e-postası gönderir</li>
-              <li>Admin'e yeni sipariş bildirimi gönderir</li>
-              <li>Her ayın 1'i saat 09:10'da aylık rapor gönderir</li>
-            </ul>
-          </AlertDescription>
-        </Alert>
       </div>
     </AdminLayout>
   );
