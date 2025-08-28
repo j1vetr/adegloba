@@ -128,6 +128,9 @@ export class EmailService {
         host: settings.smtpHost,
         port: settings.smtpPort || 587,
         secure: (settings.smtpPort || 587) === 465,
+        tls: {
+          rejectUnauthorized: false // Allow self-signed certificates
+        },
         auth: {
           user: settings.smtpUser,
           pass: decrypt(settings.smtpPass || ''),

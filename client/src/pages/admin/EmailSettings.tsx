@@ -51,7 +51,8 @@ export function EmailSettings() {
   // Update form when settings are loaded
   useEffect(() => {
     if (settings) {
-      setFormData(settings);
+      console.log('Loaded settings:', settings);
+      setFormData(prev => ({ ...prev, ...settings }));
     }
   }, [settings]);
 
