@@ -433,160 +433,225 @@ export class EmailService {
             body { 
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; 
                 margin: 0; padding: 20px; 
-                background: #f8fafc;
-                color: #1e293b; 
+                background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 50%, #0f172a 100%);
+                color: #e2e8f0; 
                 line-height: 1.6; 
+                min-height: 100vh;
             }
             .email-container { 
                 max-width: 650px; 
                 margin: 0 auto; 
-                background: #ffffff;
-                border-radius: 12px; 
+                background: linear-gradient(145deg, #1e293b 0%, #334155 100%);
+                border-radius: 16px; 
                 overflow: hidden;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                border: 1px solid #e2e8f0;
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(20px);
             }
             .header { 
-                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-                padding: 40px 30px; 
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                padding: 45px 35px; 
                 text-align: center; 
                 position: relative;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .header::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6);
             }
             .logo { 
                 color: #ffffff; 
-                font-size: 26px; 
-                font-weight: 700; 
-                letter-spacing: 0.5px;
-                margin-bottom: 8px;
+                font-size: 30px; 
+                font-weight: 800; 
+                letter-spacing: 1px;
+                margin-bottom: 12px;
+                text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+                background: linear-gradient(135deg, #06b6d4, #3b82f6);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
             }
             .subtitle {
-                color: #94a3b8;
-                font-size: 14px;
+                color: #cbd5e1;
+                font-size: 15px;
                 font-weight: 500;
                 margin: 0;
+                opacity: 0.9;
             }
             .content { 
-                padding: 40px 30px; 
-                background: #ffffff;
+                padding: 45px 35px; 
+                background: rgba(30, 41, 59, 0.4);
+                backdrop-filter: blur(10px);
             }
             .content h1, .content h2 { 
-                color: #0f172a; 
-                margin-bottom: 24px; 
-                font-weight: 600;
+                color: #ffffff; 
+                margin-bottom: 28px; 
+                font-weight: 700;
                 line-height: 1.3;
+                text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
             }
-            .content h1 { font-size: 28px; }
-            .content h2 { font-size: 24px; }
+            .content h1 { 
+                font-size: 32px;
+                background: linear-gradient(135deg, #06b6d4, #3b82f6);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+            .content h2 { 
+                font-size: 26px;
+                color: #e2e8f0;
+            }
             .content p { 
-                color: #475569; 
-                margin-bottom: 20px; 
-                font-size: 16px;
-                line-height: 1.6; 
+                color: #cbd5e1; 
+                margin-bottom: 22px; 
+                font-size: 17px;
+                line-height: 1.7;
+                opacity: 0.95;
             }
             .highlight { 
-                background: #f1f5f9;
-                color: #0f172a;
-                padding: 3px 8px;
-                border-radius: 6px;
-                font-weight: 600;
-                border: 1px solid #e2e8f0;
+                background: linear-gradient(135deg, #1e293b, #334155);
+                color: #06b6d4;
+                padding: 4px 12px;
+                border-radius: 8px;
+                font-weight: 700;
+                border: 1px solid rgba(6, 182, 212, 0.3);
+                box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
             }
             .button { 
                 display: inline-block; 
-                padding: 14px 28px; 
-                background: #0f172a;
+                padding: 16px 32px; 
+                background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
                 color: #ffffff; 
                 text-decoration: none; 
-                border-radius: 8px; 
-                font-weight: 600; 
-                font-size: 15px;
-                margin: 24px 0;
+                border-radius: 12px; 
+                font-weight: 700; 
+                font-size: 16px;
+                margin: 28px 0;
                 text-align: center;
-                letter-spacing: 0.025em;
-                border: 2px solid #0f172a;
-                transition: all 0.2s ease;
+                letter-spacing: 0.5px;
+                border: 2px solid transparent;
+                transition: all 0.3s ease;
+                box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+                text-transform: uppercase;
             }
             .button:hover {
-                background: #1e293b;
-                border-color: #1e293b;
-                transform: translateY(-1px);
-                box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+                background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 12px 35px rgba(6, 182, 212, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+                filter: brightness(1.1);
             }
             .order-details {
-                background: #f8fafc;
-                border-radius: 10px;
-                padding: 24px;
-                margin: 24px 0;
-                border: 1px solid #e2e8f0;
+                background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.8));
+                border-radius: 16px;
+                padding: 28px;
+                margin: 28px 0;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
             }
             .order-item {
-                padding: 12px 0;
-                border-bottom: 1px solid #e2e8f0;
-                color: #475569;
+                padding: 16px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                color: #cbd5e1;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                font-size: 16px;
             }
             .order-item:last-child {
                 border-bottom: none;
-                font-weight: 600;
-                color: #0f172a;
+                font-weight: 700;
+                color: #ffffff;
+                font-size: 18px;
+                padding-top: 20px;
+                margin-top: 8px;
+                border-top: 2px solid rgba(6, 182, 212, 0.3);
             }
             .price {
-                color: #059669;
-                font-weight: 700;
-                font-size: 18px;
+                color: #10b981;
+                font-weight: 800;
+                font-size: 20px;
+                text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
             }
             .footer {
-                background: #f1f5f9;
-                padding: 30px 20px;
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                padding: 35px 25px;
                 text-align: center;
-                border-top: 1px solid #e2e8f0;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                position: relative;
+            }
+            .footer::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, #06b6d4, transparent);
             }
             .footer-brand {
-                color: #0f172a;
-                font-size: 18px;
-                font-weight: 700;
-                margin-bottom: 12px;
+                color: #ffffff;
+                font-size: 22px;
+                font-weight: 800;
+                margin-bottom: 16px;
+                background: linear-gradient(135deg, #06b6d4, #3b82f6);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                text-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
             }
             .footer-links {
-                color: #64748b;
-                font-size: 14px;
-                margin-bottom: 8px;
-                line-height: 1.5;
+                color: #94a3b8;
+                font-size: 15px;
+                margin-bottom: 12px;
+                line-height: 1.6;
             }
             .footer-links a {
-                color: #475569;
+                color: #06b6d4;
                 text-decoration: none;
-                font-weight: 500;
-                transition: color 0.2s ease;
+                font-weight: 600;
+                transition: all 0.3s ease;
             }
             .footer-links a:hover {
-                color: #0f172a;
+                color: #ffffff;
+                text-shadow: 0 0 10px rgba(6, 182, 212, 0.6);
             }
             .footer-copyright {
                 color: #64748b;
-                font-size: 12px;
-                margin-top: 16px;
-                padding-top: 16px;
-                border-top: 1px solid #e2e8f0;
+                font-size: 13px;
+                margin-top: 20px;
+                padding-top: 20px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                opacity: 0.8;
             }
             .status-badge {
                 display: inline-block;
-                padding: 8px 16px;
-                background: #dcfce7;
-                color: #166534;
-                border-radius: 6px;
-                font-size: 13px;
-                font-weight: 600;
-                border: 1px solid #bbf7d0;
+                padding: 10px 20px;
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(34, 197, 94, 0.2));
+                color: #10b981;
+                border-radius: 12px;
+                font-size: 14px;
+                font-weight: 700;
+                border: 1px solid rgba(16, 185, 129, 0.4);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
             }
             @media (max-width: 600px) {
-                .email-container { margin: 10px; border-radius: 12px; }
-                .content { padding: 30px 20px; }
-                .header { padding: 25px 15px; }
-                .logo { font-size: 24px; }
-                .button { padding: 14px 24px; width: 100%; }
+                body { padding: 10px; }
+                .email-container { margin: 0; border-radius: 16px; }
+                .content { padding: 35px 25px; }
+                .header { padding: 35px 25px; }
+                .logo { font-size: 26px; }
+                .button { padding: 16px 28px; width: 100%; font-size: 15px; }
+                .order-details { padding: 24px; }
+                .content h1 { font-size: 28px; }
+                .content h2 { font-size: 22px; }
             }
         </style>
     </head>
