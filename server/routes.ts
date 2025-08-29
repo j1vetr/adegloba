@@ -1686,10 +1686,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Bulk delete ships
-  app.delete('/api/admin/ships/bulk', isAdminAuthenticated, async (req, res) => {
+  // Bulk delete ships - NEW PATH
+  app.post('/api/admin/ships/delete-multiple', isAdminAuthenticated, async (req, res) => {
+    console.log('🚀 NEW BULK DELETE ENDPOINT HIT! POST /api/admin/ships/delete-multiple');
     try {
       const { ids } = req.body;
+      console.log('📋 Received IDs:', ids);
       
       if (!Array.isArray(ids) || ids.length === 0) {
         return res.status(400).json({ message: 'Ship IDs array is required' });

@@ -150,7 +150,7 @@ export default function ShipsManagement() {
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
       console.log('🚀 Frontend: Starting bulk delete with IDs:', ids);
-      const result = await apiRequest("DELETE", `/api/admin/ships/bulk`, { ids });
+      const result = await apiRequest("POST", `/api/admin/ships/delete-multiple`, { ids });
       console.log('✅ Frontend: Bulk delete API result:', result);
       return result;
     },
