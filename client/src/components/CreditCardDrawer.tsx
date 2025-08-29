@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 interface CreditCardDrawerProps {
   isOpen: boolean;
@@ -23,6 +24,13 @@ export default function CreditCardDrawer({
   onError
 }: CreditCardDrawerProps) {
   const { toast } = useToast();
+  
+  // Fetch user data to auto-populate form
+  const { data: user } = useQuery({
+    queryKey: ['/api/user/me'],
+    enabled: isOpen, // Only fetch when drawer is open
+  });
+
   const [formData, setFormData] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -40,6 +48,29 @@ export default function CreditCardDrawer({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardBrand, setCardBrand] = useState('');
+
+  // Auto-populate form with user data when drawer opens
+  useEffect(() => {
+    if (isOpen && user) {
+      // Parse name if available (assumes full_name contains first and last name)
+      const fullName = user.full_name || '';
+      const nameParts = fullName.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      setFormData(prev => ({
+        ...prev,
+        cardholderName: firstName,
+        surname: lastName,
+        email: user.email || '',
+        phone: user.phone || '',
+        addressLine1: user.address || '',
+        city: '', // Keep empty as we don't have separate city field in user
+        region: '', // Keep empty as we don't have separate region field in user
+        postalCode: '' // Keep empty as we don't have postal code in user
+      }));
+    }
+  }, [isOpen, user]);
 
   // Detect card brand from number
   const detectCardBrand = (cardNumber: string) => {
