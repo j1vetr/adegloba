@@ -185,11 +185,9 @@ export default function OrderSuccess() {
         <div className="mt-6 text-center">
           {/* AdeGloba Logo */}
           <div className="flex justify-center mb-4">
-            <img 
-              src="/attached_assets/adegloba-1_1756252463127.png" 
-              alt="AdeGloba Logo" 
-              className="h-8 w-auto opacity-80 hover:opacity-100 transition-opacity"
-            />
+            <div className="text-2xl font-bold text-slate-300">
+              AdeGloba
+            </div>
           </div>
           
           <p className="text-slate-400 text-sm mb-2">

@@ -233,10 +233,23 @@ export default function Dashboard() {
                             </div>
                             <div>
                               <div className="font-semibold text-white">
-                                {order.items?.[0]?.plan?.title || 'Data Plan'} - {order.items?.[0]?.ship?.name || 'Ship'}
+                                {order.items?.length > 1 
+                                  ? `${order.items.length} Paket - ${order.items[0]?.ship?.name || 'Ship'}`
+                                  : `${order.items?.[0]?.plan?.title || 'Data Plan'} - ${order.items?.[0]?.ship?.name || 'Ship'}`
+                                }
                               </div>
                               <div className="text-sm text-slate-400">
                                 Order #{order.id.slice(0, 8)} • {new Date(order.createdAt).toLocaleDateString()}
+                                {order.items?.length > 1 && (
+                                  <div className="text-xs text-cyan-400 mt-1">
+                                    {order.items.map((item: any, index: number) => (
+                                      <span key={index}>
+                                        {item.plan?.title || 'Paket'}
+                                        {index < order.items.length - 1 && ', '}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
