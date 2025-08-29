@@ -49,18 +49,34 @@ export default function Reports() {
   const { data: ships } = useQuery({
     queryKey: ["/api/admin/ships"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/ships");
+      const response = await fetch("/api/admin/ships", {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        }
+      });
       return response.json();
     },
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache the result
   });
 
   // Get report data
   const { data: reportData, isLoading } = useQuery({
     queryKey: ["/api/admin/reports", selectedShip, dateRange],
     queryFn: async () => {
-      const response = await fetch(`/api/admin/reports?ship=${selectedShip}&range=${dateRange}`);
+      const response = await fetch(`/api/admin/reports?ship=${selectedShip}&range=${dateRange}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        }
+      });
       return response.json();
     },
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache the result
   });
 
   const dateRangeOptions = {

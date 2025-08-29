@@ -999,17 +999,17 @@ export class DatabaseStorage implements IStorage {
   // Statistics
   async getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number; cancelledOrders: number; pendingOrders: number }> {
     try {
-      // Total Revenue and Orders from completed orders only
+      // Total Revenue and Orders from paid and completed orders
       const [revenueStats] = await db
         .select({
-          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
-          totalOrders: sql<number>`COUNT(CASE WHEN ${orders.status} = 'completed' THEN 1 END)`,
+          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid', 'completed') THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
+          totalOrders: sql<number>`COUNT(CASE WHEN ${orders.status} IN ('paid', 'completed') THEN 1 END)`,
           cancelledOrders: sql<number>`COUNT(CASE WHEN ${orders.status} = 'cancelled' THEN 1 END)`,
           pendingOrders: sql<number>`COUNT(CASE WHEN ${orders.status} = 'pending' THEN 1 END)`
         })
         .from(orders);
 
-      // Active Users - users with at least one active package (orders with expires_at > now and status = completed)
+      // Active Users - users with at least one active package (orders with expires_at > now and status = paid or completed)
       const [activeUsersStats] = await db
         .select({
           activeUsers: sql<number>`COUNT(DISTINCT ${orders.userId})`
@@ -1017,13 +1017,13 @@ export class DatabaseStorage implements IStorage {
         .from(orders)
         .where(
           and(
-            eq(orders.status, 'completed'),
+            or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
             isNotNull(orders.expiresAt),
             gt(orders.expiresAt, new Date())
           )
         );
 
-      // Active Packages - count of active completed orders that haven't expired
+      // Active Packages - count of active paid/completed orders that haven't expired
       const [activePackagesStats] = await db
         .select({
           activePackages: sql<number>`COUNT(*)`
@@ -1031,7 +1031,7 @@ export class DatabaseStorage implements IStorage {
         .from(orders)
         .where(
           and(
-            eq(orders.status, 'completed'),
+            or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
             isNotNull(orders.expiresAt),
             gt(orders.expiresAt, new Date())
           )

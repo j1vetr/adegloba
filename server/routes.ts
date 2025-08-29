@@ -640,12 +640,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // For now, create order with first item (can be extended later)
-      const firstItem = cartItems[0];
-      if (!firstItem.plan) {
-        return res.status(400).json({ message: 'Plan not found' });
-      }
-
       // Create order with discount applied
       const orderData = {
         userId,
@@ -660,15 +654,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const order = await storage.createOrder(orderData);
 
-      // Create order item
-      await storage.createOrderItem({
-        orderId: order.id,
-        shipId: user.ship_id,
-        planId: firstItem.plan.id,
-        qty: firstItem.quantity,
-        unitPriceUsd: firstItem.plan.priceUsd,
-        lineTotalUsd: (parseFloat(firstItem.plan.priceUsd) * firstItem.quantity).toFixed(2),
-      });
+      // Create order items for all cart items
+      for (const cartItem of cartItems) {
+        if (!cartItem.plan) {
+          return res.status(400).json({ message: `Plan not found for item ${cartItem.planId}` });
+        }
+
+        await storage.createOrderItem({
+          orderId: order.id,
+          shipId: user.ship_id,
+          planId: cartItem.plan.id,
+          qty: cartItem.quantity,
+          unitPriceUsd: cartItem.plan.priceUsd,
+          lineTotalUsd: (parseFloat(cartItem.plan.priceUsd) * cartItem.quantity).toFixed(2),
+        });
+      }
 
       // Record coupon usage if coupon was applied
       if (validatedCoupon && discount > 0) {
