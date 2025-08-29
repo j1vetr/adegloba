@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import AdminLayout from "@/components/AdminLayout";
-import { BarChart3, TrendingUp, DollarSign, Package } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Package, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 type DateRange = 'last7days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear';
@@ -22,6 +23,27 @@ interface ReportData {
 export default function Reports() {
   const [selectedShip, setSelectedShip] = useState<string>('all');
   const [dateRange, setDateRange] = useState<DateRange>('thisMonth');
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+
+  // Export function
+  const handleExport = (format: 'excel' | 'csv') => {
+    const params = new URLSearchParams({
+      ship: selectedShip,
+      range: dateRange,
+      format: format
+    });
+    
+    // Create a temporary link to trigger download
+    const url = `/api/admin/reports/export?${params.toString()}`;
+    const link = document.createElement('a');
+    link.href = url;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setIsExportDialogOpen(false);
+  };
 
   // Get ships for dropdown
   const { data: ships } = useQuery({
@@ -62,10 +84,61 @@ export default function Reports() {
         
         {/* Filters */}
         <Card className="glassmorphism border-slate-700 p-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            Raporlama Filtreleri
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Raporlama Filtreleri
+            </h2>
+            
+            <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white">
+                  <Download className="w-4 h-4 mr-2" />
+                  Rapor İndir
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-slate-900 border-slate-700 text-white">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Rapor Dışa Aktarım</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <p className="text-slate-300 text-sm">
+                    Mevcut filtrelere göre raporu istediğiniz formatta indirin:
+                  </p>
+                  
+                  <div className="grid gap-3">
+                    <Button
+                      onClick={() => handleExport('excel')}
+                      className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white p-4 h-auto justify-start"
+                    >
+                      <FileSpreadsheet className="w-5 h-5 mr-3" />
+                      <div className="text-left">
+                        <div className="font-medium">Excel Dosyası (.xlsx)</div>
+                        <div className="text-sm text-green-200">Gelişmiş analiz için önerilen format</div>
+                      </div>
+                    </Button>
+                    
+                    <Button
+                      onClick={() => handleExport('csv')}
+                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-4 h-auto justify-start"
+                    >
+                      <FileText className="w-5 h-5 mr-3" />
+                      <div className="text-left">
+                        <div className="font-medium">CSV Dosyası (.csv)</div>
+                        <div className="text-sm text-blue-200">Evrensel format, tüm uygulamalarda açılır</div>
+                      </div>
+                    </Button>
+                  </div>
+                  
+                  <div className="text-xs text-slate-400 mt-4 p-3 bg-slate-800/50 rounded-lg">
+                    <strong>Mevcut Filtreler:</strong><br/>
+                    Gemi: {selectedShip === 'all' ? 'Tüm Gemiler' : ships?.find((s: any) => s.id === selectedShip)?.name || 'Seçili Gemi'}<br/>
+                    Tarih: {dateRangeOptions[dateRange]}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
           
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">

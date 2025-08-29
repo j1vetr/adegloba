@@ -988,6 +988,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin reports export endpoint
+  app.get('/api/admin/reports/export', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { ship, range, format = 'excel' } = req.query;
+      
+      // Calculate date range (same logic as reports endpoint)
+      const now = new Date();
+      let startDate: Date;
+      let endDate: Date = now;
+
+      switch (range) {
+        case 'last7days':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'thisMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'lastMonth':
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          startDate = lastMonth;
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          break;
+        case 'thisYear':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        case 'lastYear':
+          startDate = new Date(now.getFullYear() - 1, 0, 1);
+          endDate = new Date(now.getFullYear() - 1, 11, 31);
+          break;
+        default:
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      }
+
+      const reportData = await storage.getReportData(
+        ship === 'all' ? undefined : ship as string,
+        startDate,
+        endDate
+      );
+
+      if (format === 'csv') {
+        const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+        const csvWriter = createCsvWriter({
+          path: '',
+          header: [
+            { id: 'shipName', title: 'Gemi Adı' },
+            { id: 'totalOrders', title: 'Ödenen Siparişler' },
+            { id: 'packagesSold', title: 'Satılan Paketler' },
+            { id: 'totalDataGB', title: 'Satılan Veri (GB)' },
+            { id: 'totalRevenue', title: 'Net Gelir ($)' }
+          ]
+        });
+
+        const csvData = reportData.map(item => ({
+          shipName: item.shipName,
+          totalOrders: item.totalOrders,
+          packagesSold: item.packagesSold,
+          totalDataGB: item.totalDataGB,
+          totalRevenue: item.totalRevenue.toFixed(2)
+        }));
+
+        const csvString = csvData.map(row => 
+          Object.values(row).map(val => `"${val}"`).join(',')
+        ).join('\n');
+        
+        const header = 'Gemi Adı,Ödenen Siparişler,Satılan Paketler,Satılan Veri (GB),Net Gelir ($)\n';
+        const finalCsv = header + csvString;
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="rapor-${new Date().toISOString().split('T')[0]}.csv"`);
+        res.send('\uFEFF' + finalCsv); // BOM for Turkish characters
+      } else {
+        // Excel export
+        const XLSX = require('xlsx');
+        const workbook = XLSX.utils.book_new();
+        
+        const excelData = reportData.map(item => ({
+          'Gemi Adı': item.shipName,
+          'Ödenen Siparişler': item.totalOrders,
+          'Satılan Paketler': item.packagesSold,
+          'Satılan Veri (GB)': item.totalDataGB,
+          'Net Gelir ($)': parseFloat(item.totalRevenue.toFixed(2))
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        
+        // Auto-size columns
+        const colWidths = [
+          { wch: 20 }, // Gemi Adı
+          { wch: 18 }, // Ödenen Siparişler
+          { wch: 16 }, // Satılan Paketler
+          { wch: 18 }, // Satılan Veri (GB)
+          { wch: 15 }  // Net Gelir ($)
+        ];
+        worksheet['!cols'] = colWidths;
+
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Rapor');
+        
+        const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="rapor-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(excelBuffer);
+      }
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      res.status(500).json({ message: "Failed to export report" });
+    }
+  });
+
   // Admin authentication routes (using session-based auth)
   app.get('/api/admin/me', isAdminAuthenticated, async (req: any, res) => {
     try {
