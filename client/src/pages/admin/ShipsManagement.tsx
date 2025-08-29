@@ -149,7 +149,10 @@ export default function ShipsManagement() {
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
-      return await apiRequest("DELETE", `/api/admin/ships/bulk`, { ids });
+      console.log('🚀 Frontend: Starting bulk delete with IDs:', ids);
+      const result = await apiRequest("DELETE", `/api/admin/ships/bulk`, { ids });
+      console.log('✅ Frontend: Bulk delete API result:', result);
+      return result;
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/ships"] });
@@ -292,8 +295,14 @@ export default function ShipsManagement() {
   };
 
   const handleBulkDelete = () => {
-    if (selectedShips.length === 0) return;
+    console.log('🗑️ Frontend: handleBulkDelete called');
+    console.log('📋 Selected ships:', selectedShips);
+    if (selectedShips.length === 0) {
+      console.log('❌ No ships selected');
+      return;
+    }
     setIsBulkDeleting(true);
+    console.log('🚀 Calling bulkDeleteMutation.mutate with:', selectedShips);
     bulkDeleteMutation.mutate(selectedShips);
   };
 
