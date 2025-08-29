@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, CreditCard, Lock, CheckCircle2 } from "lucide-react";
+import { X, CreditCard, Lock, CheckCircle2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -369,6 +369,101 @@ export default function CreditCardDrawer({
                   />
                   {errors.email && (
                     <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Address Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-orange-400" />
+                  Adres Bilgileri
+                </h3>
+                
+                {/* Address Line 1 */}
+                <div>
+                  <Label className="text-slate-300">Adres Satırı 1</Label>
+                  <Input
+                    type="text"
+                    placeholder="Sokak, mahalle, cadde bilgileri"
+                    value={formData.addressLine1}
+                    onChange={(e) => handleInputChange('addressLine1', e.target.value)}
+                    className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.addressLine1 ? 'border-red-500' : ''}`}
+                  />
+                  {errors.addressLine1 && (
+                    <p className="text-red-400 text-sm mt-1">{errors.addressLine1}</p>
+                  )}
+                </div>
+
+                {/* Address Line 2 (Optional) */}
+                <div>
+                  <Label className="text-slate-300">Adres Satırı 2 (İsteğe Bağlı)</Label>
+                  <Input
+                    type="text"
+                    placeholder="Daire no, kat, bina adı (isteğe bağlı)"
+                    value={formData.addressLine2}
+                    onChange={(e) => handleInputChange('addressLine2', e.target.value)}
+                    className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                  />
+                </div>
+
+                {/* City, Region and Postal Code */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-slate-300">Şehir</Label>
+                    <Input
+                      type="text"
+                      placeholder="İstanbul"
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.city ? 'border-red-500' : ''}`}
+                    />
+                    {errors.city && (
+                      <p className="text-red-400 text-sm mt-1">{errors.city}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label className="text-slate-300">İlçe/Bölge</Label>
+                    <Input
+                      type="text"
+                      placeholder="Kadıköy"
+                      value={formData.region}
+                      onChange={(e) => handleInputChange('region', e.target.value)}
+                      className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-slate-300">Posta Kodu</Label>
+                    <Input
+                      type="text"
+                      placeholder="34000"
+                      value={formData.postalCode}
+                      onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                      className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                    />
+                  </div>
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <Label className="text-slate-300">Telefon Numarası</Label>
+                  <Input
+                    type="tel"
+                    placeholder="0532 123 45 67"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.phone ? 'border-red-500' : ''}`}
+                  />
+                  {errors.phone && (
+                    <p className="text-red-400 text-sm mt-1">{errors.phone}</p>
                   )}
                 </div>
               </div>
