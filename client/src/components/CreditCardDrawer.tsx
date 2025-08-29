@@ -403,48 +403,6 @@ export default function CreditCardDrawer({
                     )}
                   </div>
 
-                  {/* City, Region and Postal Code */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-slate-300">Şehir</Label>
-                      <Input
-                        type="text"
-                        placeholder="İstanbul"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                          focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.city ? 'border-red-500' : ''}`}
-                      />
-                      {errors.city && (
-                        <p className="text-red-400 text-sm mt-1">{errors.city}</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <Label className="text-slate-300">İlçe</Label>
-                      <Input
-                        type="text"
-                        placeholder="Kadıköy"
-                        value={formData.region}
-                        onChange={(e) => handleInputChange('region', e.target.value)}
-                        className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                          focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label className="text-slate-300">Posta Kodu</Label>
-                      <Input
-                        type="text"
-                        placeholder="34000"
-                        value={formData.postalCode}
-                        onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                        className="glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                          focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
-                      />
-                    </div>
-                  </div>
-
                   {/* Phone Number */}
                   <div>
                     <Label className="text-slate-300">Telefon Numarası</Label>
