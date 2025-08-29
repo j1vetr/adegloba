@@ -8,6 +8,34 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## Professional Email Template Redesign (August 29, 2025)
+- Complete redesign of all email templates from "childish gold colors" to professional corporate styling
+- Changed from dark futuristic theme to clean, modern white theme with professional typography
+- Updated color palette: removed gold/yellow accents, added modern grays and subtle greens
+- Improved button design: from flashy gradient buttons to clean, minimalist corporate buttons
+- Enhanced readability: better contrast, modern fonts (-apple-system, BlinkMacSystemFont)
+- Maintained all company information and content structure while improving visual professionalism
+- Light background (#f8fafc) with dark headers (#0f172a) for better email client compatibility
+- Clean order details boxes with subtle borders and improved spacing
+- Professional footer design with proper corporate color scheme
+
+## Enhanced Automated Monthly Report System (August 29, 2025)
+- Redesigned monthly report generation to use Reports page logic for consistency
+- Changed timing from month start to month end (last day at 23:30) with current month data
+- Upgraded from HTML email reports to Excel (.xlsx) file attachments
+- Implemented Turkish month names and proper date formatting
+- Added comprehensive ship data filtering and financial calculations
+- Enhanced report structure: ship-wise breakdown, total calculations, professional formatting
+- Automatic file cleanup after email sending to prevent storage bloat
+- Uses database settings for admin email configuration
+
+## Fixed Reports Page Critical Bug (August 29, 2025)
+- Resolved database query issue: changed from 'completed' to 'paid' order status
+- Fixed missing ship data display (FERTILE vessel now showing correctly)
+- Implemented customizable export system with Excel (.xlsx) and CSV (.csv) format support
+- Added proper ES module imports (XLSX, csv-writer) replacing require() statements
+- Enhanced filtering: ship selection, date range parameters for precise reporting
+
 ## Enhanced PayPal Payment Flow with Success/Cancel Pages (August 13, 2025)
 - Created comprehensive post-payment flow with themed success and cancel pages
 - Implemented OrderSuccess page (/checkout/success) with 5-second auto-redirect to customer panel
