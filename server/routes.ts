@@ -1684,16 +1684,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/admin/ships/bulk', isAdminAuthenticated, async (req, res) => {
     try {
       const { ids } = req.body;
+      console.log('🗑️ Bulk delete request:', { ids, bodyKeys: Object.keys(req.body) });
       
       if (!Array.isArray(ids) || ids.length === 0) {
+        console.log('❌ Invalid IDs array:', { ids, isArray: Array.isArray(ids), length: ids?.length });
         return res.status(400).json({ message: 'Ship IDs array is required' });
       }
       
       // Get ship info before deletion for logging
       const ships = await storage.getAllShips();
       const shipsToDelete = ships.filter(s => ids.includes(s.id));
+      console.log('🚢 Ships to delete:', { totalShips: ships.length, toDelete: shipsToDelete.length, ids });
       
       await storage.deleteMultipleShips(ids);
+      console.log('✅ Deletion completed successfully');
       
       // Create system log for bulk ship deletion
       await storage.createSystemLog({
