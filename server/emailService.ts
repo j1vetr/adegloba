@@ -690,7 +690,7 @@ export class EmailService {
             <div style="color: #e2e8f0;">{{orderItems}}</div>
             <div class="order-item" style="border-top: 2px solid #facc15; margin-top: 15px; padding-top: 15px;">
               <strong style="color: #facc15;">Toplam Tutar:</strong>
-              <span class="price">${{totalAmount}}</span>
+              <span class="price">$\{{totalAmount}}</span>
             </div>
           </div>
           
@@ -704,39 +704,48 @@ export class EmailService {
 
       case 'admin_new_order':
         return baseTemplate.replace('{{content}}', `
-          <h2>Yeni Sipariş Bildirimi</h2>
-          <p>Yeni bir sipariş alındı:</p>
-          <h3>Sipariş Bilgileri:</h3>
-          <ul>
-            <li><strong>Sipariş No:</strong> {{orderNumber}}</li>
-            <li><strong>Müşteri:</strong> {{customerName}} ({{customerEmail}})</li>
-            <li><strong>Gemi:</strong> {{shipName}}</li>
-            <li><strong>Toplam:</strong> ${{totalAmount}}</li>
-          </ul>
-          <h3>Sipariş İçeriği:</h3>
-          <ul>{{orderItems}}</ul>
-          <p><a href="{{adminUrl}}" class="button">Admin Paneline Git</a></p>
+          <h2>🚢 Yeni Sipariş Bildirimi</h2>
+          <p>Sisteme yeni bir sipariş alındı ve ödeme tamamlandı:</p>
+          
+          <div class="order-details">
+            <h3 class="maritime-accent">📦 Sipariş Bilgileri</h3>
+            <div class="order-item"><strong>Sipariş No:</strong> <span class="highlight">{{orderNumber}}</span></div>
+            <div class="order-item"><strong>Müşteri:</strong> <span class="highlight">{{customerName}}</span></div>
+            <div class="order-item"><strong>E-posta:</strong> <span class="highlight">{{customerEmail}}</span></div>
+            <div class="order-item"><strong>Gemi:</strong> <span class="highlight">{{shipName}}</span></div>
+            <div class="order-item"><strong>Toplam Tutar:</strong> <span class="price">$\{{totalAmount}}</span></div>
+          </div>
+          
+          <div class="order-details">
+            <h3 class="maritime-accent">📋 Sipariş İçeriği</h3>
+            <ul style="margin: 0; padding: 0; list-style: none;">{{orderItems}}</ul>
+          </div>
+          
+          <div class="status-badge">✅ Ödeme Tamamlandı</div>
+          <p style="margin-top: 20px;">Paketler otomatik olarak aktifleştiriliyor ve müşteriye bildirim gönderildi.</p>
+          
+          <div style="text-align: center;">
+            <a href="{{adminUrl}}" class="button">🔧 Admin Paneline Git</a>
+          </div>
         `);
 
       case 'admin_new_user':
         return baseTemplate.replace('{{content}}', `
-          <h2>🆕 Yeni Kullanıcı Kaydı</h2>
-          <p>Sisteme yeni bir kullanıcı kayıt oldu:</p>
+          <h2>👥 Yeni Kullanıcı Kaydı</h2>
+          <p>Sisteme yeni bir kullanıcı kayıt oldu ve hoşgeldin e-postası gönderildi:</p>
           
           <div class="order-details">
-            <h3 style="color: #facc15; margin-bottom: 15px;">👤 Kullanıcı Bilgileri</h3>
-            <div style="color: #e2e8f0;">
-              <div class="order-item"><strong>Ad Soyad:</strong> <span class="highlight">{{userName}}</span></div>
-              <div class="order-item"><strong>Kullanıcı Adı:</strong> <span class="highlight">{{username}}</span></div>
-              <div class="order-item"><strong>E-posta:</strong> <span class="highlight">{{userEmail}}</span></div>
-              <div class="order-item"><strong>Telefon:</strong> <span class="highlight">{{userPhone}}</span></div>
-              <div class="order-item"><strong>Gemi:</strong> <span class="highlight">{{shipName}}</span></div>
-              <div class="order-item"><strong>Adres:</strong> <span class="highlight">{{userAddress}}</span></div>
-            </div>
+            <h3 class="maritime-accent">👤 Kullanıcı Bilgileri</h3>
+            <div class="order-item"><strong>Ad Soyad:</strong> <span class="highlight">{{userName}}</span></div>
+            <div class="order-item"><strong>Kullanıcı Adı:</strong> <span class="highlight">{{username}}</span></div>
+            <div class="order-item"><strong>E-posta:</strong> <span class="highlight">{{userEmail}}</span></div>
+            <div class="order-item"><strong>Telefon:</strong> <span class="highlight">{{userPhone}}</span></div>
+            <div class="order-item"><strong>Gemi:</strong> <span class="highlight">{{shipName}}</span></div>
+            <div class="order-item"><strong>Adres:</strong> <span class="highlight">{{userAddress}}</span></div>
           </div>
           
-          <div class="status-badge">✅ Kayıt Tamamlandı</div>
-          <p style="margin-top: 20px;">Kullanıcı otomatik olarak sisteme giriş yaptı ve hoşgeldin e-postası gönderildi.</p>
+          <div class="status-badge">✅ Kayıt Başarılı</div>
+          <p style="margin-top: 20px;">Kullanıcı sistemde aktif oldu ve kontrol paneline erişim sağladı.</p>
           
           <div style="text-align: center;">
             <a href="{{adminUrl}}" class="button">🔧 Admin Paneline Git</a>
@@ -745,17 +754,27 @@ export class EmailService {
 
       case 'admin_monthly_report':
         return baseTemplate.replace('{{content}}', `
-          <h2>Aylık Sipariş Raporu</h2>
-          <p>{{reportMonth}} ayı sipariş özeti:</p>
-          <h3>Gemi Bazında Sipariş Detayları:</h3>
-          {{shipStats}}
-          <h3>Genel Özet:</h3>
-          <ul>
-            <li><strong>Toplam Sipariş:</strong> {{totalOrders}}</li>
-            <li><strong>Toplam Gelir:</strong> ${{totalRevenue}}</li>
-            <li><strong>Toplam Veri:</strong> {{totalDataGB}} GB</li>
-          </ul>
-          <p><a href="{{adminUrl}}" class="button">Detaylı Rapor</a></p>
+          <h2>📊 Aylık Sipariş Raporu</h2>
+          <p><strong>{{reportMonth}}</strong> ayına ait sipariş ve gelir özet raporu:</p>
+          
+          <div class="order-details">
+            <h3 class="maritime-accent">🚢 Gemi Bazında Detaylar</h3>
+            {{shipStats}}
+          </div>
+          
+          <div class="order-details">
+            <h3 class="maritime-accent">📈 Genel Özet</h3>
+            <div class="order-item"><strong>Toplam Sipariş:</strong> <span class="highlight">{{totalOrders}}</span></div>
+            <div class="order-item"><strong>Toplam Gelir:</strong> <span class="price">$\{{totalRevenue}}</span></div>
+            <div class="order-item"><strong>Toplam Veri:</strong> <span class="highlight">{{totalDataGB}} GB</span></div>
+          </div>
+          
+          <div class="status-badge">📋 Rapor Hazır</div>
+          <p style="margin-top: 20px;">Excel formatında detaylı rapor e-posta ekinde yer almaktadır.</p>
+          
+          <div style="text-align: center;">
+            <a href="{{adminUrl}}" class="button">🔧 Admin Paneline Git</a>
+          </div>
         `);
 
       default:
