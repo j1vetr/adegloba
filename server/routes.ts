@@ -10,8 +10,9 @@ import { ExpiryService } from "./services/expiryService";
 import { emailService, EmailService } from "./emailService";
 import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema } from "@shared/schema";
 import { z } from "zod";
-import * as XLSX from 'xlsx';
 import { createObjectCsvWriter } from 'csv-writer';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const orderService = new OrderService(storage);
 const couponService = new CouponService(storage);
@@ -993,7 +994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin reports export endpoint
   app.get('/api/admin/reports/export', isAdminAuthenticated, async (req, res) => {
     try {
-      const { ship, range, format = 'excel' } = req.query;
+      const { ship, range, format = 'pdf' } = req.query;
       
       // Calculate date range (same logic as reports endpoint)
       const now = new Date();
@@ -1049,36 +1050,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.setHeader('Content-Disposition', `attachment; filename="rapor-${new Date().toISOString().split('T')[0]}.csv"`);
         res.send('\uFEFF' + finalCsv); // BOM for Turkish characters
       } else {
-        // Excel export
-        const workbook = XLSX.utils.book_new();
+        // PDF export
+        const doc = new (jsPDF as any)();
         
-        const excelData = reportData.map(item => ({
-          'Gemi Adı': item.shipName,
-          'Ödenen Siparişler': item.totalOrders,
-          'Satılan Paketler': item.packagesSold,
-          'Satılan Veri (GB)': item.totalDataGB,
-          'Net Gelir ($)': parseFloat(item.totalRevenue.toFixed(2))
-        }));
-
-        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        // Set Turkish fonts and encoding
+        doc.setFont('helvetica');
         
-        // Auto-size columns
-        const colWidths = [
-          { wch: 20 }, // Gemi Adı
-          { wch: 18 }, // Ödenen Siparişler
-          { wch: 16 }, // Satılan Paketler
-          { wch: 18 }, // Satılan Veri (GB)
-          { wch: 15 }  // Net Gelir ($)
-        ];
-        worksheet['!cols'] = colWidths;
-
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Rapor');
+        // Add title
+        doc.setFontSize(18);
+        doc.text('AdeGloba Starlink System - Rapor', 20, 20);
         
-        const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        // Add date range
+        doc.setFontSize(12);
+        const dateRangeText = `Tarih Aralığı: ${startDate.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`;
+        doc.text(dateRangeText, 20, 35);
         
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', `attachment; filename="rapor-${new Date().toISOString().split('T')[0]}.xlsx"`);
-        res.send(excelBuffer);
+        // Add ship filter
+        const shipText = ship === 'all' ? 'Tüm Gemiler' : `Gemi: ${ship}`;
+        doc.text(shipText, 20, 45);
+        
+        // Prepare table data
+        const tableData = reportData.map(item => [
+          item.shipName,
+          item.totalOrders.toString(),
+          item.packagesSold.toString(),
+          item.totalDataGB.toString(),
+          '$' + item.totalRevenue.toFixed(2)
+        ]);
+        
+        // Add table
+        (doc as any).autoTable({
+          startY: 60,
+          head: [['Gemi Adı', 'Ödenen Siparişler', 'Satılan Paketler', 'Satılan Veri (GB)', 'Net Gelir']],
+          body: tableData,
+          styles: { fontSize: 10, cellPadding: 5 },
+          headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          margin: { left: 20, right: 20 }
+        });
+        
+        // Calculate totals
+        const totals = reportData.reduce((acc, item) => ({
+          totalOrders: acc.totalOrders + item.totalOrders,
+          totalPackages: acc.totalPackages + item.packagesSold,
+          totalData: acc.totalData + item.totalDataGB,
+          totalRevenue: acc.totalRevenue + item.totalRevenue
+        }), { totalOrders: 0, totalPackages: 0, totalData: 0, totalRevenue: 0 });
+        
+        // Add summary
+        const finalY = (doc as any).lastAutoTable.finalY + 20;
+        doc.setFontSize(14);
+        doc.text('Özet:', 20, finalY);
+        doc.setFontSize(12);
+        doc.text(`Toplam Sipariş: ${totals.totalOrders}`, 20, finalY + 15);
+        doc.text(`Toplam Paket: ${totals.totalPackages}`, 20, finalY + 25);
+        doc.text(`Toplam Veri: ${totals.totalData} GB`, 20, finalY + 35);
+        doc.text(`Toplam Gelir: $${totals.totalRevenue.toFixed(2)}`, 20, finalY + 45);
+        
+        const pdfBuffer = doc.output('arraybuffer');
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="rapor-${new Date().toISOString().split('T')[0]}.pdf"`);
+        res.send(Buffer.from(pdfBuffer));
       }
     } catch (error) {
       console.error("Error exporting report:", error);

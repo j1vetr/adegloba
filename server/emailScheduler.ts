@@ -1,7 +1,8 @@
 import cron from 'node-cron';
 import { storage } from './storage';
 import { emailService } from './emailService';
-import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -76,15 +77,15 @@ async function generateAndSendMonthlyReport() {
     ];
     const reportMonth = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
     
-    // Generate Excel file
-    const excelFilePath = await generateExcelReport(reportData, reportMonth);
+    // Generate PDF file
+    const pdfFilePath = await generatePDFReport(reportData, reportMonth);
     
     // Format ship statistics HTML for email
     const shipStatsHtml = reportData.map(ship => 
       `<li><strong>${ship.shipName}:</strong> ${ship.totalOrders} ödenen sipariş, ${ship.packagesSold} paket, ${ship.totalDataGB}GB veri, $${ship.totalRevenue.toFixed(2)} gelir</li>`
     ).join('');
     
-    // Send monthly report email with Excel attachment
+    // Send monthly report email with PDF attachment
     const success = await emailService.sendEmailWithAttachment(
       adminEmail,
       `${reportMonth} Aylık Finans Raporu - AdeGloba Starlink System`,
@@ -99,21 +100,21 @@ async function generateAndSendMonthlyReport() {
         adminUrl: (await getBaseUrl()) + '/admin',
       },
       [{
-        filename: `aylık-rapor-${reportMonth.toLowerCase().replace(' ', '-')}.xlsx`,
-        path: excelFilePath,
-        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        filename: `aylık-rapor-${reportMonth.toLowerCase().replace(' ', '-')}.pdf`,
+        path: pdfFilePath,
+        contentType: 'application/pdf'
       }]
     );
     
     // Clean up temp file
     try {
-      fs.unlinkSync(excelFilePath);
+      fs.unlinkSync(pdfFilePath);
     } catch (cleanupError) {
-      console.warn('Warning: Could not delete temp Excel file:', cleanupError);
+      console.warn('Warning: Could not delete temp PDF file:', cleanupError);
     }
     
     if (success) {
-      console.log(`✅ Monthly report sent successfully for ${reportMonth} with Excel attachment`);
+      console.log(`✅ Monthly report sent successfully for ${reportMonth} with PDF attachment`);
     } else {
       console.error(`❌ Failed to send monthly report for ${reportMonth}`);
     }
@@ -123,31 +124,66 @@ async function generateAndSendMonthlyReport() {
   }
 }
 
-// Generate Excel report file using Reports page logic
-async function generateExcelReport(reportData: any[], reportMonth: string): Promise<string> {
-  const workbook = XLSX.utils.book_new();
+// Generate PDF report file using Reports page logic
+async function generatePDFReport(reportData: any[], reportMonth: string): Promise<string> {
+  const doc = new (jsPDF as any)();
   
-  const excelData = reportData.map(item => ({
-    'Gemi Adı': item.shipName,
-    'Ödenen Siparişler': item.totalOrders,
-    'Satılan Paketler': item.packagesSold,
-    'Satılan Veri (GB)': item.totalDataGB,
-    'Net Gelir ($)': parseFloat(item.totalRevenue.toFixed(2))
-  }));
-
-  const worksheet = XLSX.utils.json_to_sheet(excelData);
+  // Set Turkish fonts and encoding
+  doc.setFont('helvetica');
   
-  // Auto-size columns
-  const colWidths = [
-    { wch: 20 }, // Gemi Adı
-    { wch: 18 }, // Ödenen Siparişler
-    { wch: 16 }, // Satılan Paketler
-    { wch: 18 }, // Satılan Veri (GB)
-    { wch: 15 }  // Net Gelir ($)
-  ];
-  worksheet['!cols'] = colWidths;
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Aylık Rapor');
+  // Add title
+  doc.setFontSize(20);
+  doc.text('AdeGloba Starlink System', 20, 20);
+  
+  // Add subtitle
+  doc.setFontSize(16);
+  doc.text(`${reportMonth} Aylık Finans Raporu`, 20, 35);
+  
+  // Add generation date
+  doc.setFontSize(10);
+  doc.text(`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, 20, 50);
+  
+  // Prepare table data
+  const tableData = reportData.map(item => [
+    item.shipName,
+    item.totalOrders.toString(),
+    item.packagesSold.toString(),
+    item.totalDataGB.toString(),
+    '$' + item.totalRevenue.toFixed(2)
+  ]);
+  
+  // Add table
+  (doc as any).autoTable({
+    startY: 65,
+    head: [['Gemi Adı', 'Ödenen Siparişler', 'Satılan Paketler', 'Satılan Veri (GB)', 'Net Gelir']],
+    body: tableData,
+    styles: { fontSize: 10, cellPadding: 5 },
+    headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    margin: { left: 20, right: 20 }
+  });
+  
+  // Calculate totals
+  const totals = reportData.reduce((acc, item) => ({
+    totalOrders: acc.totalOrders + item.totalOrders,
+    totalPackages: acc.totalPackages + item.packagesSold,
+    totalData: acc.totalData + item.totalDataGB,
+    totalRevenue: acc.totalRevenue + item.totalRevenue
+  }), { totalOrders: 0, totalPackages: 0, totalData: 0, totalRevenue: 0 });
+  
+  // Add summary section
+  const finalY = (doc as any).lastAutoTable.finalY + 20;
+  doc.setFontSize(14);
+  doc.text('Aylık Özet:', 20, finalY);
+  doc.setFontSize(12);
+  doc.text(`Toplam Ödenen Sipariş: ${totals.totalOrders}`, 20, finalY + 15);
+  doc.text(`Toplam Satılan Paket: ${totals.totalPackages}`, 20, finalY + 25);
+  doc.text(`Toplam Satılan Veri: ${totals.totalData} GB`, 20, finalY + 35);
+  doc.text(`Toplam Net Gelir: $${totals.totalRevenue.toFixed(2)}`, 20, finalY + 45);
+  
+  // Add footer
+  doc.setFontSize(8);
+  doc.text('AdeGloba Starlink System - Otomatik Aylık Rapor', 20, finalY + 65);
   
   // Save to temp file
   const tempDir = path.join(process.cwd(), 'temp');
@@ -155,10 +191,12 @@ async function generateExcelReport(reportData: any[], reportMonth: string): Prom
     fs.mkdirSync(tempDir, { recursive: true });
   }
   
-  const fileName = `aylık-rapor-${reportMonth.toLowerCase().replace(' ', '-')}-${Date.now()}.xlsx`;
+  const fileName = `aylık-rapor-${reportMonth.toLowerCase().replace(' ', '-')}-${Date.now()}.pdf`;
   const filePath = path.join(tempDir, fileName);
   
-  XLSX.writeFile(workbook, filePath);
+  // Save PDF to file
+  const pdfData = doc.output('arraybuffer');
+  fs.writeFileSync(filePath, Buffer.from(pdfData));
   
   return filePath;
 }

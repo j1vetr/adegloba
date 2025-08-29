@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import AdminLayout from "@/components/AdminLayout";
-import { BarChart3, TrendingUp, DollarSign, Package, Download, FileSpreadsheet, FileText } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Package, Download, FileText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 type DateRange = 'last7days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear';
@@ -26,7 +26,7 @@ export default function Reports() {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   // Export function
-  const handleExport = (format: 'excel' | 'csv') => {
+  const handleExport = (format: 'pdf' | 'csv') => {
     const params = new URLSearchParams({
       ship: selectedShip,
       range: dateRange,
@@ -108,13 +108,13 @@ export default function Reports() {
                   
                   <div className="grid gap-3">
                     <Button
-                      onClick={() => handleExport('excel')}
-                      className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white p-4 h-auto justify-start"
+                      onClick={() => handleExport('pdf')}
+                      className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white p-4 h-auto justify-start"
                     >
-                      <FileSpreadsheet className="w-5 h-5 mr-3" />
+                      <FileText className="w-5 h-5 mr-3" />
                       <div className="text-left">
-                        <div className="font-medium">Excel Dosyası (.xlsx)</div>
-                        <div className="text-sm text-green-200">Gelişmiş analiz için önerilen format</div>
+                        <div className="font-medium">PDF Dosyası (.pdf)</div>
+                        <div className="text-sm text-red-200">Profesyonel rapor formatı, yazdırma için ideal</div>
                       </div>
                     </Button>
                     
