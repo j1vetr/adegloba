@@ -546,13 +546,14 @@ export class DatabaseStorage implements IStorage {
     if (ids.length === 0) return;
     console.log('🗑️ Storage: deleteMultipleShips called with:', { ids, count: ids.length });
     
-    // For debugging: try with single delete in loop first
-    for (const id of ids) {
-      console.log('🗑️ Deleting ship:', id);
-      await db.delete(ships).where(eq(ships.id, id));
+    try {
+      const result = await db.delete(ships).where(inArray(ships.id, ids));
+      console.log('🗑️ Storage: Delete result:', result);
+      console.log('✅ Storage: Bulk delete completed successfully');
+    } catch (error) {
+      console.error('❌ Storage: Error in deleteMultipleShips:', error);
+      throw error;
     }
-    
-    console.log('✅ Storage: All ships deleted successfully');
   }
 
   // Plan operations
