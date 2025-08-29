@@ -11,8 +11,8 @@ import { emailService, EmailService } from "./emailService";
 import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema } from "@shared/schema";
 import { z } from "zod";
 import { createObjectCsvWriter } from 'csv-writer';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const orderService = new OrderService(storage);
 const couponService = new CouponService(storage);
@@ -1079,7 +1079,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ]);
         
         // Add table
-        (doc as any).autoTable({
+        autoTable(doc, {
           startY: 60,
           head: [['Gemi Adı', 'Ödenen Siparişler', 'Satılan Paketler', 'Satılan Veri (GB)', 'Net Gelir']],
           body: tableData,
