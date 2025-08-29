@@ -1688,6 +1688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Bulk delete ships
   app.delete('/api/admin/ships/bulk', isAdminAuthenticated, async (req, res) => {
+    console.log('🚀 BULK DELETE ENDPOINT HIT!');
     try {
       const { ids } = req.body;
       console.log('🗑️ Bulk delete request:', { ids, bodyKeys: Object.keys(req.body) });
