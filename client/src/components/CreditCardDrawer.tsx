@@ -116,6 +116,21 @@ export default function CreditCardDrawer({
       newErrors.email = 'Geçerli bir e-posta adresi girin';
     }
 
+    // Adres alanları opsiyonel - sadece doldurulmuşsa kontrol et
+    if (formData.addressLine1.trim() && formData.addressLine1.trim().length < 5) {
+      newErrors.addressLine1 = 'Adres en az 5 karakter olmalı';
+    }
+
+    if (formData.city.trim() && formData.city.trim().length < 2) {
+      newErrors.city = 'Şehir adı en az 2 karakter olmalı';
+    }
+
+    if (formData.phone.trim() && formData.phone.trim().length < 10) {
+      newErrors.phone = 'Telefon numarası en az 10 haneli olmalı';
+    }
+
+    console.log('Form validation errors:', newErrors);
+    console.log('Form data:', formData);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
