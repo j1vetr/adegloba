@@ -292,19 +292,52 @@ export default function CreditCardDrawer({
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-white">Kart Sahibi Bilgileri</h3>
                 
-                {/* Name */}
+                {/* Name and Surname */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-slate-300">Ad</Label>
+                    <Input
+                      type="text"
+                      placeholder="Adınız"
+                      value={formData.cardholderName}
+                      onChange={(e) => handleInputChange('cardholderName', e.target.value)}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardholderName ? 'border-red-500' : ''}`}
+                    />
+                    {errors.cardholderName && (
+                      <p className="text-red-400 text-sm mt-1">{errors.cardholderName}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label className="text-slate-300">Soyad</Label>
+                    <Input
+                      type="text"
+                      placeholder="Soyadınız"
+                      value={formData.surname}
+                      onChange={(e) => handleInputChange('surname', e.target.value)}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.surname ? 'border-red-500' : ''}`}
+                    />
+                    {errors.surname && (
+                      <p className="text-red-400 text-sm mt-1">{errors.surname}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email */}
                 <div>
-                  <Label className="text-slate-300">Kart Üzerindeki İsim</Label>
+                  <Label className="text-slate-300">E-posta Adresi</Label>
                   <Input
-                    type="text"
-                    placeholder="Kartınızdaki isim ve soyisim"
-                    value={formData.cardholderName}
-                    onChange={(e) => handleInputChange('cardholderName', e.target.value)}
+                    type="email"
+                    placeholder="ornek@email.com"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
                     className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardholderName ? 'border-red-500' : ''}`}
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.email ? 'border-red-500' : ''}`}
                   />
-                  {errors.cardholderName && (
-                    <p className="text-red-400 text-sm mt-1">{errors.cardholderName}</p>
+                  {errors.email && (
+                    <p className="text-red-400 text-sm mt-1">{errors.email}</p>
                   )}
                 </div>
               </div>
