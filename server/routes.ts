@@ -10,6 +10,8 @@ import { ExpiryService } from "./services/expiryService";
 import { emailService, EmailService } from "./emailService";
 import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema } from "@shared/schema";
 import { z } from "zod";
+import * as XLSX from 'xlsx';
+import { createObjectCsvWriter } from 'csv-writer';
 
 const orderService = new OrderService(storage);
 const couponService = new CouponService(storage);
@@ -1028,18 +1030,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (format === 'csv') {
-        const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-        const csvWriter = createCsvWriter({
-          path: '',
-          header: [
-            { id: 'shipName', title: 'Gemi Adı' },
-            { id: 'totalOrders', title: 'Ödenen Siparişler' },
-            { id: 'packagesSold', title: 'Satılan Paketler' },
-            { id: 'totalDataGB', title: 'Satılan Veri (GB)' },
-            { id: 'totalRevenue', title: 'Net Gelir ($)' }
-          ]
-        });
-
         const csvData = reportData.map(item => ({
           shipName: item.shipName,
           totalOrders: item.totalOrders,
@@ -1060,7 +1050,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.send('\uFEFF' + finalCsv); // BOM for Turkish characters
       } else {
         // Excel export
-        const XLSX = require('xlsx');
         const workbook = XLSX.utils.book_new();
         
         const excelData = reportData.map(item => ({
