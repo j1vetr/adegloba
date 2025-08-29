@@ -228,7 +228,7 @@ export default function CreditCardDrawer({
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-4xl max-h-[90vh] transform transition-all duration-300 ease-out scale-100">
+      <div className="relative w-full max-w-2xl max-h-[95vh] transform transition-all duration-300 ease-out scale-100">
         <div className="flex flex-col glassmorphism border border-slate-600/30 bg-slate-950/95 rounded-2xl shadow-2xl shadow-cyan-500/10 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
@@ -253,179 +253,174 @@ export default function CreditCardDrawer({
 
           {/* Form Content */}
           <div className="flex-1 overflow-y-auto p-6">
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column - Card Information */}
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-white flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-cyan-400" />
-                    Kart Bilgileri
-                  </h3>
-                  
-                  {/* Card Number */}
-                  <div>
-                    <Label className="text-slate-300">Kart Numarası</Label>
-                    <div className="relative">
-                      <Input
-                        type="text"
-                        placeholder="1234 5678 9012 3456"
-                        value={formData.cardNumber}
-                        onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-                        maxLength={19}
-                        className={`glassmorphism border-slate-600 text-white placeholder-slate-500 pr-12 h-12 text-lg tracking-wider
-                          focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardNumber ? 'border-red-500' : ''}`}
-                      />
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        {getCardIcon()}
-                      </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Card Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-cyan-400" />
+                  Kart Bilgileri
+                </h3>
+                
+                {/* Card Number */}
+                <div>
+                  <Label className="text-slate-300">Kart Numarası</Label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="1234 5678 9012 3456"
+                      value={formData.cardNumber}
+                      onChange={(e) => handleInputChange('cardNumber', e.target.value)}
+                      maxLength={19}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 pr-12 h-12 text-lg tracking-wider
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardNumber ? 'border-red-500' : ''}`}
+                    />
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {getCardIcon()}
                     </div>
-                    {errors.cardNumber && (
-                      <p className="text-red-400 text-sm mt-1">{errors.cardNumber}</p>
+                  </div>
+                  {errors.cardNumber && (
+                    <p className="text-red-400 text-sm mt-1">{errors.cardNumber}</p>
+                  )}
+                </div>
+
+                {/* Expiry and CVV */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-slate-300">Son Kullanma</Label>
+                    <Input
+                      type="text"
+                      placeholder="MM/YY"
+                      value={formData.expiryDate}
+                      onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                      maxLength={5}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12 text-lg tracking-wider
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.expiryDate ? 'border-red-500' : ''}`}
+                    />
+                    {errors.expiryDate && (
+                      <p className="text-red-400 text-sm mt-1">{errors.expiryDate}</p>
                     )}
                   </div>
-
-                  {/* Expiry and CVV */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-slate-300">Son Kullanma</Label>
-                      <Input
-                        type="text"
-                        placeholder="MM/YY"
-                        value={formData.expiryDate}
-                        onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                        maxLength={5}
-                        className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12 text-lg tracking-wider
-                          focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.expiryDate ? 'border-red-500' : ''}`}
-                      />
-                      {errors.expiryDate && (
-                        <p className="text-red-400 text-sm mt-1">{errors.expiryDate}</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <Label className="text-slate-300">CVV</Label>
-                      <Input
-                        type="text"
-                        placeholder="123"
-                        value={formData.cvv}
-                        onChange={(e) => handleInputChange('cvv', e.target.value)}
-                        maxLength={4}
-                        className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12 text-lg tracking-wider
-                          focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cvv ? 'border-red-500' : ''}`}
-                      />
-                      {errors.cvv && (
-                        <p className="text-red-400 text-sm mt-1">{errors.cvv}</p>
-                      )}
-                    </div>
+                  
+                  <div>
+                    <Label className="text-slate-300">CVV</Label>
+                    <Input
+                      type="text"
+                      placeholder="123"
+                      value={formData.cvv}
+                      onChange={(e) => handleInputChange('cvv', e.target.value)}
+                      maxLength={4}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12 text-lg tracking-wider
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cvv ? 'border-red-500' : ''}`}
+                    />
+                    {errors.cvv && (
+                      <p className="text-red-400 text-sm mt-1">{errors.cvv}</p>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Right Column - Personal & Address Information */}
-              <div className="space-y-6">
-                {/* Personal Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-white flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-green-400" />
-                    Kişisel Bilgiler
-                  </h3>
-                  
-                  {/* Name and Surname */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-slate-300">Ad</Label>
-                      <Input
-                        type="text"
-                        placeholder="Adınız"
-                        value={formData.cardholderName}
-                        onChange={(e) => handleInputChange('cardholderName', e.target.value)}
-                        className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                          focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardholderName ? 'border-red-500' : ''}`}
-                      />
-                      {errors.cardholderName && (
-                        <p className="text-red-400 text-sm mt-1">{errors.cardholderName}</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <Label className="text-slate-300">Soyad</Label>
-                      <Input
-                        type="text"
-                        placeholder="Soyadınız"
-                        value={formData.surname}
-                        onChange={(e) => handleInputChange('surname', e.target.value)}
-                        className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                          focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.surname ? 'border-red-500' : ''}`}
-                      />
-                      {errors.surname && (
-                        <p className="text-red-400 text-sm mt-1">{errors.surname}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Email */}
+              {/* Personal Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-green-400" />
+                  Kişisel Bilgiler
+                </h3>
+                
+                {/* Name and Surname */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-slate-300">E-posta Adresi</Label>
+                    <Label className="text-slate-300">Ad</Label>
                     <Input
-                      type="email"
-                      placeholder="ornek@email.com"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      type="text"
+                      placeholder="Adınız"
+                      value={formData.cardholderName}
+                      onChange={(e) => handleInputChange('cardholderName', e.target.value)}
                       className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.email ? 'border-red-500' : ''}`}
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardholderName ? 'border-red-500' : ''}`}
                     />
-                    {errors.email && (
-                      <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                    {errors.cardholderName && (
+                      <p className="text-red-400 text-sm mt-1">{errors.cardholderName}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label className="text-slate-300">Soyad</Label>
+                    <Input
+                      type="text"
+                      placeholder="Soyadınız"
+                      value={formData.surname}
+                      onChange={(e) => handleInputChange('surname', e.target.value)}
+                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.surname ? 'border-red-500' : ''}`}
+                    />
+                    {errors.surname && (
+                      <p className="text-red-400 text-sm mt-1">{errors.surname}</p>
                     )}
                   </div>
                 </div>
 
-                {/* Address Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-white flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-orange-400" />
-                    Adres Bilgileri
-                  </h3>
-                  
-                  {/* Address */}
-                  <div>
-                    <Label className="text-slate-300">Adres</Label>
-                    <Input
-                      type="text"
-                      placeholder="Tam adres bilgilerinizi girin"
-                      value={formData.addressLine1}
-                      onChange={(e) => handleInputChange('addressLine1', e.target.value)}
-                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.addressLine1 ? 'border-red-500' : ''}`}
-                    />
-                    {errors.addressLine1 && (
-                      <p className="text-red-400 text-sm mt-1">{errors.addressLine1}</p>
-                    )}
-                  </div>
+                {/* Email */}
+                <div>
+                  <Label className="text-slate-300">E-posta Adresi</Label>
+                  <Input
+                    type="email"
+                    placeholder="ornek@email.com"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.email ? 'border-red-500' : ''}`}
+                  />
+                  {errors.email && (
+                    <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                  )}
+                </div>
+              </div>
 
-                  {/* Phone Number */}
-                  <div>
-                    <Label className="text-slate-300">Telefon Numarası</Label>
-                    <Input
-                      type="tel"
-                      placeholder="0532 123 45 67"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.phone ? 'border-red-500' : ''}`}
-                    />
-                    {errors.phone && (
-                      <p className="text-red-400 text-sm mt-1">{errors.phone}</p>
-                    )}
-                  </div>
+              {/* Address Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-orange-400" />
+                  Adres Bilgileri
+                </h3>
+                
+                {/* Address */}
+                <div>
+                  <Label className="text-slate-300">Adres</Label>
+                  <Input
+                    type="text"
+                    placeholder="Tam adres bilgilerinizi girin"
+                    value={formData.addressLine1}
+                    onChange={(e) => handleInputChange('addressLine1', e.target.value)}
+                    className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.addressLine1 ? 'border-red-500' : ''}`}
+                  />
+                  {errors.addressLine1 && (
+                    <p className="text-red-400 text-sm mt-1">{errors.addressLine1}</p>
+                  )}
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <Label className="text-slate-300">Telefon Numarası</Label>
+                  <Input
+                    type="tel"
+                    placeholder="0532 123 45 67"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.phone ? 'border-red-500' : ''}`}
+                  />
+                  {errors.phone && (
+                    <p className="text-red-400 text-sm mt-1">{errors.phone}</p>
+                  )}
                 </div>
               </div>
             </form>
           </div>
 
           {/* Footer - Sticky */}
-          <div className="border-t border-slate-700/50 p-6 bg-slate-950/98">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center mb-6">
+          <div className="border-t border-slate-700/50 p-4 md:p-6 bg-slate-950/98">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <Lock className="w-5 h-5 text-cyan-400" />
                 <div>
@@ -434,8 +429,8 @@ export default function CreditCardDrawer({
                 </div>
               </div>
               
-              <div className="text-center lg:text-right">
-                <div className="text-3xl font-bold text-white">
+              <div className="text-center">
+                <div className="text-2xl md:text-3xl font-bold text-white">
                   {amount} {currency.toUpperCase()}
                 </div>
                 <div className="text-slate-400">Toplam tutar</div>
@@ -445,18 +440,18 @@ export default function CreditCardDrawer({
             <Button
               onClick={handleSubmit}
               disabled={isProcessing}
-              className="w-full h-16 text-xl font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 
+              className="w-full h-14 md:h-16 text-lg md:text-xl font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 
                 hover:from-cyan-600 hover:to-blue-700 text-white border-none shadow-xl shadow-cyan-500/30
                 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02]"
             >
               {isProcessing ? (
                 <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   İşleniyor...
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-6 h-6" />
+                  <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
                   Ödemeyi Güvenle Tamamla
                 </div>
               )}
