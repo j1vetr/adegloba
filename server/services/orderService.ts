@@ -265,6 +265,7 @@ export class OrderService {
       }
 
       // Get order details for email
+      let totalDataGB = 0;
       const orderItemsHtml = orderItems.map(item => {
         const ship = ships.find(s => s.id === item.shipId);
         const plan = plans.find(p => p.id === item.planId);
@@ -273,7 +274,10 @@ export class OrderService {
         const dataLimit = plan?.dataLimitGb || 0;
         const price = parseFloat(item.unitPriceUsd || '0');
         
-        return `<li><strong>${shipName}</strong> - ${planName} (${dataLimit}GB) - $${price.toFixed(2)}</li>`;
+        // Add to total data
+        totalDataGB += dataLimit;
+        
+        return `<div class="order-item"><strong>${planName}</strong> - ${dataLimit} GB - <span class="price">$${price.toFixed(2)}</span></div>`;
       }).join('');
 
       const shipName = ships.find(s => s.id === orderItems[0]?.shipId)?.name || 'Bilinmeyen Gemi';
@@ -303,10 +307,19 @@ export class OrderService {
         'admin_new_order',
         {
           orderNumber: order.id.substring(0, 8).toUpperCase(),
+          orderDate: new Date(order.createdAt).toLocaleDateString('tr-TR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
           customerName: user.full_name || user.username,
           customerEmail: user.email,
+          customerPhone: user.phone || 'Belirtilmemiş',
           shipName,
           totalAmount: parseFloat(order.totalUsd || '0').toFixed(2),
+          totalDataGB: totalDataGB.toString(),
           orderItems: orderItemsHtml,
           adminUrl: (await this.getBaseUrl()) + '/admin',
         }

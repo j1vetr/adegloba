@@ -656,18 +656,50 @@ export class EmailService {
 
       case 'admin_new_order':
         return baseTemplate.replace('{{content}}', `
-          <h2>Yeni Sipariş Bildirimi</h2>
-          <p>Yeni bir sipariş alındı:</p>
-          <h3>Sipariş Bilgileri:</h3>
-          <ul>
-            <li><strong>Sipariş No:</strong> {{orderNumber}}</li>
-            <li><strong>Müşteri:</strong> {{customerName}} ({{customerEmail}})</li>
-            <li><strong>Gemi:</strong> {{shipName}}</li>
-            <li><strong>Toplam:</strong> ${{totalAmount}}</li>
-          </ul>
-          <h3>Sipariş İçeriği:</h3>
-          <ul>{{orderItems}}</ul>
-          <p><a href="{{adminUrl}}" class="button">Admin Paneline Git</a></p>
+          <h2>🛒 Yeni Sipariş Alındı!</h2>
+          <p>Sistemde yeni bir sipariş onaylandı ve ödeme başarıyla tamamlandı.</p>
+          
+          <div class="order-details">
+            <h3 style="color: #059669; margin-bottom: 15px;">📋 Sipariş Bilgileri</h3>
+            <div style="color: #334155;">
+              <div class="order-item"><strong>Sipariş Numarası:</strong> <span class="highlight">{{orderNumber}}</span></div>
+              <div class="order-item"><strong>Sipariş Tarihi:</strong> <span class="highlight">{{orderDate}}</span></div>
+              <div class="order-item"><strong>Ödeme Durumu:</strong> <span class="status-badge">✅ Ödendi</span></div>
+            </div>
+          </div>
+
+          <div class="order-details">
+            <h3 style="color: #059669; margin-bottom: 15px;">👤 Müşteri Bilgileri</h3>
+            <div style="color: #334155;">
+              <div class="order-item"><strong>Müşteri Adı:</strong> <span class="highlight">{{customerName}}</span></div>
+              <div class="order-item"><strong>E-posta:</strong> <span class="highlight">{{customerEmail}}</span></div>
+              <div class="order-item"><strong>Telefon:</strong> <span class="highlight">{{customerPhone}}</span></div>
+              <div class="order-item"><strong>Gemi:</strong> <span class="highlight">{{shipName}}</span></div>
+            </div>
+          </div>
+
+          <div class="order-details">
+            <h3 style="color: #059669; margin-bottom: 15px;">📦 Satın Alınan Paketler</h3>
+            <div style="color: #334155;">
+              {{orderItems}}
+              <div class="order-item" style="border-top: 2px solid #059669; margin-top: 15px; padding-top: 15px;">
+                <strong style="color: #059669; font-size: 16px;">Toplam Veri Miktarı:</strong>
+                <span style="color: #059669; font-size: 16px; font-weight: bold;">{{totalDataGB}} GB</span>
+              </div>
+              <div class="order-item">
+                <strong style="color: #059669; font-size: 16px;">Toplam Ödenen Tutar:</strong>
+                <span class="price" style="font-size: 18px;">${{totalAmount}}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="status-badge" style="background: #dcfce7; color: #166534; display: block; text-align: center; margin: 20px 0;">
+            🚀 Paketler otomatik olarak aktifleştirildi
+          </div>
+          
+          <div style="text-align: center;">
+            <a href="{{adminUrl}}" class="button">🔧 Admin Paneline Git</a>
+          </div>
         `);
 
       case 'admin_new_user':
