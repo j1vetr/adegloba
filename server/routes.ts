@@ -11,7 +11,7 @@ import { emailService, EmailService } from "./emailService";
 import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema } from "@shared/schema";
 import { z } from "zod";
 import { createObjectCsvWriter } from 'csv-writer';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
 const orderService = new OrderService(storage);
@@ -1051,7 +1051,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.send('\uFEFF' + finalCsv); // BOM for Turkish characters
       } else {
         // PDF export
-        const doc = new (jsPDF as any)();
+        const doc = new jsPDF();
         
         // Set Turkish fonts and encoding
         doc.setFont('helvetica');

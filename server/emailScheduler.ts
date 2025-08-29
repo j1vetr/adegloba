@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { storage } from './storage';
 import { emailService } from './emailService';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -126,7 +126,7 @@ async function generateAndSendMonthlyReport() {
 
 // Generate PDF report file using Reports page logic
 async function generatePDFReport(reportData: any[], reportMonth: string): Promise<string> {
-  const doc = new (jsPDF as any)();
+  const doc = new jsPDF();
   
   // Set Turkish fonts and encoding
   doc.setFont('helvetica');
