@@ -56,7 +56,7 @@ import {
 } from "@shared/schema";
 import { getDaysRemainingIstanbul, isExpiredIstanbul, getEndOfMonthIstanbul } from './utils/dateUtils';
 import { db } from "./db";
-import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt, lt } from "drizzle-orm";
+import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt, lt, inArray } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -540,6 +540,11 @@ export class DatabaseStorage implements IStorage {
 
   async deleteShip(id: string): Promise<void> {
     await db.delete(ships).where(eq(ships.id, id));
+  }
+
+  async deleteMultipleShips(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await db.delete(ships).where(inArray(ships.id, ids));
   }
 
   // Plan operations

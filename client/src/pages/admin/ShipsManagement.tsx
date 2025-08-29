@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -28,7 +29,8 @@ import {
   Calendar,
   Filter,
   CheckCircle,
-  XCircle
+  XCircle,
+  Trash
 } from "lucide-react";
 
 type Ship = {
@@ -50,6 +52,8 @@ export default function ShipsManagement() {
   const [deleteShip, setDeleteShip] = useState<Ship | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [selectedShips, setSelectedShips] = useState<string[]>([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   
   const [formData, setFormData] = useState<ShipFormData>({
     name: "",
@@ -143,9 +147,31 @@ export default function ShipsManagement() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      return await apiRequest("DELETE", `/api/admin/ships/bulk`, { ids });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/ships"] });
+      setSelectedShips([]);
+      setIsBulkDeleting(false);
+      toast({
+        title: "Başarılı",
+        description: data?.message || "Seçili gemiler başarıyla silindi.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const toggleMutation = useMutation({
     mutationFn: async (id: string) => {
-      const ship = ships?.find((s: Ship) => s.id === id);
+      const ship = Array.isArray(ships) ? ships.find((s: Ship) => s.id === id) : null;
       if (!ship) return;
       return await apiRequest("PUT", `/api/admin/ships/${id}`, { isActive: !ship.isActive });
     },
@@ -248,6 +274,32 @@ export default function ShipsManagement() {
     });
   };
 
+  // Bulk selection functions
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedShips(filteredShips.map(ship => ship.id));
+    } else {
+      setSelectedShips([]);
+    }
+  };
+
+  const handleSelectShip = (shipId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedShips(prev => [...prev, shipId]);
+    } else {
+      setSelectedShips(prev => prev.filter(id => id !== shipId));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedShips.length === 0) return;
+    setIsBulkDeleting(true);
+    bulkDeleteMutation.mutate(selectedShips);
+  };
+
+  const isAllSelected = filteredShips.length > 0 && selectedShips.length === filteredShips.length;
+  const isIndeterminate = selectedShips.length > 0 && selectedShips.length < filteredShips.length;
+
   return (
     <AdminLayout title="Gemi Yönetimi">
       <div className="admin-mobile-responsive space-y-6">
@@ -326,6 +378,50 @@ export default function ShipsManagement() {
           </CardHeader>
         </Card>
 
+        {/* Bulk Actions */}
+        {selectedShips.length > 0 && (
+          <Card className="admin-card border-amber-500/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-white font-medium">
+                    {selectedShips.length} gemi seçildi
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedShips([])}
+                    className="text-slate-400 border-slate-600 hover:bg-slate-700"
+                    data-testid="button-clear-selection"
+                  >
+                    Seçimi Temizle
+                  </Button>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleteMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  data-testid="button-bulk-delete"
+                >
+                  {bulkDeleteMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Siliniyor...
+                    </>
+                  ) : (
+                    <>
+                      <Trash className="h-4 w-4 mr-2" />
+                      Seçili Gemileri Sil
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Ships Table */}
         <Card className="admin-card">
           <CardContent className="p-0">
@@ -341,6 +437,14 @@ export default function ShipsManagement() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={handleSelectAll}
+                            className="border-slate-400 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                            data-testid="checkbox-select-all"
+                          />
+                        </TableHead>
                         <TableHead className="text-white font-semibold">Gemi Adı</TableHead>
                         <TableHead className="text-white font-semibold hidden md:table-cell">Slug</TableHead>
                         <TableHead className="text-white font-semibold">KIT No</TableHead>
@@ -352,7 +456,7 @@ export default function ShipsManagement() {
                     <TableBody>
                       {filteredShips.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-12">
+                          <TableCell colSpan={7} className="text-center py-12">
                             <div className="flex flex-col items-center gap-4">
                               <Ship className="h-12 w-12 text-slate-500" />
                               <div className="text-center">
@@ -372,6 +476,14 @@ export default function ShipsManagement() {
                       ) : (
                         filteredShips.map((ship: Ship) => (
                           <TableRow key={ship.id} className="group hover:bg-primary/5 transition-colors">
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedShips.includes(ship.id)}
+                                onCheckedChange={(checked) => handleSelectShip(ship.id, checked as boolean)}
+                                className="border-slate-400 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                                data-testid={`checkbox-ship-${ship.id}`}
+                              />
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg bg-gradient-to-br from-primary/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0">

@@ -1680,6 +1680,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk delete ships
+  app.delete('/api/admin/ships/bulk', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: 'Ship IDs array is required' });
+      }
+      
+      // Get ship info before deletion for logging
+      const ships = await storage.getAllShips();
+      const shipsToDelete = ships.filter(s => ids.includes(s.id));
+      
+      await storage.deleteMultipleShips(ids);
+      
+      // Create system log for bulk ship deletion
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'bulk_delete_ships',
+        adminId: req.session.adminUser.id,
+        entityType: 'ship',
+        entityId: null,
+        details: {
+          deletedShipsCount: shipsToDelete.length,
+          deletedShips: shipsToDelete.map(ship => ({
+            id: ship.id,
+            name: ship.name,
+            slug: ship.slug,
+            isActive: ship.isActive
+          }))
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+      
+      res.json({ 
+        success: true, 
+        deletedCount: shipsToDelete.length,
+        message: `${shipsToDelete.length} gemi başarıyla silindi` 
+      });
+    } catch (error) {
+      console.error('Error bulk deleting ships:', error);
+      res.status(500).json({ message: 'Failed to bulk delete ships' });
+    }
+  });
+
   // Admin CRUD Routes for Plans
   app.get('/api/admin/plans', isAdminAuthenticated, async (req, res) => {
     try {
