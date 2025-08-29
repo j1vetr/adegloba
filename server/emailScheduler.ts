@@ -1,8 +1,8 @@
 import cron from 'node-cron';
 import { storage } from './storage';
 import { emailService } from './emailService';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -153,7 +153,7 @@ async function generatePDFReport(reportData: any[], reportMonth: string): Promis
   ]);
   
   // Add table
-  autoTable(doc, {
+  (doc as any).autoTable({
     startY: 65,
     head: [['Gemi Adı', 'Ödenen Siparişler', 'Satılan Paketler', 'Satılan Veri (GB)', 'Net Gelir']],
     body: tableData,
