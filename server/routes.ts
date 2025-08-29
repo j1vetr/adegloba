@@ -29,6 +29,12 @@ function generateSlug(name: string): string {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Authentication Middleware
   const isAdminAuthenticated = (req: any, res: any, next: any) => {
+    console.log('🔐 Auth check:', { 
+      hasSession: !!req.session, 
+      hasAdminUser: !!req.session?.adminUser,
+      sessionKeys: req.session ? Object.keys(req.session) : 'no session',
+      url: req.url 
+    });
     if (req.session && req.session.adminUser) {
       return next();
     }
