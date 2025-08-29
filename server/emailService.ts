@@ -430,251 +430,234 @@ export class EmailService {
         <title>{{subject}}</title>
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
+            body, table, td, p, a { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                -webkit-text-size-adjust: 100%; 
+                -ms-text-size-adjust: 100%; 
+            }
+            table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+            img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
             body { 
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; 
-                margin: 0; padding: 20px; 
-                background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 50%, #0f172a 100%);
-                color: #e2e8f0; 
-                line-height: 1.6; 
-                min-height: 100vh;
+                margin: 0; 
+                padding: 0; 
+                background-color: #f8fafc; 
+                color: #1e293b;
+                line-height: 1.6;
             }
             .email-container { 
-                max-width: 650px; 
+                max-width: 600px; 
                 margin: 0 auto; 
-                background: linear-gradient(145deg, #1e293b 0%, #334155 100%);
-                border-radius: 16px; 
+                background-color: #ffffff;
+                border-radius: 0; 
                 overflow: hidden;
-                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(20px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                border: 1px solid #e2e8f0;
             }
             .header { 
-                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-                padding: 45px 35px; 
+                background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                padding: 40px 30px; 
                 text-align: center; 
-                position: relative;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            .header::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 2px;
-                background: linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6);
+                border-bottom: none;
             }
             .logo { 
                 color: #ffffff; 
-                font-size: 30px; 
+                font-size: 28px; 
                 font-weight: 800; 
-                letter-spacing: 1px;
-                margin-bottom: 12px;
-                text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-                background: linear-gradient(135deg, #06b6d4, #3b82f6);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
+                letter-spacing: 2px;
+                margin-bottom: 10px;
+                text-transform: uppercase;
             }
             .subtitle {
-                color: #cbd5e1;
-                font-size: 15px;
+                color: #94a3b8;
+                font-size: 16px;
                 font-weight: 500;
                 margin: 0;
-                opacity: 0.9;
+                letter-spacing: 0.5px;
             }
             .content { 
-                padding: 45px 35px; 
-                background: rgba(30, 41, 59, 0.4);
-                backdrop-filter: blur(10px);
-            }
-            .content h1, .content h2 { 
-                color: #ffffff; 
-                margin-bottom: 28px; 
-                font-weight: 700;
-                line-height: 1.3;
-                text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+                padding: 40px 30px; 
+                background-color: #ffffff;
             }
             .content h1 { 
-                font-size: 32px;
-                background: linear-gradient(135deg, #06b6d4, #3b82f6);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
+                color: #1e293b; 
+                margin-bottom: 24px; 
+                font-weight: 700;
+                line-height: 1.3;
+                font-size: 28px;
             }
             .content h2 { 
-                font-size: 26px;
-                color: #e2e8f0;
+                color: #1e293b; 
+                margin-bottom: 20px; 
+                font-weight: 600;
+                font-size: 24px;
+            }
+            .content h3 { 
+                color: #334155; 
+                margin-bottom: 16px; 
+                font-weight: 600;
+                font-size: 20px;
             }
             .content p { 
-                color: #cbd5e1; 
-                margin-bottom: 22px; 
-                font-size: 17px;
-                line-height: 1.7;
-                opacity: 0.95;
+                color: #475569; 
+                margin-bottom: 16px; 
+                font-size: 16px;
+                line-height: 1.6;
             }
             .highlight { 
-                background: linear-gradient(135deg, #1e293b, #334155);
-                color: #06b6d4;
-                padding: 4px 12px;
-                border-radius: 8px;
-                font-weight: 700;
-                border: 1px solid rgba(6, 182, 212, 0.3);
-                box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+                background-color: #f1f5f9;
+                color: #0ea5e9;
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-weight: 600;
+                border: 1px solid #e0f2fe;
             }
             .button { 
                 display: inline-block; 
-                padding: 16px 32px; 
-                background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-                color: #ffffff; 
+                padding: 14px 28px; 
+                background-color: #0ea5e9;
+                color: #ffffff !important; 
                 text-decoration: none; 
-                border-radius: 12px; 
-                font-weight: 700; 
+                border-radius: 6px; 
+                font-weight: 600; 
                 font-size: 16px;
-                margin: 28px 0;
+                margin: 20px 0;
                 text-align: center;
-                letter-spacing: 0.5px;
-                border: 2px solid transparent;
-                transition: all 0.3s ease;
-                box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-                text-transform: uppercase;
-            }
-            .button:hover {
-                background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
-                transform: translateY(-2px);
-                box-shadow: 0 12px 35px rgba(6, 182, 212, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
-                filter: brightness(1.1);
+                border: 2px solid #0ea5e9;
+                box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);
             }
             .order-details {
-                background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.8));
-                border-radius: 16px;
-                padding: 28px;
-                margin: 28px 0;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+                background-color: #f8fafc;
+                border-radius: 8px;
+                padding: 24px;
+                margin: 24px 0;
+                border: 1px solid #e2e8f0;
+                border-left: 4px solid #0ea5e9;
             }
             .order-item {
-                padding: 16px 0;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                color: #cbd5e1;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 16px;
+                padding: 12px 0;
+                border-bottom: 1px solid #e2e8f0;
+                color: #475569;
+                font-size: 15px;
+            }
+            .order-item strong {
+                color: #334155;
+                font-weight: 600;
             }
             .order-item:last-child {
                 border-bottom: none;
                 font-weight: 700;
-                color: #ffffff;
+                color: #1e293b;
                 font-size: 18px;
-                padding-top: 20px;
+                padding-top: 16px;
                 margin-top: 8px;
-                border-top: 2px solid rgba(6, 182, 212, 0.3);
+                border-top: 2px solid #0ea5e9;
             }
             .price {
-                color: #10b981;
-                font-weight: 800;
-                font-size: 20px;
-                text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+                color: #059669;
+                font-weight: 700;
+                font-size: 18px;
             }
             .footer {
-                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-                padding: 35px 25px;
+                background-color: #1e293b;
+                padding: 30px 20px;
                 text-align: center;
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-                position: relative;
-            }
-            .footer::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 1px;
-                background: linear-gradient(90deg, transparent, #06b6d4, transparent);
+                color: #94a3b8;
             }
             .footer-brand {
                 color: #ffffff;
-                font-size: 22px;
-                font-weight: 800;
-                margin-bottom: 16px;
-                background: linear-gradient(135deg, #06b6d4, #3b82f6);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                text-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+                font-size: 20px;
+                font-weight: 700;
+                margin-bottom: 12px;
             }
             .footer-links {
                 color: #94a3b8;
-                font-size: 15px;
-                margin-bottom: 12px;
-                line-height: 1.6;
+                font-size: 14px;
+                margin-bottom: 16px;
+                line-height: 1.5;
             }
             .footer-links a {
-                color: #06b6d4;
+                color: #0ea5e9;
                 text-decoration: none;
-                font-weight: 600;
-                transition: all 0.3s ease;
-            }
-            .footer-links a:hover {
-                color: #ffffff;
-                text-shadow: 0 0 10px rgba(6, 182, 212, 0.6);
+                font-weight: 500;
             }
             .footer-copyright {
                 color: #64748b;
-                font-size: 13px;
-                margin-top: 20px;
-                padding-top: 20px;
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-                opacity: 0.8;
+                font-size: 12px;
+                margin-top: 16px;
+                padding-top: 16px;
+                border-top: 1px solid #374151;
             }
             .status-badge {
                 display: inline-block;
-                padding: 10px 20px;
-                background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(34, 197, 94, 0.2));
-                color: #10b981;
-                border-radius: 12px;
+                padding: 8px 16px;
+                background-color: #dcfce7;
+                color: #059669;
+                border-radius: 20px;
                 font-size: 14px;
-                font-weight: 700;
-                border: 1px solid rgba(16, 185, 129, 0.4);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+                font-weight: 600;
+                border: 1px solid #bbf7d0;
             }
-            @media (max-width: 600px) {
-                body { padding: 10px; }
-                .email-container { margin: 0; border-radius: 16px; }
-                .content { padding: 35px 25px; }
-                .header { padding: 35px 25px; }
-                .logo { font-size: 26px; }
-                .button { padding: 16px 28px; width: 100%; font-size: 15px; }
-                .order-details { padding: 24px; }
-                .content h1 { font-size: 28px; }
-                .content h2 { font-size: 22px; }
+            .maritime-accent {
+                color: #0ea5e9;
+                font-weight: 600;
+            }
+            .wave-divider {
+                height: 4px;
+                background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 50%, #0ea5e9 100%);
+                margin: 0;
+            }
+            @media only screen and (max-width: 600px) {
+                .email-container { 
+                    margin: 0; 
+                    border-radius: 0; 
+                    border-left: none;
+                    border-right: none;
+                }
+                .content { padding: 30px 20px; }
+                .header { padding: 30px 20px; }
+                .logo { font-size: 24px; }
+                .button { 
+                    padding: 14px 20px; 
+                    width: 100%; 
+                    font-size: 15px;
+                    display: block;
+                }
+                .order-details { padding: 20px; }
+                .content h1 { font-size: 24px; }
+                .content h2 { font-size: 20px; }
             }
         </style>
     </head>
     <body>
-        <div class="email-container">
-            <div class="header">
-                <div class="logo">AdeGloba Starlink System</div>
-                <div class="subtitle">Maritime Satellite Internet Solutions</div>
-            </div>
-            <div class="content">
-                {{content}}
-            </div>
-            <div class="footer">
-                <div class="footer-brand">Ade Globa</div>
-                <div class="footer-links">
-                    Destek: <a href="mailto:starlink@adegloba.space">starlink@adegloba.space</a> | 
-                    Tel & WhatsApp: <a href="tel:+447440225375">+44 744 022 5375</a>
-                </div>
-                <div class="footer-copyright">
-                    © 2025 Ade Globa. Tüm hakları saklıdır. | Güvenilir Denizcilik İnternet Çözümleri
-                </div>
-            </div>
-        </div>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8fafc;">
+            <tr>
+                <td>
+                    <div class="email-container">
+                        <div class="wave-divider"></div>
+                        <div class="header">
+                            <div class="logo">⚓ AdeGloba Starlink</div>
+                            <div class="subtitle">Profesyonel Denizcilik İnternet Çözümleri</div>
+                        </div>
+                        <div class="content">
+                            {{content}}
+                        </div>
+                        <div class="footer">
+                            <div class="footer-brand">🌊 Ade Globa</div>
+                            <div class="footer-links">
+                                📧 Destek: <a href="mailto:starlink@adegloba.space">starlink@adegloba.space</a><br>
+                                📞 Tel & WhatsApp: <a href="tel:+447440225375">+44 744 022 5375</a><br>
+                                🌐 Web: <a href="https://adegloba.space">www.adegloba.space</a>
+                            </div>
+                            <div class="footer-copyright">
+                                © 2025 Ade Globa Ltd. Tüm hakları saklıdır.<br>
+                                Güvenilir ve Profesyonel Denizcilik İnternet Hizmetleri
+                            </div>
+                        </div>
+                        <div class="wave-divider"></div>
+                    </div>
+                </td>
+            </tr>
+        </table>
     </body>
     </html>
     `;
