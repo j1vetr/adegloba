@@ -220,7 +220,7 @@ export default function CreditCardDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
@@ -228,8 +228,8 @@ export default function CreditCardDrawer({
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[95vh] transform transition-all duration-300 ease-out scale-100">
-        <div className="flex flex-col glassmorphism border border-slate-600/30 bg-slate-950/95 rounded-2xl shadow-2xl shadow-cyan-500/10 overflow-hidden">
+      <div className="relative w-full max-w-2xl h-[calc(100vh-1rem)] sm:h-[calc(100vh-2rem)] sm:max-h-[90vh] transform transition-all duration-300 ease-out scale-100">
+        <div className="flex flex-col h-full glassmorphism border border-slate-600/30 bg-slate-950/95 rounded-2xl shadow-2xl shadow-cyan-500/10 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
             <div className="flex items-center space-x-3">
@@ -252,8 +252,8 @@ export default function CreditCardDrawer({
           </div>
 
           {/* Form Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Card Information Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-white flex items-center gap-2">
@@ -419,39 +419,39 @@ export default function CreditCardDrawer({
           </div>
 
           {/* Footer - Sticky */}
-          <div className="border-t border-slate-700/50 p-4 md:p-6 bg-slate-950/98">
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <Lock className="w-5 h-5 text-cyan-400" />
+          <div className="border-t border-slate-700/50 p-3 sm:p-4 md:p-6 bg-slate-950/98 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-between mb-3 sm:mb-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
                 <div>
-                  <div className="text-white font-medium">Güvenli Ödeme</div>
-                  <div className="text-slate-400 text-sm">256-bit SSL şifreli</div>
+                  <div className="text-white font-medium text-sm sm:text-base">Güvenli Ödeme</div>
+                  <div className="text-slate-400 text-xs sm:text-sm">256-bit SSL şifreli</div>
                 </div>
               </div>
               
               <div className="text-center">
-                <div className="text-2xl md:text-3xl font-bold text-white">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
                   {amount} {currency.toUpperCase()}
                 </div>
-                <div className="text-slate-400">Toplam tutar</div>
+                <div className="text-slate-400 text-sm">Toplam tutar</div>
               </div>
             </div>
             
             <Button
               onClick={handleSubmit}
               disabled={isProcessing}
-              className="w-full h-14 md:h-16 text-lg md:text-xl font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 
+              className="w-full h-12 sm:h-14 md:h-16 text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 
                 hover:from-cyan-600 hover:to-blue-700 text-white border-none shadow-xl shadow-cyan-500/30
                 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02]"
             >
               {isProcessing ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   İşleniyor...
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                   Ödemeyi Güvenle Tamamla
                 </div>
               )}
