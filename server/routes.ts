@@ -1055,19 +1055,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Set Turkish fonts and encoding
         doc.setFont('helvetica');
+        doc.setFontSize(10);
+        doc.setLanguage('tr-TR');
         
-        // Add title
-        doc.setFontSize(18);
-        doc.text('AdeGloba Starlink System - Rapor', 20, 20);
+        // Add title with better spacing
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('AdeGloba Starlink System', 105, 25, { align: 'center' });
         
-        // Add date range
-        doc.setFontSize(12);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Finansal Rapor', 105, 35, { align: 'center' });
+        
+        // Add date and filter info
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
         const dateRangeText = `Tarih Aralığı: ${startDate.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`;
-        doc.text(dateRangeText, 20, 35);
+        doc.text(dateRangeText, 105, 45, { align: 'center' });
         
-        // Add ship filter
-        const shipText = ship === 'all' ? 'Tüm Gemiler' : `Gemi: ${ship}`;
-        doc.text(shipText, 20, 45);
+        const shipText = ship === 'all' ? 'Kapsam: Tüm Gemiler' : `Kapsam: ${ship}`;
+        doc.text(shipText, 105, 52, { align: 'center' });
+        
+        // Add separator line
+        doc.setLineWidth(0.5);
+        doc.line(20, 58, 190, 58);
         
         // Prepare table data
         const tableData = reportData.map(item => [
@@ -1078,14 +1089,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           '$' + item.totalRevenue.toFixed(2)
         ]);
         
-        // Add table
+        // Add table with better styling
         (doc as any).autoTable({
-          startY: 60,
-          head: [['Gemi Adı', 'Ödenen Siparişler', 'Satılan Paketler', 'Satılan Veri (GB)', 'Net Gelir']],
+          startY: 65,
+          head: [['Gemi Adı', 'Ödenen\nSiparişler', 'Satılan\nPaketler', 'Satılan Veri\n(GB)', 'Net Gelir\n(USD)']],
           body: tableData,
-          styles: { fontSize: 10, cellPadding: 5 },
-          headStyles: { fillColor: [15, 23, 42], textColor: 255 },
-          alternateRowStyles: { fillColor: [248, 250, 252] },
+          styles: { 
+            fontSize: 9, 
+            cellPadding: 4,
+            valign: 'middle',
+            halign: 'center',
+            textColor: [51, 51, 51],
+            lineColor: [200, 200, 200],
+            lineWidth: 0.5
+          },
+          headStyles: { 
+            fillColor: [15, 23, 42], 
+            textColor: [255, 255, 255],
+            fontSize: 10,
+            fontStyle: 'bold',
+            halign: 'center',
+            valign: 'middle'
+          },
+          alternateRowStyles: { 
+            fillColor: [248, 250, 252] 
+          },
+          columnStyles: {
+            0: { halign: 'left', cellWidth: 40 },
+            1: { halign: 'center', cellWidth: 25 },
+            2: { halign: 'center', cellWidth: 25 },
+            3: { halign: 'center', cellWidth: 30 },
+            4: { halign: 'right', cellWidth: 25 }
+          },
           margin: { left: 20, right: 20 }
         });
         
@@ -1097,15 +1132,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalRevenue: acc.totalRevenue + item.totalRevenue
         }), { totalOrders: 0, totalPackages: 0, totalData: 0, totalRevenue: 0 });
         
-        // Add summary
-        const finalY = (doc as any).lastAutoTable.finalY + 20;
+        // Add summary section with better design
+        const finalY = (doc as any).lastAutoTable.finalY + 15;
+        
+        // Summary box background
+        doc.setFillColor(240, 248, 255);
+        doc.rect(20, finalY, 170, 35, 'F');
+        doc.setDrawColor(200, 200, 200);
+        doc.rect(20, finalY, 170, 35, 'S');
+        
+        // Summary title
         doc.setFontSize(14);
-        doc.text('Özet:', 20, finalY);
-        doc.setFontSize(12);
-        doc.text(`Toplam Sipariş: ${totals.totalOrders}`, 20, finalY + 15);
-        doc.text(`Toplam Paket: ${totals.totalPackages}`, 20, finalY + 25);
-        doc.text(`Toplam Veri: ${totals.totalData} GB`, 20, finalY + 35);
-        doc.text(`Toplam Gelir: $${totals.totalRevenue.toFixed(2)}`, 20, finalY + 45);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.text('RAPOR ÖZETİ', 105, finalY + 10, { align: 'center' });
+        
+        // Summary content in two columns
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+        
+        // Left column
+        doc.text(`Toplam Ödenen Sipariş: ${totals.totalOrders}`, 25, finalY + 20);
+        doc.text(`Toplam Satılan Paket: ${totals.totalPackages}`, 25, finalY + 27);
+        
+        // Right column
+        doc.text(`Toplam Satılan Veri: ${totals.totalData} GB`, 110, finalY + 20);
+        doc.text(`Toplam Net Gelir: $${totals.totalRevenue.toFixed(2)}`, 110, finalY + 27);
+        
+        // Footer
+        const footerY = finalY + 45;
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`Rapor Oluşturma Tarihi: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR')}`, 105, footerY, { align: 'center' });
+        doc.text('AdeGloba Starlink System - Otomatik Rapor', 105, footerY + 6, { align: 'center' });
         
         const pdfBuffer = doc.output('arraybuffer');
         

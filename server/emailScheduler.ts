@@ -130,18 +130,27 @@ async function generatePDFReport(reportData: any[], reportMonth: string): Promis
   
   // Set Turkish fonts and encoding
   doc.setFont('helvetica');
+  doc.setFontSize(10);
+  doc.setLanguage('tr-TR');
   
-  // Add title
+  // Add title with better spacing
   doc.setFontSize(20);
-  doc.text('AdeGloba Starlink System', 20, 20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('AdeGloba Starlink System', 105, 25, { align: 'center' });
   
   // Add subtitle
   doc.setFontSize(16);
-  doc.text(`${reportMonth} Aylık Finans Raporu`, 20, 35);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${reportMonth} Aylık Finans Raporu`, 105, 35, { align: 'center' });
   
   // Add generation date
-  doc.setFontSize(10);
-  doc.text(`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, 20, 50);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Rapor Oluşturma Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, 105, 45, { align: 'center' });
+  
+  // Add separator line
+  doc.setLineWidth(0.5);
+  doc.line(20, 53, 190, 53);
   
   // Prepare table data
   const tableData = reportData.map(item => [
@@ -152,14 +161,38 @@ async function generatePDFReport(reportData: any[], reportMonth: string): Promis
     '$' + item.totalRevenue.toFixed(2)
   ]);
   
-  // Add table
+  // Add table with better styling
   (doc as any).autoTable({
-    startY: 65,
-    head: [['Gemi Adı', 'Ödenen Siparişler', 'Satılan Paketler', 'Satılan Veri (GB)', 'Net Gelir']],
+    startY: 60,
+    head: [['Gemi Adı', 'Ödenen\nSiparişler', 'Satılan\nPaketler', 'Satılan Veri\n(GB)', 'Net Gelir\n(USD)']],
     body: tableData,
-    styles: { fontSize: 10, cellPadding: 5 },
-    headStyles: { fillColor: [15, 23, 42], textColor: 255 },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
+    styles: { 
+      fontSize: 9, 
+      cellPadding: 4,
+      valign: 'middle',
+      halign: 'center',
+      textColor: [51, 51, 51],
+      lineColor: [200, 200, 200],
+      lineWidth: 0.5
+    },
+    headStyles: { 
+      fillColor: [15, 23, 42], 
+      textColor: [255, 255, 255],
+      fontSize: 10,
+      fontStyle: 'bold',
+      halign: 'center',
+      valign: 'middle'
+    },
+    alternateRowStyles: { 
+      fillColor: [248, 250, 252] 
+    },
+    columnStyles: {
+      0: { halign: 'left', cellWidth: 40 },
+      1: { halign: 'center', cellWidth: 25 },
+      2: { halign: 'center', cellWidth: 25 },
+      3: { halign: 'center', cellWidth: 30 },
+      4: { halign: 'right', cellWidth: 25 }
+    },
     margin: { left: 20, right: 20 }
   });
   
@@ -171,19 +204,40 @@ async function generatePDFReport(reportData: any[], reportMonth: string): Promis
     totalRevenue: acc.totalRevenue + item.totalRevenue
   }), { totalOrders: 0, totalPackages: 0, totalData: 0, totalRevenue: 0 });
   
-  // Add summary section
-  const finalY = (doc as any).lastAutoTable.finalY + 20;
-  doc.setFontSize(14);
-  doc.text('Aylık Özet:', 20, finalY);
-  doc.setFontSize(12);
-  doc.text(`Toplam Ödenen Sipariş: ${totals.totalOrders}`, 20, finalY + 15);
-  doc.text(`Toplam Satılan Paket: ${totals.totalPackages}`, 20, finalY + 25);
-  doc.text(`Toplam Satılan Veri: ${totals.totalData} GB`, 20, finalY + 35);
-  doc.text(`Toplam Net Gelir: $${totals.totalRevenue.toFixed(2)}`, 20, finalY + 45);
+  // Add summary section with better design
+  const finalY = (doc as any).lastAutoTable.finalY + 15;
   
-  // Add footer
+  // Summary box background
+  doc.setFillColor(240, 248, 255);
+  doc.rect(20, finalY, 170, 40, 'F');
+  doc.setDrawColor(200, 200, 200);
+  doc.rect(20, finalY, 170, 40, 'S');
+  
+  // Summary title
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(`${reportMonth.toUpperCase()} AYI ÖZETİ`, 105, finalY + 12, { align: 'center' });
+  
+  // Summary content in two columns
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(51, 51, 51);
+  
+  // Left column
+  doc.text(`Toplam Ödenen Sipariş: ${totals.totalOrders}`, 25, finalY + 22);
+  doc.text(`Toplam Satılan Paket: ${totals.totalPackages}`, 25, finalY + 29);
+  
+  // Right column
+  doc.text(`Toplam Satılan Veri: ${totals.totalData} GB`, 110, finalY + 22);
+  doc.text(`Toplam Net Gelir: $${totals.totalRevenue.toFixed(2)}`, 110, finalY + 29);
+  
+  // Footer
+  const footerY = finalY + 50;
   doc.setFontSize(8);
-  doc.text('AdeGloba Starlink System - Otomatik Aylık Rapor', 20, finalY + 65);
+  doc.setTextColor(120, 120, 120);
+  doc.text(`Rapor Oluşturma Tarihi: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR')}`, 105, footerY, { align: 'center' });
+  doc.text('AdeGloba Starlink System - Otomatik Aylık Rapor', 105, footerY + 6, { align: 'center' });
   
   // Save to temp file
   const tempDir = path.join(process.cwd(), 'temp');
