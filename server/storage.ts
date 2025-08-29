@@ -1092,15 +1092,15 @@ export class DatabaseStorage implements IStorage {
 
   async getReportData(shipId?: string, startDate?: Date, endDate?: Date): Promise<any[]> {
     try {
-      // Base query with joins
+      // Base query with joins - using 'paid' status instead of 'completed'
       let query = db
         .select({
           shipId: ships.id,
           shipName: ships.name,
-          totalOrders: sql<number>`COUNT(DISTINCT CASE WHEN ${orders.status} = 'completed' THEN ${orders.id} END)`,
-          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
-          totalDataGB: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN ${plans.dataLimitGb} * ${orderItems.qty} ELSE 0 END), 0)`,
-          packagesSold: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'completed' THEN ${orderItems.qty} ELSE 0 END), 0)`
+          totalOrders: sql<number>`COUNT(DISTINCT CASE WHEN ${orders.status} = 'paid' THEN ${orders.id} END)`,
+          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'paid' THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
+          totalDataGB: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'paid' THEN ${plans.dataLimitGb} * ${orderItems.qty} ELSE 0 END), 0)`,
+          packagesSold: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'paid' THEN ${orderItems.qty} ELSE 0 END), 0)`
         })
         .from(ships)
         .leftJoin(orders, eq(ships.id, orders.shipId))
@@ -1109,24 +1109,23 @@ export class DatabaseStorage implements IStorage {
         .groupBy(ships.id, ships.name)
         .orderBy(ships.name);
 
-      // Apply filters
-      const conditions: any[] = [];
-
+      // Apply ship filter if provided
       if (shipId) {
-        conditions.push(eq(ships.id, shipId));
+        query = query.where(eq(ships.id, shipId)) as any;
       }
 
+      // Apply date filter to orders if provided
       if (startDate && endDate) {
-        conditions.push(
-          and(
-            gte(orders.createdAt, startDate),
-            lte(orders.createdAt, endDate)
-          )
+        const dateCondition = and(
+          gte(orders.createdAt, startDate),
+          lte(orders.createdAt, endDate)
         );
-      }
-
-      if (conditions.length > 0) {
-        query = query.where(and(...conditions)) as any;
+        
+        if (shipId) {
+          query = query.where(and(eq(ships.id, shipId), dateCondition)) as any;
+        } else {
+          query = query.where(dateCondition) as any;
+        }
       }
 
       const result = await query;
