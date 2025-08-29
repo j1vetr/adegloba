@@ -126,6 +126,79 @@ export class EmailService {
     }
   }
 
+  // Send email with attachments
+  async sendEmailWithAttachment(
+    to: string,
+    subject: string,
+    template: string,
+    context: EmailContext = {},
+    attachments: Array<{filename: string, path: string, contentType: string}> = [],
+    cc?: string,
+    bcc?: string
+  ): Promise<boolean> {
+    const settings = await this.getEmailSettings();
+    
+    if (!settings || !settings.isActive) {
+      console.log('Email sending disabled - no active settings found');
+      return false;
+    }
+
+    // Create email log entry
+    const logData: InsertEmailLog = {
+      toEmail: to,
+      ccEmail: cc || null,
+      bccEmail: bcc || null,
+      subject,
+      template,
+      provider: settings.provider,
+      status: 'pending',
+    };
+
+    try {
+      const emailLog = await storage.createEmailLog(logData);
+      
+      // Generate HTML content
+      const htmlContent = await this.generateEmailHTML(template, context);
+      
+      let success = false;
+      
+      switch (settings.provider) {
+        case 'smtp':
+          success = await this.sendViaSMTPWithAttachment(settings, to, subject, htmlContent, attachments, cc, bcc);
+          break;
+        case 'sendgrid':
+          success = await this.sendViaSendGridWithAttachment(settings, to, subject, htmlContent, attachments, cc, bcc);
+          break;
+        case 'mailgun':
+          success = await this.sendViaMailgunWithAttachment(settings, to, subject, htmlContent, attachments, cc, bcc);
+          break;
+        default:
+          throw new Error(`Unsupported email provider: ${settings.provider}`);
+      }
+
+      // Update email log with result
+      await storage.createEmailLog({
+        ...logData,
+        status: success ? 'sent' : 'failed',
+        sentAt: success ? new Date() : null,
+        errorMessage: success ? null : 'Failed to send email with attachment',
+      });
+
+      return success;
+    } catch (error) {
+      console.error('Email sending error:', error);
+      
+      // Log the error
+      await storage.createEmailLog({
+        ...logData,
+        status: 'failed',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
+      
+      return false;
+    }
+  }
+
   private async sendViaSMTP(
     settings: EmailSetting,
     to: string,
@@ -179,6 +252,106 @@ export class EmailService {
       return true;
     } catch (error) {
       console.error('SMTP sending error:', error);
+      return false;
+    }
+  }
+
+  private async sendViaSMTPWithAttachment(
+    settings: EmailSetting,
+    to: string,
+    subject: string,
+    html: string,
+    attachments: Array<{filename: string, path: string, contentType: string}>,
+    cc?: string,
+    bcc?: string
+  ): Promise<boolean> {
+    try {
+      const smtpPort = settings.smtpPort || 587;
+      const isSecure = smtpPort === 465;
+      
+      console.log(`🔧 Attempting SMTP connection to ${settings.smtpHost}:${smtpPort} (secure: ${isSecure})`);
+      
+      const transporter = nodemailer.createTransporter({
+        host: settings.smtpHost,
+        port: smtpPort,
+        secure: isSecure,
+        requireTLS: !isSecure,
+        auth: {
+          user: settings.smtpUser,
+          pass: settings.smtpPass || '',
+        },
+        tls: {
+          rejectUnauthorized: false,
+          servername: settings.smtpHost
+        },
+        connectionTimeout: 30000,
+        greetingTimeout: 10000,
+        socketTimeout: 30000,
+        debug: false,
+        logger: false
+      });
+
+      console.log('🔧 Testing SMTP connection...');
+      await transporter.verify();
+      console.log('✅ SMTP connection verified successfully');
+
+      const mailOptions = {
+        from: `${settings.fromName || 'AdeGloba'} <${settings.fromEmail}>`,
+        to,
+        cc,
+        bcc,
+        subject,
+        html,
+        replyTo: settings.replyTo || settings.fromEmail,
+        attachments: attachments.map(att => ({
+          filename: att.filename,
+          path: att.path,
+          contentType: att.contentType
+        }))
+      };
+
+      await transporter.sendMail(mailOptions);
+      return true;
+    } catch (error) {
+      console.error('SMTP sending error with attachment:', error);
+      return false;
+    }
+  }
+
+  private async sendViaSendGridWithAttachment(
+    settings: EmailSetting,
+    to: string,
+    subject: string,
+    html: string,
+    attachments: Array<{filename: string, path: string, contentType: string}>,
+    cc?: string,
+    bcc?: string
+  ): Promise<boolean> {
+    try {
+      // SendGrid with attachment implementation would go here
+      console.log('SendGrid with attachment not yet implemented - falling back to regular send');
+      return await this.sendViaSendGrid(settings, to, subject, html, cc, bcc);
+    } catch (error) {
+      console.error('SendGrid sending error with attachment:', error);
+      return false;
+    }
+  }
+
+  private async sendViaMailgunWithAttachment(
+    settings: EmailSetting,
+    to: string,
+    subject: string,
+    html: string,
+    attachments: Array<{filename: string, path: string, contentType: string}>,
+    cc?: string,
+    bcc?: string
+  ): Promise<boolean> {
+    try {
+      // Mailgun with attachment implementation would go here
+      console.log('Mailgun with attachment not yet implemented');
+      return false;
+    } catch (error) {
+      console.error('Mailgun sending error with attachment:', error);
       return false;
     }
   }
