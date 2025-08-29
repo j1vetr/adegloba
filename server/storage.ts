@@ -544,7 +544,15 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMultipleShips(ids: string[]): Promise<void> {
     if (ids.length === 0) return;
-    await db.delete(ships).where(inArray(ships.id, ids));
+    console.log('🗑️ Storage: deleteMultipleShips called with:', { ids, count: ids.length });
+    
+    // For debugging: try with single delete in loop first
+    for (const id of ids) {
+      console.log('🗑️ Deleting ship:', id);
+      await db.delete(ships).where(eq(ships.id, id));
+    }
+    
+    console.log('✅ Storage: All ships deleted successfully');
   }
 
   // Plan operations
