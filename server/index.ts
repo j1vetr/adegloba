@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import path from "path";
 import { pool } from "./db";
 import { registerRoutes } from "./routes";
 import { startEmailScheduler } from "./emailScheduler";
@@ -13,6 +14,29 @@ import { storage } from "./storage";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Special handling for PWA files with correct MIME types
+app.get('/sw.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.sendFile(path.resolve(import.meta.dirname, '..', 'public', 'sw.js'));
+});
+
+app.get('/manifest.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/manifest+json');
+  res.sendFile(path.resolve(import.meta.dirname, '..', 'public', 'manifest.json'));
+});
+
+// PWA icon files
+app.get('/pwa-icon-*.png', (req, res) => {
+  res.setHeader('Content-Type', 'image/png');
+  res.sendFile(path.resolve(import.meta.dirname, '..', 'public', req.path));
+});
+
+app.get('/favicon.ico', (req, res) => {
+  res.setHeader('Content-Type', 'image/x-icon');
+  res.sendFile(path.resolve(import.meta.dirname, '..', 'public', 'favicon.ico'));
+});
 
 // Session configuration
 const PgStore = connectPgSimple(session);
