@@ -148,11 +148,14 @@ export default function Profil() {
 
   // Initialize form data when user data loads
   React.useEffect(() => {
+    console.log('👤 User data for form init:', user);
     if (user) {
       // Parse phone number
       const phone = user.phone || "";
       let phoneCountryCode = "+90";
       let phoneNumber = "";
+      
+      console.log('📞 Parsing phone:', phone);
       
       if (phone) {
         // Find matching country code
@@ -165,7 +168,7 @@ export default function Profil() {
         }
       }
       
-      setFormData({
+      const newFormData = {
         full_name: user.full_name || "",
         email: user.email || "",
         phoneCountryCode,
@@ -175,7 +178,10 @@ export default function Profil() {
         currentPassword: "",
         newPassword: "",
         confirmPassword: ""
-      });
+      };
+      
+      console.log('📝 Setting form data:', newFormData);
+      setFormData(newFormData);
     }
   }, [user]);
 
