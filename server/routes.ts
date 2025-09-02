@@ -60,10 +60,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  // User endpoint for session auth
+  app.get('/api/user/me', async (req, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -2071,37 +2075,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ publicKey: PushNotificationService.getPublicKey() });
   });
 
-  app.post('/api/push/subscribe', isAuthenticated, async (req, res) => {
+  app.post('/api/push/subscribe', async (req, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
     try {
       const { PushNotificationService } = await import('./services/pushNotificationService');
       const { subscription, userAgent } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
-
-      console.log('🔍 Push subscription attempt - Auth user ID:', userId);
-      console.log('🔍 Full auth user object:', JSON.stringify(req.user, null, 2));
-
-      // Check if user exists in database, if not create a minimal record
-      const existingUser = await storage.getUser(userId);
-      if (!existingUser) {
-        console.log('⚠️ User not found in database, creating minimal record for push notifications');
-        try {
-          await storage.createUser({
-            id: userId,
-            username: req.user.claims.preferred_username || `user_${userId.slice(0, 8)}`,
-            email: req.user.claims.email || `${userId}@unknown.com`,
-            password_hash: 'N/A', // Not used for auth
-            full_name: req.user.claims.name || 'Unknown User',
-            phone: null,
-            ship_id: null,
-            address: null
-          });
-          console.log('✅ Minimal user record created for push notifications');
-        } catch (createError) {
-          console.error('❌ Failed to create user record:', createError);
-          return res.status(400).json({ success: false, message: 'User synchronization failed' });
-        }
-      }
 
       await PushNotificationService.subscribeUser(userId, subscription, userAgent, ipAddress);
       
@@ -2112,11 +2095,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/push/unsubscribe', isAuthenticated, async (req, res) => {
+  app.post('/api/push/unsubscribe', async (req, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
     try {
       const { PushNotificationService } = await import('./services/pushNotificationService');
       const { endpoint } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
 
       await PushNotificationService.unsubscribeUser(userId, endpoint);
       
@@ -2127,10 +2114,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/push/test', isAuthenticated, async (req, res) => {
+  app.post('/api/push/test', async (req, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
     try {
       const { PushNotificationService } = await import('./services/pushNotificationService');
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
 
       await PushNotificationService.sendTestNotification(userId);
       
