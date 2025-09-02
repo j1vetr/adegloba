@@ -60,21 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User endpoint for session auth
-  app.get('/api/user/me', async (req, res) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-    
-    try {
-      const userId = req.session.userId;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // User endpoint for session auth - REMOVED DUPLICATE (kept the better one below)
 
   // PayPal routes
   app.get("/api/paypal/setup", async (req, res) => {
@@ -257,21 +243,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Protected user routes
+  // Protected user routes - Get user profile with ship information
   app.get('/api/user/me', async (req: any, res, next) => {
     if (req.session && req.session.userId) {
       try {
         const userId = req.session.userId;
+        console.log(`📋 Fetching user profile for userId: ${userId}`);
+        
         const user = await storage.getUserWithShip(userId);
         if (!user) {
+          console.log(`❌ User not found for userId: ${userId}`);
           return res.status(404).json({ message: 'User not found' });
         }
+        
+        console.log(`✅ User profile found:`, {
+          id: user.id,
+          username: user.username,
+          full_name: user.full_name,
+          email: user.email,
+          phone: user.phone,
+          ship_id: user.ship_id,
+          address: user.address
+        });
+        
         res.json(user);
       } catch (error) {
         console.error("Error fetching user profile:", error);
         res.status(500).json({ message: "Failed to fetch user profile" });
       }
     } else {
+      console.log(`🚫 Unauthorized request to /api/user/me - no session or userId`);
       return res.status(401).json({ message: 'Unauthorized' });
     }
   });
@@ -2375,15 +2376,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session?.userId;
       if (!userId) {
+        console.log('🚫 Profile update failed: No userId in session');
         return res.status(401).json({ message: 'Unauthorized' });
       }
+
+      console.log('📝 Profile update request for userId:', userId);
+      console.log('📝 Request body:', req.body);
 
       const updateData: any = {
         full_name: req.body.full_name,
         email: req.body.email,
+        phone: req.body.phone,
         ship_id: req.body.ship_id,
         address: req.body.address,
       };
+      
+      console.log('📝 Update data to be saved:', updateData);
 
       // Handle password update if provided
       if (req.body.newPassword && req.body.currentPassword) {
@@ -2406,8 +2414,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.updateUser(userId, updateData);
       if (!user) {
+        console.log('❌ User update failed: User not found for userId:', userId);
         return res.status(404).json({ message: 'User not found' });
       }
+
+      console.log('✅ User updated successfully:', {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        ship_id: user.ship_id
+      });
 
       res.json(user);
     } catch (error) {
