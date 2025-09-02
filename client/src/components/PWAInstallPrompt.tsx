@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, Download, Smartphone, Monitor } from 'lucide-react';
+import { useUserAuth } from '@/hooks/useUserAuth';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -13,6 +14,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWAInstallPrompt() {
+  const { user } = useUserAuth(); // Kullanıcı giriş durumunu kontrol et
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -59,15 +61,15 @@ export function PWAInstallPrompt() {
         }
       }
 
-      // Only show for mobile devices (Android or iPhone)
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      // Only show for Android devices with logged-in users
+      const isAndroid = /Android/i.test(navigator.userAgent);
       
-      if (!isMobile) {
-        return; // Hide on desktop
+      if (!isAndroid || !user) {
+        return; // Hide on desktop, iOS, and for non-logged-in users
       }
 
       const timer = setTimeout(() => {
-        if (deferredPrompt || isMobile) {
+        if (deferredPrompt || isAndroid) {
           setShowPrompt(true);
         }
       }, 5000);
@@ -98,7 +100,7 @@ export function PWAInstallPrompt() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, [deferredPrompt]);
+  }, [deferredPrompt, user]); // user dependency eklendi
 
   const handleInstall = async () => {
     const isAndroid = /Android/i.test(navigator.userAgent);

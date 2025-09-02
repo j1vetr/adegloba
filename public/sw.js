@@ -83,7 +83,8 @@ self.addEventListener('push', (event) => {
     title: 'AdeGloba Starlink',
     body: 'Yeni bildirim',
     icon: '/pwa-icon-192.png',
-    badge: '/favicon.ico',
+    badge: '/pwa-icon-192.png', // Badge olarak da PWA icon kullan
+    image: '/pwa-icon-192.png', // Large icon for expanded view
     data: { url: '/' }
   };
 
@@ -107,16 +108,22 @@ self.addEventListener('push', (event) => {
       body: notificationData.body,
       icon: notificationData.icon,
       badge: notificationData.badge,
+      image: notificationData.image,
       data: notificationData.data,
       requireInteraction: true,
+      vibrate: [200, 100, 200], // Titreşim pattern'i
+      tag: 'adegloba-notification', // Aynı tag'li bildirimleri grupla
+      renotify: true, // Aynı tag ile tekrar bildirim göster
       actions: [
         {
           action: 'open',
-          title: 'Aç'
+          title: 'Aç',
+          icon: '/pwa-icon-192.png'
         },
         {
-          action: 'close',
-          title: 'Kapat'
+          action: 'close', 
+          title: 'Kapat',
+          icon: '/pwa-icon-192.png'
         }
       ]
     })
