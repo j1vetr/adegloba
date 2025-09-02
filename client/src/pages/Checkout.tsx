@@ -511,7 +511,7 @@ export default function Checkout() {
                   </div>
                   
                   {currentTotal > 0 ? (
-                    <div className="space-y-3 animate-slide-in-up">
+                    <div className="space-y-1 animate-slide-in-up">
                       {/* PayPal Button */}
                       <div data-testid="paypal-container">
                         <PayPalButton
