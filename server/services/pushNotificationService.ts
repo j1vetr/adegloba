@@ -4,8 +4,8 @@ import type { InsertPushSubscription } from '@shared/schema';
 
 // Web Push VAPID Configuration
 // These should be environment variables in production
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BOyI6QI-SRD3Q7Ej3-PbUvN8zKhG9R8qU4x7a2g8NjR8kM9V3YW8A4xN6n8T8Dg5z3K2M7t6Y8u9S6q5L3j8D4w';
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'Ty3r7N4bH8k9M2v5F6s8D4q9R7t3Y5u6I9o8P2a6W4e8Z7c9X3n4B8h6K2y5L4j7';
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BJ2qhSSjDDHuOYWTaqN-EVoRL7zpiaQOrQLyycOW1AtamXwfp-sh48DwfbSFWxY66hBXLB9WGdWp7DBLW8sNIYo';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '__iXqZ6_zS4E8ESwm4xv43dXjNud_1Tcr0_OPN-Ugd0';
 const VAPID_EMAIL = process.env.VAPID_EMAIL || 'starlink@adegloba.space';
 
 // Configure web-push with VAPID keys
