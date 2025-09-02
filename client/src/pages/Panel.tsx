@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { NotificationSettings } from "@/components/NotificationSettings";
-import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive, Zap, Copy, Bell } from "lucide-react";
+import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive, Zap, Copy } from "lucide-react";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useToast } from "@/hooks/use-toast";
@@ -142,7 +141,7 @@ export default function Panel() {
         </div>
 
         <Tabs defaultValue="packages" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-slate-800/50 border-slate-700/50 rounded-lg p-1">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border-slate-700/50 rounded-lg p-1">
             <TabsTrigger 
               value="packages" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
@@ -169,15 +168,6 @@ export default function Panel() {
               <Archive className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Süresi Bitmiş Paketlerim</span>
               <span className="sm:hidden">Bitmiş</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="notifications" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
-              data-testid="tab-notifications"
-            >
-              <Bell className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Bildirimler</span>
-              <span className="sm:hidden">Bildirim</span>
             </TabsTrigger>
           </TabsList>
 
@@ -526,9 +516,6 @@ export default function Panel() {
           </TabsContent>
 
           {/* Notifications */}
-          <TabsContent value="notifications" className="space-y-4">
-            <NotificationSettings />
-          </TabsContent>
         </Tabs>
       </div>
     </div>
