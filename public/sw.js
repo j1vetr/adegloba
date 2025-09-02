@@ -4,9 +4,8 @@
 const CACHE_NAME = 'adegloba-starlink-v1';
 const urlsToCache = [
   '/',
-  '/manifest.json',
-  '/pwa-icon-192.png',
-  '/pwa-icon-512.png'
+  '/manifest.json'
+  // Icons will be cached dynamically when requested
 ];
 
 // Install event

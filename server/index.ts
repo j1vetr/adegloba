@@ -28,14 +28,21 @@ app.get('/manifest.json', (req, res) => {
 });
 
 // PWA icon files
-app.get('/pwa-icon-*.png', (req, res) => {
+app.get('/pwa-icon-192.png', (req, res) => {
   res.setHeader('Content-Type', 'image/png');
-  res.sendFile(path.resolve(import.meta.dirname, '..', 'public', req.path));
+  res.sendFile(path.resolve(import.meta.dirname, '..', 'public', 'pwa-icon-192.png'));
 });
 
+app.get('/pwa-icon-512.png', (req, res) => {
+  res.setHeader('Content-Type', 'image/png');
+  res.sendFile(path.resolve(import.meta.dirname, '..', 'public', 'pwa-icon-512.png'));
+});
+
+// Create a simple favicon if it doesn't exist
 app.get('/favicon.ico', (req, res) => {
   res.setHeader('Content-Type', 'image/x-icon');
-  res.sendFile(path.resolve(import.meta.dirname, '..', 'public', 'favicon.ico'));
+  // Send the pwa icon as favicon if favicon doesn't exist
+  res.sendFile(path.resolve(import.meta.dirname, '..', 'public', 'pwa-icon-192.png'));
 });
 
 // Session configuration

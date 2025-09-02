@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 
 export function NotificationSettings() {
+  console.log('🔔 NotificationSettings component rendering...');
+  
   const {
     isSupported,
     isSubscribed,
@@ -27,6 +29,8 @@ export function NotificationSettings() {
     requestPermission,
     testNotification,
   } = usePushNotifications();
+  
+  console.log('🔔 Push notification state:', { isSupported, isSubscribed, isPermissionGranted });
 
   if (!isSupported) {
     return (
