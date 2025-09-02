@@ -35,8 +35,7 @@ export default function CreditCardDrawer({
     cardNumber: '',
     expiryDate: '',
     cvv: '',
-    cardholderName: '',
-    surname: '',
+    fullName: '', // Single field for full name instead of separate first/last
     addressLine1: '',
     addressLine2: '',
     postalCode: '',
@@ -52,19 +51,13 @@ export default function CreditCardDrawer({
   // Auto-populate form with user data when drawer opens
   useEffect(() => {
     if (isOpen && user) {
-      // Parse name if available (assumes full_name contains first and last name)
-      const fullName = user.full_name || '';
-      const nameParts = fullName.split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-
+      const userData = user as any; // Type assertion for user data
       setFormData(prev => ({
         ...prev,
-        cardholderName: firstName,
-        surname: lastName,
-        email: user.email || '',
-        phone: user.phone || '',
-        addressLine1: user.address || '',
+        fullName: userData.full_name || '', // Use full name directly
+        email: userData.email || '',
+        phone: userData.phone || '',
+        addressLine1: userData.address || '',
         city: '', // Keep empty as we don't have separate city field in user
         region: '', // Keep empty as we don't have separate region field in user
         postalCode: '' // Keep empty as we don't have postal code in user
@@ -135,12 +128,8 @@ export default function CreditCardDrawer({
       newErrors.cvv = 'Geçerli CVV girin';
     }
     
-    if (!formData.cardholderName.trim()) {
-      newErrors.cardholderName = 'Kart sahibinin adını girin';
-    }
-    
-    if (!formData.surname.trim()) {
-      newErrors.surname = 'Soyadını girin';
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Ad ve soyadınızı girin';
     }
     
     if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -326,37 +315,20 @@ export default function CreditCardDrawer({
                   Kişisel Bilgiler
                 </h3>
                 
-                {/* Name and Surname */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-slate-300">Ad</Label>
-                    <Input
-                      type="text"
-                      placeholder="Adınız"
-                      value={formData.cardholderName}
-                      onChange={(e) => handleInputChange('cardholderName', e.target.value)}
-                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.cardholderName ? 'border-red-500' : ''}`}
-                    />
-                    {errors.cardholderName && (
-                      <p className="text-red-400 text-sm mt-1">{errors.cardholderName}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <Label className="text-slate-300">Soyad</Label>
-                    <Input
-                      type="text"
-                      placeholder="Soyadınız"
-                      value={formData.surname}
-                      onChange={(e) => handleInputChange('surname', e.target.value)}
-                      className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
-                        focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.surname ? 'border-red-500' : ''}`}
-                    />
-                    {errors.surname && (
-                      <p className="text-red-400 text-sm mt-1">{errors.surname}</p>
-                    )}
-                  </div>
+                {/* Full Name - Single field */}
+                <div>
+                  <Label className="text-slate-300">Ad Soyad</Label>
+                  <Input
+                    type="text"
+                    placeholder="Adınız ve soyadınız"
+                    value={formData.fullName}
+                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    className={`glassmorphism border-slate-600 text-white placeholder-slate-500 h-12
+                      focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 ${errors.fullName ? 'border-red-500' : ''}`}
+                  />
+                  {errors.fullName && (
+                    <p className="text-red-400 text-sm mt-1">{errors.fullName}</p>
+                  )}
                 </div>
 
                 {/* Email */}

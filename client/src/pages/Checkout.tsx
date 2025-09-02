@@ -13,6 +13,7 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
 import PayPalButton from "@/components/PayPalButton";
+import CreditCardDrawer from "@/components/CreditCardDrawer";
 
 export default function Checkout() {
   const [location] = useLocation();
@@ -22,6 +23,7 @@ export default function Checkout() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [discount, setDiscount] = useState(0);
   const [couponValidating, setCouponValidating] = useState(false);
+  const [creditCardDrawerOpen, setCreditCardDrawerOpen] = useState(false);
 
   // Get order ID from URL params (if coming from cart checkout)
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
@@ -509,23 +511,41 @@ export default function Checkout() {
                   </div>
                   
                   {currentTotal > 0 ? (
-                    <div data-testid="paypal-container" className="animate-slide-in-up">
-                      <PayPalButton
-                        amount={currentTotal.toFixed(2)}
-                        currency="USD"
-                        intent="capture"
-                        couponCode={appliedCoupon?.code}
-                        onSuccess={(orderId: string) => {
-                          completeOrderMutation.mutate(orderId);
-                        }}
-                        onError={(error: any) => {
-                          toast({
-                            title: "💳 PayPal Hatası",
-                            description: "Ödeme işlemi başarısız oldu. Lütfen tekrar deneyin.",
-                            variant: "destructive",
-                          });
-                        }}
-                      />
+                    <div className="space-y-3 animate-slide-in-up">
+                      {/* PayPal Button */}
+                      <div data-testid="paypal-container">
+                        <PayPalButton
+                          amount={currentTotal.toFixed(2)}
+                          currency="USD"
+                          intent="capture"
+                          couponCode={appliedCoupon?.code}
+                          onSuccess={(orderId: string) => {
+                            completeOrderMutation.mutate(orderId);
+                          }}
+                          onError={(error: any) => {
+                            toast({
+                              title: "💳 PayPal Hatası",
+                              description: "Ödeme işlemi başarısız oldu. Lütfen tekrar deneyin.",
+                              variant: "destructive",
+                            });
+                          }}
+                        />
+                      </div>
+
+                      {/* Credit Card Button */}
+                      <Button
+                        onClick={() => setCreditCardDrawerOpen(true)}
+                        className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-semibold py-3 rounded-xl text-lg btn-interactive transition-all duration-300 flex items-center justify-center space-x-2"
+                        data-testid="credit-card-button"
+                      >
+                        <CreditCard className="h-5 w-5" />
+                        <span>Kredi Kartı ile Ödeme</span>
+                        <div className="flex space-x-1 ml-2">
+                          <span className="text-xs">VISA</span>
+                          <span className="text-xs">MC</span>
+                          <span className="text-xs">AMEX</span>
+                        </div>
+                      </Button>
                     </div>
                   ) : (
                     <Button
@@ -557,6 +577,31 @@ export default function Checkout() {
           </div>
         </div>
       </div>
+
+      {/* Credit Card Payment Drawer */}
+      <CreditCardDrawer
+        isOpen={creditCardDrawerOpen}
+        onClose={() => setCreditCardDrawerOpen(false)}
+        amount={currentTotal.toFixed(2)}
+        currency="USD"
+        onSuccess={(paymentData) => {
+          setCreditCardDrawerOpen(false);
+          // Here you would typically call your payment completion endpoint
+          toast({
+            title: "Ödeme Başarılı",
+            description: "Kredi kartı ödemesi başarıyla tamamlandı!",
+          });
+          // For now, simulate completion like PayPal
+          completeOrderMutation.mutate('card_payment_' + Date.now());
+        }}
+        onError={(error) => {
+          toast({
+            title: "Ödeme Hatası",
+            description: "Kredi kartı ödemesi başarısız oldu. Lütfen tekrar deneyin.",
+            variant: "destructive",
+          });
+        }}
+      />
     </div>
   );
 }
