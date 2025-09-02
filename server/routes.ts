@@ -2075,7 +2075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { PushNotificationService } = await import('./services/pushNotificationService');
       const { subscription, userAgent } = req.body;
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
 
       await PushNotificationService.subscribeUser(userId, subscription, userAgent, ipAddress);
@@ -2091,7 +2091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { PushNotificationService } = await import('./services/pushNotificationService');
       const { endpoint } = req.body;
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
 
       await PushNotificationService.unsubscribeUser(userId, endpoint);
       
@@ -2105,7 +2105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/push/test', isAuthenticated, async (req, res) => {
     try {
       const { PushNotificationService } = await import('./services/pushNotificationService');
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
 
       await PushNotificationService.sendTestNotification(userId);
       
