@@ -93,6 +93,26 @@ export function PWAInstallPrompt() {
         
         if (choiceResult.outcome === 'accepted') {
           console.log('✅ PWA install accepted');
+          
+          // PWA yüklendikten hemen sonra notification permission iste
+          setTimeout(async () => {
+            try {
+              if ('Notification' in window && Notification.permission === 'default') {
+                console.log('📱 PWA installed, requesting notification permission...');
+                const permission = await Notification.requestPermission();
+                
+                if (permission === 'granted') {
+                  console.log('🔔 Notification permission granted after PWA install');
+                  // Sistem otomatik olarak push notification'ları aktif edecek
+                } else {
+                  console.log('🚫 Notification permission denied after PWA install');
+                }
+              }
+            } catch (error) {
+              console.log('📱 Auto notification permission request failed:', error);
+            }
+          }, 1500); // 1.5 saniye bekle (PWA install animasyonu bitsin)
+          
         } else {
           console.log('❌ PWA install dismissed');
           localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
