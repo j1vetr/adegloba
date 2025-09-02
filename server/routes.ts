@@ -2078,6 +2078,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
 
+      console.log('🔍 Push subscription attempt - Auth user ID:', userId);
+      console.log('🔍 Full auth user object:', JSON.stringify(req.user, null, 2));
+
+      // Check if user exists in database, if not create a minimal record
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        console.log('⚠️ User not found in database, creating minimal record for push notifications');
+        try {
+          await storage.createUser({
+            id: userId,
+            username: req.user.claims.preferred_username || `user_${userId.slice(0, 8)}`,
+            email: req.user.claims.email || `${userId}@unknown.com`,
+            password_hash: 'N/A', // Not used for auth
+            full_name: req.user.claims.name || 'Unknown User',
+            phone: null,
+            ship_id: null,
+            address: null
+          });
+          console.log('✅ Minimal user record created for push notifications');
+        } catch (createError) {
+          console.error('❌ Failed to create user record:', createError);
+          return res.status(400).json({ success: false, message: 'User synchronization failed' });
+        }
+      }
+
       await PushNotificationService.subscribeUser(userId, subscription, userAgent, ipAddress);
       
       res.json({ success: true, message: 'Push subscription created successfully' });
