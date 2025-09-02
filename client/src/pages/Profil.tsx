@@ -25,6 +25,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
+import { NotificationSettings } from "@/components/NotificationSettings";
 import type { User as UserType, Ship } from "@shared/schema";
 
 export default function Profil() {
@@ -518,6 +519,9 @@ export default function Profil() {
               )}
             </CardContent>
           </Card>
+
+          {/* Notification Settings */}
+          <NotificationSettings />
         </div>
       </div>
     </div>

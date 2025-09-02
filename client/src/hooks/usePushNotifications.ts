@@ -29,6 +29,29 @@ export function usePushNotifications(): PushNotificationHook {
   // Check permission status and subscription on mount
   useEffect(() => {
     checkPermissionAndSubscription();
+    
+    // Otomatik olarak izin iste ve subscribe ol (kullanıcı deneyimi için)
+    const autoEnableNotifications = async () => {
+      if (!isSupported || !user) return;
+      
+      // Eğer daha önce izin verilmişse otomatik subscribe ol
+      if (Notification.permission === 'granted') {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const existingSubscription = await registration.pushManager.getSubscription();
+          
+          if (!existingSubscription) {
+            // Mevcut subscription yoksa oluştur
+            await subscribe();
+          }
+        } catch (error) {
+          console.log('Auto-subscription skipped:', error);
+        }
+      }
+    };
+    
+    // 2 saniye sonra auto-enable dene
+    setTimeout(autoEnableNotifications, 2000);
   }, [user]);
 
   const checkPermissionAndSubscription = async () => {
