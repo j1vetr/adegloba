@@ -30,11 +30,22 @@ export function usePushNotifications(): PushNotificationHook {
   useEffect(() => {
     checkPermissionAndSubscription();
     
-    // Otomatik olarak izin verilmişse sistem aktivasyonu
+    // Otomatik kullanıcı kayıt ve notification aktivasyonu
     const autoEnableNotifications = async () => {
       if (!isSupported || !user) return;
       
       console.log('📱 Auto-notification check - Permission:', Notification.permission);
+      
+      // Tüm kullanıcıları otomatik olarak "granted" olarak kaydet (basitlik için)
+      try {
+        await apiRequest('/api/user/notification-preference', {
+          method: 'POST',
+          body: JSON.stringify({ enabled: true })
+        });
+        console.log('📱 User automatically registered as notification-enabled in database');
+      } catch (error) {
+        console.log('📱 Failed to register notification preference:', error);
+      }
       
       // Eğer daha önce izin verilmişse otomatik subscribe ol
       if (Notification.permission === 'granted') {

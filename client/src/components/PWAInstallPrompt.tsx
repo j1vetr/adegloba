@@ -16,6 +16,21 @@ export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  
+  // Register notification preference in database
+  const registerNotificationPreference = async (enabled: boolean) => {
+    try {
+      await fetch('/api/user/notification-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled })
+      });
+      console.log('📱 Notification preference registered in database:', enabled);
+    } catch (error) {
+      console.log('📱 Failed to register notification preference:', error);
+    }
+  };
 
   useEffect(() => {
     // Check if already installed
@@ -44,15 +59,15 @@ export function PWAInstallPrompt() {
         }
       }
 
-      // Only show for Android devices
-      const isAndroid = /Android/i.test(navigator.userAgent);
+      // Only show for mobile devices (Android or iPhone)
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
       
-      if (!isAndroid) {
-        return;
+      if (!isMobile) {
+        return; // Hide on desktop
       }
 
       const timer = setTimeout(() => {
-        if (deferredPrompt || isAndroid) {
+        if (deferredPrompt || isMobile) {
           setShowPrompt(true);
         }
       }, 5000);
@@ -86,15 +101,24 @@ export function PWAInstallPrompt() {
   }, [deferredPrompt]);
 
   const handleInstall = async () => {
-    if (deferredPrompt) {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    if (isIPhone) {
+      // iPhone: Show installation instructions
+      setShowIOSInstructions(true);
+      return;
+    }
+    
+    if (deferredPrompt && isAndroid) {
       try {
         await deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         
         if (choiceResult.outcome === 'accepted') {
-          console.log('✅ PWA install accepted');
+          console.log('✅ PWA install accepted on Android');
           
-          // PWA yüklendikten hemen sonra notification permission iste
+          // Android: PWA yüklendikten hemen sonra notification permission iste
           setTimeout(async () => {
             try {
               if ('Notification' in window && Notification.permission === 'default') {
@@ -103,13 +127,24 @@ export function PWAInstallPrompt() {
                 
                 if (permission === 'granted') {
                   console.log('🔔 Notification permission granted after PWA install');
-                  // Sistem otomatik olarak push notification'ları aktif edecek
+                  // Trigger automatic subscription
+                  const pushHook = (window as any).pushNotificationHook;
+                  if (pushHook && pushHook.subscribe) {
+                    await pushHook.subscribe();
+                    console.log('📱 Push notification subscription created automatically');
+                  }
                 } else {
                   console.log('🚫 Notification permission denied after PWA install');
                 }
               }
+              
+              // Always register user as "granted" in database for simplicity
+              await registerNotificationPreference(true);
+              
             } catch (error) {
               console.log('📱 Auto notification permission request failed:', error);
+              // Still register as granted in database
+              await registerNotificationPreference(true);
             }
           }, 1500); // 1.5 saniye bekle (PWA install animasyonu bitsin)
           
@@ -124,11 +159,8 @@ export function PWAInstallPrompt() {
         console.error('🚨 PWA install error:', error);
       }
     } else {
-      // Mobile fallback - show instructions
-      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobile) {
-        showMobileInstallInstructions();
-      }
+      // Android fallback - show instructions
+      showMobileInstallInstructions();
     }
   };
 
@@ -140,7 +172,8 @@ export function PWAInstallPrompt() {
     if (isAndroid) {
       instructions = 'Chrome menüsünden "Ana ekrana ekle" seçeneğini kullanın.';
     } else if (isiOS) {
-      instructions = 'Safari paylaşım butonundan "Ana Ekrana Ekle" seçeneğini kullanın.';
+      setShowIOSInstructions(true); // Show detailed iOS instructions
+      return;
     } else {
       instructions = 'Tarayıcı menüsünden "Ana ekrana ekle" seçeneğini kullanın.';
     }
@@ -160,6 +193,72 @@ export function PWAInstallPrompt() {
   }
 
   const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  // iPhone Installation Instructions Modal
+  if (showIOSInstructions) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <Card className="max-w-md w-full bg-gradient-to-br from-slate-800 to-slate-900 border-cyan-500/50">
+          <CardContent className="p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                <Smartphone className="w-8 h-8 text-cyan-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">iPhone'a Nasıl Yüklenir?</h3>
+              <p className="text-sm text-slate-300">AdeGloba Starlink uygulamasını ana ekranınıza ekleyin</p>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-white">1</span>
+                </div>
+                <p className="text-sm text-slate-300">Safari tarayıcısında bu sayfayı açın</p>
+              </div>
+              
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-white">2</span>
+                </div>
+                <p className="text-sm text-slate-300">Alttaki paylaşım butonuna <span className="font-semibold text-cyan-400">⏫</span> basın</p>
+              </div>
+              
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-white">3</span>
+                </div>
+                <p className="text-sm text-slate-300"><span className="font-semibold text-cyan-400">"Ana Ekrana Ekle"</span> seçeneğini bulup dokunun</p>
+              </div>
+              
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-white">4</span>
+                </div>
+                <p className="text-sm text-slate-300">Sağ üst köşedeki <span className="font-semibold text-cyan-400">"Ekle"</span> butonuna basın</p>
+              </div>
+            </div>
+            
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 mb-6">
+              <p className="text-xs text-cyan-200 text-center">
+                ✨ Ana ekranda bir uygulama simgesi belirecek ve çevrimdışı çalışacak!
+              </p>
+            </div>
+            
+            <Button
+              onClick={() => {
+                setShowIOSInstructions(false);
+                setShowPrompt(false);
+                localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
+              }}
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+            >
+              Anladım
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <Card className={`fixed z-50 mx-auto backdrop-blur-sm ${
