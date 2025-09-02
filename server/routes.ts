@@ -29,12 +29,6 @@ function generateSlug(name: string): string {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Authentication Middleware
   const isAdminAuthenticated = (req: any, res: any, next: any) => {
-    console.log('🔐 Auth check:', { 
-      hasSession: !!req.session, 
-      hasAdminUser: !!req.session?.adminUser,
-      sessionKeys: req.session ? Object.keys(req.session) : 'no session',
-      url: req.url 
-    });
     if (req.session && req.session.adminUser) {
       return next();
     }
@@ -1683,57 +1677,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting ship:', error);
       res.status(500).json({ message: 'Failed to delete ship' });
-    }
-  });
-
-  // Bulk delete ships - NEW PATH
-  app.post('/api/admin/ships/delete-multiple', isAdminAuthenticated, async (req, res) => {
-    console.log('🚀 NEW BULK DELETE ENDPOINT HIT! POST /api/admin/ships/delete-multiple');
-    try {
-      const { ids } = req.body;
-      console.log('📋 Received IDs:', ids);
-      
-      if (!Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ message: 'Ship IDs array is required' });
-      }
-      
-      // Get ship info before deletion for logging
-      const ships = await storage.getAllShips();
-      const shipsToDelete = ships.filter(s => ids.includes(s.id));
-      
-      // Delete ships one by one (same as credentials)
-      for (const id of ids) {
-        await storage.deleteShip(id);
-      }
-      
-      // Create system log for bulk ship deletion
-      await storage.createSystemLog({
-        category: 'admin_action',
-        action: 'bulk_delete_ships',
-        adminId: req.session.adminUser.id,
-        entityType: 'ship',
-        entityId: null,
-        details: {
-          deletedShipsCount: shipsToDelete.length,
-          deletedShips: shipsToDelete.map(ship => ({
-            id: ship.id,
-            name: ship.name,
-            slug: ship.slug,
-            isActive: ship.isActive
-          }))
-        },
-        ipAddress: req.ip || req.connection.remoteAddress,
-        userAgent: req.get('User-Agent'),
-      });
-      
-      res.json({ 
-        success: true, 
-        deletedCount: shipsToDelete.length,
-        message: `${shipsToDelete.length} gemi başarıyla silindi` 
-      });
-    } catch (error) {
-      console.error('Error bulk deleting ships:', error);
-      res.status(500).json({ message: 'Failed to bulk delete ships' });
     }
   });
 
