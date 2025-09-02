@@ -52,6 +52,13 @@ export default function CreditCardDrawer({
   useEffect(() => {
     if (isOpen && user) {
       const userData = user as any; // Type assertion for user data
+      console.log('💳 Checkout form auto-fill data:', userData);
+      console.log('💳 User keys:', Object.keys(userData));
+      console.log('💳 full_name:', userData.full_name);
+      console.log('💳 email:', userData.email);
+      console.log('💳 phone:', userData.phone);
+      console.log('💳 address:', userData.address);
+      
       setFormData(prev => ({
         ...prev,
         fullName: userData.full_name || '', // Use full name directly
@@ -62,6 +69,13 @@ export default function CreditCardDrawer({
         region: '', // Keep empty as we don't have separate region field in user
         postalCode: '' // Keep empty as we don't have postal code in user
       }));
+      
+      console.log('💳 Form data after auto-fill:', {
+        fullName: userData.full_name || '',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        address: userData.address || ''
+      });
     }
   }, [isOpen, user]);
 

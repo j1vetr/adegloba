@@ -149,6 +149,10 @@ export default function Profil() {
   // Initialize form data when user data loads
   React.useEffect(() => {
     console.log('👤 User data for form init:', user);
+    console.log('👤 User keys:', user ? Object.keys(user) : 'no user');
+    console.log('👤 User full_name:', user?.full_name);
+    console.log('👤 User phone:', user?.phone);
+    console.log('👤 User address:', user?.address);
     if (user) {
       // Parse phone number
       const phone = user.phone || "";
