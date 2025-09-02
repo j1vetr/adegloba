@@ -35,18 +35,25 @@ export function PWAInstallPrompt() {
         const dismissedDate = new Date(dismissed);
         const daysSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
         
-        // Show again after 7 days
-        if (daysSinceDismissed < 7) {
+        // Show again after 3 days for mobile users
+        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const showAfterDays = isMobile ? 3 : 7;
+        
+        if (daysSinceDismissed < showAfterDays) {
           return;
         }
       }
 
-      // Show prompt after 30 seconds to let user explore first
+      // For mobile, show prompt immediately after 5 seconds
+      // For desktop, show after 30 seconds
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const showDelay = isMobile ? 5000 : 30000;
+
       const timer = setTimeout(() => {
-        if (deferredPrompt) {
+        if (deferredPrompt || isMobile) {
           setShowPrompt(true);
         }
-      }, 30000);
+      }, showDelay);
 
       return () => clearTimeout(timer);
     };
@@ -77,24 +84,48 @@ export function PWAInstallPrompt() {
   }, [deferredPrompt]);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-
-    try {
-      await deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      
-      if (choiceResult.outcome === 'accepted') {
-        console.log('✅ PWA install accepted');
-      } else {
-        console.log('❌ PWA install dismissed');
-        localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        
+        if (choiceResult.outcome === 'accepted') {
+          console.log('✅ PWA install accepted');
+        } else {
+          console.log('❌ PWA install dismissed');
+          localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
+        }
+        
+        setDeferredPrompt(null);
+        setShowPrompt(false);
+      } catch (error) {
+        console.error('🚨 PWA install error:', error);
       }
-      
-      setDeferredPrompt(null);
-      setShowPrompt(false);
-    } catch (error) {
-      console.error('🚨 PWA install error:', error);
+    } else {
+      // Mobile fallback - show instructions
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        showMobileInstallInstructions();
+      }
     }
+  };
+
+  const showMobileInstallInstructions = () => {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    let instructions = '';
+    if (isAndroid) {
+      instructions = 'Chrome menüsünden "Ana ekrana ekle" seçeneğini kullanın.';
+    } else if (isiOS) {
+      instructions = 'Safari paylaşım butonundan "Ana Ekrana Ekle" seçeneğini kullanın.';
+    } else {
+      instructions = 'Tarayıcı menüsünden "Ana ekrana ekle" seçeneğini kullanın.';
+    }
+    
+    alert(`📱 AdeGloba Starlink Uygulamasını Ana Ekrana Ekleyin!\n\n${instructions}\n\nBu sayede uygulamaya daha hızlı erişebilirsiniz.`);
+    setShowPrompt(false);
+    localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
   };
 
   const handleDismiss = () => {
@@ -102,57 +133,76 @@ export function PWAInstallPrompt() {
     localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
   };
 
-  if (isInstalled || !showPrompt || !deferredPrompt) {
+  if (isInstalled || !showPrompt) {
     return null;
   }
 
+  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   return (
-    <Card className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md bg-gradient-to-r from-cyan-900/90 to-blue-900/90 border-cyan-500/50 backdrop-blur-sm animate-slide-in-up">
-      <CardContent className="p-4">
-        <div className="flex items-start space-x-3">
+    <Card className={`fixed z-50 mx-auto backdrop-blur-sm ${
+      isMobile 
+        ? 'bottom-0 left-0 right-0 rounded-t-xl rounded-b-none bg-gradient-to-t from-slate-900/95 to-slate-800/95 border-t border-cyan-500/50 border-x-0 border-b-0' 
+        : 'bottom-4 left-4 right-4 max-w-md rounded-lg bg-gradient-to-r from-cyan-900/90 to-blue-900/90 border-cyan-500/50'
+    } animate-slide-in-up`}>
+      <CardContent className={isMobile ? "p-6 pb-8" : "p-4"}>
+        <div className={`flex items-start ${isMobile ? 'space-x-4' : 'space-x-3'}`}>
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-              <Smartphone className="w-5 h-5 text-cyan-400" />
+            <div className={`${isMobile ? 'w-12 h-12' : 'w-10 h-10'} rounded-lg bg-cyan-500/20 flex items-center justify-center`}>
+              {isMobile ? (
+                <Smartphone className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'} text-cyan-400`} />
+              ) : (
+                <Monitor className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'} text-cyan-400`} />
+              )}
             </div>
           </div>
           
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-white mb-1">
-              🚢 AdeGloba Starlink Uygulamasını Yükle
+            <h3 className={`${isMobile ? 'text-lg' : 'text-sm'} font-semibold text-white mb-2`}>
+              🚢 AdeGloba Starlink {isMobile ? 'Uygulamasını Ana Ekrana Ekle' : 'Uygulamasını Yükle'}
             </h3>
-            <p className="text-xs text-cyan-100 mb-3">
-              Hızlı erişim için telefon ve bilgisayarınıza yükleyin. Çevrimdışı çalışır!
+            <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-cyan-100 mb-4`}>
+              {isMobile 
+                ? 'Hızlı erişim için telefona yükleyin. Çevrimdışı çalışır ve daha hızlı açılır!' 
+                : 'Hızlı erişim için telefon ve bilgisayarınıza yükleyin. Çevrimdışı çalışır!'
+              }
             </p>
             
-            <div className="flex items-center space-x-2">
+            <div className={`flex items-center ${isMobile ? 'space-x-3' : 'space-x-2'}`}>
               <Button
                 onClick={handleInstall}
-                size="sm"
-                className="bg-cyan-500 hover:bg-cyan-600 text-white text-xs px-3 py-1.5"
+                size={isMobile ? "default" : "sm"}
+                className={`bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold ${
+                  isMobile ? 'px-6 py-2 text-base' : 'text-xs px-3 py-1.5'
+                }`}
               >
-                <Download className="w-3 h-3 mr-1" />
-                Yükle
+                <Download className={`${isMobile ? 'w-4 h-4 mr-2' : 'w-3 h-3 mr-1'}`} />
+                {isMobile ? 'Ana Ekrana Ekle' : 'Yükle'}
               </Button>
               
               <Button
                 onClick={handleDismiss}
                 variant="ghost"
-                size="sm"
-                className="text-cyan-200 hover:bg-cyan-800/50 text-xs px-2 py-1.5"
+                size={isMobile ? "default" : "sm"}
+                className={`text-cyan-200 hover:bg-cyan-800/50 ${
+                  isMobile ? 'px-4 py-2 text-base' : 'text-xs px-2 py-1.5'
+                }`}
               >
                 Sonra
               </Button>
             </div>
           </div>
           
-          <Button
-            onClick={handleDismiss}
-            variant="ghost"
-            size="sm"
-            className="flex-shrink-0 text-cyan-300 hover:bg-cyan-800/50 p-1"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+          {!isMobile && (
+            <Button
+              onClick={handleDismiss}
+              variant="ghost"
+              size="sm"
+              className="flex-shrink-0 text-cyan-300 hover:bg-cyan-800/50 p-1"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

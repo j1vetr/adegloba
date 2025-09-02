@@ -2179,7 +2179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/push/test', isAdminAuthenticated, async (req, res) => {
     try {
       const { PushNotificationService } = await import('./services/pushNotificationService');
-      const adminId = req.admin.id;
+      const adminId = req.user?.id;
 
       // Send test notification to admin
       const payload = {
