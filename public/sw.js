@@ -1,22 +1,21 @@
 // AdeGloba Starlink System - Service Worker
-// Version 1.0.0 - PWA Support with Push Notifications
+// Version 1.0.1 - PWA Support with Push Notifications
 
 const CACHE_NAME = 'adegloba-starlink-v1';
 const urlsToCache = [
   '/',
   '/manifest.json',
   '/pwa-icon-192.png',
-  '/pwa-icon-512.png',
-  // Static assets will be cached dynamically
+  '/pwa-icon-512.png'
 ];
 
-// Install event - Cache essential resources
+// Install event
 self.addEventListener('install', (event) => {
   console.log('🔧 Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('📦 Service Worker: Caching essential resources');
+        console.log('📦 Service Worker: Caching resources');
         return cache.addAll(urlsToCache);
       })
       .then(() => {
@@ -26,7 +25,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - Clean up old caches
+// Activate event
 self.addEventListener('activate', (event) => {
   console.log('🚀 Service Worker: Activating...');
   event.waitUntil(
@@ -46,128 +45,88 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - Network first with cache fallback strategy
+// Fetch event - Cache strategy
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // Skip external domains
-  if (!event.request.url.startsWith(self.location.origin)) {
+  const url = new URL(event.request.url);
+  
+  // Skip API calls, use cache for static assets
+  if (url.pathname.startsWith('/api/')) {
     return;
   }
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Don't cache API responses or non-successful responses
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-
-        // Clone the response for caching
-        const responseToCache = response.clone();
-
-        // Cache static assets
-        if (event.request.url.includes('.js') || 
-            event.request.url.includes('.css') || 
-            event.request.url.includes('.png') || 
-            event.request.url.includes('.ico') ||
-            event.request.url.includes('.json')) {
-          
+        if (response.status === 200) {
+          const responseClone = response.clone();
           caches.open(CACHE_NAME)
             .then((cache) => {
-              cache.put(event.request, responseToCache);
+              cache.put(event.request, responseClone);
             });
         }
-
         return response;
       })
       .catch(() => {
-        // Network failed, try cache
-        return caches.match(event.request).then((response) => {
-          if (response) {
-            console.log('📱 Service Worker: Serving from cache:', event.request.url);
-            return response;
-          }
-
-          // Show offline page for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('/').then((response) => {
-              return response || new Response('Çevrimdışı - AdeGloba Starlink sistemine bağlanılamıyor', {
-                status: 503,
-                statusText: 'Service Unavailable',
-                headers: new Headers({
-                  'Content-Type': 'text/html; charset=utf-8'
-                })
-              });
-            });
-          }
-
-          return new Response('Çevrimdışı', {
-            status: 503,
-            statusText: 'Service Unavailable'
-          });
-        });
+        return caches.match(event.request);
       })
   );
 });
 
-// Push notification event
+// Push notification event - CRITICAL FOR NOTIFICATIONS
 self.addEventListener('push', (event) => {
-  console.log('📢 Service Worker: Push notification received');
-
+  console.log('📢 Service Worker: Push received');
+  
   let notificationData = {
     title: 'AdeGloba Starlink',
-    body: 'Yeni bir bildiriminiz var',
+    body: 'Yeni bildirim',
     icon: '/pwa-icon-192.png',
-    badge: '/pwa-icon-192.png',
-    data: { url: '/' },
-    actions: [
-      {
-        action: 'open',
-        title: 'Aç',
-        icon: '/pwa-icon-192.png'
-      },
-      {
-        action: 'close',
-        title: 'Kapat'
-      }
-    ],
-    requireInteraction: false,
-    silent: false,
-    tag: 'adegloba-notification'
+    badge: '/favicon.ico',
+    data: { url: '/' }
   };
 
   if (event.data) {
     try {
       const payload = event.data.json();
       notificationData = {
-        ...notificationData,
-        ...payload
+        title: payload.title || notificationData.title,
+        body: payload.body || notificationData.body,
+        icon: payload.icon || notificationData.icon,
+        badge: payload.badge || notificationData.badge,
+        data: { url: payload.url || '/' }
       };
     } catch (error) {
-      console.error('🚨 Service Worker: Error parsing push data:', error);
-      notificationData.body = event.data.text() || notificationData.body;
+      console.error('🚨 Push data parse error:', error);
     }
   }
 
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, notificationData)
-      .then(() => {
-        console.log('✅ Service Worker: Notification shown successfully');
-      })
-      .catch((error) => {
-        console.error('🚨 Service Worker: Error showing notification:', error);
-      })
+    self.registration.showNotification(notificationData.title, {
+      body: notificationData.body,
+      icon: notificationData.icon,
+      badge: notificationData.badge,
+      data: notificationData.data,
+      requireInteraction: true,
+      actions: [
+        {
+          action: 'open',
+          title: 'Aç'
+        },
+        {
+          action: 'close',
+          title: 'Kapat'
+        }
+      ]
+    })
   );
 });
 
 // Notification click event
 self.addEventListener('notificationclick', (event) => {
-  console.log('👆 Service Worker: Notification clicked');
-  
+  console.log('🔔 Notification clicked');
   event.notification.close();
 
   if (event.action === 'close') {
@@ -179,9 +138,8 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // Check if app is already open
         for (const client of clientList) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
+          if (client.url.includes(self.location.origin)) {
             client.focus();
             if (urlToOpen !== '/') {
               client.navigate(urlToOpen);
@@ -189,75 +147,11 @@ self.addEventListener('notificationclick', (event) => {
             return;
           }
         }
-
-        // Open new window
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);
         }
       })
-      .catch((error) => {
-        console.error('🚨 Service Worker: Error handling notification click:', error);
-      })
   );
 });
 
-// Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  console.log('🔄 Service Worker: Background sync triggered:', event.tag);
-
-  if (event.tag === 'offline-orders') {
-    event.waitUntil(syncOfflineOrders());
-  }
-});
-
-// Sync offline orders when connection is restored
-async function syncOfflineOrders() {
-  try {
-    console.log('🌐 Service Worker: Syncing offline orders...');
-    
-    // Get offline orders from IndexedDB or localStorage
-    const offlineOrders = JSON.parse(localStorage.getItem('offlineOrders') || '[]');
-    
-    if (offlineOrders.length > 0) {
-      console.log(`📦 Service Worker: Found ${offlineOrders.length} offline orders to sync`);
-      
-      for (const order of offlineOrders) {
-        try {
-          const response = await fetch('/api/orders', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(order)
-          });
-
-          if (response.ok) {
-            console.log('✅ Service Worker: Offline order synced successfully');
-            // Remove synced order from storage
-            const updatedOrders = offlineOrders.filter(o => o.id !== order.id);
-            localStorage.setItem('offlineOrders', JSON.stringify(updatedOrders));
-          }
-        } catch (error) {
-          console.error('🚨 Service Worker: Error syncing offline order:', error);
-        }
-      }
-    }
-  } catch (error) {
-    console.error('🚨 Service Worker: Background sync failed:', error);
-  }
-}
-
-// Message handling from main thread
-self.addEventListener('message', (event) => {
-  console.log('💬 Service Worker: Message received:', event.data);
-
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-
-  if (event.data && event.data.type === 'GET_VERSION') {
-    event.ports[0].postMessage({ version: CACHE_NAME });
-  }
-});
-
-console.log('🚀 AdeGloba Starlink Service Worker loaded successfully');
+console.log('🚀 AdeGloba Service Worker loaded');
