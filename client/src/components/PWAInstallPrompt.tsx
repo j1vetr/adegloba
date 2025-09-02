@@ -44,16 +44,18 @@ export function PWAInstallPrompt() {
         }
       }
 
-      // For mobile, show prompt immediately after 5 seconds
-      // For desktop, show after 30 seconds
-      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const showDelay = isMobile ? 5000 : 30000;
+      // Only show for Android devices
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      
+      if (!isAndroid) {
+        return;
+      }
 
       const timer = setTimeout(() => {
-        if (deferredPrompt || isMobile) {
+        if (deferredPrompt || isAndroid) {
           setShowPrompt(true);
         }
-      }, showDelay);
+      }, 5000);
 
       return () => clearTimeout(timer);
     };
