@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, CreditCard, Shield, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import CreditCardDrawer from "./CreditCardDrawer";
 
 interface PayPalButtonProps {
   amount: string;
@@ -24,7 +23,6 @@ export default function PayPalButton({
   const [isLoading, setIsLoading] = useState(false);
   const [paypalLoaded, setPaypalLoaded] = useState(false);
   const [settings, setSettings] = useState<any>(null);
-  const [showCardDrawer, setShowCardDrawer] = useState(false);
   const { toast } = useToast();
 
   // Load PayPal settings from backend
@@ -363,33 +361,6 @@ export default function PayPalButton({
         <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 animate-pulse"></div>
       </Button>
 
-      {/* Credit Card Payment Button */}
-      <Button
-        onClick={() => setShowCardDrawer(true)}
-        className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-semibold py-3 rounded-xl text-sm transition-all duration-200 shadow-lg hover:shadow-xl relative overflow-hidden"
-        data-testid="credit-card-button"
-      >
-        <div className="flex items-center justify-center">
-          {/* Card Brand Icons */}
-          <div className="flex items-center space-x-1 mr-3">
-            <div className="bg-white rounded px-1 py-0.5">
-              <span className="text-xs font-bold text-blue-600">VISA</span>
-            </div>
-            <div className="bg-white rounded px-1 py-0.5">
-              <span className="text-xs font-bold text-red-600">MC</span>
-            </div>
-            <div className="bg-white rounded px-1 py-0.5">
-              <span className="text-xs font-bold text-blue-800">AMEX</span>
-            </div>
-            <div className="bg-white rounded px-1 py-0.5">
-              <span className="text-xs font-bold text-red-500">MAESTRO</span>
-            </div>
-          </div>
-          <span className="font-semibold">Kredi Kartı ile Ödeme</span>
-        </div>
-        {/* Animated background effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 animate-pulse"></div>
-      </Button>
 
       {/* Payment Methods Info */}
       <div className="flex items-center justify-center space-x-4 text-xs text-slate-400">
@@ -449,25 +420,5 @@ export default function PayPalButton({
     );
   }
 
-  return (
-    <>
-      {renderCustomButton()}
-      
-      {/* Credit Card Drawer */}
-      <CreditCardDrawer
-        isOpen={showCardDrawer}
-        onClose={() => setShowCardDrawer(false)}
-        amount={amount}
-        currency={currency}
-        onSuccess={(paymentData) => {
-          setShowCardDrawer(false);
-          onSuccess?.(paymentData.orderId || 'card-payment-success');
-        }}
-        onError={(error) => {
-          setShowCardDrawer(false);
-          onError?.(error);
-        }}
-      />
-    </>
-  );
+  return renderCustomButton();
 }
