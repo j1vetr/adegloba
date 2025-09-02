@@ -2065,6 +2065,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Push Notification Routes
+  app.get('/api/push/vapid-key', async (req, res) => {
+    const { PushNotificationService } = await import('./services/pushNotificationService');
+    res.json({ publicKey: PushNotificationService.getPublicKey() });
+  });
+
+  app.post('/api/push/subscribe', isAuthenticated, async (req, res) => {
+    try {
+      const { PushNotificationService } = await import('./services/pushNotificationService');
+      const { subscription, userAgent } = req.body;
+      const userId = req.user.id;
+      const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+
+      await PushNotificationService.subscribeUser(userId, subscription, userAgent, ipAddress);
+      
+      res.json({ success: true, message: 'Push subscription created successfully' });
+    } catch (error: any) {
+      console.error('Push subscription error:', error);
+      res.status(500).json({ success: false, message: error.message || 'Failed to create push subscription' });
+    }
+  });
+
+  app.post('/api/push/unsubscribe', isAuthenticated, async (req, res) => {
+    try {
+      const { PushNotificationService } = await import('./services/pushNotificationService');
+      const { endpoint } = req.body;
+      const userId = req.user.id;
+
+      await PushNotificationService.unsubscribeUser(userId, endpoint);
+      
+      res.json({ success: true, message: 'Push subscription removed successfully' });
+    } catch (error: any) {
+      console.error('Push unsubscription error:', error);
+      res.status(500).json({ success: false, message: error.message || 'Failed to remove push subscription' });
+    }
+  });
+
+  app.post('/api/push/test', isAuthenticated, async (req, res) => {
+    try {
+      const { PushNotificationService } = await import('./services/pushNotificationService');
+      const userId = req.user.id;
+
+      await PushNotificationService.sendTestNotification(userId);
+      
+      res.json({ success: true, message: 'Test notification sent successfully' });
+    } catch (error: any) {
+      console.error('Test notification error:', error);
+      res.status(500).json({ success: false, message: error.message || 'Failed to send test notification' });
+    }
+  });
+
+  // Admin Push Notification Routes
+  app.post('/api/admin/push/send', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { PushNotificationService } = await import('./services/pushNotificationService');
+      const { title, body, url, target, targetIds, requireInteraction } = req.body;
+
+      if (!title || !body) {
+        return res.status(400).json({ success: false, message: 'Title and body are required' });
+      }
+
+      const payload = {
+        title,
+        body,
+        url: url || '/',
+        requireInteraction: requireInteraction || false,
+        icon: '/pwa-icon-192.png',
+        data: { adminSent: true, timestamp: Date.now() }
+      };
+
+      let sentCount = 0;
+
+      switch (target) {
+        case 'all':
+          await PushNotificationService.sendToAllUsers(payload);
+          const allSubs = await storage.getAllActivePushSubscriptions();
+          sentCount = allSubs.length;
+          break;
+          
+        case 'ships':
+          if (targetIds && targetIds.length > 0) {
+            await PushNotificationService.sendToShipUsers(targetIds, payload);
+            const shipSubs = await storage.getPushSubscriptionsForShips(targetIds);
+            sentCount = shipSubs.length;
+          }
+          break;
+          
+        case 'user':
+          if (targetIds && targetIds.length > 0) {
+            await PushNotificationService.sendToUser(targetIds[0], payload);
+            const userSubs = await storage.getPushSubscriptionsForUser(targetIds[0]);
+            sentCount = userSubs.length;
+          }
+          break;
+          
+        default:
+          return res.status(400).json({ success: false, message: 'Invalid target type' });
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Notifications sent successfully',
+        sentCount 
+      });
+      
+    } catch (error: any) {
+      console.error('Admin push notification error:', error);
+      res.status(500).json({ success: false, message: error.message || 'Failed to send notifications' });
+    }
+  });
+
+  app.post('/api/admin/push/test', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { PushNotificationService } = await import('./services/pushNotificationService');
+      const adminId = req.admin.id;
+
+      // Send test notification to admin
+      const payload = {
+        title: '🧪 Admin Test Bildirimi',
+        body: 'Bu bir test bildirimidir. Push notification sistemi çalışıyor!',
+        url: '/admin/push-notifications',
+        icon: '/pwa-icon-192.png',
+        data: { test: true, adminTest: true }
+      };
+
+      // Find admin's user account if exists or use admin ID
+      await PushNotificationService.sendToUser(adminId, payload);
+      
+      res.json({ success: true, message: 'Admin test notification sent successfully' });
+    } catch (error: any) {
+      console.error('Admin test notification error:', error);
+      res.status(500).json({ success: false, message: error.message || 'Failed to send admin test notification' });
+    }
+  });
+
   app.get('/api/admin/email-logs', isAdminAuthenticated, async (req, res) => {
     try {
       const page = parseInt(req.query.page as string) || 1;

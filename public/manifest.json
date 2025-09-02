@@ -1,0 +1,107 @@
+{
+  "name": "AdeGloba Starlink System",
+  "short_name": "AdeGloba",
+  "description": "Denizcilik Starlink İnternet Hizmetleri - Gemiler için güvenilir internet bağlantısı",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0a0a0b",
+  "background_color": "#0a0a0b",
+  "categories": ["business", "utilities", "navigation"],
+  "lang": "tr",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icon-512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AdeGloba Starlink - Mobil Görünüm"
+    },
+    {
+      "src": "/screenshot-desktop.png", 
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "AdeGloba Starlink - Masaüstü Görünüm"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Paketler",
+      "short_name": "Paketler",
+      "description": "Starlink paketlerini görüntüle",
+      "url": "/paketler",
+      "icons": [
+        {
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Sepet",
+      "short_name": "Sepet", 
+      "description": "Alışveriş sepetini görüntüle",
+      "url": "/sepet",
+      "icons": [
+        {
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Profil",
+      "short_name": "Profil",
+      "description": "Kullanıcı profilini yönet",
+      "url": "/profil", 
+      "icons": [
+        {
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Destek",
+      "short_name": "Destek",
+      "description": "Teknik destek al",
+      "url": "/destek",
+      "icons": [
+        {
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+}

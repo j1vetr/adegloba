@@ -19,7 +19,8 @@ import {
   FileText,
   Key,
   Mail,
-  BarChart3
+  BarChart3,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -64,6 +65,12 @@ const navigationCategories = [
     name: 'Destek',
     items: [
       { name: 'Destek Talepleri', href: '/admin/tickets', icon: HelpCircle },
+    ]
+  },
+  {
+    name: 'İletişim',
+    items: [
+      { name: 'Push Bildirimleri', href: '/admin/push-notifications', icon: Bell },
     ]
   },
   {

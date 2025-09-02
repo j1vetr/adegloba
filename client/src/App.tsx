@@ -40,8 +40,10 @@ import UserTickets from "@/pages/UserTickets";
 import TicketDetail from "@/pages/TicketDetail";
 import Profil from "@/pages/Profil";
 import KullanimKilavuzu from "@/pages/KullanimKilavuzu";
+import PushNotifications from "@/pages/admin/PushNotifications";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 function Router() {
   const { isAuthenticated, isLoading } = useUserAuth();
@@ -138,6 +140,12 @@ function Router() {
         </AdminProtectedRoute>
       </Route>
       
+      <Route path="/admin/push-notifications">
+        <AdminProtectedRoute>
+          <PushNotifications />
+        </AdminProtectedRoute>
+      </Route>
+      
       {/* Main Application Routes */}
       <Route path="/" component={Landing} />
       
@@ -203,8 +211,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
         <Router />
+        <PWAInstallPrompt />
+        <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -53,6 +53,9 @@ import {
   type InsertCartItem,
   type CouponUsage,
   type InsertCouponUsage,
+  pushSubscriptions,
+  type PushSubscription,
+  type InsertPushSubscription,
 } from "@shared/schema";
 import { getDaysRemainingIstanbul, isExpiredIstanbul, getEndOfMonthIstanbul } from './utils/dateUtils';
 import { db } from "./db";
@@ -202,6 +205,14 @@ export interface IStorage {
   removeFromCart(userId: string, planId: string): Promise<void>;
   clearCart(userId: string): Promise<void>;
   getCartTotal(userId: string): Promise<{ subtotal: number; total: number; itemCount: number }>;
+
+  // Push notification operations
+  createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription>;
+  getPushSubscriptionsForUser(userId: string): Promise<PushSubscription[]>;
+  getAllActivePushSubscriptions(): Promise<PushSubscription[]>;
+  getPushSubscriptionsForShips(shipIds: string[]): Promise<PushSubscription[]>;
+  deletePushSubscriptionsForUser(userId: string, endpoint?: string): Promise<void>;
+  deactivatePushSubscription(subscriptionId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2118,6 +2129,81 @@ export class DatabaseStorage implements IStorage {
       console.error('Error fetching orders by ship and date range:', error);
       return [];
     }
+  }
+
+  // Push Notification operations
+  async createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription> {
+    const [created] = await db
+      .insert(pushSubscriptions)
+      .values(subscription)
+      .returning();
+    return created;
+  }
+
+  async getPushSubscriptionsForUser(userId: string): Promise<PushSubscription[]> {
+    return await db
+      .select()
+      .from(pushSubscriptions)
+      .where(and(
+        eq(pushSubscriptions.userId, userId),
+        eq(pushSubscriptions.isActive, true)
+      ));
+  }
+
+  async getAllActivePushSubscriptions(): Promise<PushSubscription[]> {
+    return await db
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.isActive, true));
+  }
+
+  async getPushSubscriptionsForShips(shipIds: string[]): Promise<PushSubscription[]> {
+    if (shipIds.length === 0) return [];
+    
+    return await db
+      .select({
+        id: pushSubscriptions.id,
+        userId: pushSubscriptions.userId,
+        endpoint: pushSubscriptions.endpoint,
+        p256dhKey: pushSubscriptions.p256dhKey,
+        authKey: pushSubscriptions.authKey,
+        userAgent: pushSubscriptions.userAgent,
+        ipAddress: pushSubscriptions.ipAddress,
+        isActive: pushSubscriptions.isActive,
+        createdAt: pushSubscriptions.createdAt,
+        updatedAt: pushSubscriptions.updatedAt,
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(pushSubscriptions.userId, users.id))
+      .where(and(
+        sql`${users.ship_id} = ANY(${shipIds})`,
+        eq(pushSubscriptions.isActive, true)
+      ));
+  }
+
+  async deletePushSubscriptionsForUser(userId: string, endpoint?: string): Promise<void> {
+    let whereClause = eq(pushSubscriptions.userId, userId);
+    
+    if (endpoint) {
+      whereClause = and(
+        eq(pushSubscriptions.userId, userId),
+        eq(pushSubscriptions.endpoint, endpoint)
+      );
+    }
+
+    await db
+      .delete(pushSubscriptions)
+      .where(whereClause);
+  }
+
+  async deactivatePushSubscription(subscriptionId: string): Promise<void> {
+    await db
+      .update(pushSubscriptions)
+      .set({ 
+        isActive: false,
+        updatedAt: new Date()
+      })
+      .where(eq(pushSubscriptions.id, subscriptionId));
   }
 }
 
