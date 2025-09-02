@@ -30,9 +30,11 @@ export function usePushNotifications(): PushNotificationHook {
   useEffect(() => {
     checkPermissionAndSubscription();
     
-    // Otomatik olarak izin iste ve subscribe ol (kullanıcı deneyimi için)
+    // Otomatik olarak izin verilmişse sistem aktivasyonu
     const autoEnableNotifications = async () => {
       if (!isSupported || !user) return;
+      
+      console.log('📱 Auto-notification check - Permission:', Notification.permission);
       
       // Eğer daha önce izin verilmişse otomatik subscribe ol
       if (Notification.permission === 'granted') {
@@ -40,18 +42,25 @@ export function usePushNotifications(): PushNotificationHook {
           const registration = await navigator.serviceWorker.ready;
           const existingSubscription = await registration.pushManager.getSubscription();
           
+          console.log('📱 Existing subscription check:', !!existingSubscription);
+          
           if (!existingSubscription) {
+            console.log('📱 No existing subscription, creating new one...');
             // Mevcut subscription yoksa oluştur
             await subscribe();
+          } else {
+            // Mevcut subscription var, backend'de kayıtlı mı kontrol et
+            console.log('📱 Subscription exists, verifying with backend...');
+            setIsSubscribed(true);
           }
         } catch (error) {
-          console.log('Auto-subscription skipped:', error);
+          console.log('📱 Auto-subscription skipped:', error);
         }
       }
     };
     
-    // 2 saniye sonra auto-enable dene
-    setTimeout(autoEnableNotifications, 2000);
+    // 3 saniye sonra auto-enable dene (service worker'ın yüklenmesi için daha fazla bekleme)
+    setTimeout(autoEnableNotifications, 3000);
   }, [user]);
 
   const checkPermissionAndSubscription = async () => {
@@ -104,8 +113,11 @@ export function usePushNotifications(): PushNotificationHook {
     setIsLoading(true);
 
     try {
+      console.log('📱 Starting push subscription process...');
+      
       // Request permission if not granted
       if (Notification.permission !== 'granted') {
+        console.log('📱 Requesting notification permission...');
         const permission = await requestPermission();
         if (permission !== 'granted') {
           throw new Error('Notification permission denied');
@@ -113,24 +125,32 @@ export function usePushNotifications(): PushNotificationHook {
       }
 
       // Get service worker registration
+      console.log('📱 Getting service worker registration...');
       const registration = await navigator.serviceWorker.ready;
+      console.log('📱 Service worker ready:', registration);
       
       // Get VAPID public key from server
+      console.log('📱 Fetching VAPID key...');
       const response = await apiRequest('GET', '/api/push/vapid-key');
       const { publicKey } = await response.json();
+      console.log('📱 VAPID key received:', publicKey);
 
       // Subscribe to push notifications
+      console.log('📱 Creating push subscription...');
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey)
       });
+      console.log('📱 Push subscription created:', subscription);
 
       // Send subscription to server
-      await apiRequest('POST', '/api/push/subscribe', {
+      console.log('📱 Sending subscription to server...');
+      const subscribeResponse = await apiRequest('POST', '/api/push/subscribe', {
         subscription: subscription.toJSON(),
         userAgent: navigator.userAgent,
         timestamp: Date.now()
       });
+      console.log('📱 Server response:', await subscribeResponse.text());
 
       setIsSubscribed(true);
       
