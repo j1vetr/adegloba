@@ -123,41 +123,49 @@ export async function createPaypalOrder(req: Request, res: Response) {
     const client = await createPayPalClient();
     const ordersController = new OrdersController(client);
 
-    const collect = {
-      body: {
-        intent: intent,
-        purchaseUnits: [
-          {
-            amount: {
-              currencyCode: currency,
-              value: amount,
-            },
+    // Build PayPal order body
+    const orderBody: any = {
+      intent: intent,
+      purchase_units: [
+        {
+          amount: {
+            currency_code: currency,
+            value: amount,
           },
-        ],
-        // Add payment_source for direct card capture with real card details
-        ...(req.body.paymentMethod === 'CARD' && req.body.cardDetails ? {
-          payment_source: {
-          card: {
-            number: req.body.cardDetails.number,
-            security_code: req.body.cardDetails.securityCode,
-            expiry: `${req.body.cardDetails.expiryYear}-${req.body.cardDetails.expiryMonth.padStart(2, '0')}`,
-            name: req.body.cardDetails.name,
-            billing_address: {
-              address_line_1: req.body.cardDetails.billingAddress.addressLine1,
-              address_line_2: req.body.cardDetails.billingAddress.addressLine2,
-              admin_area_2: req.body.cardDetails.billingAddress.city,
-              admin_area_1: req.body.cardDetails.billingAddress.state,
-              postal_code: req.body.cardDetails.billingAddress.postalCode,
-              country_code: req.body.cardDetails.billingAddress.countryCode
-            },
-            attributes: {
-              verification: {
-                method: "SCA_WHEN_REQUIRED"
-              }
+        },
+      ],
+    };
+
+    // Add payment_source for credit card payments
+    if (req.body.paymentMethod === 'CARD' && req.body.cardDetails) {
+      console.log('🔧 Adding card payment_source to PayPal order');
+      orderBody.payment_source = {
+        card: {
+          number: req.body.cardDetails.number,
+          security_code: req.body.cardDetails.securityCode,
+          expiry: `${req.body.cardDetails.expiryYear}-${req.body.cardDetails.expiryMonth.padStart(2, '0')}`,
+          name: req.body.cardDetails.name,
+          billing_address: {
+            address_line_1: req.body.cardDetails.billingAddress.addressLine1 || '',
+            address_line_2: req.body.cardDetails.billingAddress.addressLine2 || '',
+            admin_area_2: req.body.cardDetails.billingAddress.city || '',
+            admin_area_1: req.body.cardDetails.billingAddress.state || '',
+            postal_code: req.body.cardDetails.billingAddress.postalCode || '',
+            country_code: req.body.cardDetails.billingAddress.countryCode || 'TR'
+          },
+          attributes: {
+            verification: {
+              method: "SCA_WHEN_REQUIRED"
             }
           }
-        } : {}),
-      },
+        }
+      };
+    }
+
+    console.log('📤 PayPal Order Body:', JSON.stringify(orderBody, null, 2));
+
+    const collect = {
+      body: orderBody,
       prefer: "return=minimal",
     };
 

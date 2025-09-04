@@ -171,33 +171,49 @@ export default function CreditCardDrawer({
     setIsProcessing(true);
     
     try {
+      // Validate and prepare card details
+      if (!formData.cardNumber || !formData.expiryDate || !formData.cvv || !formData.fullName) {
+        throw new Error('Eksik kart bilgileri. Lütfen tüm alanları doldurun.');
+      }
+
+      const cardPayload = {
+        amount: parseFloat(amount).toString(),
+        currency: currency,
+        intent: 'CAPTURE',
+        paymentMethod: 'CARD',
+        cardDetails: {
+          number: formData.cardNumber.replace(/\s/g, ''),
+          expiryMonth: formData.expiryDate.split('/')[0].padStart(2, '0'),
+          expiryYear: '20' + formData.expiryDate.split('/')[1],
+          securityCode: formData.cvv,
+          name: formData.fullName.trim(),
+          billingAddress: {
+            addressLine1: formData.addressLine1.trim() || 'N/A',
+            addressLine2: formData.addressLine2.trim() || '',
+            city: formData.city.trim() || 'Istanbul',
+            state: formData.region.trim() || 'TR',
+            postalCode: formData.postalCode.trim() || '34000',
+            countryCode: 'TR'
+          }
+        }
+      };
+
+      console.log('🔍 Frontend Card Payload:', {
+        ...cardPayload,
+        cardDetails: {
+          ...cardPayload.cardDetails,
+          number: cardPayload.cardDetails.number.slice(0, 4) + '****',
+          securityCode: '***'
+        }
+      });
+
       // Create PayPal order for credit card processing with card details
       const createResponse = await fetch('/api/paypal/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          amount: parseFloat(amount).toString(),
-          currency: currency,
-          intent: 'CAPTURE',
-          paymentMethod: 'CARD',
-          cardDetails: {
-            number: formData.cardNumber.replace(/\s/g, ''),
-            expiryMonth: formData.expiryDate.split('/')[0],
-            expiryYear: '20' + formData.expiryDate.split('/')[1],
-            securityCode: formData.cvv,
-            name: formData.fullName,
-            billingAddress: {
-              addressLine1: formData.addressLine1,
-              addressLine2: formData.addressLine2,
-              city: formData.city,
-              state: formData.region,
-              postalCode: formData.postalCode,
-              countryCode: 'TR'
-            }
-          }
-        }),
+        body: JSON.stringify(cardPayload),
       });
 
       if (!createResponse.ok) {
