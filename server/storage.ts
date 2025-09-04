@@ -112,6 +112,14 @@ export interface IStorage {
   deletePlan(id: string): Promise<void>;
 
   // Credential Pool operations
+  getAllCredentials(): Promise<CredentialPool[]>;
+  getCredentialsWithPagination(options: {
+    search?: string;
+    statusFilter?: string;
+    planFilter?: string;
+    limit: number;
+    offset: number;
+  }): Promise<{ credentials: any[]; totalCount: number }>;
   getCredentialPoolsByShip(shipId: string): Promise<CredentialPool[]>;
   getAvailableCredentials(shipId: string): Promise<CredentialPool[]>;
   createCredentialPool(credential: InsertCredentialPool): Promise<CredentialPool>;
@@ -1369,6 +1377,102 @@ export class DatabaseStorage implements IStorage {
 
   async getAllCredentials(): Promise<CredentialPool[]> {
     return db.select().from(credentialPools).orderBy(credentialPools.createdAt);
+  }
+
+  async getCredentialsWithPagination(options: {
+    search?: string;
+    statusFilter?: string;
+    planFilter?: string;
+    limit: number;
+    offset: number;
+  }): Promise<{ credentials: any[]; totalCount: number }> {
+    const { search, statusFilter, planFilter, limit, offset } = options;
+
+    // Build the base query with joins
+    let query = db.select({
+      id: credentialPools.id,
+      planId: credentialPools.planId,
+      username: credentialPools.username,
+      password: credentialPools.password,
+      isAssigned: credentialPools.isAssigned,
+      assignedToUserId: credentialPools.assignedToUserId,
+      assignedToOrderId: credentialPools.assignedToOrderId,
+      assignedAt: credentialPools.assignedAt,
+      createdAt: credentialPools.createdAt,
+      updatedAt: credentialPools.updatedAt,
+      plan: {
+        id: plans.id,
+        name: plans.name,
+        description: plans.description,
+        price: plans.price,
+        currency: plans.currency,
+        shipId: plans.shipId,
+        isActive: plans.isActive,
+      },
+      ship: {
+        id: ships.id,
+        name: ships.name,
+        slug: ships.slug,
+        description: ships.description,
+        isActive: ships.isActive,
+      }
+    })
+    .from(credentialPools)
+    .leftJoin(plans, eq(credentialPools.planId, plans.id))
+    .leftJoin(ships, eq(plans.shipId, ships.id));
+
+    // Add conditions for filtering
+    const conditions = [];
+    
+    if (search) {
+      conditions.push(
+        or(
+          sql`LOWER(${credentialPools.username}) LIKE LOWER(${'%' + search + '%'})`,
+          sql`LOWER(${plans.name}) LIKE LOWER(${'%' + search + '%'})`,
+          sql`LOWER(${ships.name}) LIKE LOWER(${'%' + search + '%'})`
+        )
+      );
+    }
+
+    if (statusFilter && statusFilter !== 'all') {
+      if (statusFilter === 'available') {
+        conditions.push(eq(credentialPools.isAssigned, false));
+      } else if (statusFilter === 'assigned') {
+        conditions.push(eq(credentialPools.isAssigned, true));
+      }
+    }
+
+    if (planFilter && planFilter !== 'all') {
+      conditions.push(eq(credentialPools.planId, planFilter));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    // Get total count
+    let countQuery = db.select({ count: sql<number>`COUNT(*)` })
+      .from(credentialPools)
+      .leftJoin(plans, eq(credentialPools.planId, plans.id))
+      .leftJoin(ships, eq(plans.shipId, ships.id));
+
+    if (conditions.length > 0) {
+      countQuery = countQuery.where(and(...conditions));
+    }
+
+    const [countResult] = await countQuery;
+    const totalCount = Number(countResult.count) || 0;
+
+    // Get paginated results
+    const credentials = await query
+      .orderBy(desc(credentialPools.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      credentials,
+      totalCount
+    };
   }
 
 

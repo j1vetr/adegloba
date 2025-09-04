@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -67,16 +67,48 @@ export default function CredentialPoolsNew() {
   const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
   const [selectedCredentialForAssignment, setSelectedCredentialForAssignment] = useState<CredentialWithDetails | null>(null);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  
+  // Debounced search
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  
   const [formData, setFormData] = useState<CredentialFormData>({
     planId: '',
     username: '',
     password: '',
   });
 
-  // Fetch credentials with plan and ship details
-  const { data: credentials, isLoading: credentialsLoading } = useQuery({
-    queryKey: ["/api/admin/credentials"],
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch credentials with pagination
+  const { data: credentialsResponse, isLoading: credentialsLoading } = useQuery({
+    queryKey: ["/api/admin/credentials", debouncedSearchQuery, statusFilter, planFilter, currentPage, pageSize],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        search: debouncedSearchQuery,
+        statusFilter,
+        planFilter,
+        page: currentPage.toString(),
+        pageSize: pageSize.toString()
+      });
+      const response = await fetch(`/api/admin/credentials?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch credentials');
+      return response.json();
+    },
+    enabled: true,
   });
+  
+  const credentials = credentialsResponse?.credentials || [];
+  const totalCount = credentialsResponse?.totalCount || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   // Fetch ships and plans for filters
   const { data: ships, isLoading: shipsLoading } = useQuery({
@@ -87,40 +119,36 @@ export default function CredentialPoolsNew() {
     queryKey: ["/api/admin/plans"],
   });
 
-  // Calculate credential statistics
-  const credentialStats: CredentialStats = {
-    totalCredentials: credentials?.length || 0,
-    availableCredentials: credentials?.filter((c: CredentialWithDetails) => !c.isAssigned).length || 0,
-    assignedCredentials: credentials?.filter((c: CredentialWithDetails) => c.isAssigned).length || 0,
-    planBreakdown: plans?.map((plan: Plan) => {
-      const planCredentials = credentials?.filter((c: CredentialWithDetails) => c.planId === plan.id) || [];
-      const ship = ships?.find((s: Ship) => s.id === plan.shipId);
-      return {
-        planId: plan.id,
-        planTitle: plan.name,
-        shipName: ship?.name || 'Unknown Ship',
-        total: planCredentials.length,
-        available: planCredentials.filter(c => !c.isAssigned).length,
-        assigned: planCredentials.filter(c => c.isAssigned).length,
-      };
-    }).filter(p => p.total > 0) || [],
-  };
+  // Calculate credential statistics (simplified for performance)
+  const credentialStats: CredentialStats = useMemo(() => {
+    if (!credentials) return {
+      totalCredentials: 0,
+      availableCredentials: 0,
+      assignedCredentials: 0,
+      planBreakdown: [],
+    };
 
-  // Filter credentials
-  const filteredCredentials = credentials?.filter((credential: CredentialWithDetails) => {
-    const matchesSearch = !searchQuery || 
-      credential.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      credential.plan?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      credential.ship?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'available' && !credential.isAssigned) ||
-      (statusFilter === 'assigned' && credential.isAssigned);
-    
-    const matchesPlan = planFilter === 'all' || credential.planId === planFilter;
-    
-    return matchesSearch && matchesStatus && matchesPlan;
-  }) || [];
+    return {
+      totalCredentials: totalCount,
+      availableCredentials: credentials.filter((c: CredentialWithDetails) => !c.isAssigned).length,
+      assignedCredentials: credentials.filter((c: CredentialWithDetails) => c.isAssigned).length,
+      planBreakdown: plans?.map((plan: Plan) => {
+        const planCredentials = credentials.filter((c: CredentialWithDetails) => c.planId === plan.id);
+        const ship = ships?.find((s: Ship) => s.id === plan.shipId);
+        return {
+          planId: plan.id,
+          planTitle: plan.name,
+          shipName: ship?.name || 'Unknown Ship',
+          total: planCredentials.length,
+          available: planCredentials.filter(c => !c.isAssigned).length,
+          assigned: planCredentials.filter(c => c.isAssigned).length,
+        };
+      }).filter(p => p.total > 0) || [],
+    };
+  }, [credentials, totalCount, plans, ships]);
+
+  // No need for client-side filtering now - it's done on the server
+  const filteredCredentials = credentials;
 
   // Create credential mutation
   const createMutation = useMutation({
@@ -235,6 +263,24 @@ export default function CredentialPoolsNew() {
       setSelectedCredentials([]);
     }
   };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, statusFilter, planFilter]);
+
+  // Handle page change
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    setSelectedCredentials([]);
+  }, []);
+
+  // Handle page size change
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+    setSelectedCredentials([]);
+  }, []);
 
   const handleSelectCredential = (credentialId: string, checked: boolean) => {
     if (checked) {
@@ -524,7 +570,7 @@ export default function CredentialPoolsNew() {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Package className="h-5 w-5 text-blue-400" />
-              Kimlik Bilgisi Listesi ({filteredCredentials.length})
+              Kimlik Bilgisi Listesi ({totalCount} toplam, sayfa {currentPage}/{totalPages})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -653,6 +699,91 @@ export default function CredentialPoolsNew() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+            
+            {/* Pagination Controls */}
+            {totalCount > 0 && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-700">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <span>Sayfa başına:</span>
+                    <Select value={pageSize.toString()} onValueChange={(value) => handlePageSizeChange(parseInt(value))}>
+                      <SelectTrigger className="w-20 h-8 bg-gray-800 border-gray-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                        <SelectItem value="200">200</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {totalCount > 0 ? (
+                      <>
+                        {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} / {totalCount} kayıt
+                      </>
+                    ) : (
+                      "0 kayıt"
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1 || credentialsLoading}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    Önceki
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          disabled={credentialsLoading}
+                          className={`w-8 h-8 ${
+                            currentPage === pageNum 
+                              ? 'bg-blue-600 text-white border-blue-600' 
+                              : 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages || credentialsLoading}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    Sonraki
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

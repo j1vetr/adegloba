@@ -1171,21 +1171,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/credentials", isAdminAuthenticated, async (req, res) => {
     try {
-      const credentials = await storage.getAllCredentials();
-      const plans = await storage.getAllPlans();
-      const ships = await storage.getAllShips();
-      
-      const credentialsWithDetails = credentials.map(credential => {
-        const plan = plans.find(p => p.id === credential.planId);
-        const ship = ships.find(s => s.id === plan?.shipId);
-        return {
-          ...credential,
-          plan,
-          ship
-        };
+      const { 
+        search = '', 
+        statusFilter = 'all', 
+        planFilter = 'all',
+        page = '1',
+        pageSize = '50'
+      } = req.query;
+
+      const pageNum = parseInt(page as string, 10);
+      const pageSizeNum = parseInt(pageSize as string, 10);
+      const offset = (pageNum - 1) * pageSizeNum;
+
+      // Get paginated credentials with filters
+      const result = await storage.getCredentialsWithPagination({
+        search: search as string,
+        statusFilter: statusFilter as string,
+        planFilter: planFilter as string,
+        limit: pageSizeNum,
+        offset: offset
       });
       
-      res.json(credentialsWithDetails);
+      res.json({
+        credentials: result.credentials,
+        totalCount: result.totalCount,
+        currentPage: pageNum,
+        pageSize: pageSizeNum,
+        totalPages: Math.ceil(result.totalCount / pageSizeNum)
+      });
     } catch (error: any) {
       console.error("Error fetching credentials:", error);
       res.status(500).json({ message: error.message });
