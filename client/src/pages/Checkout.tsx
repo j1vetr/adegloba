@@ -518,13 +518,7 @@ export default function Checkout() {
                         data-testid="credit-card-button"
                       >
                         <CreditCard className="h-6 w-6" />
-                        <span>Kredi Kartı / Banka Kartı ile Ödeme</span>
-                        <div className="flex space-x-2 ml-3">
-                          <span className="text-xs bg-white/20 px-2 py-1 rounded">VISA</span>
-                          <span className="text-xs bg-white/20 px-2 py-1 rounded">MC</span>
-                          <span className="text-xs bg-white/20 px-2 py-1 rounded">AMEX</span>
-                          <span className="text-xs bg-white/20 px-2 py-1 rounded">MAESTRO</span>
-                        </div>
+                        <span>Kredi Kartı & Banka Kartı ile Ödeme</span>
                       </Button>
                       
                       <div className="text-center text-sm text-slate-400">
