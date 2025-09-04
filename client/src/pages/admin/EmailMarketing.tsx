@@ -86,7 +86,8 @@ export default function EmailMarketing() {
     try {
       setLoading(true);
       const response = await apiRequest('GET', '/api/admin/email-marketing/users');
-      setUsers(response as User[]);
+      const data = await response.json();
+      setUsers(data);
     } catch (error) {
       toast({
         title: 'Hata',
@@ -101,7 +102,8 @@ export default function EmailMarketing() {
   const loadTemplates = async () => {
     try {
       const response = await apiRequest('GET', '/api/admin/email-marketing/templates');
-      setTemplates(response as EmailTemplate[]);
+      const data = await response.json();
+      setTemplates(data);
     } catch (error) {
       console.error('Templates load error:', error);
     }
@@ -110,7 +112,8 @@ export default function EmailMarketing() {
   const loadCampaigns = async () => {
     try {
       const response = await apiRequest('GET', '/api/admin/email-marketing/campaigns');
-      setCampaigns(response as EmailCampaign[]);
+      const data = await response.json();
+      setCampaigns(data);
     } catch (error) {
       console.error('Campaigns load error:', error);
     }
