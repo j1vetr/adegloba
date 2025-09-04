@@ -1388,119 +1388,132 @@ export class DatabaseStorage implements IStorage {
   }): Promise<{ credentials: any[]; totalCount: number }> {
     const { search, statusFilter, planFilter, limit, offset } = options;
 
-    // Build the base query with joins - flatten the selection to avoid nested null issues
-    let query = db.select({
-      id: credentialPools.id,
-      planId: credentialPools.planId,
-      username: credentialPools.username,
-      password: credentialPools.password,
-      isAssigned: credentialPools.isAssigned,
-      assignedToUserId: credentialPools.assignedToUserId,
-      assignedToOrderId: credentialPools.assignedToOrderId,
-      assignedAt: credentialPools.assignedAt,
-      createdAt: credentialPools.createdAt,
-      updatedAt: credentialPools.updatedAt,
-      // Flattened plan fields
-      planDbId: plans.id,
-      planName: plans.name,
-      planDescription: plans.description,
-      planPrice: plans.price,
-      planCurrency: plans.currency,
-      planShipId: plans.shipId,
-      planIsActive: plans.isActive,
-      // Flattened ship fields
-      shipDbId: ships.id,
-      shipName: ships.name,
-      shipSlug: ships.slug,
-      shipDescription: ships.description,
-      shipIsActive: ships.isActive,
-    })
-    .from(credentialPools)
-    .leftJoin(plans, eq(credentialPools.planId, plans.id))
-    .leftJoin(ships, eq(plans.shipId, ships.id));
+    try {
+      // Build WHERE conditions array
+      const whereConditions: string[] = [];
+      const whereParams: any[] = [];
+      let paramIndex = 1;
 
-    // Add conditions for filtering
-    const conditions = [];
-    
-    if (search) {
-      conditions.push(
-        or(
-          sql`LOWER(${credentialPools.username}) LIKE LOWER(${'%' + search + '%'})`,
-          sql`LOWER(${plans.name}) LIKE LOWER(${'%' + search + '%'})`,
-          sql`LOWER(${ships.name}) LIKE LOWER(${'%' + search + '%'})`
-        )
-      );
-    }
-
-    if (statusFilter && statusFilter !== 'all') {
-      if (statusFilter === 'available') {
-        conditions.push(eq(credentialPools.isAssigned, false));
-      } else if (statusFilter === 'assigned') {
-        conditions.push(eq(credentialPools.isAssigned, true));
+      if (search) {
+        whereConditions.push(`(
+          LOWER(cp.username) LIKE LOWER($${paramIndex}) OR
+          LOWER(p.name) LIKE LOWER($${paramIndex}) OR  
+          LOWER(s.name) LIKE LOWER($${paramIndex})
+        )`);
+        whereParams.push(`%${search}%`);
+        paramIndex++;
       }
+
+      if (statusFilter && statusFilter !== 'all') {
+        if (statusFilter === 'available') {
+          whereConditions.push(`cp.is_assigned = $${paramIndex}`);
+          whereParams.push(false);
+          paramIndex++;
+        } else if (statusFilter === 'assigned') {
+          whereConditions.push(`cp.is_assigned = $${paramIndex}`);
+          whereParams.push(true);
+          paramIndex++;
+        }
+      }
+
+      if (planFilter && planFilter !== 'all') {
+        whereConditions.push(`cp.plan_id = $${paramIndex}`);
+        whereParams.push(planFilter);
+        paramIndex++;
+      }
+
+      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+      // Get total count with raw SQL
+      const countQuery = `
+        SELECT COUNT(*) as count
+        FROM credential_pools cp
+        LEFT JOIN plans p ON cp.plan_id = p.id
+        LEFT JOIN ships s ON p.ship_id = s.id
+        ${whereClause}
+      `;
+
+      const countResult = await db.execute(sql.raw(countQuery, whereParams));
+      const totalCount = Number(countResult.rows[0]?.count) || 0;
+
+      // Get paginated data with raw SQL
+      const dataQuery = `
+        SELECT 
+          cp.id,
+          cp.plan_id,
+          cp.username,
+          cp.password,
+          cp.is_assigned,
+          cp.assigned_to_user_id,
+          cp.assigned_to_order_id,
+          cp.assigned_at,
+          cp.created_at,
+          cp.updated_at,
+          p.id as plan_id_joined,
+          p.name as plan_name,
+          p.description as plan_description,
+          p.price_usd as plan_price,
+          'USD' as plan_currency,
+          p.ship_id as plan_ship_id,
+          p.is_active as plan_is_active,
+          s.id as ship_id,
+          s.name as ship_name,
+          s.slug as ship_slug,
+          s.description as ship_description,
+          s.is_active as ship_is_active
+        FROM credential_pools cp
+        LEFT JOIN plans p ON cp.plan_id = p.id
+        LEFT JOIN ships s ON p.ship_id = s.id
+        ${whereClause}
+        ORDER BY cp.created_at DESC
+        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+      `;
+
+      const dataParams = [...whereParams, limit, offset];
+      const dataResult = await db.execute(sql.raw(dataQuery, dataParams));
+
+      // Transform raw results to expected structure
+      const credentials = dataResult.rows.map((row: any) => ({
+        id: row.id,
+        planId: row.plan_id,
+        username: row.username,
+        password: row.password,
+        isAssigned: row.is_assigned,
+        assignedToUserId: row.assigned_to_user_id,
+        assignedToOrderId: row.assigned_to_order_id,
+        assignedAt: row.assigned_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        plan: row.plan_id_joined ? {
+          id: row.plan_id_joined,
+          name: row.plan_name,
+          description: row.plan_description,
+          price: row.plan_price,
+          currency: row.plan_currency,
+          shipId: row.plan_ship_id,
+          isActive: row.plan_is_active,
+        } : null,
+        ship: row.ship_id ? {
+          id: row.ship_id,
+          name: row.ship_name,
+          slug: row.ship_slug,
+          description: row.ship_description,
+          isActive: row.ship_is_active,
+        } : null
+      }));
+
+      return {
+        credentials,
+        totalCount
+      };
+
+    } catch (error) {
+      console.error('Error in getCredentialsWithPagination:', error);
+      return {
+        credentials: [],
+        totalCount: 0
+      };
     }
-
-    if (planFilter && planFilter !== 'all') {
-      conditions.push(eq(credentialPools.planId, planFilter));
-    }
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
-    // Get total count
-    let countQuery = db.select({ count: sql<number>`COUNT(*)` })
-      .from(credentialPools)
-      .leftJoin(plans, eq(credentialPools.planId, plans.id))
-      .leftJoin(ships, eq(plans.shipId, ships.id));
-
-    if (conditions.length > 0) {
-      countQuery = countQuery.where(and(...conditions));
-    }
-
-    const [countResult] = await countQuery;
-    const totalCount = Number(countResult.count) || 0;
-
-    // Get paginated results
-    const rawCredentials = await query
-      .orderBy(desc(credentialPools.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    // Transform the flattened results back to the expected nested structure
-    const credentials = rawCredentials.map(row => ({
-      id: row.id,
-      planId: row.planId,
-      username: row.username,
-      password: row.password,
-      isAssigned: row.isAssigned,
-      assignedToUserId: row.assignedToUserId,
-      assignedToOrderId: row.assignedToOrderId,
-      assignedAt: row.assignedAt,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      plan: row.planDbId ? {
-        id: row.planDbId,
-        name: row.planName,
-        description: row.planDescription,
-        price: row.planPrice,
-        currency: row.planCurrency,
-        shipId: row.planShipId,
-        isActive: row.planIsActive,
-      } : null,
-      ship: row.shipDbId ? {
-        id: row.shipDbId,
-        name: row.shipName,
-        slug: row.shipSlug,
-        description: row.shipDescription,
-        isActive: row.shipIsActive,
-      } : null
-    }));
-
-    return {
-      credentials,
-      totalCount
-    };
   }
 
 
