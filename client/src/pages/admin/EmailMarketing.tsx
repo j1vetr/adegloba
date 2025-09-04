@@ -145,6 +145,15 @@ export default function EmailMarketing() {
         subject: template.subject,
         content: template.content
       }));
+      
+      // Switch to the email sending tab to show the loaded template
+      setActiveTab('compose');
+      
+      // Show success notification
+      toast({
+        title: 'Başarılı',
+        description: `"${template.name}" şablonu yüklendi`
+      });
     }
   };
 
