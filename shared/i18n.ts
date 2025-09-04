@@ -43,6 +43,8 @@ export interface Translation {
     phone: string;
     address: string;
     confirmPassword: string;
+    usernameOrEmail: string;
+    usernameOnly: string;
   };
 
   // Dashboard & Panel
