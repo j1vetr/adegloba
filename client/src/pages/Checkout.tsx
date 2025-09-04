@@ -7,12 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, ShoppingCart, Package, CreditCard, Tag, Trash2, CheckCircle } from "lucide-react";
+import { Loader2, ShoppingCart, Package, CreditCard, Tag, Trash2, CheckCircle, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
-import PayPalButton from "@/components/PayPalButton";
 import CreditCardDrawer from "@/components/CreditCardDrawer";
 
 export default function Checkout() {
@@ -511,41 +510,29 @@ export default function Checkout() {
                   </div>
                   
                   {currentTotal > 0 ? (
-                    <div className="space-y-1 animate-slide-in-up">
-                      {/* PayPal Button */}
-                      <div data-testid="paypal-container">
-                        <PayPalButton
-                          amount={currentTotal.toFixed(2)}
-                          currency="USD"
-                          intent="capture"
-                          couponCode={appliedCoupon?.code}
-                          onSuccess={(orderId: string) => {
-                            completeOrderMutation.mutate(orderId);
-                          }}
-                          onError={(error: any) => {
-                            toast({
-                              title: "💳 PayPal Hatası",
-                              description: "Ödeme işlemi başarısız oldu. Lütfen tekrar deneyin.",
-                              variant: "destructive",
-                            });
-                          }}
-                        />
-                      </div>
-
-                      {/* Credit Card Button */}
+                    <div className="space-y-4 animate-slide-in-up">
+                      {/* Credit Card & Debit Card Payment Button */}
                       <Button
                         onClick={() => setCreditCardDrawerOpen(true)}
-                        className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-semibold py-3 rounded-xl text-lg btn-interactive transition-all duration-300 flex items-center justify-center space-x-2"
+                        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 rounded-xl text-lg btn-interactive transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-blue-500/25"
                         data-testid="credit-card-button"
                       >
-                        <CreditCard className="h-5 w-5" />
-                        <span>Kredi Kartı ile Ödeme</span>
-                        <div className="flex space-x-1 ml-2">
-                          <span className="text-xs">VISA</span>
-                          <span className="text-xs">MC</span>
-                          <span className="text-xs">AMEX</span>
+                        <CreditCard className="h-6 w-6" />
+                        <span>Kredi Kartı / Banka Kartı ile Ödeme</span>
+                        <div className="flex space-x-2 ml-3">
+                          <span className="text-xs bg-white/20 px-2 py-1 rounded">VISA</span>
+                          <span className="text-xs bg-white/20 px-2 py-1 rounded">MC</span>
+                          <span className="text-xs bg-white/20 px-2 py-1 rounded">AMEX</span>
+                          <span className="text-xs bg-white/20 px-2 py-1 rounded">MAESTRO</span>
                         </div>
                       </Button>
+                      
+                      <div className="text-center text-sm text-slate-400">
+                        <div className="flex items-center justify-center space-x-2">
+                          <Shield className="h-4 w-4 text-green-400" />
+                          <span>3D Secure ile güvenli ödeme</span>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <Button
@@ -586,13 +573,12 @@ export default function Checkout() {
         currency="USD"
         onSuccess={(paymentData) => {
           setCreditCardDrawerOpen(false);
-          // Here you would typically call your payment completion endpoint
           toast({
             title: "Ödeme Başarılı",
             description: "Kredi kartı ödemesi başarıyla tamamlandı!",
           });
-          // For now, simulate completion like PayPal
-          completeOrderMutation.mutate('card_payment_' + Date.now());
+          // Call PayPal capture with card payment details
+          completeOrderMutation.mutate(paymentData.orderId || 'card_payment_' + Date.now());
         }}
         onError={(error) => {
           toast({

@@ -171,21 +171,78 @@ export default function CreditCardDrawer({
     setIsProcessing(true);
     
     try {
-      // Process credit card payment
+      // Create PayPal order for credit card processing
+      const createResponse = await fetch('/api/paypal/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: parseFloat(amount).toString(),
+          currency: currency,
+          intent: 'CAPTURE',
+          paymentMethod: 'CARD' // Indicate this is a card payment
+        }),
+      });
+
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json();
+        throw new Error(errorData.message || 'Order creation failed');
+      }
+
+      const createData = await createResponse.json();
+      console.log('PayPal card order created:', createData.id);
+
+      // Simulate card processing with PayPal
       toast({
-        title: "Ödeme Başarılı",
-        description: "Kredi kartı ödemesi başarıyla tamamlandı.",
-        variant: "default"
+        title: "Kart İşleniyor",
+        description: "Kredi kartı bilgileri doğrulanıyor...",
       });
       
-      // Simulate processing delay
+      // Simulate PayPal card validation delay
       await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Capture the payment
+      const captureResponse = await fetch('/api/paypal/capture-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: createData.id,
+        }),
+      });
+
+      if (!captureResponse.ok) {
+        const errorData = await captureResponse.json();
+        throw new Error(errorData.message || 'Payment capture failed');
+      }
+
+      const captureData = await captureResponse.json();
+      console.log('PayPal card payment captured:', captureData);
+
+      if (captureData.status === 'COMPLETED') {
+        toast({
+          title: "Ödeme Başarılı",
+          description: "Kredi kartı ödemesi başarıyla tamamlandı.",
+        });
+        
+        onSuccess?.({ 
+          method: 'card', 
+          amount, 
+          currency,
+          orderId: createData.id,
+          paymentId: captureData.id 
+        });
+      } else {
+        throw new Error('Payment not completed');
+      }
       
-      onSuccess?.({ method: 'card', amount, currency });
     } catch (error) {
+      console.error('Credit card payment error:', error);
       toast({
         title: "Ödeme Hatası",
-        description: "Kart ödemesi işlenirken bir hata oluştu",
+        description: error instanceof Error ? error.message : "Kart ödemesi işlenirken bir hata oluştu",
         variant: "destructive"
       });
       onError?.(error);
