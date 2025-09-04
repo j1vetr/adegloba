@@ -14,6 +14,7 @@ import {
 import { useState } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage, LanguageSelector } from "@/contexts/LanguageContext";
 
 interface UserNavigationProps {
   className?: string;
@@ -23,6 +24,7 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { logout } = useUserAuth();
+  const { t } = useLanguage();
 
   // Get cart data for badge
   const { data: cartData } = useQuery({
@@ -32,37 +34,37 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
 
   const navigation = [
     {
-      name: "Ana Sayfa",
+      name: t.dashboard.navigation.home,
       href: "/panel",
       icon: Home,
       active: location === "/panel"
     },
     {
-      name: "Paketler",
+      name: t.dashboard.navigation.packages,
       href: "/paketler",
       icon: Package,
       active: location === "/paketler"
     },
     {
-      name: "Kullanım Kılavuzu",
+      name: t.dashboard.navigation.guide,
       href: "/kilavuz",
       icon: BookOpen,
       active: location === "/kilavuz"
     },
     {
-      name: "Destek",
+      name: t.dashboard.navigation.support,
       href: "/destek",
       icon: MessageSquare,
       active: location === "/destek" || location.startsWith("/destek/")
     },
     {
-      name: "Profil",
+      name: t.dashboard.navigation.profile,
       href: "/profil",
       icon: User,
       active: location === "/profil"
     },
     {
-      name: "Sepet",
+      name: t.dashboard.navigation.cart,
       href: "/sepet",
       icon: ShoppingCart,
       active: location === "/sepet",
@@ -133,6 +135,9 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
               );
             })}
             
+            {/* Language Selector */}
+            <LanguageSelector className="mx-2" />
+            
             <Button
               variant="ghost"
               onClick={handleLogout}
@@ -140,7 +145,7 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
               data-testid="button-logout"
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Çıkış
+              {t.dashboard.navigation.logout}
             </Button>
           </div>
 
@@ -198,7 +203,7 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
                 data-testid="mobile-button-logout"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Çıkış
+                {t.dashboard.navigation.logout}
               </Button>
             </div>
           </div>
