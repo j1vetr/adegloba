@@ -390,7 +390,7 @@ export default function Kayit() {
               {t.auth.createNewAccount}
             </CardTitle>
             <p className="text-center text-slate-400 text-sm">
-              Sisteme erişim için gerekli bilgileri doldurun
+              {t.auth.systemAccess}
             </p>
           </CardHeader>
           <CardContent>
@@ -398,7 +398,7 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="full_name" className="text-slate-300 flex items-center gap-2 font-medium">
                   <User className="h-4 w-4 text-amber-400" />
-                  İsim Soyisim *
+                  {t.auth.fullName} *
                 </Label>
                 <Input
                   id="full_name"
@@ -408,7 +408,7 @@ export default function Kayit() {
                   onChange={handleChange}
                   required
                   className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
-                  placeholder="Adınız ve soyadınızı girin"
+                  placeholder={t.auth.fullName}
                   data-testid="input-full-name"
                 />
               </div>
@@ -416,7 +416,7 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-slate-300 flex items-center gap-2 font-medium">
                   <User className="h-4 w-4 text-amber-400" />
-                  Kullanıcı Adı *
+                  {t.auth.username} *
                 </Label>
                 <Input
                   id="username"
@@ -426,7 +426,7 @@ export default function Kayit() {
                   onChange={handleChange}
                   required
                   className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
-                  placeholder="Kullanıcı adınızı girin"
+                  placeholder={t.auth.username}
                   data-testid="input-username"
                 />
               </div>
@@ -434,7 +434,7 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-slate-300 flex items-center gap-2 font-medium">
                   <Mail className="h-4 w-4 text-amber-400" />
-                  E-posta *
+                  {t.auth.email} *
                 </Label>
                 <Input
                   id="email"
@@ -452,7 +452,7 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-slate-300 flex items-center gap-2 font-medium">
                   <Lock className="h-4 w-4 text-amber-400" />
-                  Şifre *
+                  {t.auth.password} *
                 </Label>
                 <Input
                   id="password"
@@ -470,7 +470,7 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="phoneCountryCode" className="text-slate-300 flex items-center gap-2 font-medium">
                   <Phone className="h-4 w-4 text-amber-400" />
-                  Telefon Numarası *
+                  {t.auth.phoneNumber} *
                 </Label>
                 <div className="flex gap-2">
                   <Input
@@ -500,18 +500,18 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="ship_id" className="text-slate-300 flex items-center gap-2 font-medium">
                   <ShipIcon className="h-4 w-4 text-amber-400" />
-                  Gemi Seçin *
+                  {t.auth.selectShip} *
                 </Label>
                 <Select onValueChange={handleShipChange} required>
                   <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white h-12 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm" data-testid="select-ship">
-                    <SelectValue placeholder="Geminizi seçin" />
+                    <SelectValue placeholder={t.auth.chooseShip} />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800/95 border-slate-600 backdrop-blur-xl">
                     {shipsLoading ? (
                       <SelectItem value="loading" disabled>
                         <div className="flex items-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Gemiler yükleniyor...
+                          {t.auth.loadingShips}
                         </div>
                       </SelectItem>
                     ) : (
@@ -528,7 +528,7 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="address" className="text-slate-300 flex items-center gap-2 font-medium">
                   <MapPin className="h-4 w-4 text-amber-400" />
-                  Adresiniz
+                  {t.auth.address}
                 </Label>
                 <Textarea
                   id="address"
@@ -538,7 +538,7 @@ export default function Kayit() {
                   required
                   rows={3}
                   className="bg-slate-800/50 border-slate-600/50 text-white min-h-[80px] placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm resize-none"
-                  placeholder="Faturalama/kargo adresinizi girin..."
+                  placeholder={t.auth.address}
                   data-testid="textarea-address"
                 />
               </div>
@@ -565,7 +565,7 @@ export default function Kayit() {
                 ) : (
                   <>
                     <UserPlus className="mr-2 h-5 w-5" />
-                    Sisteme Kayıt Ol
+                    {t.auth.registerButton}
                   </>
                 )}
               </Button>
@@ -579,13 +579,13 @@ export default function Kayit() {
             {/* Login Link */}
             <div className="mt-6 text-center space-y-4">
               <p className="text-slate-400 text-sm">
-                Zaten hesabınız var mı?{" "}
+                {t.auth.alreadyHaveAccount}{" "}
                 <button
                   onClick={() => setLocation("/giris")}
                   className="text-amber-400 hover:text-amber-300 underline transition-colors"
                   data-testid="link-login"
                 >
-                  Giriş Yap
+                  {t.auth.loginNow}
                 </button>
               </p>
               
