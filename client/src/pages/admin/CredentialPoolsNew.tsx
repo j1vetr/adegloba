@@ -17,7 +17,8 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Separator } from '@/components/ui/separator';
 import { 
   Plus, Search, Package, Upload, Download, Trash2, MoreHorizontal, 
-  Edit, User, Check, X, Ship as ShipIcon, AlertCircle, Eye, EyeOff 
+  Edit, User, Check, X, Ship as ShipIcon, AlertCircle, Eye, EyeOff,
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -73,6 +74,11 @@ export default function CredentialPoolsNew() {
   
   // Debounced search
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  
+  // Plan breakdown state
+  const [showPlanBreakdown, setShowPlanBreakdown] = useState(true);
+  const [planBreakdownPage, setPlanBreakdownPage] = useState(1);
+  const planBreakdownPageSize = 6; // 2 rows of 3 items
   
   const [formData, setFormData] = useState<CredentialFormData>({
     planId: '',
@@ -149,6 +155,16 @@ export default function CredentialPoolsNew() {
 
   // No need for client-side filtering now - it's done on the server
   const filteredCredentials = credentials;
+
+  // Paginated plan breakdown
+  const paginatedPlanBreakdown = useMemo(() => {
+    if (!credentialStats.planBreakdown.length) return [];
+    const start = (planBreakdownPage - 1) * planBreakdownPageSize;
+    const end = start + planBreakdownPageSize;
+    return credentialStats.planBreakdown.slice(start, end);
+  }, [credentialStats.planBreakdown, planBreakdownPage, planBreakdownPageSize]);
+
+  const planBreakdownTotalPages = Math.ceil(credentialStats.planBreakdown.length / planBreakdownPageSize);
 
   // Create credential mutation
   const createMutation = useMutation({
@@ -459,37 +475,101 @@ export default function CredentialPoolsNew() {
           </Card>
         </div>
 
-        {/* Plan Breakdown */}
+        {/* Plan Breakdown - Optimized */}
         {credentialStats.planBreakdown.length > 0 && (
           <Card className="glass-card border-border/50">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Package className="h-5 w-5 text-blue-400" />
-                Paket Bazlı Dağılım
-              </CardTitle>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Package className="h-5 w-5 text-blue-400" />
+                  Paket Bazlı Dağılım ({credentialStats.planBreakdown.length} paket)
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPlanBreakdown(!showPlanBreakdown)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  {showPlanBreakdown ? (
+                    <>
+                      <ChevronUp className="h-4 w-4 mr-1" />
+                      Gizle
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4 mr-1" />
+                      Göster
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {credentialStats.planBreakdown.map((breakdown) => (
-                  <div key={breakdown.planId} className="glass-card border-border/30 p-4 rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-semibold text-white text-sm">{breakdown.planTitle}</h4>
-                        <p className="text-gray-400 text-xs flex items-center gap-1">
-                          <ShipIcon className="h-3 w-3" />
-                          {breakdown.shipName}
-                        </p>
+            
+            {showPlanBreakdown && (
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {paginatedPlanBreakdown.map((breakdown) => (
+                    <div key={breakdown.planId} className="glass-card border-border/30 p-3 rounded-lg hover:border-blue-500/30 transition-all duration-300">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-white text-sm truncate" title={breakdown.planTitle}>
+                            {breakdown.planTitle}
+                          </h4>
+                          <p className="text-gray-400 text-xs flex items-center gap-1 truncate">
+                            <ShipIcon className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate" title={breakdown.shipName}>{breakdown.shipName}</span>
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-xs ml-2 flex-shrink-0">{breakdown.total}</Badge>
                       </div>
-                      <Badge variant="outline" className="text-xs">{breakdown.total}</Badge>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-green-400">✓ {breakdown.available}</span>
+                        <span className="text-red-400">⚫ {breakdown.assigned}</span>
+                      </div>
+                      {/* Progress bar */}
+                      <div className="w-full bg-slate-700 rounded-full h-1 mt-2">
+                        <div 
+                          className="h-full bg-gradient-to-r from-green-400 to-blue-400 rounded-full transition-all duration-500" 
+                          style={{width: `${breakdown.total > 0 ? (breakdown.available / breakdown.total) * 100 : 0}%`}}
+                        ></div>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-green-400">Uygun: {breakdown.available}</span>
-                      <span className="text-red-400">Atanmış: {breakdown.assigned}</span>
+                  ))}
+                </div>
+                
+                {/* Plan breakdown pagination */}
+                {planBreakdownTotalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-700">
+                    <div className="text-sm text-gray-400">
+                      {credentialStats.planBreakdown.length} paketten {((planBreakdownPage - 1) * planBreakdownPageSize) + 1}-{Math.min(planBreakdownPage * planBreakdownPageSize, credentialStats.planBreakdown.length)} arası gösteriliyor
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPlanBreakdownPage(planBreakdownPage - 1)}
+                        disabled={planBreakdownPage <= 1}
+                        className="h-7 px-2 border-gray-600 text-gray-300 hover:bg-gray-700"
+                      >
+                        <ChevronLeft className="h-3 w-3" />
+                      </Button>
+                      <span className="text-sm text-gray-300 px-2">
+                        {planBreakdownPage} / {planBreakdownTotalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPlanBreakdownPage(planBreakdownPage + 1)}
+                        disabled={planBreakdownPage >= planBreakdownTotalPages}
+                        className="h-7 px-2 border-gray-600 text-gray-300 hover:bg-gray-700"
+                      >
+                        <ChevronRight className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
+                )}
+              </CardContent>
+            )}
           </Card>
         )}
 
