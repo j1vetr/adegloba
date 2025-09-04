@@ -1,0 +1,126 @@
+0|adegloba  | 🔍 Checking for incomplete paid orders on startup...
+0|adegloba  | Found 0 incomplete paid orders
+0|adegloba  | 🔧 Processing 0 incomplete paid orders...
+0|adegloba  | 🔧 Batch completion: 0/0 orders fixed
+0|adegloba  | ✅ No incomplete paid orders found on startup
+0|adegloba  | 6:01:34 PM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba  | 6:01:34 PM [express] GET /api/auth/user 200 in 5ms
+0|adegloba  | 6:01:35 PM [express] GET /api/user/me 401 in 0ms :: {"message":"Unauthorized"}
+0|adegloba  | 6:01:36 PM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba  | 6:01:42 PM [express] POST /api/user/login 200 in 175ms :: {"success":true,"user":{"id":"bac9d8da-deb…
+0|adegloba  | 6:01:42 PM [express] GET /api/user/me 200 in 2ms :: {"id":"bac9d8da-debb-4154-88dd-b98865147c08","us…
+0|adegloba  | 6:01:42 PM [express] GET /api/cart 200 in 6ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | Found 7 active packages for user bac9d8da-debb-4154-88dd-b98865147c08
+0|adegloba  | 6:01:42 PM [express] GET /api/user/active-packages 200 in 6ms :: [{"credentialId":"79cc9901-a854-478…
+0|adegloba  | 6:01:42 PM [express] GET /api/user/orders 200 in 7ms :: [{"id":"c861bfb6-2e5e-4d4f-bf35-69ec3b1e2082…
+0|adegloba  | 6:01:42 PM [express] GET /api/user/expired-packages 200 in 6ms :: {"packages":[],"pagination":{"curr…
+0|adegloba  | 6:01:44 PM [express] POST /api/cart/checkout 200 in 7ms :: {"id":"1f21977f-bed9-48ce-88c6-c4eef16ca5…
+0|adegloba  | 6:01:44 PM [express] GET /api/user/me 304 in 3ms :: {"id":"bac9d8da-debb-4154-88dd-b98865147c08","us…
+0|adegloba  | 6:01:44 PM [express] GET /api/cart 304 in 3ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 6:01:49 PM [express] GET /api/cart 304 in 4ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 6:01:54 PM [express] GET /api/cart 304 in 3ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 6:01:59 PM [express] GET /api/cart 304 in 3ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 🔍 PayPal Order Request Debug: {
+0|adegloba  |   amount: '1',
+0|adegloba  |   currency: 'USD',
+0|adegloba  |   intent: 'CAPTURE',
+0|adegloba  |   paymentMethod: 'CARD',
+0|adegloba  |   hasCardDetails: true,
+0|adegloba  |   cardNumber: '5351****'
+0|adegloba  | }
+0|adegloba  | 🔧 Adding card paymentSource to PayPal order
+0|adegloba  | 📤 PayPal Order Body: {
+0|adegloba  |   "intent": "CAPTURE",
+0|adegloba  |   "purchaseUnits": [
+0|adegloba  |     {
+0|adegloba  |       "amount": {
+0|adegloba  |         "currencyCode": "USD",
+0|adegloba  |         "value": "1"
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   ],
+0|adegloba  |   "paymentSource": {
+0|adegloba  |     "card": {
+0|adegloba  |       "number": "5351776675427727",
+0|adegloba  |       "securityCode": "690",
+0|adegloba  |       "expiry": "2029-12",
+0|adegloba  |       "name": "Emir Şimşek",
+0|adegloba  |       "billingAddress": {
+0|adegloba  |         "addressLine1": "sdasdfsafsafasf asfas fas fasf asf sa",
+0|adegloba  |         "addressLine2": "",
+0|adegloba  |         "adminArea2": "Istanbul",
+0|adegloba  |         "adminArea1": "TR",
+0|adegloba  |         "postalCode": "34000",
+0|adegloba  |         "countryCode": "TR"
+0|adegloba  |       },
+0|adegloba  |       "attributes": {
+0|adegloba  |         "verification": {
+0|adegloba  |           "method": "SCA_WHEN_REQUIRED"
+0|adegloba  |         }
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | info: Request POST https://api-m.paypal.com/v1/oauth2/token
+0|adegloba  | info: Request body {"type":"form","content":[{"key":"grant_type","value":"client_credentials"}]}
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","access-control-expose-headers":"**Redacted**","pragma":"no-cache","cache-control":"max-age=0, no-cache, no-store, must-revalidate","content-type":"application/json","paypal-debug-id":"**Redacted**","server-timing":"**Redacted**","set-cookie":"**Redacted**","x-paypal-token-service":"**Redacted**","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Thu, 04 Sep 2025 15:02:00 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | info: Request POST https://api-m.paypal.com/v2/checkout/orders application/json
+0|adegloba  | info: Request body {"type":"text","content":"{\"intent\":\"CAPTURE\",\"purchase_units\":[{\"amount\":{\"currency_code\":\"USD\",\"value\":\"1\"}}],\"payment_source\":{\"card\":{\"name\":\"Emir Şimşek\",\"number\":\"5351776675427727\",\"expiry\":\"2029-12\",\"security_code\":\"690\",\"billing_address\":{\"address_line_1\":\"sdasdfsafsafasf asfas fas fasf asf sa\",\"address_line_2\":\"\",\"admin_area_2\":\"Istanbul\",\"admin_area_1\":\"TR\",\"postal_code\":\"34000\",\"country_code\":\"TR\"},\"attributes\":{\"verification\":{\"method\":\"SCA_WHEN_REQUIRED\"}}}}}"}
+0|adegloba  | info: Response 400 535 application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-length":"535","access-control-expose-headers":"**Redacted**","set-cookie":"**Redacted**","content-type":"application/json","paypal-debug-id":"**Redacted**","server-timing":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Thu, 04 Sep 2025 15:02:01 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding"}
+0|adegloba  | Failed to create order: CustomError
+0|adegloba  |     at CustomError.ApiError [as constructor] (/var/www/adegloba/node_modules/@apimatic/core/lib/errors/apiError.js:17:28)
+0|adegloba  |     at new CustomError (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/errors/customError.js:14:42)
+0|adegloba  |     at DefaultRequestBuilder.<anonymous> (/var/www/adegloba/node_modules/@apimatic/core/lib/http/requestBuilder.js:686:33)
+0|adegloba  |     at step (/var/www/adegloba/node_modules/tslib/tslib.js:196:27)
+0|adegloba  |     at Object.next (/var/www/adegloba/node_modules/tslib/tslib.js:177:57)
+0|adegloba  |     at fulfilled (/var/www/adegloba/node_modules/tslib/tslib.js:167:62)
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+0|adegloba  |   request: {
+0|adegloba  |     method: 'POST',
+0|adegloba  |     url: 'https://api-m.paypal.com/v2/checkout/orders',
+0|adegloba  |     headers: {
+0|adegloba  |       'Content-Type': 'application/json',
+0|adegloba  |       Prefer: 'return=minimal',
+0|adegloba  |       authorization: 'Bearer A21AANU5NdNqSa56mcQZBY05VPzIe0xtrFSB5_MtfhPr1tzbIEvXZ0uVM14VRZWugdglEHvnLsPOhtIqbRMzPUuwtcSQOY0uw',
+0|adegloba  |       'user-agent': 'PayPal REST API TypeScript SDK, Version: 1.1.0, on OS linux',
+0|adegloba  |       accept: 'application/json'
+0|adegloba  |     },
+0|adegloba  |     body: {
+0|adegloba  |       type: 'text',
+0|adegloba  |       content: '{"intent":"CAPTURE","purchase_units":[{"amount":{"currency_code":"USD","value":"1"}}],"payment_source":{"card":{"name":"Emir Şimşek","number":"5351776675427727","expiry":"2029-12","security_code":"690","billing_address":{"address_line_1":"sdasdfsafsafasf asfas fas fasf asf sa","address_line_2":"","admin_area_2":"Istanbul","admin_area_1":"TR","postal_code":"34000","country_code":"TR"},"attributes":{"verification":{"method":"SCA_WHEN_REQUIRED"}}}}}'
+0|adegloba  |     }
+0|adegloba  |   },
+0|adegloba  |   statusCode: 400,
+0|adegloba  |   headers: {
+0|adegloba  |     connection: 'keep-alive',
+0|adegloba  |     'content-length': '535',
+0|adegloba  |     'access-control-expose-headers': 'Server-Timing',
+0|adegloba  |     'set-cookie': 'l7_az=ccg01.phx; Path=/; Domain=paypal.com; Expires=Thu, 04 Sep 2025 15:32:01 GMT; HttpOnly; Secure',
+0|adegloba  |     'content-type': 'application/json',
+0|adegloba  |     'paypal-debug-id': 'a6a92ab0ef001',
+0|adegloba  |     'server-timing': 'traceparent;desc="00-0000000000000000000a6a92ab0ef001-a8964577257f7091-01"',
+0|adegloba  |     'cache-control': 'max-age=0, no-cache, no-store, must-revalidate',
+0|adegloba  |     'edge-control': 'max-age=0',
+0|adegloba  |     'accept-ranges': 'bytes',
+0|adegloba  |     date: 'Thu, 04 Sep 2025 15:02:01 GMT',
+0|adegloba  |     via: '1.1 varnish',
+0|adegloba  |     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
+0|adegloba  |     'x-served-by': 'cache-fra-etou8220120-FRA, cache-fra-etou8220120-FRA',
+0|adegloba  |     'x-cache': 'MISS, MISS',
+0|adegloba  |     'x-cache-hits': '0, 0',
+0|adegloba  |     'x-timer': 'S1756998121.935952,VS0,VE337',
+0|adegloba  |     vary: 'Accept-Encoding'
+0|adegloba  |   },
+0|adegloba  |   body: `{"name":"INVALID_REQUEST","details":[{"issue":"PAYPAL_REQUEST_ID_REQUIRED","description":"A PayPal-Request-Id is required if you are trying to process payment for an Order. Please specify a PayPal-Request-Id or Create the Order without a 'payment_source' specified."}],"message":"Request is not well-formed, syntactically incorrect, or violates schema.","debug_id":"a6a92ab0ef001","links":[{"href":"https://developer.paypal.com/api/rest/reference/orders/v2/errors/#PAYPAL_REQUEST_ID_REQUIRED","rel":"information_link","method":"GET"}]}`,
+0|adegloba  |   result: [Object: null prototype] {
+0|adegloba  |     name: 'INVALID_REQUEST',
+0|adegloba  |     details: [ [Object: null prototype] ],
+0|adegloba  |     message: 'Request is not well-formed, syntactically incorrect, or violates schema.',
+0|adegloba  |     debug_id: 'a6a92ab0ef001',
+0|adegloba  |     links: [ [Object: null prototype] ]
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | 6:02:01 PM [express] POST /api/paypal/create-order 500 in 749ms :: {"error":"Failed to create order.…
+
