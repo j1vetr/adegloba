@@ -163,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const paymentSettings = {
         paypal_client_id: settingsData.find(s => s.key === 'paypalClientId')?.value || '',
-        paypalEnvironment: settingsData.find(s => s.key === 'paypalEnvironment')?.value || 'sandbox',
+        paypal_environment: settingsData.find(s => s.key === 'paypalEnvironment')?.value || 'sandbox',
         paypal_secret: settingsData.find(s => s.key === 'paypalClientSecret')?.value || '',
       };
       

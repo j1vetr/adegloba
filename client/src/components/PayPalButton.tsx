@@ -77,7 +77,7 @@ export default function PayPalButton({
 
         const script = document.createElement('script');
         const clientId = settings.paypal_client_id;
-        const environment = settings.paypalEnvironment || 'sandbox';
+        const environment = settings.paypal_environment || 'sandbox';
         
         // Build PayPal SDK URL with proper parameters
         const sdkUrl = new URL('https://www.paypal.com/sdk/js');
@@ -132,7 +132,7 @@ export default function PayPalButton({
     }, 100); // Small delay to ensure settings are properly loaded
 
     return () => clearTimeout(timeoutId);
-  }, [settings?.paypal_client_id, settings?.paypalEnvironment, currency, intent, toast]);
+  }, [settings?.paypal_client_id, settings?.paypal_environment, currency, intent, toast]);
 
   const handlePayPalClick = async () => {
     if (!paypalLoaded || !(window as any).paypal) {
