@@ -19,6 +19,7 @@ export default function Settings() {
     paypalClientId: '',
     paypalSecret: '',
     paypalEnvironment: 'sandbox',
+    paypalWebhookUrl: 'https://ads.adegloba.space/api/paypal/webhook',
     defaultLanguage: 'en',
     timezone: 'Europe/Istanbul',
     privacyPolicy: '',
@@ -49,6 +50,9 @@ export default function Settings() {
             break;
           case 'paypalEnvironment':
             settingsObj.paypalEnvironment = setting.value || 'sandbox';
+            break;
+          case 'paypalWebhookUrl':
+            settingsObj.paypalWebhookUrl = setting.value || 'https://ads.adegloba.space/api/paypal/webhook';
             break;
           default:
             settingsObj[setting.key] = setting.value;
@@ -269,6 +273,31 @@ export default function Settings() {
                 placeholder="PayPal Client Secret (starts with EL...)"
                 data-testid="paypal-secret-input"
               />
+            </div>
+            
+            <div>
+              <Label className="text-slate-300">Webhook URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={settings.paypalWebhookUrl}
+                  onChange={(e) => setSettings({ ...settings, paypalWebhookUrl: e.target.value })}
+                  className="glassmorphism border-slate-600 text-white flex-1"
+                  placeholder="https://ads.adegloba.space/api/paypal/webhook"
+                  data-testid="paypal-webhook-url-input"
+                />
+                <Button
+                  onClick={() => handleSaveSetting('paypalWebhookUrl', settings.paypalWebhookUrl, 'payment')}
+                  disabled={updateSettingMutation.isPending}
+                  size="sm"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  data-testid="save-webhook-url"
+                >
+                  {updateSettingMutation.isPending ? '💫' : '✓'}
+                </Button>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                PayPal Developer Console'da webhook eklerken bu URL'yi kullanın
+              </p>
             </div>
           </div>
         </Card>

@@ -24,6 +24,7 @@ async function getPayPalSettings() {
   const clientId = settings.find(s => s.key === 'paypalClientId')?.value;
   const clientSecret = settings.find(s => s.key === 'paypalClientSecret')?.value;
   const environment = settings.find(s => s.key === 'paypalEnvironment')?.value || 'sandbox';
+  const webhookUrl = settings.find(s => s.key === 'paypalWebhookUrl')?.value || 'https://ads.adegloba.space/api/paypal/webhook';
   
   if (!clientId || !clientSecret) {
     throw new Error('PayPal credentials not configured in database. Please configure in admin panel.');
@@ -32,7 +33,8 @@ async function getPayPalSettings() {
   return {
     clientId,
     clientSecret,
-    environment
+    environment,
+    webhookUrl
   };
 }
 

@@ -2925,12 +2925,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const event = req.body;
       
-      // Get PayPal environment settings
+      // Get PayPal environment settings from database
       const settings = await storage.getSettingsByCategory('payment');
       const environment = settings.find(s => s.key === 'paypalEnvironment')?.value || 'sandbox';
+      const webhookUrl = settings.find(s => s.key === 'paypalWebhookUrl')?.value || 'https://ads.adegloba.space/api/paypal/webhook';
       
       // Log environment info
       console.log(`🌍 PayPal Environment: ${environment.toUpperCase()}`);
+      console.log(`🔗 Webhook URL from DB: ${webhookUrl}`);
       
       // PayPal webhook signature verification in production mode
       if (environment === 'live') {
