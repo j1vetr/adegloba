@@ -48,7 +48,7 @@ async function createPayPalClient() {
       oAuthClientSecret: settings.clientSecret,
     },
     timeout: 0,
-    environment: settings.environment === "live" 
+    environment: (settings.environment === "live" || settings.environment === "production")
       ? Environment.Production 
       : Environment.Sandbox,
     logging: {
