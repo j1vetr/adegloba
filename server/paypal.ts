@@ -164,7 +164,30 @@ export async function capturePaypalOrder(req: Request, res: Response) {
     res.status(httpStatusCode).json(jsonResponse);
   } catch (error) {
     console.error("Failed to capture order:", error);
-    res.status(500).json({ error: "Failed to capture order." });
+    
+    // Enhanced error logging for production debugging
+    if (error && typeof error === 'object') {
+      console.error("PayPal Capture Error Details:", {
+        message: error.message,
+        statusCode: error.statusCode,
+        body: error.body,
+        headers: error.headers,
+        result: error.result
+      });
+    }
+    
+    // Return more detailed error for debugging
+    const errorMessage = error && typeof error === 'object' && error.message 
+      ? error.message 
+      : "Failed to capture order.";
+      
+    res.status(500).json({ 
+      error: errorMessage,
+      details: error && typeof error === 'object' ? {
+        statusCode: error.statusCode,
+        paypalError: error.result || error.body
+      } : null
+    });
   }
 }
 
