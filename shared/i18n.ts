@@ -352,7 +352,9 @@ export const translations: Record<'tr' | 'en', Translation> = {
       loadingShips: "Gemiler yükleniyor...",
       passwordMinLength: "Şifrenizi girin (en az 6 karakter)",
       registering: "Kayıt oluşturuluyor...",
-      loginNow: "Şimdi Giriş Yap"
+      loginNow: "Şimdi Giriş Yap",
+      usernameOrEmail: "Kullanıcı Adı / E-posta",
+      usernameOnly: "Kullanıcı Adı"
     },
     profile: {
       fullName: "Ad Soyad",
@@ -674,7 +676,9 @@ export const translations: Record<'tr' | 'en', Translation> = {
       loadingShips: "Loading ships...",
       passwordMinLength: "Enter your password (minimum 6 characters)",
       registering: "Registering...",
-      loginNow: "Sign In Now"
+      loginNow: "Sign In Now",
+      usernameOrEmail: "Username / Email",
+      usernameOnly: "Username"
     },
     profile: {
       fullName: "Full Name",

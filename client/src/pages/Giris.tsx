@@ -128,7 +128,7 @@ export default function Giris() {
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-slate-300 flex items-center gap-2 font-medium">
                   <User className="h-4 w-4 text-amber-400" />
-                  {t.auth.username}
+                  {t.auth.usernameOrEmail}
                 </Label>
                 <Input
                   id="username"

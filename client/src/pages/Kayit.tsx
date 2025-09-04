@@ -416,7 +416,7 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-slate-300 flex items-center gap-2 font-medium">
                   <User className="h-4 w-4 text-amber-400" />
-                  {t.auth.username} *
+                  {t.auth.usernameOnly} *
                 </Label>
                 <Input
                   id="username"
@@ -426,7 +426,7 @@ export default function Kayit() {
                   onChange={handleChange}
                   required
                   className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
-                  placeholder={t.auth.username}
+                  placeholder={t.auth.usernameOnly}
                   data-testid="input-username"
                 />
               </div>
