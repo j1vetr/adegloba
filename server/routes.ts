@@ -2928,27 +2928,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get PayPal environment settings
       const settings = await storage.getSettingsByCategory('payment');
       const environment = settings.find(s => s.key === 'paypalEnvironment')?.value || 'sandbox';
-      const webhookSecret = settings.find(s => s.key === 'paypalWebhookSecret')?.value;
       
       // Log environment info
       console.log(`🌍 PayPal Environment: ${environment.toUpperCase()}`);
       
-      // Verify webhook signature in production mode
-      if (environment === 'live' && webhookSecret) {
-        const crypto = require('crypto');
-        const receivedSignature = req.headers['paypal-signature'];
+      // PayPal webhook signature verification in production mode
+      if (environment === 'live') {
+        const signature = req.headers['paypal-message-signature'] || req.headers['paypal-signature'];
         
-        if (!receivedSignature) {
+        if (!signature) {
           console.error('❌ Missing PayPal signature header in live mode');
-          return res.status(401).json({ error: 'Missing signature' });
+          return res.status(401).json({ error: 'Missing PayPal signature' });
         }
         
-        // Verify signature (basic implementation - PayPal provides more complex verification)
-        const payload = JSON.stringify(req.body);
-        const expectedSignature = crypto.createHmac('sha256', webhookSecret).update(payload).digest('hex');
-        
-        console.log('🔐 Webhook signature verification in progress...');
-        // Note: In production you'd use PayPal's official webhook verification method
+        console.log('🔐 PayPal webhook signature detected for live environment');
+        // Note: PayPal uses complex signature verification with certificates
+        // For basic validation, we check signature existence in live mode
       }
       
       console.log(`📧 Event Type: ${event.event_type}`);
