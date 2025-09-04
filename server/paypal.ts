@@ -167,6 +167,7 @@ export async function createPaypalOrder(req: Request, res: Response) {
     const collect = {
       body: orderBody,
       prefer: "return=minimal",
+      payPalRequestId: `order-${Date.now()}-${Math.random().toString(36).substring(2)}`,
     };
 
     const { body, ...httpResponse } =
