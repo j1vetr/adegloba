@@ -610,7 +610,7 @@ export default function EmailMarketing() {
                             onClick={() => handleTemplateSelect(template.id)}
                             variant="outline"
                             size="sm"
-                            className="admin-button-secondary"
+                            className="admin-button-use"
                           >
                             Kullan
                           </Button>
