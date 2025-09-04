@@ -84,15 +84,20 @@ export default function PayPalButton({
         sdkUrl.searchParams.set('client-id', clientId);
         sdkUrl.searchParams.set('currency', currency);
         sdkUrl.searchParams.set('intent', intent);
-        sdkUrl.searchParams.set('components', 'buttons');
+        sdkUrl.searchParams.set('components', 'buttons,funding-eligibility');
         
         // Add environment-specific parameters
         if (environment === 'sandbox') {
-          sdkUrl.searchParams.set('disable-funding', 'venmo');
+          sdkUrl.searchParams.set('disable-funding', 'venmo,paylater');
+          sdkUrl.searchParams.set('enable-funding', 'card');
         } else if (environment === 'production' || environment === 'live') {
-          // Production mode parameters
-          sdkUrl.searchParams.set('enable-funding', 'venmo,card');
-          sdkUrl.searchParams.set('disable-funding', 'paylater');
+          // Production mode parameters for maximum compatibility
+          sdkUrl.searchParams.set('enable-funding', 'venmo,card,bancontact,eps,giropay,ideal,mybank,p24,sepa,sofort');
+          sdkUrl.searchParams.set('disable-funding', 'paylater,blik');
+          sdkUrl.searchParams.set('locale', 'tr_TR'); // Turkish locale for Turkey
+          sdkUrl.searchParams.set('buyer-country', 'TR'); // Turkey buyer country
+          sdkUrl.searchParams.set('commit', 'true'); // Immediate payment commit
+          sdkUrl.searchParams.set('vault', 'false'); // Don't save payment methods
         }
         
         script.src = sdkUrl.toString();
@@ -167,8 +172,12 @@ export default function PayPalButton({
           color: 'blue',
           shape: 'rect',
           label: 'pay',
-          height: 40
+          height: 45,
+          tagline: false,
+          fundingicons: true
         },
+        // Force production validation and behavior
+        fundingSource: environment === 'production' || environment === 'live' ? undefined : 'paypal',
         createOrder: async () => {
           try {
             // Create PayPal order
@@ -287,17 +296,38 @@ export default function PayPalButton({
           }
         },
         onError: (err: any) => {
-          console.error('PayPal error:', err);
+          console.error('PayPal error (Production Mode):', err);
+          
+          // Enhanced error handling for production
+          let errorMessage = "Ödeme işlemi sırasında bir hata oluştu.";
+          let errorReason = 'PayPal processing error';
+          
+          if (err && typeof err === 'object') {
+            if (err.name === 'VALIDATION_ERROR') {
+              errorMessage = "Kart bilgileri geçersiz. Lütfen doğru bilgilerle tekrar deneyin.";
+              errorReason = 'Invalid card details';
+            } else if (err.name === 'INSTRUMENT_DECLINED') {
+              errorMessage = "Kartınız reddedildi. Farklı bir kart deneyin veya bankanızla iletişime geçin.";
+              errorReason = 'Card declined';
+            } else if (err.name === 'UNPROCESSABLE_ENTITY') {
+              errorMessage = "Ödeme işlenemiyor. Kart bilgilerinizi kontrol edin.";
+              errorReason = 'Unprocessable payment';
+            } else if (environment === 'production' || environment === 'live') {
+              errorMessage = "Canlı ödeme hatası. Gerçek kart bilgileri kullanın.";
+              errorReason = 'Production mode validation error';
+            }
+          }
+          
           toast({
             title: "PayPal Hatası",
-            description: "Ödeme işlemi sırasında bir hata oluştu.",
+            description: errorMessage,
             variant: "destructive",
           });
           
-          // Redirect to cancel page on PayPal error
+          // Redirect to cancel page with detailed error info
           setTimeout(() => {
-            window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent('PayPal processing error')}`;
-          }, 2000);
+            window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(errorReason)}&env=${environment}`;
+          }, 3000);
           
           onError?.(err);
         },
