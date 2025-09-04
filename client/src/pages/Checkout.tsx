@@ -571,8 +571,8 @@ export default function Checkout() {
             title: "Ödeme Başarılı",
             description: "Kredi kartı ödemesi başarıyla tamamlandı!",
           });
-          // Call PayPal capture with card payment details
-          completeOrderMutation.mutate(paymentData.orderId || 'card_payment_' + Date.now());
+          // Call complete payment with PayPal Order ID
+          completeOrderMutation.mutate(paymentData.paypalOrderId || paymentData.orderId || 'card_payment_' + Date.now());
         }}
         onError={(error) => {
           toast({

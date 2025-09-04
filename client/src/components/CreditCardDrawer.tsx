@@ -231,12 +231,14 @@ export default function CreditCardDrawer({
           description: "Kredi kartı ödemesi başarıyla tamamlandı.",
         });
         
+        // Call completeOrderMutation with PayPal Order ID
         onSuccess?.({ 
           method: 'card', 
           amount, 
           currency,
           orderId: createData.id,
-          paymentId: createData.id 
+          paymentId: createData.id,
+          paypalOrderId: createData.id  // Pass PayPal Order ID for backend
         });
         return;
       }
@@ -270,12 +272,14 @@ export default function CreditCardDrawer({
             description: "Kredi kartı ödemesi başarıyla tamamlandı.",
           });
           
+          // Call completeOrderMutation with PayPal Order ID
           onSuccess?.({ 
             method: 'card', 
             amount, 
             currency,
             orderId: createData.id,
-            paymentId: createData.id 
+            paymentId: createData.id,
+            paypalOrderId: createData.id  // Pass PayPal Order ID for backend
           });
           return;
         }
@@ -291,12 +295,14 @@ export default function CreditCardDrawer({
           description: "Kredi kartı ödemesi başarıyla tamamlandı.",
         });
         
+        // Call completeOrderMutation with PayPal Order ID
         onSuccess?.({ 
           method: 'card', 
           amount, 
           currency,
           orderId: createData.id,
-          paymentId: captureData.id 
+          paymentId: captureData.id,
+          paypalOrderId: createData.id  // Pass PayPal Order ID for backend
         });
       } else {
         throw new Error('Payment not completed');
