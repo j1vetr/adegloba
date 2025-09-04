@@ -12,10 +12,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
+import { useLanguage } from "@/contexts/LanguageContext";
 import CreditCardDrawer from "@/components/CreditCardDrawer";
 
 export default function Checkout() {
   const [location] = useLocation();
+  const { t } = useLanguage();
   const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
   const [couponCode, setCouponCode] = useState("");
@@ -76,8 +78,8 @@ export default function Checkout() {
             : `$${result.coupon.discountValue} tutarında`;
           
           toast({
-            title: "✅ Kupon Başarıyla Uygulandı!",
-            description: `"${result.coupon.code}" kuponunuz ${discountText} indirim sağladı. Toplam indirimi: $${result.discount_amount.toFixed(2)}`,
+            title: t.checkout.couponApplied,
+            description: `"${result.coupon.code}" ${t.checkout.couponDiscount} ${discountText} ${t.checkout.totalDiscount}: $${result.discount_amount.toFixed(2)}`,
           });
         }
       } else {

@@ -499,6 +499,10 @@ export const translations: Record<'tr' | 'en', Translation> = {
       backToPanel: "Panele Dön",
       
       orderId: "Sipariş ID",
+      couponApplied: "✅ Kupon Başarıyla Uygulandı!",
+      couponDiscount: "kuponunuz",
+      totalDiscount: "indirim sağladı. Toplam indirimi",
+      couponError: "❌ Kupon Hatası",
       amount: "Tutar",
       status: "Durum",
       paid: "Ödendi"
@@ -817,6 +821,10 @@ export const translations: Record<'tr' | 'en', Translation> = {
       backToPanel: "Back to Panel",
       
       orderId: "Order ID",
+      couponApplied: "✅ Coupon Applied Successfully!",
+      couponDiscount: "coupon provided",
+      totalDiscount: "discount. Total discount",
+      couponError: "❌ Coupon Error",
       amount: "Amount",
       status: "Status",
       paid: "Paid"

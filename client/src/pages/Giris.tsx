@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, User, Lock, CheckCircle, Navigation } from "lucide-react";
+import { Loader2, User, Lock, CheckCircle, Navigation, Home } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -198,8 +198,8 @@ export default function Giris() {
               </Button>
             </form>
 
-            {/* Register Link */}
-            <div className="mt-6 text-center">
+            {/* Register Link & Home Button */}
+            <div className="mt-6 text-center space-y-4">
               <p className="text-slate-400 text-sm">
                 Henüz hesabınız yok mu?{" "}
                 <button
@@ -210,6 +210,18 @@ export default function Giris() {
                   {t.auth.registerButton}
                 </button>
               </p>
+              
+              <div className="pt-2 border-t border-slate-600/30">
+                <button
+                  type="button"
+                  onClick={() => setLocation("/")}
+                  className="flex items-center justify-center gap-2 mx-auto text-slate-400 hover:text-white text-sm transition-colors py-2 px-4 rounded-lg hover:bg-slate-700/30"
+                  data-testid="button-home"
+                >
+                  <Home className="h-4 w-4" />
+                  Ana Sayfaya Dön
+                </button>
+              </div>
             </div>
           </CardContent>
         </Card>
