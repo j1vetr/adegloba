@@ -86,9 +86,13 @@ export default function PayPalButton({
         sdkUrl.searchParams.set('intent', intent);
         sdkUrl.searchParams.set('components', 'buttons');
         
-        // Add sandbox parameter for sandbox environment
+        // Add environment-specific parameters
         if (environment === 'sandbox') {
           sdkUrl.searchParams.set('disable-funding', 'venmo');
+        } else if (environment === 'production' || environment === 'live') {
+          // Production mode parameters
+          sdkUrl.searchParams.set('enable-funding', 'venmo,card');
+          sdkUrl.searchParams.set('disable-funding', 'paylater');
         }
         
         script.src = sdkUrl.toString();
