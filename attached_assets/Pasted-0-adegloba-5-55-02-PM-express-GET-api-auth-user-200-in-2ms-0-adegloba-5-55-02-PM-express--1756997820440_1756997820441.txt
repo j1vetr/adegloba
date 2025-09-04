@@ -1,0 +1,140 @@
+0|adegloba  | 5:55:02 PM [express] GET /api/auth/user 200 in 2ms
+0|adegloba  | 5:55:02 PM [express] GET /api/user/me 401 in 2ms :: {"message":"Unauthorized"}
+0|adegloba  | 5:55:12 PM [express] POST /api/user/login 200 in 193ms :: {"success":true,"user":{"id":"bac9d8da-deb…
+0|adegloba  | 5:55:12 PM [express] GET /api/user/me 200 in 4ms :: {"id":"bac9d8da-debb-4154-88dd-b98865147c08","us…
+0|adegloba  | 5:55:12 PM [express] GET /api/cart 200 in 7ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | Found 7 active packages for user bac9d8da-debb-4154-88dd-b98865147c08
+0|adegloba  | 5:55:12 PM [express] GET /api/user/active-packages 200 in 6ms :: [{"credentialId":"79cc9901-a854-478…
+0|adegloba  | 5:55:12 PM [express] GET /api/user/orders 200 in 6ms :: [{"id":"cd475662-9a81-482b-95d8-fe5d4a87e844…
+0|adegloba  | 5:55:12 PM [express] GET /api/user/expired-packages 200 in 6ms :: {"packages":[],"pagination":{"curr…
+0|adegloba  | 5:55:19 PM [express] POST /api/cart/checkout 200 in 10ms :: {"id":"f040de24-4427-43fa-875f-5ea6bfd4e…
+0|adegloba  | 5:55:19 PM [express] GET /api/user/me 304 in 3ms :: {"id":"bac9d8da-debb-4154-88dd-b98865147c08","us…
+0|adegloba  | 5:55:19 PM [express] GET /api/cart 304 in 5ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 5:55:24 PM [express] GET /api/cart 304 in 2ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 5:55:29 PM [express] GET /api/cart 304 in 4ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 5:55:34 PM [express] GET /api/cart 304 in 2ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 🔍 PayPal Order Request Debug: {
+0|adegloba  |   amount: '1',
+0|adegloba  |   currency: 'USD',
+0|adegloba  |   intent: 'CAPTURE',
+0|adegloba  |   paymentMethod: 'CARD',
+0|adegloba  |   hasCardDetails: true,
+0|adegloba  |   cardNumber: '5351****'
+0|adegloba  | }
+0|adegloba  | 🔧 Adding card payment_source to PayPal order
+0|adegloba  | 📤 PayPal Order Body: {
+0|adegloba  |   "intent": "CAPTURE",
+0|adegloba  |   "purchase_units": [
+0|adegloba  |     {
+0|adegloba  |       "amount": {
+0|adegloba  |         "currency_code": "USD",
+0|adegloba  |         "value": "1"
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   ],
+0|adegloba  |   "payment_source": {
+0|adegloba  |     "card": {
+0|adegloba  |       "number": "5351776675427727",
+0|adegloba  |       "security_code": "690",
+0|adegloba  |       "expiry": "2029-12",
+0|adegloba  |       "name": "Emir Şimşek",
+0|adegloba  |       "billing_address": {
+0|adegloba  |         "address_line_1": "sdasdfsafsafasf asfas fas fasf asf sa",
+0|adegloba  |         "address_line_2": "",
+0|adegloba  |         "admin_area_2": "Istanbul",
+0|adegloba  |         "admin_area_1": "TR",
+0|adegloba  |         "postal_code": "34000",
+0|adegloba  |         "country_code": "TR"
+0|adegloba  |       },
+0|adegloba  |       "attributes": {
+0|adegloba  |         "verification": {
+0|adegloba  |           "method": "SCA_WHEN_REQUIRED"
+0|adegloba  |         }
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | Failed to create order: ArgumentsValidationError: Argument for 'body' failed validation.
+0|adegloba  | Some properties are missing in the object: "purchaseUnits".
+0|adegloba  | Given value: {"intent":"CAPTURE","purchase_units":[{"amount":{"currency_code":"USD","value":"1"}}],"payment_source":{"card":{"number":"5351776675427727","security_code":"690","expiry":"2029-12","name":"Emir Şimşek","billing_address":{"address_line_1":"sdasdfsafsafasf asfas fas fasf asf sa","address_line_2":"","admin_area_2":"Istanbul","admin_area_1":"TR","postal_code":"34000","country_code":"TR"},"attributes":{"verification":{"method":"SCA_WHEN_REQUIRED"}}}}}
+0|adegloba  | Type: 'object'
+0|adegloba  | Expected type: 'Object<{intent,payer,purchaseUnits,paymentSource,applicationContext}>'
+0|adegloba  |     at new ArgumentsValidationError (/var/www/adegloba/node_modules/@apimatic/core/lib/errors/argumentsValidationError.js:49:24)
+0|adegloba  |     at DefaultRequestBuilder.prepareArgs (/var/www/adegloba/node_modules/@apimatic/core/lib/http/validate.js:36:15)
+0|adegloba  |     at OrdersController.<anonymous> (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/controllers/ordersController.js:288:30)
+0|adegloba  |     at step (/var/www/adegloba/node_modules/tslib/tslib.js:196:27)
+0|adegloba  |     at Object.next (/var/www/adegloba/node_modules/tslib/tslib.js:177:57)
+0|adegloba  |     at /var/www/adegloba/node_modules/tslib/tslib.js:170:75
+0|adegloba  |     at new Promise (<anonymous>)
+0|adegloba  |     at Object.__awaiter (/var/www/adegloba/node_modules/tslib/tslib.js:166:16)
+0|adegloba  |     at OrdersController.createOrder (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/controllers/ordersController.js:284:24)
+0|adegloba  |     at createPaypalOrder (file:///var/www/adegloba/dist/index.js:3563:62) {
+0|adegloba  |   errors: { body: [ [Object] ] }
+0|adegloba  | }
+0|adegloba  | 5:55:36 PM [express] POST /api/paypal/create-order 500 in 10ms :: {"error":"Failed to create order."}
+0|adegloba  | 5:55:39 PM [express] GET /api/cart 304 in 3ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 5:55:45 PM [express] GET /api/cart 304 in 9ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 5:55:50 PM [express] GET /api/cart 304 in 3ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 🔍 PayPal Order Request Debug: {
+0|adegloba  |   amount: '1',
+0|adegloba  |   currency: 'USD',
+0|adegloba  |   intent: 'CAPTURE',
+0|adegloba  |   paymentMethod: 'CARD',
+0|adegloba  |   hasCardDetails: true,
+0|adegloba  |   cardNumber: '5351****'
+0|adegloba  | }
+0|adegloba  | 🔧 Adding card payment_source to PayPal order
+0|adegloba  | 📤 PayPal Order Body: {
+0|adegloba  |   "intent": "CAPTURE",
+0|adegloba  |   "purchase_units": [
+0|adegloba  |     {
+0|adegloba  |       "amount": {
+0|adegloba  |         "currency_code": "USD",
+0|adegloba  |         "value": "1"
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   ],
+0|adegloba  |   "payment_source": {
+0|adegloba  |     "card": {
+0|adegloba  |       "number": "5351776675427727",
+0|adegloba  |       "security_code": "690",
+0|adegloba  |       "expiry": "2029-12",
+0|adegloba  |       "name": "Emir Şimşek",
+0|adegloba  |       "billing_address": {
+0|adegloba  |         "address_line_1": "sdasdfsafsafasf asfas fas fasf asf sa",
+0|adegloba  |         "address_line_2": "",
+0|adegloba  |         "admin_area_2": "Istanbul",
+0|adegloba  |         "admin_area_1": "TR",
+0|adegloba  |         "postal_code": "34000",
+0|adegloba  |         "country_code": "TR"
+0|adegloba  |       },
+0|adegloba  |       "attributes": {
+0|adegloba  |         "verification": {
+0|adegloba  |           "method": "SCA_WHEN_REQUIRED"
+0|adegloba  |         }
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | Failed to create order: ArgumentsValidationError: Argument for 'body' failed validation.
+0|adegloba  | Some properties are missing in the object: "purchaseUnits".
+0|adegloba  | Given value: {"intent":"CAPTURE","purchase_units":[{"amount":{"currency_code":"USD","value":"1"}}],"payment_source":{"card":{"number":"5351776675427727","security_code":"690","expiry":"2029-12","name":"Emir Şimşek","billing_address":{"address_line_1":"sdasdfsafsafasf asfas fas fasf asf sa","address_line_2":"","admin_area_2":"Istanbul","admin_area_1":"TR","postal_code":"34000","country_code":"TR"},"attributes":{"verification":{"method":"SCA_WHEN_REQUIRED"}}}}}
+0|adegloba  | Type: 'object'
+0|adegloba  | Expected type: 'Object<{intent,payer,purchaseUnits,paymentSource,applicationContext}>'
+0|adegloba  |     at new ArgumentsValidationError (/var/www/adegloba/node_modules/@apimatic/core/lib/errors/argumentsValidationError.js:49:24)
+0|adegloba  |     at DefaultRequestBuilder.prepareArgs (/var/www/adegloba/node_modules/@apimatic/core/lib/http/validate.js:36:15)
+0|adegloba  |     at OrdersController.<anonymous> (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/controllers/ordersController.js:288:30)
+0|adegloba  |     at step (/var/www/adegloba/node_modules/tslib/tslib.js:196:27)
+0|adegloba  |     at Object.next (/var/www/adegloba/node_modules/tslib/tslib.js:177:57)
+0|adegloba  |     at /var/www/adegloba/node_modules/tslib/tslib.js:170:75
+0|adegloba  |     at new Promise (<anonymous>)
+0|adegloba  |     at Object.__awaiter (/var/www/adegloba/node_modules/tslib/tslib.js:166:16)
+0|adegloba  |     at OrdersController.createOrder (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/controllers/ordersController.js:284:24)
+0|adegloba  |     at createPaypalOrder (file:///var/www/adegloba/dist/index.js:3563:62) {
+0|adegloba  |   errors: { body: [ [Object] ] }
+0|adegloba  | }
+0|adegloba  | 5:55:50 PM [express] POST /api/paypal/create-order 500 in 5ms :: {"error":"Failed to create order."}
+0|adegloba  | 5:55:55 PM [express] GET /api/cart 304 in 5ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 5:56:00 PM [express] GET /api/cart 304 in 3ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 5:56:05 PM [express] GET /api/cart 304 in 3ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+

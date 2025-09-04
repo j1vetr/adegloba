@@ -123,35 +123,35 @@ export async function createPaypalOrder(req: Request, res: Response) {
     const client = await createPayPalClient();
     const ordersController = new OrdersController(client);
 
-    // Build PayPal order body
+    // Build PayPal order body (camelCase format for SDK)
     const orderBody: any = {
       intent: intent,
-      purchase_units: [
+      purchaseUnits: [
         {
           amount: {
-            currency_code: currency,
+            currencyCode: currency,
             value: amount,
           },
         },
       ],
     };
 
-    // Add payment_source for credit card payments
+    // Add paymentSource for credit card payments  
     if (req.body.paymentMethod === 'CARD' && req.body.cardDetails) {
-      console.log('🔧 Adding card payment_source to PayPal order');
-      orderBody.payment_source = {
+      console.log('🔧 Adding card paymentSource to PayPal order');
+      orderBody.paymentSource = {
         card: {
           number: req.body.cardDetails.number,
-          security_code: req.body.cardDetails.securityCode,
+          securityCode: req.body.cardDetails.securityCode,
           expiry: `${req.body.cardDetails.expiryYear}-${req.body.cardDetails.expiryMonth.padStart(2, '0')}`,
           name: req.body.cardDetails.name,
-          billing_address: {
-            address_line_1: req.body.cardDetails.billingAddress.addressLine1 || '',
-            address_line_2: req.body.cardDetails.billingAddress.addressLine2 || '',
-            admin_area_2: req.body.cardDetails.billingAddress.city || '',
-            admin_area_1: req.body.cardDetails.billingAddress.state || '',
-            postal_code: req.body.cardDetails.billingAddress.postalCode || '',
-            country_code: req.body.cardDetails.billingAddress.countryCode || 'TR'
+          billingAddress: {
+            addressLine1: req.body.cardDetails.billingAddress.addressLine1 || '',
+            addressLine2: req.body.cardDetails.billingAddress.addressLine2 || '',
+            adminArea2: req.body.cardDetails.billingAddress.city || '',
+            adminArea1: req.body.cardDetails.billingAddress.state || '',
+            postalCode: req.body.cardDetails.billingAddress.postalCode || '',
+            countryCode: req.body.cardDetails.billingAddress.countryCode || 'TR'
           },
           attributes: {
             verification: {
