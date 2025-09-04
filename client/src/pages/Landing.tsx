@@ -82,7 +82,7 @@ export default function Landing() {
               <div className="space-y-6 sm:space-y-8">
                 <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight">
                   <div className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 bg-clip-text text-transparent mb-2 sm:mb-4">
-                    OKYANUSTA
+                    AÇIK DENİZDE
                   </div>
                   <div className="bg-gradient-to-r from-slate-300 via-white to-slate-300 bg-clip-text text-transparent">
                     SINIR YOK
