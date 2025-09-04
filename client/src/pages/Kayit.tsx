@@ -434,7 +434,7 @@ export default function Kayit() {
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-slate-300 flex items-center gap-2 font-medium">
                   <Mail className="h-4 w-4 text-amber-400" />
-                  {t.auth.email}
+                  {t.auth.emailLabel}
                 </Label>
                 <Input
                   id="email"

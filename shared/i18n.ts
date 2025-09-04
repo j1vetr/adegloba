@@ -45,6 +45,7 @@ export interface Translation {
     confirmPassword: string;
     usernameOrEmail: string;
     usernameOnly: string;
+    emailLabel: string;
   };
 
   // Dashboard & Panel
@@ -356,7 +357,8 @@ export const translations: Record<'tr' | 'en', Translation> = {
       registering: "Kayıt oluşturuluyor...",
       loginNow: "Şimdi Giriş Yap",
       usernameOrEmail: "Kullanıcı Adı / E-posta",
-      usernameOnly: "Kullanıcı Adı"
+      usernameOnly: "Kullanıcı Adı",
+      emailLabel: "E-posta"
     },
     profile: {
       fullName: "Ad Soyad",
@@ -680,7 +682,8 @@ export const translations: Record<'tr' | 'en', Translation> = {
       registering: "Registering...",
       loginNow: "Sign In Now",
       usernameOrEmail: "Username / Email",
-      usernameOnly: "Username"
+      usernameOnly: "Username",
+      emailLabel: "Email"
     },
     profile: {
       fullName: "Full Name",
