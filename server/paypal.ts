@@ -135,7 +135,8 @@ export async function createPaypalOrder(req: Request, res: Response) {
           },
         ],
         // Add payment_source for direct card capture with real card details
-        payment_source: req.body.paymentMethod === 'CARD' && req.body.cardDetails ? {
+        ...(req.body.paymentMethod === 'CARD' && req.body.cardDetails ? {
+          payment_source: {
           card: {
             number: req.body.cardDetails.number,
             security_code: req.body.cardDetails.securityCode,
@@ -155,7 +156,7 @@ export async function createPaypalOrder(req: Request, res: Response) {
               }
             }
           }
-        } : undefined,
+        } : {}),
       },
       prefer: "return=minimal",
     };
