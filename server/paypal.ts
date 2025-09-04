@@ -88,7 +88,16 @@ export async function getClientToken() {
 
 export async function createPaypalOrder(req: Request, res: Response) {
   try {
-    const { amount, currency, intent } = req.body;
+    const { amount, currency, intent, paymentMethod, cardDetails } = req.body;
+    
+    console.log('🔍 PayPal Order Request Debug:', {
+      amount,
+      currency,
+      intent,
+      paymentMethod,
+      hasCardDetails: !!cardDetails,
+      cardNumber: cardDetails?.number ? cardDetails.number.slice(0, 4) + '****' : 'None'
+    });
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res
