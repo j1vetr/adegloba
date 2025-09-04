@@ -45,10 +45,12 @@ export interface Translation {
     confirmPassword: string;
   };
 
-  // Dashboard
+  // Dashboard & Panel
   dashboard: {
     title: string;
     welcome: string;
+    systemNotice: string;
+    managementDescription: string;
     navigation: {
       home: string;
       packages: string;
@@ -64,6 +66,72 @@ export interface Translation {
       expired: string;
       purchaseHistory: string;
     };
+    stats: {
+      activePlans: string;
+      totalSpent: string;
+      shipsConnected: string;
+    };
+    purchase: {
+      buyDataPackage: string;
+      createOrder: string;
+      buyAgain: string;
+      noOrdersYet: string;
+      startBrowsing: string;
+      browsePlans: string;
+    };
+    status: {
+      active: string;
+      expired: string;
+      pending: string;
+      paid: string;
+      completed: string;
+      failed: string;
+      refunded: string;
+      cancelled: string;
+      daysLeft: string;
+    };
+  };
+
+  // Profile
+  profile: {
+    title: string;
+    personalInfo: string;
+    editProfile: string;
+    saveChanges: string;
+    cancel: string;
+    username: string;
+    email: string;
+    fullName: string;
+    phoneNumber: string;
+    selectShip: string;
+    address: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    registrationDate: string;
+    changePassword: string;
+    cannotChange: string;
+  };
+
+  // Cart Page
+  cart: {
+    title: string;
+    description: string;
+    loading: string;
+    empty: string;
+    emptyDescription: string;
+    browsePackages: string;
+    clearCart: string;
+    clearCartConfirm: string;
+    quantity: string;
+    remove: string;
+    removeSuccess: string;
+    clearSuccess: string;
+    checkoutProcessing: string;
+    securityNotice: string;
+    monthEndExpiry: string;
+    couponHint: string;
+    couponDescription: string;
   };
 
   // Checkout & Payment
@@ -78,6 +146,7 @@ export interface Translation {
     paypalPayment: string;
     cardPayment: string;
     processing: string;
+    proceedToPayment: string;
     
     // Card Form
     cardInfo: string;
@@ -196,6 +265,12 @@ export interface Translation {
     ok: string;
     close: string;
     back: string;
+    removed: string;
+    cleared: string;
+    created: string;
+    copied: string;
+    copiedDescription: string;
+    redirecting: string;
     next: string;
     previous: string;
     page: string;
@@ -262,6 +337,8 @@ export const translations: Record<'tr' | 'en', Translation> = {
     dashboard: {
       title: "AdeGloba Starlink System - Kontrol Paneli",
       welcome: "Hoş geldiniz",
+      systemNotice: "Bu sistem AdeGloba Starlink System müşterilerine özeldir.",
+      managementDescription: "Hesabınızı yönetin ve satın alma geçmişinizi görüntüleyin",
       navigation: {
         home: "Ana Sayfa",
         packages: "Paketler",
@@ -276,7 +353,71 @@ export const translations: Record<'tr' | 'en', Translation> = {
         activePackages: "Aktif Paketlerim",
         expired: "Süresi Doldu",
         purchaseHistory: "Geçmiş Satın Alımlar"
+      },
+      stats: {
+        activePlans: "Aktif Planlar",
+        totalSpent: "Toplam Harcama",
+        shipsConnected: "Bağlı Gemiler"
+      },
+      purchase: {
+        buyDataPackage: "Data Paketi Satın Al",
+        createOrder: "Oluşturuluyor...",
+        buyAgain: "Tekrar Satın Al",
+        noOrdersYet: "Henüz sipariş yok",
+        startBrowsing: "Data paketlerimize göz atmaya başlayın",
+        browsePlans: "Paketlere Göz At"
+      },
+      status: {
+        active: "Aktif",
+        expired: "Süresi Doldu",
+        pending: "Beklemede",
+        paid: "Ödendi",
+        completed: "Tamamlandı",
+        failed: "Başarısız",
+        refunded: "İade Edildi",
+        cancelled: "İptal Edildi",
+        daysLeft: "gün kaldı"
       }
+    },
+
+    profile: {
+      title: "AdeGloba Starlink System - Profil",
+      personalInfo: "Profil Bilgileri",
+      editProfile: "Profil Düzenle",
+      saveChanges: "Değişiklikleri Kaydet",
+      cancel: "İptal",
+      username: "Kullanıcı Adı",
+      email: "E-posta",
+      fullName: "İsim Soyisim",
+      phoneNumber: "Telefon Numarası",
+      selectShip: "Gemi Seçin",
+      address: "Adresiniz",
+      currentPassword: "Mevcut Şifre",
+      newPassword: "Yeni Şifre",
+      confirmPassword: "Yeni Şifre Tekrar",
+      registrationDate: "Kayıt Tarihi",
+      changePassword: "Şifre Değiştir (İsteğe Bağlı)",
+      cannotChange: "Bu alan değiştirilemez"
+    },
+
+    cart: {
+      title: "Sepetim",
+      description: "Paketlerinizi inceleyin ve ödeme işlemine geçin",
+      loading: "Sepet yükleniyor...",
+      empty: "Sepetiniz Boş",
+      emptyDescription: "Paket eklemek için paketler sayfasını ziyaret edin.",
+      browsePackages: "Paketlere Göz At",
+      clearCart: "Sepeti Temizle",
+      clearCartConfirm: "Tüm ürünleri sepetten çıkarmak istediğinizden emin misiniz?",
+      quantity: "Adet",
+      remove: "Kaldır",
+      removeSuccess: "Ürün sepetten kaldırıldı",
+      clearSuccess: "Sepet temizlendi",
+      checkoutProcessing: "Ödeme işlemi hazırlanıyor...",
+      securityNotice: "Güvenli 256-bit SSL şifreleme",
+      monthEndExpiry: "Ay sonu bitiş",
+      couponHint: "Kupon kodu var mı?",
+      couponDescription: "Ödeme sayfasında kupon kodunuzu girebilirsiniz"
     },
     
     checkout: {
@@ -290,6 +431,7 @@ export const translations: Record<'tr' | 'en', Translation> = {
       paypalPayment: "PayPal ile Ödeme",
       cardPayment: "Kart ile Ödeme",
       processing: "İşleniyor...",
+      proceedToPayment: "Ödemeye Geç",
       
       cardInfo: "Kart Bilgileri",
       cardNumber: "Kart Numarası",
@@ -398,6 +540,12 @@ export const translations: Record<'tr' | 'en', Translation> = {
       ok: "Tamam",
       close: "Kapat",
       back: "Geri",
+      removed: "Kaldırıldı",
+      cleared: "Temizlendi",
+      created: "Sipariş Oluşturuldu",
+      copied: "Kopyalandı",
+      copiedDescription: "panoya kopyalandı",
+      redirecting: "Ödeme sayfasına yönlendiriliyorsunuz...",
       next: "İleri",
       previous: "Önceki",
       page: "Sayfa",
@@ -463,6 +611,8 @@ export const translations: Record<'tr' | 'en', Translation> = {
     dashboard: {
       title: "AdeGloba Starlink System - Control Panel",
       welcome: "Welcome",
+      systemNotice: "This system is exclusive to AdeGloba Starlink System customers.",
+      managementDescription: "Manage your account and view purchase history",
       navigation: {
         home: "Home",
         packages: "Packages",
@@ -477,7 +627,71 @@ export const translations: Record<'tr' | 'en', Translation> = {
         activePackages: "My Active Packages",
         expired: "Expired",
         purchaseHistory: "Purchase History"
+      },
+      stats: {
+        activePlans: "Active Plans",
+        totalSpent: "Total Spent",
+        shipsConnected: "Ships Connected"
+      },
+      purchase: {
+        buyDataPackage: "Buy Data Package",
+        createOrder: "Creating...",
+        buyAgain: "Buy Again",
+        noOrdersYet: "No orders yet",
+        startBrowsing: "Start by browsing our data packages",
+        browsePlans: "Browse Plans"
+      },
+      status: {
+        active: "Active",
+        expired: "Expired",
+        pending: "Pending",
+        paid: "Paid",
+        completed: "Completed",
+        failed: "Failed",
+        refunded: "Refunded",
+        cancelled: "Cancelled",
+        daysLeft: "days left"
       }
+    },
+
+    profile: {
+      title: "AdeGloba Starlink System - Profile",
+      personalInfo: "Profile Information",
+      editProfile: "Edit Profile",
+      saveChanges: "Save Changes",
+      cancel: "Cancel",
+      username: "Username",
+      email: "Email",
+      fullName: "Full Name",
+      phoneNumber: "Phone Number",
+      selectShip: "Select Ship",
+      address: "Address",
+      currentPassword: "Current Password",
+      newPassword: "New Password",
+      confirmPassword: "Confirm New Password",
+      registrationDate: "Registration Date",
+      changePassword: "Change Password (Optional)",
+      cannotChange: "This field cannot be changed"
+    },
+
+    cart: {
+      title: "My Cart",
+      description: "Review your packages and proceed to checkout",
+      loading: "Loading cart...",
+      empty: "Your Cart is Empty",
+      emptyDescription: "Visit packages page to add packages.",
+      browsePackages: "Browse Packages",
+      clearCart: "Clear Cart",
+      clearCartConfirm: "Are you sure you want to remove all items from your cart?",
+      quantity: "Quantity",
+      remove: "Remove",
+      removeSuccess: "Item removed from cart",
+      clearSuccess: "Cart cleared",
+      checkoutProcessing: "Preparing checkout...",
+      securityNotice: "Secure 256-bit SSL encryption",
+      monthEndExpiry: "Month-end expiry",
+      couponHint: "Have a coupon code?",
+      couponDescription: "You can enter your coupon code on the checkout page"
     },
     
     checkout: {
@@ -491,6 +705,7 @@ export const translations: Record<'tr' | 'en', Translation> = {
       paypalPayment: "Pay with PayPal",
       cardPayment: "Pay with Card",
       processing: "Processing...",
+      proceedToPayment: "Proceed to Payment",
       
       cardInfo: "Card Information",
       cardNumber: "Card Number",
@@ -599,6 +814,12 @@ export const translations: Record<'tr' | 'en', Translation> = {
       ok: "OK",
       close: "Close",
       back: "Back",
+      removed: "Removed",
+      cleared: "Cleared",
+      created: "Order Created",
+      copied: "Copied",
+      copiedDescription: "copied to clipboard",
+      redirecting: "Redirecting to payment page...",
       next: "Next",
       previous: "Previous",
       page: "Page",

@@ -5,25 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUserAuth } from "@/hooks/useUserAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import type { User, Order } from "@shared/schema";
 
-// Utility function to translate order status to Turkish
-function getOrderStatusTurkish(status: string, isActive: boolean, isExpired: boolean): string {
-  if (isActive) return 'Aktif';
-  if (isExpired) return 'Süresi Doldu';
+// Utility function to translate order status
+function getOrderStatus(status: string, isActive: boolean, isExpired: boolean, t: any): string {
+  if (isActive) return t.dashboard.status.active;
+  if (isExpired) return t.dashboard.status.expired;
   
   const statusMap: { [key: string]: string } = {
-    'pending': 'Beklemede',
-    'paid': 'Ödendi',
-    'completed': 'Tamamlandı',
-    'failed': 'Başarısız',
-    'refunded': 'İade Edildi',
-    'expired': 'Süresi Doldu',
-    'cancelled': 'İptal Edildi'
+    'pending': t.dashboard.status.pending,
+    'paid': t.dashboard.status.paid,
+    'completed': t.dashboard.status.completed,
+    'failed': t.dashboard.status.failed,
+    'refunded': t.dashboard.status.refunded,
+    'expired': t.dashboard.status.expired,
+    'cancelled': t.dashboard.status.cancelled
   };
   return statusMap[status] || status;
 }
@@ -31,6 +32,7 @@ function getOrderStatusTurkish(status: string, isActive: boolean, isExpired: boo
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
 
   const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
@@ -124,7 +126,7 @@ export default function Dashboard() {
               <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent" data-testid="dashboard-title">
                 Dashboard
               </h1>
-              <p className="text-xl text-slate-300">Manage your account and view purchase history</p>
+              <p className="text-xl text-slate-300">{t.dashboard.managementDescription}</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -169,7 +171,7 @@ export default function Dashboard() {
                   <Card className="glassmorphism rounded-xl p-6 border-transparent" data-testid="stat-active-plans">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm text-slate-400">Active Plans</div>
+                        <div className="text-sm text-slate-400">{t.dashboard.stats.activePlans}</div>
                         <div className="text-2xl font-bold text-neon-green">{activeOrders.length}</div>
                       </div>
                       <i className="fas fa-wifi text-neon-green text-2xl"></i>
@@ -179,7 +181,7 @@ export default function Dashboard() {
                   <Card className="glassmorphism rounded-xl p-6 border-transparent" data-testid="stat-total-spent">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm text-slate-400">Total Spent</div>
+                        <div className="text-sm text-slate-400">{t.dashboard.stats.totalSpent}</div>
                         <div className="text-2xl font-bold text-neon-purple">${totalSpent.toFixed(2)}</div>
                       </div>
                       <i className="fas fa-dollar-sign text-neon-purple text-2xl"></i>
@@ -189,7 +191,7 @@ export default function Dashboard() {
                   <Card className="glassmorphism rounded-xl p-6 border-transparent" data-testid="stat-ships-connected">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm text-slate-400">Ships Connected</div>
+                        <div className="text-sm text-slate-400">{t.dashboard.stats.shipsConnected}</div>
                         <div className="text-2xl font-bold text-neon-cyan">{connectedShips}</div>
                       </div>
                       <i className="fas fa-ship text-neon-cyan text-2xl"></i>
@@ -200,7 +202,7 @@ export default function Dashboard() {
                 {/* Purchase History */}
                 <Card className="glassmorphism rounded-2xl p-6 border-transparent">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-white">Purchase History</h3>
+                    <h3 className="text-xl font-semibold text-white">{t.dashboard.sections.purchaseHistory}</h3>
                     <div className="flex space-x-2">
                       <select className="px-3 py-2 rounded-lg glassmorphism border border-slate-600 text-white text-sm bg-transparent" data-testid="filter-status">
                         <option value="all">All Status</option>
@@ -268,7 +270,7 @@ export default function Dashboard() {
                                 <Badge variant="secondary" className="bg-slate-500/20 text-slate-400 border-transparent">Süresi Doldu</Badge>
                               ) : (
                                 <Badge className="bg-yellow-500/20 text-yellow-500 border-transparent">
-                                  {getOrderStatusTurkish(order.status, false, false)}
+                                  {getOrderStatus(order.status, false, false, t)}
                                 </Badge>
                               )}
                             </div>

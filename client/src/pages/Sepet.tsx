@@ -8,6 +8,7 @@ import { Loader2, ShoppingCart, Package, Trash2, Plus, Minus, DollarSign, Tag } 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useState } from "react";
 
 interface CartItem {
@@ -34,6 +35,7 @@ interface CartData {
 
 export default function Sepet() {
   const { user, isLoading: authLoading } = useUserAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
 
   const { data: cartData, isLoading: cartLoading } = useQuery<CartData>({
@@ -51,7 +53,7 @@ export default function Sepet() {
     },
     onError: (error: any) => {
       toast({
-        title: "Hata",
+        title: t.common.error,
         description: error.message || "Miktar güncellenemedi",
         variant: "destructive",
       });
@@ -66,13 +68,13 @@ export default function Sepet() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
-        title: "Kaldırıldı",
-        description: "Ürün sepetten kaldırıldı",
+        title: t.common.removed,
+        description: t.cart.removeSuccess,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Hata",
+        title: t.common.error,
         description: error.message || "Ürün kaldırılamadı",
         variant: "destructive",
       });
@@ -87,13 +89,13 @@ export default function Sepet() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
-        title: "Temizlendi",
-        description: "Sepet temizlendi",
+        title: t.common.cleared,
+        description: t.cart.clearSuccess,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Hata",
+        title: t.common.error,
         description: error.message || "Sepet temizlenemedi",
         variant: "destructive",
       });
@@ -108,14 +110,14 @@ export default function Sepet() {
     },
     onSuccess: (order) => {
       toast({
-        title: "Sipariş Oluşturuldu",
-        description: "Ödeme sayfasına yönlendiriliyorsunuz...",
+        title: t.common.created,
+        description: t.common.redirecting,
       });
       window.location.href = `/checkout?orderId=${order.id}`;
     },
     onError: (error: any) => {
       toast({
-        title: "Hata",
+        title: t.common.error,
         description: error.message || "Sipariş oluşturulamadı",
         variant: "destructive",
       });
@@ -171,32 +173,32 @@ export default function Sepet() {
             </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-4">
-            Sepetim
+            {t.cart.title}
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-            Paketlerinizi inceleyin ve ödeme işlemine geçin
+            {t.cart.description}
           </p>
         </div>
 
         {cartLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
-            <span className="ml-3 text-slate-300">Sepet yükleniyor...</span>
+            <span className="ml-3 text-slate-300">{t.cart.loading}</span>
           </div>
         ) : !cartData?.items?.length ? (
           <div className="text-center py-12">
             <ShoppingCart className="h-16 w-16 text-slate-400 mx-auto mb-6" />
             <h3 className="text-xl font-semibold text-white mb-4">
-              Sepetiniz Boş
+              {t.cart.empty}
             </h3>
             <p className="text-slate-400 mb-6">
-              Paket eklemek için paketler sayfasını ziyaret edin.
+              {t.cart.emptyDescription}
             </p>
             <Button 
               onClick={() => window.location.href = '/paketler'}
               className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-8 py-3 rounded-xl"
             >
-              Paketlere Göz At
+              {t.cart.browsePackages}
             </Button>
           </div>
         ) : (
@@ -223,7 +225,7 @@ export default function Sepet() {
                             {item.plan?.name || 'Paket'}
                           </h3>
                           <p className="text-slate-400 text-sm mb-2">
-                            {item.plan?.dataLimitGb}GB - Ay sonu bitiş
+                            {item.plan?.dataLimitGb}GB - {t.cart.monthEndExpiry}
                           </p>
                           <div className="flex items-center text-cyan-400 price-highlight">
                             <DollarSign className="h-4 w-4 mr-1 animate-pulse" />
@@ -300,7 +302,7 @@ export default function Sepet() {
                   data-testid="clear-cart-button"
                 >
                   <Trash2 className="h-4 w-4 mr-2 transition-transform duration-200 hover:scale-110" />
-                  Sepeti Temizle
+                  {t.cart.clearCart}
                 </Button>
               </div>
             </div>
@@ -309,28 +311,28 @@ export default function Sepet() {
             <div className="lg:col-span-1">
               <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50 sticky top-24">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-white">Sipariş Özeti</CardTitle>
+                  <CardTitle className="text-xl font-semibold text-white">{t.checkout.orderSummary}</CardTitle>
                 </CardHeader>
                 
                 <CardContent className="space-y-6">
                   {/* Price Breakdown */}
                   <div className="space-y-3 pt-4 border-t border-slate-600">
                     <div className="flex justify-between">
-                      <span className="text-slate-300">Ara Toplam</span>
+                      <span className="text-slate-300">{t.checkout.subtotal}</span>
                       <span className="text-white font-semibold">{formatPrice(cartData.subtotal)}</span>
                     </div>
                     
                     <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-600">
-                      <span className="text-white">Toplam</span>
+                      <span className="text-white">{t.checkout.total}</span>
                       <span className="text-cyan-400">{formatPrice(cartData.subtotal || 0)}</span>
                     </div>
                     
                     <div className="text-center text-sm text-slate-400 bg-slate-800/30 p-3 rounded-lg">
                       <div className="flex items-center justify-center mb-1">
                         <Tag className="h-4 w-4 mr-2 text-green-400" />
-                        <span className="text-green-400 font-medium">Kupon kodu var mı?</span>
+                        <span className="text-green-400 font-medium">{t.cart.couponHint}</span>
                       </div>
-                      <span>Ödeme sayfasında kupon kodunuzu girebilirsiniz</span>
+                      <span>{t.cart.couponDescription}</span>
                     </div>
                   </div>
 
@@ -346,13 +348,13 @@ export default function Sepet() {
                     ) : (
                       <ShoppingCart className="h-5 w-5 mr-2" />
                     )}
-                    Ödemeye Geç
+                    {checkoutMutation.isPending ? t.cart.checkoutProcessing : t.checkout.proceedToPayment}
                   </Button>
 
                   {/* Security Notice */}
                   <div className="text-center text-xs text-slate-400 flex items-center justify-center">
                     <div className="mr-1">🔒</div>
-                    Güvenli 256-bit SSL şifreleme
+                    {t.cart.securityNotice}
                   </div>
                 </CardContent>
               </Card>

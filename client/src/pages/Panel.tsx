@@ -10,12 +10,14 @@ import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronR
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { Order, User, Ship } from "@shared/schema";
 import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
 
 export default function Panel() {
   const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }, isLoading: boolean };
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [expiredPage, setExpiredPage] = useState(1);
   const expiredPageSize = 6;
 
@@ -23,13 +25,13 @@ export default function Panel() {
     try {
       await navigator.clipboard.writeText(text);
       toast({
-        title: "Kopyalandı",
-        description: `${type} panoya kopyalandı`,
+        title: t.common.copied,
+        description: `${type} ${t.common.copiedDescription}`,
         variant: "default"
       });
     } catch (err) {
       toast({
-        title: "Hata",
+        title: t.common.error,
         description: "Kopyalama işlemi başarısız",
         variant: "destructive"
       });
@@ -122,11 +124,11 @@ export default function Panel() {
                 className="h-8 sm:h-10 lg:h-12 object-contain filter drop-shadow-lg"
               />
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                Kontrol Paneli
+                {t.dashboard.title.replace(' - ', '').replace('AdeGloba Starlink System', '')}
               </h1>
             </div>
             <p className="text-slate-400 text-sm lg:text-base">
-              Hoş geldiniz, <span className="text-white font-medium">{user.username}</span>
+              {t.dashboard.welcome}, <span className="text-white font-medium">{user.username}</span>
               {user.ship && (
                 <> • <span className="text-amber-400 font-medium">Gemi: {user.ship.name}</span></>
               )}
@@ -135,7 +137,7 @@ export default function Panel() {
           <Link href="/paketler">
             <Button className="w-full lg:w-auto bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg" data-testid="button-buy-packages">
               <Package className="mr-2 h-4 w-4" />
-              Data Paketi Satın Al
+              {t.dashboard.purchase.buyDataPackage}
             </Button>
           </Link>
         </div>
@@ -148,7 +150,7 @@ export default function Panel() {
               data-testid="tab-packages"
             >
               <Package className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Paketlerim</span>
+              <span className="hidden sm:inline">{t.dashboard.sections.activePackages}</span>
               <span className="sm:hidden">Paketler</span>
             </TabsTrigger>
             <TabsTrigger 
@@ -157,7 +159,7 @@ export default function Panel() {
               data-testid="tab-history"
             >
               <History className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Geçmiş Satın Alımlar</span>
+              <span className="hidden sm:inline">{t.dashboard.sections.purchaseHistory}</span>
               <span className="sm:hidden">Geçmiş</span>
             </TabsTrigger>
             <TabsTrigger 
@@ -166,7 +168,7 @@ export default function Panel() {
               data-testid="tab-expired"
             >
               <Archive className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Süresi Bitmiş Paketlerim</span>
+              <span className="hidden sm:inline">{t.dashboard.sections.expired} Paketlerim</span>
               <span className="sm:hidden">Bitmiş</span>
             </TabsTrigger>
           </TabsList>
@@ -177,7 +179,7 @@ export default function Panel() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 text-lg">
                   <Package className="h-5 w-5 text-blue-400" />
-                  Aktif Paketlerim {(activePackages as any)?.length ? `(${(activePackages as any).length})` : ''}
+                  {t.dashboard.sections.activePackages} {(activePackages as any)?.length ? `(${(activePackages as any).length})` : ''}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -213,7 +215,7 @@ export default function Panel() {
                                   ? 'bg-gradient-to-r from-yellow-600 to-orange-600' 
                                   : 'bg-gradient-to-r from-red-600 to-red-700'
                               }`}>
-                                {daysRemaining > 0 ? 'Aktif' : 'Süresi Doldu'}
+                                {daysRemaining > 0 ? t.dashboard.status.active : t.dashboard.status.expired}
                               </Badge>
                             </div>
                             
@@ -340,7 +342,7 @@ export default function Panel() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <History className="h-5 w-5" />
-                  Geçmiş Satın Alımlar
+                  {t.dashboard.sections.purchaseHistory}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -406,7 +408,7 @@ export default function Panel() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 text-lg">
                   <Archive className="h-5 w-5 text-red-400" />
-                  Süresi Bitmiş Paketlerim
+                  {t.dashboard.sections.expired} Paketlerim
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -424,7 +426,7 @@ export default function Panel() {
                             <div className="flex items-center justify-between mb-4">
                               <h3 className="font-semibold text-white text-lg">{pkg.planName}</h3>
                               <Badge className="bg-gradient-to-r from-red-600 to-red-700 text-white border-0">
-                                Süresi Doldu
+                                {t.dashboard.status.expired}
                               </Badge>
                             </div>
                             
@@ -505,7 +507,7 @@ export default function Panel() {
                       <Archive className="h-16 w-16 text-slate-400 mx-auto" />
                       <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl" />
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-3">Süresi Bitmiş Paket Yok</h3>
+                    <h3 className="text-xl font-semibold text-white mb-3">{t.dashboard.sections.expired} Paket Yok</h3>
                     <p className="text-slate-400 mb-6 max-w-md mx-auto">
                       Henüz süresi dolmuş paketiniz bulunmamaktadır. Aktif paketleriniz sona erdiğinde burada görünecek.
                     </p>
