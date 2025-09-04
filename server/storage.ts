@@ -1388,119 +1388,80 @@ export class DatabaseStorage implements IStorage {
   }): Promise<{ credentials: any[]; totalCount: number }> {
     const { search, statusFilter, planFilter, limit, offset } = options;
 
+    // Simple approach - get all credentials and then filter/paginate
+    // This is less efficient but guaranteed to work
     try {
-      // Build WHERE conditions array
-      const whereConditions: string[] = [];
-      const whereParams: any[] = [];
-      let paramIndex = 1;
+      const allCredentials = await db.select({
+        id: credentialPools.id,
+        planId: credentialPools.planId,
+        username: credentialPools.username,
+        password: credentialPools.password,
+        isAssigned: credentialPools.isAssigned,
+        assignedToUserId: credentialPools.assignedToUserId,
+        assignedToOrderId: credentialPools.assignedToOrderId,
+        assignedAt: credentialPools.assignedAt,
+        createdAt: credentialPools.createdAt,
+        updatedAt: credentialPools.updatedAt
+      }).from(credentialPools)
+        .orderBy(desc(credentialPools.createdAt));
+
+      // Get related plans and ships separately to avoid join issues
+      const allPlans = await db.select().from(plans);
+      const allShips = await db.select().from(ships);
+
+      // Manually attach plan and ship data
+      const credentialsWithJoins = allCredentials.map(credential => {
+        const plan = allPlans.find(p => p.id === credential.planId);
+        const ship = plan ? allShips.find(s => s.id === plan.shipId) : null;
+
+        return {
+          ...credential,
+          plan: plan ? {
+            id: plan.id,
+            name: plan.name,
+            description: plan.description,
+            price: plan.priceUsd,
+            currency: 'USD',
+            shipId: plan.shipId,
+            isActive: plan.isActive,
+          } : null,
+          ship: ship ? {
+            id: ship.id,
+            name: ship.name,
+            slug: ship.slug,
+            kitNumber: ship.kitNumber,
+            isActive: ship.isActive,
+          } : null
+        };
+      });
+
+      // Apply client-side filtering
+      let filteredCredentials = credentialsWithJoins;
 
       if (search) {
-        whereConditions.push(`(
-          LOWER(cp.username) LIKE LOWER($${paramIndex}) OR
-          LOWER(p.name) LIKE LOWER($${paramIndex}) OR  
-          LOWER(s.name) LIKE LOWER($${paramIndex})
-        )`);
-        whereParams.push(`%${search}%`);
-        paramIndex++;
+        const searchLower = search.toLowerCase();
+        filteredCredentials = filteredCredentials.filter(cred => 
+          cred.username.toLowerCase().includes(searchLower) ||
+          (cred.plan?.name && cred.plan.name.toLowerCase().includes(searchLower)) ||
+          (cred.ship?.name && cred.ship.name.toLowerCase().includes(searchLower))
+        );
       }
 
       if (statusFilter && statusFilter !== 'all') {
         if (statusFilter === 'available') {
-          whereConditions.push(`cp.is_assigned = $${paramIndex}`);
-          whereParams.push(false);
-          paramIndex++;
+          filteredCredentials = filteredCredentials.filter(cred => !cred.isAssigned);
         } else if (statusFilter === 'assigned') {
-          whereConditions.push(`cp.is_assigned = $${paramIndex}`);
-          whereParams.push(true);
-          paramIndex++;
+          filteredCredentials = filteredCredentials.filter(cred => cred.isAssigned);
         }
       }
 
       if (planFilter && planFilter !== 'all') {
-        whereConditions.push(`cp.plan_id = $${paramIndex}`);
-        whereParams.push(planFilter);
-        paramIndex++;
+        filteredCredentials = filteredCredentials.filter(cred => cred.planId === planFilter);
       }
 
-      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-
-      // Get total count with raw SQL
-      const countQuery = `
-        SELECT COUNT(*) as count
-        FROM credential_pools cp
-        LEFT JOIN plans p ON cp.plan_id = p.id
-        LEFT JOIN ships s ON p.ship_id = s.id
-        ${whereClause}
-      `;
-
-      const countResult = await db.execute(sql.raw(countQuery, whereParams));
-      const totalCount = Number(countResult.rows[0]?.count) || 0;
-
-      // Get paginated data with raw SQL
-      const dataQuery = `
-        SELECT 
-          cp.id,
-          cp.plan_id,
-          cp.username,
-          cp.password,
-          cp.is_assigned,
-          cp.assigned_to_user_id,
-          cp.assigned_to_order_id,
-          cp.assigned_at,
-          cp.created_at,
-          cp.updated_at,
-          p.id as plan_id_joined,
-          p.name as plan_name,
-          p.description as plan_description,
-          p.price_usd as plan_price,
-          'USD' as plan_currency,
-          p.ship_id as plan_ship_id,
-          p.is_active as plan_is_active,
-          s.id as ship_id,
-          s.name as ship_name,
-          s.slug as ship_slug,
-          s.description as ship_description,
-          s.is_active as ship_is_active
-        FROM credential_pools cp
-        LEFT JOIN plans p ON cp.plan_id = p.id
-        LEFT JOIN ships s ON p.ship_id = s.id
-        ${whereClause}
-        ORDER BY cp.created_at DESC
-        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-      `;
-
-      const dataParams = [...whereParams, limit, offset];
-      const dataResult = await db.execute(sql.raw(dataQuery, dataParams));
-
-      // Transform raw results to expected structure
-      const credentials = dataResult.rows.map((row: any) => ({
-        id: row.id,
-        planId: row.plan_id,
-        username: row.username,
-        password: row.password,
-        isAssigned: row.is_assigned,
-        assignedToUserId: row.assigned_to_user_id,
-        assignedToOrderId: row.assigned_to_order_id,
-        assignedAt: row.assigned_at,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        plan: row.plan_id_joined ? {
-          id: row.plan_id_joined,
-          name: row.plan_name,
-          description: row.plan_description,
-          price: row.plan_price,
-          currency: row.plan_currency,
-          shipId: row.plan_ship_id,
-          isActive: row.plan_is_active,
-        } : null,
-        ship: row.ship_id ? {
-          id: row.ship_id,
-          name: row.ship_name,
-          slug: row.ship_slug,
-          description: row.ship_description,
-          isActive: row.ship_is_active,
-        } : null
-      }));
+      // Apply pagination
+      const totalCount = filteredCredentials.length;
+      const credentials = filteredCredentials.slice(offset, offset + limit);
 
       return {
         credentials,
