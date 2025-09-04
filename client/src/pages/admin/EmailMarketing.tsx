@@ -63,6 +63,7 @@ export default function EmailMarketing() {
   const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [activeTab, setActiveTab] = useState('compose');
   
   // Email form state
   const [emailForm, setEmailForm] = useState({
@@ -275,7 +276,7 @@ export default function EmailMarketing() {
           </div>
         </div>
 
-        <Tabs defaultValue="compose" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="compose">
               <Mail className="w-4 h-4 mr-2" />
