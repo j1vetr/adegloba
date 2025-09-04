@@ -375,10 +375,10 @@ export default function Kayit() {
             />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            Sisteme Kayıt
+            {t.auth.systemRegistration}
           </h1>
           <p className="text-slate-400 text-sm sm:text-base">
-            AdeGloba Starlink System'e katılın
+            {t.auth.joinMessage}
           </p>
         </div>
 
@@ -387,7 +387,7 @@ export default function Kayit() {
           <CardHeader className="pb-6">
             <CardTitle className="text-center text-white text-xl flex items-center justify-center gap-2">
               <UserPlus className="h-5 w-5 text-amber-400" />
-              Yeni Hesap Oluştur
+              {t.auth.createNewAccount}
             </CardTitle>
             <p className="text-center text-slate-400 text-sm">
               Sisteme erişim için gerekli bilgileri doldurun
