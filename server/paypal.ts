@@ -125,9 +125,21 @@ export async function createPaypalOrder(req: Request, res: Response) {
             },
           },
         ],
-        // Add payment_source for direct card capture without approval step
-        payment_source: req.body.paymentMethod === 'CARD' ? {
+        // Add payment_source for direct card capture with real card details
+        payment_source: req.body.paymentMethod === 'CARD' && req.body.cardDetails ? {
           card: {
+            number: req.body.cardDetails.number,
+            security_code: req.body.cardDetails.securityCode,
+            expiry: `${req.body.cardDetails.expiryYear}-${req.body.cardDetails.expiryMonth.padStart(2, '0')}`,
+            name: req.body.cardDetails.name,
+            billing_address: {
+              address_line_1: req.body.cardDetails.billingAddress.addressLine1,
+              address_line_2: req.body.cardDetails.billingAddress.addressLine2,
+              admin_area_2: req.body.cardDetails.billingAddress.city,
+              admin_area_1: req.body.cardDetails.billingAddress.state,
+              postal_code: req.body.cardDetails.billingAddress.postalCode,
+              country_code: req.body.cardDetails.billingAddress.countryCode
+            },
             attributes: {
               verification: {
                 method: "SCA_WHEN_REQUIRED"

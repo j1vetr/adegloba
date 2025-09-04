@@ -171,7 +171,7 @@ export default function CreditCardDrawer({
     setIsProcessing(true);
     
     try {
-      // Create PayPal order for credit card processing
+      // Create PayPal order for credit card processing with card details
       const createResponse = await fetch('/api/paypal/create-order', {
         method: 'POST',
         headers: {
@@ -181,7 +181,22 @@ export default function CreditCardDrawer({
           amount: parseFloat(amount).toString(),
           currency: currency,
           intent: 'CAPTURE',
-          paymentMethod: 'CARD' // Indicate this is a card payment
+          paymentMethod: 'CARD',
+          cardDetails: {
+            number: formData.cardNumber.replace(/\s/g, ''),
+            expiryMonth: formData.expiryDate.split('/')[0],
+            expiryYear: '20' + formData.expiryDate.split('/')[1],
+            securityCode: formData.cvv,
+            name: formData.fullName,
+            billingAddress: {
+              addressLine1: formData.addressLine1,
+              addressLine2: formData.addressLine2,
+              city: formData.city,
+              state: formData.region,
+              postalCode: formData.postalCode,
+              countryCode: 'TR'
+            }
+          }
         }),
       });
 
