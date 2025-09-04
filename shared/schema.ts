@@ -547,6 +547,31 @@ export const emailLogs = pgTable("email_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Email Templates table for marketing campaigns
+export const emailTemplates = pgTable("email_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  subject: varchar("subject").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Email Campaigns table for tracking bulk email sends
+export const emailCampaigns = pgTable("email_campaigns", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  subject: varchar("subject").notNull(),
+  content: text("content").notNull(),
+  recipientType: varchar("recipient_type").notNull(), // 'all', 'active', 'inactive', 'selected'
+  selectedUsers: text("selected_users"), // JSON array of user IDs for 'selected' type
+  recipientCount: integer("recipient_count").notNull().default(0),
+  sentCount: integer("sent_count").notNull().default(0),
+  status: varchar("status").notNull().default('draft'), // 'draft', 'sending', 'sent', 'failed'
+  createdAt: timestamp("created_at").defaultNow(),
+  sentAt: timestamp("sent_at"),
+});
+
 export const insertEmailSettingSchema = createInsertSchema(emailSettings).omit({
   id: true,
   createdAt: true,
@@ -561,6 +586,24 @@ export const insertEmailLogSchema = createInsertSchema(emailLogs).omit({
 });
 export type InsertEmailLog = z.infer<typeof insertEmailLogSchema>;
 export type EmailLog = typeof emailLogs.$inferSelect;
+
+// Email template schemas
+export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+
+// Email campaign schemas
+export const insertEmailCampaignSchema = createInsertSchema(emailCampaigns).omit({
+  id: true,
+  createdAt: true,
+  sentAt: true,
+});
+export type InsertEmailCampaign = z.infer<typeof insertEmailCampaignSchema>;
+export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 
 export const systemLogsRelations = relations(systemLogs, ({ one }) => ({
   adminUser: one(admin_users, { fields: [systemLogs.adminId], references: [admin_users.id] }),

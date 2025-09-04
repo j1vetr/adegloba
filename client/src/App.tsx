@@ -41,6 +41,7 @@ import TicketDetail from "@/pages/TicketDetail";
 import Profil from "@/pages/Profil";
 import KullanimKilavuzu from "@/pages/KullanimKilavuzu";
 import PushNotifications from "@/pages/admin/PushNotifications";
+import EmailMarketing from "@/pages/admin/EmailMarketing";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
@@ -143,6 +144,12 @@ function Router() {
       <Route path="/admin/push-notifications">
         <AdminProtectedRoute>
           <PushNotifications />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/email-marketing">
+        <AdminProtectedRoute>
+          <EmailMarketing />
         </AdminProtectedRoute>
       </Route>
       

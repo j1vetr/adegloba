@@ -71,6 +71,7 @@ const navigationCategories = [
     name: 'İletişim',
     items: [
       { name: 'Push Bildirimleri', href: '/admin/push-notifications', icon: Bell },
+      { name: 'E-mail Pazarlama', href: '/admin/email-marketing', icon: Mail },
     ]
   },
   {

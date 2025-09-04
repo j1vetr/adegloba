@@ -47,6 +47,12 @@ import {
   type InsertEmailSetting,
   type EmailLog,
   type InsertEmailLog,
+  emailTemplates,
+  type EmailTemplate,
+  type InsertEmailTemplate,
+  emailCampaigns,
+  type EmailCampaign,
+  type InsertEmailCampaign,
   cartItems,
   couponUsage,
   type CartItem,
@@ -195,6 +201,15 @@ export interface IStorage {
     status?: string;
     template?: string;
   }): Promise<{ logs: EmailLog[]; total: number }>;
+  
+  // Email marketing operations
+  createEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate>;
+  getEmailTemplates(): Promise<EmailTemplate[]>;
+  getEmailTemplateById(id: string): Promise<EmailTemplate | undefined>;
+  deleteEmailTemplate(id: string): Promise<boolean>;
+  createEmailCampaign(campaign: InsertEmailCampaign): Promise<EmailCampaign>;
+  getEmailCampaigns(): Promise<EmailCampaign[]>;
+  updateEmailCampaign(id: string, data: Partial<EmailCampaign>): Promise<EmailCampaign | undefined>;
   getOrdersByShipAndDateRange(shipId: string, startDate: Date, endDate: Date): Promise<Order[]>;
   getOrderItems(orderId: string): Promise<OrderItem[]>;
 
@@ -2214,6 +2229,66 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(pushSubscriptions.id, subscriptionId));
+  }
+
+  // Email marketing operations
+  async createEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate> {
+    const [created] = await db
+      .insert(emailTemplates)
+      .values(template)
+      .returning();
+    return created;
+  }
+
+  async getEmailTemplates(): Promise<EmailTemplate[]> {
+    return await db
+      .select()
+      .from(emailTemplates)
+      .orderBy(desc(emailTemplates.createdAt));
+  }
+
+  async getEmailTemplateById(id: string): Promise<EmailTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(emailTemplates)
+      .where(eq(emailTemplates.id, id));
+    return template;
+  }
+
+  async deleteEmailTemplate(id: string): Promise<boolean> {
+    try {
+      await db
+        .delete(emailTemplates)
+        .where(eq(emailTemplates.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting email template:', error);
+      return false;
+    }
+  }
+
+  async createEmailCampaign(campaign: InsertEmailCampaign): Promise<EmailCampaign> {
+    const [created] = await db
+      .insert(emailCampaigns)
+      .values(campaign)
+      .returning();
+    return created;
+  }
+
+  async getEmailCampaigns(): Promise<EmailCampaign[]> {
+    return await db
+      .select()
+      .from(emailCampaigns)
+      .orderBy(desc(emailCampaigns.createdAt));
+  }
+
+  async updateEmailCampaign(id: string, data: Partial<EmailCampaign>): Promise<EmailCampaign | undefined> {
+    const [updated] = await db
+      .update(emailCampaigns)
+      .set(data)
+      .where(eq(emailCampaigns.id, id))
+      .returning();
+    return updated;
   }
 }
 

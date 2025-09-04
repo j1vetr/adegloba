@@ -3105,6 +3105,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email Marketing API endpoints
+  app.get('/api/admin/email-marketing/users', isAdminAuthenticated, async (req, res) => {
+    try {
+      const users = await storage.getAllUsersWithShips();
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users for email marketing:', error);
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
+  app.get('/api/admin/email-marketing/templates', isAdminAuthenticated, async (req, res) => {
+    try {
+      const templates = await storage.getEmailTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching email templates:', error);
+      res.status(500).json({ message: 'Failed to fetch templates' });
+    }
+  });
+
+  app.post('/api/admin/email-marketing/templates', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { name, subject, content } = req.body;
+
+      if (!name || !subject || !content) {
+        return res.status(400).json({ message: 'Name, subject and content are required' });
+      }
+
+      const template = await storage.createEmailTemplate({
+        name,
+        subject,
+        content
+      });
+
+      res.json(template);
+    } catch (error) {
+      console.error('Error creating email template:', error);
+      res.status(500).json({ message: 'Failed to create template' });
+    }
+  });
+
+  app.get('/api/admin/email-marketing/campaigns', isAdminAuthenticated, async (req, res) => {
+    try {
+      const campaigns = await storage.getEmailCampaigns();
+      res.json(campaigns);
+    } catch (error) {
+      console.error('Error fetching email campaigns:', error);
+      res.status(500).json({ message: 'Failed to fetch campaigns' });
+    }
+  });
+
+  app.post('/api/admin/email-marketing/send', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { subject, content, recipientType, selectedUsers } = req.body;
+
+      if (!subject || !content) {
+        return res.status(400).json({ message: 'Subject and content are required' });
+      }
+
+      // Get recipients based on type
+      const allUsers = await storage.getAllUsersWithShips();
+      let recipients: any[] = [];
+
+      switch (recipientType) {
+        case 'all':
+          recipients = allUsers;
+          break;
+        case 'active':
+          recipients = allUsers.filter(user => user.last_login_at && 
+            new Date(user.last_login_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+          break;
+        case 'inactive':
+          recipients = allUsers.filter(user => !user.last_login_at || 
+            new Date(user.last_login_at) <= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+          break;
+        case 'selected':
+          recipients = allUsers.filter(user => selectedUsers.includes(user.id));
+          break;
+        default:
+          recipients = [];
+      }
+
+      if (recipients.length === 0) {
+        return res.status(400).json({ message: 'No recipients selected' });
+      }
+
+      // Create campaign record
+      const campaign = await storage.createEmailCampaign({
+        name: subject,
+        subject,
+        content,
+        recipientType,
+        selectedUsers: recipientType === 'selected' ? JSON.stringify(selectedUsers) : null,
+        recipientCount: recipients.length,
+        sentCount: 0,
+        status: 'sending'
+      });
+
+      // Send emails using existing EmailService
+      const emailService = (global as any).emailService;
+      let sentCount = 0;
+
+      for (const user of recipients) {
+        try {
+          // Replace template variables
+          const personalizedContent = content
+            .replace(/{kullanici_adi}/g, user.full_name || user.username)
+            .replace(/{email}/g, user.email)
+            .replace(/{telefon}/g, user.phone || '');
+
+          await emailService.sendEmail(
+            user.email,
+            subject,
+            personalizedContent
+          );
+          
+          sentCount++;
+        } catch (emailError) {
+          console.error(`Failed to send email to ${user.email}:`, emailError);
+        }
+      }
+
+      // Update campaign status
+      await storage.updateEmailCampaign(campaign.id, {
+        sentCount,
+        status: sentCount > 0 ? 'sent' : 'failed',
+        sentAt: new Date()
+      });
+
+      res.json({ 
+        success: true, 
+        sentCount, 
+        totalCount: recipients.length,
+        campaignId: campaign.id
+      });
+
+    } catch (error) {
+      console.error('Error sending marketing emails:', error);
+      res.status(500).json({ message: 'Failed to send emails' });
+    }
+  });
+
   // Run startup check after a short delay
   setTimeout(startupIncompleteOrdersCheck, 5000);
   
