@@ -1,0 +1,242 @@
+0|adegloba | > rest-express@1.0.0 start
+0|adegloba | > NODE_ENV=production node dist/index.js
+0|adegloba |
+0|adegloba | Admin user already exists
+0|adegloba | Seeding initial ships...
+0|adegloba | Initial ships seeded successfully
+0|adegloba | 🗑️  Starting log cleanup scheduler - will delete logs older than 7 days
+0|adegloba | 🗑️  Running log cleanup - deleting logs older than 2025-08-28T15:04:41.052Z
+0|adegloba | 🚀 Starting order auto-cancel service - checking every 5 minutes
+0|adegloba | 📧 Starting email scheduler...
+0|adegloba | ✅ Email scheduler started - Monthly reports will be sent on last day of each month at 23:30
+0|adegloba | 🏭 Setting up standalone authentication system
+0|adegloba | 6:04:41 PM [express] serving on port 5000
+0|adegloba | 🗑️  Log cleanup completed - no old logs to delete
+0|adegloba | 🔄 Order auto-cancel: No expired pending orders found
+
+0|adegloba  | 🔍 Checking for incomplete paid orders on startup...
+0|adegloba  | Found 0 incomplete paid orders
+0|adegloba  | 🔧 Processing 0 incomplete paid orders...
+0|adegloba  | 🔧 Batch completion: 0/0 orders fixed
+0|adegloba  | ✅ No incomplete paid orders found on startup
+0|adegloba  | 6:04:49 PM [express] GET /api/cart 304 in 6ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 6:04:56 PM [express] GET /api/auth/user 200 in 2ms
+0|adegloba  | 6:04:56 PM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba  | 6:05:01 PM [express] POST /api/user/login 200 in 190ms :: {"success":true,"user":{"id":"bac9d8da-deb…
+0|adegloba  | 6:05:01 PM [express] GET /api/user/me 200 in 5ms :: {"id":"bac9d8da-debb-4154-88dd-b98865147c08","us…
+0|adegloba  | 6:05:01 PM [express] GET /api/cart 200 in 10ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c…
+0|adegloba  | 6:05:01 PM [express] GET /api/user/orders 200 in 8ms :: [{"id":"1f21977f-bed9-48ce-88c6-c4eef16ca5f1…
+0|adegloba  | Found 7 active packages for user bac9d8da-debb-4154-88dd-b98865147c08
+0|adegloba  | 6:05:01 PM [express] GET /api/user/active-packages 200 in 12ms :: [{"credentialId":"79cc9901-a854-47…
+0|adegloba  | 6:05:01 PM [express] GET /api/user/expired-packages 200 in 12ms :: {"packages":[],"pagination":{"cur…
+0|adegloba  | 6:05:03 PM [express] POST /api/cart/checkout 200 in 7ms :: {"id":"961c7116-b44f-4a19-8242-3b8a5ad52a…
+0|adegloba  | 6:05:03 PM [express] GET /api/user/me 304 in 2ms :: {"id":"bac9d8da-debb-4154-88dd-b98865147c08","us…
+0|adegloba  | 6:05:03 PM [express] GET /api/cart 304 in 2ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 6:05:08 PM [express] GET /api/cart 304 in 3ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 6:05:13 PM [express] GET /api/cart 304 in 4ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 6:05:18 PM [express] GET /api/cart 304 in 2ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 6:05:23 PM [express] GET /api/cart 304 in 4ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 🔍 PayPal Order Request Debug: {
+0|adegloba  |   amount: '1',
+0|adegloba  |   currency: 'USD',
+0|adegloba  |   intent: 'CAPTURE',
+0|adegloba  |   paymentMethod: 'CARD',
+0|adegloba  |   hasCardDetails: true,
+0|adegloba  |   cardNumber: '5351****'
+0|adegloba  | }
+0|adegloba  | 🔧 Adding card paymentSource to PayPal order
+0|adegloba  | 📤 PayPal Order Body: {
+0|adegloba  |   "intent": "CAPTURE",
+0|adegloba  |   "purchaseUnits": [
+0|adegloba  |     {
+0|adegloba  |       "amount": {
+0|adegloba  |         "currencyCode": "USD",
+0|adegloba  |         "value": "1"
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   ],
+0|adegloba  |   "paymentSource": {
+0|adegloba  |     "card": {
+0|adegloba  |       "number": "5351776675427727",
+0|adegloba  |       "securityCode": "690",
+0|adegloba  |       "expiry": "2029-12",
+0|adegloba  |       "name": "Emir Şimşek",
+0|adegloba  |       "billingAddress": {
+0|adegloba  |         "addressLine1": "sdasdfsafsafasf asfas fas fasf asf sa",
+0|adegloba  |         "addressLine2": "",
+0|adegloba  |         "adminArea2": "Istanbul",
+0|adegloba  |         "adminArea1": "TR",
+0|adegloba  |         "postalCode": "34000",
+0|adegloba  |         "countryCode": "TR"
+0|adegloba  |       },
+0|adegloba  |       "attributes": {
+0|adegloba  |         "verification": {
+0|adegloba  |           "method": "SCA_WHEN_REQUIRED"
+0|adegloba  |         }
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | info: Request POST https://api-m.paypal.com/v1/oauth2/token
+0|adegloba  | info: Request body {"type":"form","content":[{"key":"grant_type","value":"client_credentials"}]}
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","access-control-expose-headers":"**Redacted**","pragma":"no-cache","cache-control":"max-age=0, no-cache, no-store, must-revalidate","content-type":"application/json","paypal-debug-id":"**Redacted**","server-timing":"**Redacted**","set-cookie":"**Redacted**","x-paypal-token-service":"**Redacted**","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Thu, 04 Sep 2025 15:05:24 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | info: Request POST https://api-m.paypal.com/v2/checkout/orders application/json
+0|adegloba  | info: Request body {"type":"text","content":"{\"intent\":\"CAPTURE\",\"purchase_units\":[{\"amount\":{\"currency_code\":\"USD\",\"value\":\"1\"}}],\"payment_source\":{\"card\":{\"name\":\"Emir Şimşek\",\"number\":\"5351776675427727\",\"expiry\":\"2029-12\",\"security_code\":\"690\",\"billing_address\":{\"address_line_1\":\"sdasdfsafsafasf asfas fas fasf asf sa\",\"address_line_2\":\"\",\"admin_area_2\":\"Istanbul\",\"admin_area_1\":\"TR\",\"postal_code\":\"34000\",\"country_code\":\"TR\"},\"attributes\":{\"verification\":{\"method\":\"SCA_WHEN_REQUIRED\"}}}}}"}
+0|adegloba  | info: Response 201 1410 application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-length":"1410","access-control-expose-headers":"**Redacted**","set-cookie":"**Redacted**","content-type":"application/json","paypal-debug-id":"**Redacted**","server-timing":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Thu, 04 Sep 2025 15:05:26 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding"}
+0|adegloba  | 6:05:26 PM [express] POST /api/paypal/create-order 201 in 2279ms :: {"id":"62P28430F15150343","statu…
+0|adegloba  | info: Request POST https://api-m.paypal.com/v1/oauth2/token
+0|adegloba  | info: Request body {"type":"form","content":[{"key":"grant_type","value":"client_credentials"}]}
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","access-control-expose-headers":"**Redacted**","pragma":"no-cache","cache-control":"max-age=0, no-cache, no-store, must-revalidate","content-type":"application/json","paypal-debug-id":"**Redacted**","server-timing":"**Redacted**","set-cookie":"**Redacted**","x-paypal-token-service":"**Redacted**","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Thu, 04 Sep 2025 15:05:28 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | info: Request POST https://api-m.paypal.com/v2/checkout/orders/62P28430F15150343/capture application/json
+0|adegloba  | info: Request body undefined
+0|adegloba  | info: Response 422 465 application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-length":"465","cache-control":"max-age=0, no-cache, no-store, must-revalidate","access-control-expose-headers":"**Redacted**","server-timing":"**Redacted**","content-type":"application/json","set-cookie":"**Redacted**","paypal-debug-id":"**Redacted**","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Thu, 04 Sep 2025 15:05:29 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding"}
+0|adegloba  | Failed to capture order: CustomError
+0|adegloba  |     at CustomError.ApiError [as constructor] (/var/www/adegloba/node_modules/@apimatic/core/lib/errors/apiError.js:17:28)
+0|adegloba  |     at new CustomError (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/errors/customError.js:14:42)
+0|adegloba  |     at DefaultRequestBuilder.<anonymous> (/var/www/adegloba/node_modules/@apimatic/core/lib/http/requestBuilder.js:686:33)
+0|adegloba  |     at step (/var/www/adegloba/node_modules/tslib/tslib.js:196:27)
+0|adegloba  |     at Object.next (/var/www/adegloba/node_modules/tslib/tslib.js:177:57)
+0|adegloba  |     at fulfilled (/var/www/adegloba/node_modules/tslib/tslib.js:167:62)
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+0|adegloba  |   request: {
+0|adegloba  |     method: 'POST',
+0|adegloba  |     url: 'https://api-m.paypal.com/v2/checkout/orders/62P28430F15150343/capture',
+0|adegloba  |     headers: {
+0|adegloba  |       'Content-Type': 'application/json',
+0|adegloba  |       Prefer: 'return=minimal',
+0|adegloba  |       authorization: 'Bearer A21AANU5NdNqSa56mcQZBY05VPzIe0xtrFSB5_MtfhPr1tzbIEvXZ0uVM14VRZWugdglEHvnLsPOhtIqbRMzPUuwtcSQOY0uw',
+0|adegloba  |       'user-agent': 'PayPal REST API TypeScript SDK, Version: 1.1.0, on OS linux',
+0|adegloba  |       accept: 'application/json'
+0|adegloba  |     },
+0|adegloba  |     body: undefined
+0|adegloba  |   },
+0|adegloba  |   statusCode: 422,
+0|adegloba  |   headers: {
+0|adegloba  |     connection: 'keep-alive',
+0|adegloba  |     'content-length': '465',
+0|adegloba  |     'cache-control': 'max-age=0, no-cache, no-store, must-revalidate',
+0|adegloba  |     'access-control-expose-headers': 'Server-Timing',
+0|adegloba  |     'server-timing': 'traceparent;desc="00-000000000000000000020031ccca1f45-77dc7bd713b774f6-01"',
+0|adegloba  |     'content-type': 'application/json',
+0|adegloba  |     'set-cookie': 'l7_az=ccg01.phx; Path=/; Domain=paypal.com; Expires=Thu, 04 Sep 2025 15:35:29 GMT; HttpOnly; Secure',
+0|adegloba  |     'paypal-debug-id': '20031ccca1f45',
+0|adegloba  |     'edge-control': 'max-age=0',
+0|adegloba  |     'accept-ranges': 'bytes',
+0|adegloba  |     date: 'Thu, 04 Sep 2025 15:05:29 GMT',
+0|adegloba  |     via: '1.1 varnish',
+0|adegloba  |     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
+0|adegloba  |     'x-served-by': 'cache-fra-etou8220031-FRA, cache-fra-etou8220031-FRA',
+0|adegloba  |     'x-cache': 'MISS, MISS',
+0|adegloba  |     'x-cache-hits': '0, 0',
+0|adegloba  |     'x-timer': 'S1756998329.770047,VS0,VE1069',
+0|adegloba  |     vary: 'Accept-Encoding'
+0|adegloba  |   },
+0|adegloba  |   body: `{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"ORDER_ALREADY_CAPTURED","description":"Order already captured.If 'intent=CAPTURE' only one capture per order is allowed."}],"message":"The requested action could not be performed, semantically incorrect, or failed business validation.","debug_id":"20031ccca1f45","links":[{"href":"https://developer.paypal.com/api/rest/reference/orders/v2/errors/#ORDER_ALREADY_CAPTURED","rel":"information_link","method":"GET"}]}`,
+0|adegloba  |   result: [Object: null prototype] {
+0|adegloba  |     name: 'UNPROCESSABLE_ENTITY',
+0|adegloba  |     details: [ [Object: null prototype] ],
+0|adegloba  |     message: 'The requested action could not be performed, semantically incorrect, or failed business validation.',
+0|adegloba  |     debug_id: '20031ccca1f45',
+0|adegloba  |     links: [ [Object: null prototype] ]
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | PayPal Capture Error Details: {
+0|adegloba  |   message: '',
+0|adegloba  |   statusCode: 422,
+0|adegloba  |   body: `{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"ORDER_ALREADY_CAPTURED","description":"Order already captured.If 'intent=CAPTURE' only one capture per order is allowed."}],"message":"The requested action could not be performed, semantically incorrect, or failed business validation.","debug_id":"20031ccca1f45","links":[{"href":"https://developer.paypal.com/api/rest/reference/orders/v2/errors/#ORDER_ALREADY_CAPTURED","rel":"information_link","method":"GET"}]}`,
+0|adegloba  |   headers: {
+0|adegloba  |     connection: 'keep-alive',
+0|adegloba  |     'content-length': '465',
+0|adegloba  |     'cache-control': 'max-age=0, no-cache, no-store, must-revalidate',
+0|adegloba  |     'access-control-expose-headers': 'Server-Timing',
+0|adegloba  |     'server-timing': 'traceparent;desc="00-000000000000000000020031ccca1f45-77dc7bd713b774f6-01"',
+0|adegloba  |     'content-type': 'application/json',
+0|adegloba  |     'set-cookie': 'l7_az=ccg01.phx; Path=/; Domain=paypal.com; Expires=Thu, 04 Sep 2025 15:35:29 GMT; HttpOnly; Secure',
+0|adegloba  |     'paypal-debug-id': '20031ccca1f45',
+0|adegloba  |     'edge-control': 'max-age=0',
+0|adegloba  |     'accept-ranges': 'bytes',
+0|adegloba  |     date: 'Thu, 04 Sep 2025 15:05:29 GMT',
+0|adegloba  |     via: '1.1 varnish',
+0|adegloba  |     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
+0|adegloba  |     'x-served-by': 'cache-fra-etou8220031-FRA, cache-fra-etou8220031-FRA',
+0|adegloba  |     'x-cache': 'MISS, MISS',
+0|adegloba  |     'x-cache-hits': '0, 0',
+0|adegloba  |     'x-timer': 'S1756998329.770047,VS0,VE1069',
+0|adegloba  |     vary: 'Accept-Encoding'
+0|adegloba  |   },
+0|adegloba  |   result: [Object: null prototype] {
+0|adegloba  |     name: 'UNPROCESSABLE_ENTITY',
+0|adegloba  |     details: [ [Object: null prototype] ],
+0|adegloba  |     message: 'The requested action could not be performed, semantically incorrect, or failed business validation.',
+0|adegloba  |     debug_id: '20031ccca1f45',
+0|adegloba  |     links: [ [Object: null prototype] ]
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | 6:05:29 PM [express] POST /api/paypal/capture-order 500 in 1357ms :: {"error":"Failed to capture ord…
+0|adegloba  | 6:05:33 PM [express] GET /api/cart 304 in 4ms :: {"items":[{"id":"a4d7250c-778f-40fb-bcef-8b0689f5c4…
+0|adegloba  | 🔔 [2025-09-04T15:05:38.697Z] PayPal webhook received: {
+0|adegloba  |   id: 'WH-3TB254306U1528223-8HJ17328WG3402412',
+0|adegloba  |   event_version: '1.0',
+0|adegloba  |   create_time: '2025-09-04T15:05:30.456Z',
+0|adegloba  |   resource_type: 'capture',
+0|adegloba  |   resource_version: '2.0',
+0|adegloba  |   event_type: 'PAYMENT.CAPTURE.COMPLETED',
+0|adegloba  |   summary: 'Payment completed for $ 1.0 USD',
+0|adegloba  |   resource: {
+0|adegloba  |     id: '6BE55539DU7697521',
+0|adegloba  |     amount: { currency_code: 'USD', value: '1.00' },
+0|adegloba  |     final_capture: true,
+0|adegloba  |     seller_protection: { status: 'NOT_ELIGIBLE' },
+0|adegloba  |     seller_receivable_breakdown: {
+0|adegloba  |       gross_amount: [Object],
+0|adegloba  |       paypal_fee: [Object],
+0|adegloba  |       net_amount: [Object]
+0|adegloba  |     },
+0|adegloba  |     status: 'COMPLETED',
+0|adegloba  |     processor_response: { avs_code: 'S', cvv_code: 'M', response_code: '0000' },
+0|adegloba  |     supplementary_data: { related_ids: [Object] },
+0|adegloba  |     payee: {
+0|adegloba  |       email_address: 'starlink@adegloba.space',
+0|adegloba  |       merchant_id: 'U7YXXEN63ELEC'
+0|adegloba  |     },
+0|adegloba  |     create_time: '2025-09-04T15:05:25Z',
+0|adegloba  |     update_time: '2025-09-04T15:05:25Z',
+0|adegloba  |     links: [ [Object], [Object], [Object] ],
+0|adegloba  |     network_transaction_reference: { id: 'MDSGA1OS6', date: '0904', network: 'MASTERCARD' }
+0|adegloba  |   },
+0|adegloba  |   links: [
+0|adegloba  |     {
+0|adegloba  |       href: 'https://api.paypal.com/v1/notifications/webhooks-events/WH-3TB254306U1528223-8HJ17328WG3402412',
+0|adegloba  |       rel: 'self',
+0|adegloba  |       method: 'GET'
+0|adegloba  |     },
+0|adegloba  |     {
+0|adegloba  |       href: 'https://api.paypal.com/v1/notifications/webhooks-events/WH-3TB254306U1528223-8HJ17328WG3402412/resend',
+0|adegloba  |       rel: 'resend',
+0|adegloba  |       method: 'POST'
+0|adegloba  |     }
+0|adegloba  |   ]
+0|adegloba  | }
+0|adegloba  | 🌍 PayPal Environment: PRODUCTION
+0|adegloba  | 🔗 Webhook URL from DB: https://ads.adegloba.space/api/paypal/webhook
+0|adegloba  | 📧 Event Type: PAYMENT.CAPTURE.COMPLETED
+0|adegloba  | 💰 [SUCCESS] Processing payment completion for order: 62P28430F15150343
+0|adegloba  | 💳 Payment ID: 6BE55539DU7697521
+0|adegloba  | 💵 Amount: USD 1.00
+0|adegloba  | ❌ Payment completion failed for order 62P28430F15150343: Error: Order not found
+0|adegloba  |     at file:///var/www/adegloba/dist/index.js:3819:17
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|adegloba  |     at async NodePgSession.transaction (file:///var/www/adegloba/node_modules/drizzle-orm/node-postgres/session.js:142:22)
+0|adegloba  |     at async OrderService.processPaymentCompletion (file:///var/www/adegloba/dist/index.js:3816:14)
+0|adegloba  |     at async file:///var/www/adegloba/dist/index.js:6590:26
+0|adegloba  | 💥 Payment processing error for order 62P28430F15150343: Error: Order not found
+0|adegloba  |     at file:///var/www/adegloba/dist/index.js:3819:17
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|adegloba  |     at async NodePgSession.transaction (file:///var/www/adegloba/node_modules/drizzle-orm/node-postgres/session.js:142:22)
+0|adegloba  |     at async OrderService.processPaymentCompletion (file:///var/www/adegloba/dist/index.js:3816:14)
+0|adegloba  |     at async file:///var/www/adegloba/dist/index.js:6590:26
+0|adegloba  | 6:05:38 PM [express] POST /api/paypal/webhook 200 in 5ms :: {"status":"error","message":"Order not f…

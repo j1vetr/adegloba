@@ -222,9 +222,26 @@ export default function CreditCardDrawer({
       }
 
       const createData = await createResponse.json();
-      console.log('PayPal card order created:', createData.id);
+      console.log('PayPal card order created:', createData);
 
-      // Simulate card processing with PayPal
+      // Check if payment is already completed (auto-captured)
+      if (createData.status === 'COMPLETED') {
+        toast({
+          title: "Ödeme Başarılı",
+          description: "Kredi kartı ödemesi başarıyla tamamlandı.",
+        });
+        
+        onSuccess?.({ 
+          method: 'card', 
+          amount, 
+          currency,
+          orderId: createData.id,
+          paymentId: createData.id 
+        });
+        return;
+      }
+
+      // If not completed, try to capture (fallback for orders not auto-captured)
       toast({
         title: "Kart İşleniyor",
         description: "Kredi kartı bilgileri doğrulanıyor...",
@@ -246,6 +263,22 @@ export default function CreditCardDrawer({
 
       if (!captureResponse.ok) {
         const errorData = await captureResponse.json();
+        // If already captured, treat as success
+        if (errorData.message?.includes('ORDER_ALREADY_CAPTURED')) {
+          toast({
+            title: "Ödeme Başarılı",
+            description: "Kredi kartı ödemesi başarıyla tamamlandı.",
+          });
+          
+          onSuccess?.({ 
+            method: 'card', 
+            amount, 
+            currency,
+            orderId: createData.id,
+            paymentId: createData.id 
+          });
+          return;
+        }
         throw new Error(errorData.message || 'Payment capture failed');
       }
 
