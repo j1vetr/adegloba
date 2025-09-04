@@ -11,11 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, User, Mail, Lock, Ship as ShipIcon, MapPin, UserPlus, Phone } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useUserAuth } from "@/hooks/useUserAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { Ship } from "@shared/schema";
 import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
 
 export default function Kayit() {
   const [, setLocation] = useLocation();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     full_name: "",
     username: "",

@@ -113,6 +113,15 @@ export interface Translation {
     cannotChange: string;
   };
 
+
+  // User Guide
+  guide: {
+    title: string;
+    subtitle: string;
+    sections: string;
+  };
+
+
   // Cart Page
   cart: {
     title: string;
@@ -526,7 +535,32 @@ export const translations: Record<'tr' | 'en', Translation> = {
       high: "Yüksek",
       message: "Mesaj",
       sendReply: "Yanıt Gönder",
-      ticketList: "Ticket Listesi"
+      ticketList: "Ticket Listesi",
+      title: "Destek Talepleri Yönetimi",
+      description: "Kullanıcı destek taleplerini görüntüleyin ve yeni talep oluşturun",
+      createTicket: "Yeni Destek Talebi",
+      ticketId: "Talep ID",
+      goBack: "Geri Dön",
+      ticketNotFound: "Talep Bulunamadı",
+      ticketInfo: "Talep Bilgileri",
+      status: "Durum",
+      createdAt: "Oluşturulma Tarihi",
+      conversationHistory: "Konuşma Geçmişi",
+      replyPlaceholder: "Yanıtınızı buraya yazın...",
+      replySent: "Yanıtınız gönderildi.",
+      replyError: "Yanıt gönderilirken bir hata oluştu.",
+      ticketClosed: "Bu talep kapatılmıştır. Yeni yanıt gönderilemez.",
+      subjectLabel: "Konu Başlığı",
+      priorityLevel: "Öncelik Seviyesi",
+      messageLabel: "Mesaj",
+      messageRequired: "Mesaj boş olamaz",
+      you: "Siz",
+      supportTeam: "Destek Ekibi",
+      open: "Açık",
+      closed: "Kapalı",
+      totalTickets: "Toplam Ticket",
+      noTicketsYet: "Henüz destek talebi oluşturmadınız...",
+      createFirstTicket: "İlk Talebi Oluştur"
     },
     
     common: {
@@ -800,7 +834,32 @@ export const translations: Record<'tr' | 'en', Translation> = {
       high: "High",
       message: "Message",
       sendReply: "Send Reply",
-      ticketList: "Ticket List"
+      ticketList: "Ticket List",
+      title: "Support Ticket Management",
+      description: "View and create user support tickets",
+      createTicket: "New Support Ticket",
+      ticketId: "Ticket ID",
+      goBack: "Go Back",
+      ticketNotFound: "Ticket Not Found",
+      ticketInfo: "Ticket Information",
+      status: "Status",
+      createdAt: "Created At",
+      conversationHistory: "Conversation History",
+      replyPlaceholder: "Write your reply here...",
+      replySent: "Your reply has been sent.",
+      replyError: "Error occurred while sending reply.",
+      ticketClosed: "This ticket is closed. No new replies can be sent.",
+      subjectLabel: "Subject",
+      priorityLevel: "Priority Level",
+      messageLabel: "Message",
+      messageRequired: "Message cannot be empty",
+      you: "You",
+      supportTeam: "Support Team",
+      open: "Open",
+      closed: "Closed",
+      totalTickets: "Total Tickets",
+      noTicketsYet: "You haven't created any support tickets yet...",
+      createFirstTicket: "Create First Ticket"
     },
     
     common: {

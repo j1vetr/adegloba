@@ -8,10 +8,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, User, Lock, CheckCircle, Navigation } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useUserAuth } from "@/hooks/useUserAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
 
 export default function Giris() {
   const [location, setLocation] = useLocation();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     username: "",
     password: ""
@@ -32,7 +34,7 @@ export default function Giris() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('registered') === 'true') {
-      setSuccess("Kayıt başarılı! Şimdi giriş yapabilirsiniz.");
+      setSuccess(t.auth.registerSuccess);
     }
   }, []);
 
@@ -70,10 +72,10 @@ export default function Giris() {
           setLocation("/panel");
         }, 100);
       } else {
-        setError(data.message || "Giriş işlemi başarısız");
+        setError(data.message || t.auth.loginFailed);
       }
     } catch (error) {
-      setError("Bağlantı hatası oluştu");
+      setError(t.auth.connectionError);
     } finally {
       setIsLoading(false);
     }
@@ -106,10 +108,10 @@ export default function Giris() {
             />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            Sistem Girişi
+            {t.auth.systemLogin}
           </h1>
           <p className="text-slate-400 text-sm sm:text-base">
-            AdeGloba Starlink System'e hoş geldiniz
+            {t.auth.welcomeMessage}
           </p>
         </div>
 
@@ -118,7 +120,7 @@ export default function Giris() {
           <CardHeader className="pb-6">
             <CardTitle className="text-center text-white text-xl flex items-center justify-center gap-2">
               <Navigation className="h-5 w-5 text-amber-400" />
-              Hesabıma Giriş
+              {t.auth.accountLogin}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -126,7 +128,7 @@ export default function Giris() {
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-slate-300 flex items-center gap-2 font-medium">
                   <User className="h-4 w-4 text-amber-400" />
-                  Kullanıcı Adı / E-posta
+                  {t.auth.username}
                 </Label>
                 <Input
                   id="username"
@@ -136,7 +138,7 @@ export default function Giris() {
                   onChange={handleChange}
                   required
                   className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
-                  placeholder="Kullanıcı adı veya e-posta adresinizi girin"
+                  placeholder={t.auth.enterUsername}
                   data-testid="input-username"
                 />
               </div>
@@ -144,7 +146,7 @@ export default function Giris() {
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-slate-300 flex items-center gap-2 font-medium">
                   <Lock className="h-4 w-4 text-amber-400" />
-                  Şifre
+                  {t.auth.password}
                 </Label>
                 <Input
                   id="password"
@@ -154,7 +156,7 @@ export default function Giris() {
                   onChange={handleChange}
                   required
                   className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
-                  placeholder="Şifrenizi girin"
+                  placeholder={t.auth.enterPassword}
                   data-testid="input-password"
                 />
               </div>
@@ -190,7 +192,7 @@ export default function Giris() {
                 ) : (
                   <>
                     <Navigation className="mr-2 h-5 w-5" />
-                    Giriş Yap
+                    {t.auth.loginButton}
                   </>
                 )}
               </Button>
@@ -205,7 +207,7 @@ export default function Giris() {
                   className="text-amber-400 hover:text-amber-300 underline transition-colors"
                   data-testid="link-register"
                 >
-                  Kayıt Ol
+                  {t.auth.registerButton}
                 </button>
               </p>
             </div>
