@@ -1388,7 +1388,7 @@ export class DatabaseStorage implements IStorage {
   }): Promise<{ credentials: any[]; totalCount: number }> {
     const { search, statusFilter, planFilter, limit, offset } = options;
 
-    // Build the base query with joins
+    // Build the base query with joins - flatten the selection to avoid nested null issues
     let query = db.select({
       id: credentialPools.id,
       planId: credentialPools.planId,
@@ -1400,22 +1400,20 @@ export class DatabaseStorage implements IStorage {
       assignedAt: credentialPools.assignedAt,
       createdAt: credentialPools.createdAt,
       updatedAt: credentialPools.updatedAt,
-      plan: {
-        id: plans.id,
-        name: plans.name,
-        description: plans.description,
-        price: plans.price,
-        currency: plans.currency,
-        shipId: plans.shipId,
-        isActive: plans.isActive,
-      },
-      ship: {
-        id: ships.id,
-        name: ships.name,
-        slug: ships.slug,
-        description: ships.description,
-        isActive: ships.isActive,
-      }
+      // Flattened plan fields
+      planDbId: plans.id,
+      planName: plans.name,
+      planDescription: plans.description,
+      planPrice: plans.price,
+      planCurrency: plans.currency,
+      planShipId: plans.shipId,
+      planIsActive: plans.isActive,
+      // Flattened ship fields
+      shipDbId: ships.id,
+      shipName: ships.name,
+      shipSlug: ships.slug,
+      shipDescription: ships.description,
+      shipIsActive: ships.isActive,
     })
     .from(credentialPools)
     .leftJoin(plans, eq(credentialPools.planId, plans.id))
@@ -1464,10 +1462,40 @@ export class DatabaseStorage implements IStorage {
     const totalCount = Number(countResult.count) || 0;
 
     // Get paginated results
-    const credentials = await query
+    const rawCredentials = await query
       .orderBy(desc(credentialPools.createdAt))
       .limit(limit)
       .offset(offset);
+
+    // Transform the flattened results back to the expected nested structure
+    const credentials = rawCredentials.map(row => ({
+      id: row.id,
+      planId: row.planId,
+      username: row.username,
+      password: row.password,
+      isAssigned: row.isAssigned,
+      assignedToUserId: row.assignedToUserId,
+      assignedToOrderId: row.assignedToOrderId,
+      assignedAt: row.assignedAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      plan: row.planDbId ? {
+        id: row.planDbId,
+        name: row.planName,
+        description: row.planDescription,
+        price: row.planPrice,
+        currency: row.planCurrency,
+        shipId: row.planShipId,
+        isActive: row.planIsActive,
+      } : null,
+      ship: row.shipDbId ? {
+        id: row.shipDbId,
+        name: row.shipName,
+        slug: row.shipSlug,
+        description: row.shipDescription,
+        isActive: row.shipIsActive,
+      } : null
+    }));
 
     return {
       credentials,
