@@ -102,6 +102,12 @@ export interface Translation {
       noActivePackagesDesc: string;
       buyFirstPackage: string;
       noPurchaseHistory: string;
+      ship: string;
+      expiredPackagesTitle: string;
+      loadingExpiredPackages: string;
+      noExpiredPackages: string;
+      noExpiredPackagesDesc: string;
+      paginationText: string;
     };
   };
 
@@ -431,7 +437,12 @@ export const translations: Record<'tr' | 'en', Translation> = {
         noActivePackagesDesc: "AdeGloba Starlink System'de ilk data paketinizi satın alın ve kesintisiz internete başlayın.",
         buyFirstPackage: "İlk Paketinizi Satın Alın",
         noPurchaseHistory: "Henüz satın alım geçmişiniz bulunmamaktadır.",
-        ship: "Gemi:"
+        ship: "Gemi:",
+        expiredPackagesTitle: "Süresi Doldu Paketlerim",
+        loadingExpiredPackages: "Bitmiş paketler yükleniyor...",
+        noExpiredPackages: "Bitmiş Paket Yok",
+        noExpiredPackagesDesc: "Henüz süresi dolmuş paketiniz bulunmamaktadır. Aktif paketleriniz sona erdiğinde burada görünecek.",
+        paginationText: "Toplam {total} paket • Sayfa {current} / {totalPages}"
       }
     },
 
@@ -767,7 +778,12 @@ export const translations: Record<'tr' | 'en', Translation> = {
         noActivePackagesDesc: "Purchase your first data package in AdeGloba Starlink System and start uninterrupted internet.",
         buyFirstPackage: "Buy Your First Package",
         noPurchaseHistory: "You don't have any purchase history yet.",
-        ship: "Ship:"
+        ship: "Ship:",
+        expiredPackagesTitle: "My Expired Packages",
+        loadingExpiredPackages: "Loading expired packages...",
+        noExpiredPackages: "No Expired Packages",
+        noExpiredPackagesDesc: "You don't have any expired packages yet. When your active packages expire, they will appear here.",
+        paginationText: "Total {total} packages • Page {current} / {totalPages}"
       }
     },
 

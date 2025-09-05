@@ -168,7 +168,7 @@ export default function Panel() {
               data-testid="tab-expired"
             >
               <Archive className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">{t.dashboard.sections.expired} Paketlerim</span>
+              <span className="hidden sm:inline">{t.dashboard.texts.expiredPackagesTitle}</span>
               <span className="sm:hidden">{t.dashboard.sections.expiredShort}</span>
             </TabsTrigger>
           </TabsList>
@@ -408,14 +408,14 @@ export default function Panel() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2 text-lg">
                   <Archive className="h-5 w-5 text-red-400" />
-                  {t.dashboard.sections.expired} Paketlerim
+                  {t.dashboard.texts.expiredPackagesTitle}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {expiredLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-red-400" />
-                    <span className="ml-3 text-slate-300">Bitmiş paketler yükleniyor...</span>
+                    <span className="ml-3 text-slate-300">{t.dashboard.texts.loadingExpiredPackages}</span>
                   </div>
                 ) : expiredPackagesData?.packages?.length ? (
                   <div className="space-y-6">
@@ -472,7 +472,11 @@ export default function Panel() {
                     {expiredPackagesData.pagination && expiredPackagesData.pagination.totalPages > 1 && (
                       <div className="flex items-center justify-between">
                         <div className="text-sm text-slate-400">
-                          Toplam {expiredPackagesData.pagination.totalCount} paket • Sayfa {expiredPackagesData.pagination.currentPage} / {expiredPackagesData.pagination.totalPages}
+                          {t.dashboard.texts.paginationText
+                            .replace('{total}', expiredPackagesData.pagination.totalCount)
+                            .replace('{current}', expiredPackagesData.pagination.currentPage)
+                            .replace('{totalPages}', expiredPackagesData.pagination.totalPages)
+                          }
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -507,9 +511,9 @@ export default function Panel() {
                       <Archive className="h-16 w-16 text-slate-400 mx-auto" />
                       <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl" />
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-3">{t.dashboard.sections.expired} Paket Yok</h3>
+                    <h3 className="text-xl font-semibold text-white mb-3">{t.dashboard.texts.noExpiredPackages}</h3>
                     <p className="text-slate-400 mb-6 max-w-md mx-auto">
-                      Henüz süresi dolmuş paketiniz bulunmamaktadır. Aktif paketleriniz sona erdiğinde burada görünecek.
+                      {t.dashboard.texts.noExpiredPackagesDesc}
                     </p>
                   </div>
                 )}
