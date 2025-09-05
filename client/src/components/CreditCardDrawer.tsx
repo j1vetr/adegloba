@@ -224,26 +224,8 @@ export default function CreditCardDrawer({
       const createData = await createResponse.json();
       console.log('PayPal card order created:', createData);
 
-      // Check if payment is already completed (auto-captured)
-      if (createData.status === 'COMPLETED') {
-        toast({
-          title: "Ödeme Başarılı",
-          description: "Kredi kartı ödemesi başarıyla tamamlandı.",
-        });
-        
-        // Call completeOrderMutation with PayPal Order ID
-        onSuccess?.({ 
-          method: 'card', 
-          amount, 
-          currency,
-          orderId: createData.id,
-          paymentId: createData.id,
-          paypalOrderId: createData.id  // Pass PayPal Order ID for backend
-        });
-        return;
-      }
-
-      // If not completed, try to capture (fallback for orders not auto-captured)
+      // PayPal Order oluşturuldu, şimdi ödemeyi CAPTURE etmek lazım
+      // Order create edilmesi != Ödeme başarısı
       toast({
         title: "Kart İşleniyor",
         description: "Kredi kartı bilgileri doğrulanıyor...",
@@ -265,47 +247,38 @@ export default function CreditCardDrawer({
 
       if (!captureResponse.ok) {
         const errorData = await captureResponse.json();
-        // If already captured, treat as success
-        if (errorData.message?.includes('ORDER_ALREADY_CAPTURED')) {
-          toast({
-            title: "Ödeme Başarılı",
-            description: "Kredi kartı ödemesi başarıyla tamamlandı.",
-          });
-          
-          // Call completeOrderMutation with PayPal Order ID
-          onSuccess?.({ 
-            method: 'card', 
-            amount, 
-            currency,
-            orderId: createData.id,
-            paymentId: createData.id,
-            paypalOrderId: createData.id  // Pass PayPal Order ID for backend
-          });
-          return;
-        }
-        throw new Error(errorData.message || 'Payment capture failed');
+        console.error('❌ PayPal Capture Error:', errorData);
+        
+        // Capture başarısız = Ödeme başarısız
+        // Bu durumda kesinlikle success çağırmayalım!
+        throw new Error(errorData.message || 'Ödeme başarısız oldu. Kart bilgilerini kontrol edin.');
       }
 
       const captureData = await captureResponse.json();
       console.log('PayPal card payment captured:', captureData);
 
+      // Sadece COMPLETED status'ta success çağır
       if (captureData.status === 'COMPLETED') {
+        console.log('✅ Payment captured successfully:', captureData.status);
+        
         toast({
           title: "Ödeme Başarılı",
           description: "Kredi kartı ödemesi başarıyla tamamlandı.",
         });
         
-        // Call completeOrderMutation with PayPal Order ID
+        // Sadece başarılı capture'da backend'e complete-payment gönder
         onSuccess?.({ 
           method: 'card', 
           amount, 
           currency,
           orderId: createData.id,
           paymentId: captureData.id,
-          paypalOrderId: createData.id  // Pass PayPal Order ID for backend
+          paypalOrderId: createData.id
         });
       } else {
-        throw new Error('Payment not completed');
+        // DECLINED, FAILED, PENDING vs. durumları error
+        console.error('❌ Payment capture failed with status:', captureData.status);
+        throw new Error(`Ödeme başarısız: ${captureData.status}`);
       }
       
     } catch (error) {

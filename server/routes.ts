@@ -3041,29 +3041,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-      } else if (event.event_type === 'PAYMENT.CAPTURE.DENIED') {
+      } else if (event.event_type === 'PAYMENT.CAPTURE.DENIED' || event.event_type === 'PAYMENT.CAPTURE.DECLINED') {
         const payment = event.resource;
         const orderId = payment.supplementary_data?.related_ids?.order_id || payment.custom_id;
         
-        console.log(`❌ [DENIED] Payment denied for order: ${orderId}`);
+        console.log(`❌ [DECLINED] Processing payment decline for order: ${orderId}`);
+        console.log(`💳 Payment ID: ${payment.id}`);
+        console.log(`💵 Amount: ${payment.amount?.currency_code} ${payment.amount?.value}`);
+        console.log(`🚫 Reason: ${payment.status_details?.reason || 'Unknown'}`);
         
-        // Log denied payment
-        await storage.createSystemLog({
-          category: 'payment_error',
-          action: 'webhook_payment_denied',
-          entityType: 'order',
-          entityId: orderId,
-          details: {
-            paymentId: payment.id,
-            reason: payment.status_details?.reason || 'Payment denied by PayPal',
-            webhookEventType: event.event_type,
-            environment: environment
-          },
-          ipAddress: req.ip || req.connection.remoteAddress,
-          userAgent: 'PayPal-Webhook',
-        });
-        
-        res.status(200).json({ status: 'payment_denied', orderId });
+        try {
+          // Order'ı failed olarak işaretle
+          const orders = await storage.getOrdersByPaypalOrderId(orderId);
+          if (orders.length > 0) {
+            const order = orders[0];
+            await storage.updateOrder(order.id, { status: 'failed' });
+            console.log(`🔄 Order ${order.id} marked as FAILED due to payment decline`);
+            
+            // System log oluştur
+            await storage.createSystemLog({
+              category: 'payment_error',
+              action: 'webhook_payment_declined',
+              entityType: 'order',
+              entityId: order.id,
+              details: {
+                paypalOrderId: orderId,
+                paymentId: payment.id,
+                amount: `${payment.amount?.currency_code} ${payment.amount?.value}`,
+                reason: payment.status_details?.reason || 'Unknown',
+                webhookEventType: event.event_type,
+                environment: environment
+              },
+              ipAddress: req.ip || req.connection.remoteAddress,
+              userAgent: 'PayPal-Webhook',
+            });
+            
+            res.status(200).json({ 
+              status: 'declined_processed',
+              orderId: order.id,
+              paypalOrderId: orderId,
+              paymentId: payment.id,
+              reason: payment.status_details?.reason || 'Unknown',
+              environment: environment,
+              timestamp: new Date().toISOString()
+            });
+          } else {
+            console.error(`❌ No order found for PayPal Order ID: ${orderId}`);
+            res.status(404).json({ error: 'Order not found' });
+          }
+        } catch (error) {
+          console.error(`💥 Error processing payment decline for order ${orderId}:`, error);
+          res.status(500).json({ error: 'Failed to process payment decline' });
+        }
         
       } else if (event.event_type === 'CHECKOUT.ORDER.APPROVED') {
         const order = event.resource;
