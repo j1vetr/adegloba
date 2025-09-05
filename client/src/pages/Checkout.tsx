@@ -407,7 +407,7 @@ export default function Checkout() {
                       ) : (
                         <>
                           <Tag className="h-4 w-4 mr-1 transition-transform duration-200 hover:scale-110" />
-                          Uygula
+                          {t.checkout.apply}
                         </>
                       )}
                     </Button>
@@ -468,7 +468,7 @@ export default function Checkout() {
                 {/* Price Breakdown */}
                 <div className="space-y-3">
                   <div className="flex justify-between text-slate-300">
-                    <span>Ara Toplam</span>
+                    <span>{t.checkout.subtotal}</span>
                     <span className="font-semibold price-highlight" data-testid="checkout-subtotal">
                       {formatPrice(currentSubtotal)}
                     </span>
@@ -489,7 +489,7 @@ export default function Checkout() {
                   <Separator className="bg-slate-600" />
                   
                   <div className="flex justify-between text-xl font-bold">
-                    <span className="text-white">Ödenecek Toplam</span>
+                    <span className="text-white">{t.checkout.total}</span>
                     <span className="text-cyan-400 price-highlight font-bold transition-all duration-500" data-testid="checkout-total">
                       {formatPrice(currentTotal)}
                     </span>
@@ -526,7 +526,7 @@ export default function Checkout() {
                       <div className="text-center text-sm text-slate-400">
                         <div className="flex items-center justify-center space-x-2">
                           <Shield className="h-4 w-4 text-green-400" />
-                          <span>3D Secure ile güvenli ödeme</span>
+                          <span>{t.checkout.secure3D || '3D Secure secure payment'}</span>
                         </div>
                       </div>
                     </div>
