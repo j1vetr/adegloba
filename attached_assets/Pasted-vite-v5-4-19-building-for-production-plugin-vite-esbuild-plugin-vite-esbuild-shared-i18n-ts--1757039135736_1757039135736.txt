@@ -1,0 +1,248 @@
+vite v5.4.19 building for production...
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "phoneNumber" in object literal
+420|        usernameOnly: "Kullanıcı Adı",
+421|        emailLabel: "E-posta",
+422|        phoneNumber: "Telefon",
+   |        ^
+423|        selectShip: "Gemi Seçimi",
+424|        chooseShip: "Gemi seçiniz",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "selectShip" in object literal
+421|        emailLabel: "E-posta",
+422|        phoneNumber: "Telefon",
+423|        selectShip: "Gemi Seçimi",
+   |        ^
+424|        chooseShip: "Gemi seçiniz",
+425|        loadingShips: "Gemiler yükleniyor...",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "chooseShip" in object literal
+422|        phoneNumber: "Telefon",
+423|        selectShip: "Gemi Seçimi",
+424|        chooseShip: "Gemi seçiniz",
+   |        ^
+425|        loadingShips: "Gemiler yükleniyor...",
+426|        loginNow: "Giriş yap",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "loadingShips" in object literal
+423|        selectShip: "Gemi Seçimi",
+424|        chooseShip: "Gemi seçiniz",
+425|        loadingShips: "Gemiler yükleniyor...",
+   |        ^
+426|        loginNow: "Giriş yap",
+427|        joinMessage: "Denizde güvenilir internet bağlantısı için sisteme katılın",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "loginNow" in object literal
+424|        chooseShip: "Gemi seçiniz",
+425|        loadingShips: "Gemiler yükleniyor...",
+426|        loginNow: "Giriş yap",
+   |        ^
+427|        joinMessage: "Denizde güvenilir internet bağlantısı için sisteme katılın",
+428|        createNewAccount: "Yeni Hesap Oluştur",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "joinMessage" in object literal
+425|        loadingShips: "Gemiler yükleniyor...",
+426|        loginNow: "Giriş yap",
+427|        joinMessage: "Denizde güvenilir internet bağlantısı için sisteme katılın",
+   |        ^
+428|        createNewAccount: "Yeni Hesap Oluştur",
+429|        systemAccess: "Sistem erişimi için lütfen bilgilerinizi girin",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "createNewAccount" in object literal
+426|        loginNow: "Giriş yap",
+427|        joinMessage: "Denizde güvenilir internet bağlantısı için sisteme katılın",
+428|        createNewAccount: "Yeni Hesap Oluştur",
+   |        ^
+429|        systemAccess: "Sistem erişimi için lütfen bilgilerinizi girin",
+430|        registrationProcessing: "Kayıt işlemi devam ediyor...",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "systemAccess" in object literal
+427|        joinMessage: "Denizde güvenilir internet bağlantısı için sisteme katılın",
+428|        createNewAccount: "Yeni Hesap Oluştur",
+429|        systemAccess: "Sistem erişimi için lütfen bilgilerinizi girin",
+   |        ^
+430|        registrationProcessing: "Kayıt işlemi devam ediyor...",
+431|        privateSystemNotice: "Bu sistem AdeGloba Starlink System müşterilerine özeldir.",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "profile" in object literal
+535|      },
+536|
+537|      profile: {
+   |      ^
+538|        title: "AdeGloba Starlink System - Profil",
+539|        personalInfo: "Profil Bilgileri",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "proceedToPayment" in object literal
+599|        cardPayment: "Kart ile Ödeme",
+600|        processing: "İşleniyor...",
+601|        proceedToPayment: "Ödemeye Geç",
+   |        ^
+602|
+603|        cardInfo: "Kart Bilgileri",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "paymentSuccess" in object literal
+622|        phonePlaceholder: "0532 123 45 67",
+623|
+624|        paymentSuccess: "Ödeme Başarılı",
+   |        ^
+625|        paymentSuccessDesc: "Siparişiniz başarıyla tamamlandı!",
+626|        paymentError: "Ödeme Hatası",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "paymentFailed" in object literal
+626|        paymentError: "Ödeme Hatası",
+627|        paymentCancelled: "Ödeme İptal Edildi",
+628|        paymentFailed: "Ödeme Başarısız",
+   |        ^
+629|        paymentTimeout: "İşlem Zaman Aşımı",
+630|        orderNotFound: "Sipariş Bulunamadı",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "couponApplied" in object literal
+639|
+640|        orderId: "Sipariş ID",
+641|        couponApplied: "✅ Kupon Başarıyla Uygulandı!",
+   |        ^
+642|        couponDiscount: "kuponunuz",
+643|        totalDiscount: "indirim sağladı. Toplam indirimi",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "couponDiscount" in object literal
+640|        orderId: "Sipariş ID",
+641|        couponApplied: "✅ Kupon Başarıyla Uygulandı!",
+642|        couponDiscount: "kuponunuz",
+   |        ^
+643|        totalDiscount: "indirim sağladı. Toplam indirimi",
+644|        couponError: "❌ Kupon Hatası",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "totalDiscount" in object literal
+641|        couponApplied: "✅ Kupon Başarıyla Uygulandı!",
+642|        couponDiscount: "kuponunuz",
+643|        totalDiscount: "indirim sağladı. Toplam indirimi",
+   |        ^
+644|        couponError: "❌ Kupon Hatası",
+645|        amount: "Tutar",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "removed" in object literal
+819|        type: "Tür",
+820|        details: "Detaylar",
+821|        removed: "Kaldırıldı",
+   |        ^
+822|        cleared: "Temizlendi",
+823|        created: "Oluşturuldu",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "cleared" in object literal
+820|        details: "Detaylar",
+821|        removed: "Kaldırıldı",
+822|        cleared: "Temizlendi",
+   |        ^
+823|        created: "Oluşturuldu",
+824|        redirecting: "Yönlendiriliyor..."
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "created" in object literal
+821|        removed: "Kaldırıldı",
+822|        cleared: "Temizlendi",
+823|        created: "Oluşturuldu",
+   |        ^
+824|        redirecting: "Yönlendiriliyor..."
+825|      }
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "redirecting" in object literal
+822|        cleared: "Temizlendi",
+823|        created: "Oluşturuldu",
+824|        redirecting: "Yönlendiriliyor..."
+   |        ^
+825|      }
+826|    },
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "profile" in object literal
+986|      },
+987|
+988|      profile: {
+   |      ^
+989|        title: "AdeGloba Starlink System - Profile",
+990|        personalInfo: "Profile Information",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "proceedToPayment" in object literal
+1050|        cardPayment: "Pay with Card",
+1051|        processing: "Processing...",
+1052|        proceedToPayment: "Proceed to Payment",
+   |        ^
+1053|
+1054|        cardInfo: "Card Information",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "paymentSuccess" in object literal
+1073|        phonePlaceholder: "+1 234 567 8900",
+1074|
+1075|        paymentSuccess: "Payment Successful",
+   |        ^
+1076|        paymentSuccessDesc: "Your order has been completed successfully!",
+1077|        paymentError: "Payment Error",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "paymentFailed" in object literal
+1077|        paymentError: "Payment Error",
+1078|        paymentCancelled: "Payment Cancelled",
+1079|        paymentFailed: "Payment Failed",
+   |        ^
+1080|        paymentTimeout: "Transaction Timeout",
+1081|        orderNotFound: "Order Not Found",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "couponApplied" in object literal
+1090|
+1091|        orderId: "Order ID",
+1092|        couponApplied: "✅ Coupon Applied Successfully!",
+   |        ^
+1093|        couponDiscount: "coupon provided",
+1094|        totalDiscount: "discount. Total discount",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "couponDiscount" in object literal
+1091|        orderId: "Order ID",
+1092|        couponApplied: "✅ Coupon Applied Successfully!",
+1093|        couponDiscount: "coupon provided",
+   |        ^
+1094|        totalDiscount: "discount. Total discount",
+1095|        couponError: "❌ Coupon Error",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "totalDiscount" in object literal
+1092|        couponApplied: "✅ Coupon Applied Successfully!",
+1093|        couponDiscount: "coupon provided",
+1094|        totalDiscount: "discount. Total discount",
+   |        ^
+1095|        couponError: "❌ Coupon Error",
+1096|        amount: "Amount",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "removed" in object literal
+1270|        type: "Type",
+1271|        details: "Details",
+1272|        removed: "Removed",
+   |        ^
+1273|        cleared: "Cleared",
+1274|        created: "Created",
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "cleared" in object literal
+1271|        details: "Details",
+1272|        removed: "Removed",
+1273|        cleared: "Cleared",
+   |        ^
+1274|        created: "Created",
+1275|        redirecting: "Redirecting..."
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "created" in object literal
+1272|        removed: "Removed",
+1273|        cleared: "Cleared",
+1274|        created: "Created",
+   |        ^
+1275|        redirecting: "Redirecting..."
+1276|      }
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "redirecting" in object literal
+1273|        cleared: "Cleared",
+1274|        created: "Created",
+1275|        redirecting: "Redirecting..."
+   |        ^
+1276|      }
+1277|    },
+
+[plugin:vite:esbuild] [plugin vite:esbuild] shared/i18n.ts: Duplicate key "paymentFailed" in object literal
+1525|        orderError: "Ошибка при создании заказа",
+1526|        invalidPayment: "Неверная платежная информация",
+1527|        paymentFailed: "Ошибка платежа",
+   |        ^
+1528|        redirecting: "Перенаправление...",
+1529|        orderCreated: "Заказ создан",
