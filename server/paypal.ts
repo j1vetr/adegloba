@@ -202,6 +202,26 @@ export async function capturePaypalOrder(req: Request, res: Response) {
     const jsonResponse = JSON.parse(String(body));
     const httpStatusCode = httpResponse.statusCode;
 
+    console.log('🔍 PayPal Capture Response Debug:', {
+      httpStatusCode,
+      status: jsonResponse.status,
+      captureStatus: jsonResponse.purchase_units?.[0]?.payments?.captures?.[0]?.status,
+      captureId: jsonResponse.purchase_units?.[0]?.payments?.captures?.[0]?.id
+    });
+
+    // PayPal HTTP 201 döndürse bile capture status DECLINED olabilir!
+    // Capture details'ını kontrol etmemiz lazım
+    const captureDetails = jsonResponse.purchase_units?.[0]?.payments?.captures?.[0];
+    if (captureDetails && captureDetails.status === 'DECLINED') {
+      console.error('❌ PayPal Capture DECLINED despite HTTP 201:', captureDetails);
+      return res.status(400).json({
+        ...jsonResponse,
+        status: 'DECLINED',
+        error: 'Payment was declined by the card issuer',
+        decline_reason: captureDetails.processor_response?.response_code || 'Unknown'
+      });
+    }
+
     res.status(httpStatusCode).json(jsonResponse);
   } catch (error) {
     console.error("Failed to capture order:", error);
