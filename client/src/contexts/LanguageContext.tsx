@@ -69,28 +69,38 @@ export function LanguageSelector({ className = '' }: LanguageSelectorProps) {
   const { language, setLanguage } = useLanguage();
 
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
+    <div className={`relative inline-flex p-1 rounded-xl bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 shadow-lg ${className}`}>
+      {/* Sliding background indicator */}
+      <div
+        className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg shadow-md transition-transform duration-300 ease-out ${
+          language === 'tr' ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      />
+      
       <button
         onClick={() => setLanguage('tr')}
-        className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+        className={`relative z-10 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 min-w-[60px] justify-center ${
           language === 'tr'
-            ? 'bg-amber-500 text-white shadow-lg'
-            : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+            ? 'text-white shadow-lg scale-105'
+            : 'text-slate-300 hover:text-white hover:scale-105'
         }`}
         data-testid="language-tr"
       >
-        TR
+        <span className="text-base">🇹🇷</span>
+        <span className="font-bold">TR</span>
       </button>
+      
       <button
         onClick={() => setLanguage('en')}
-        className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+        className={`relative z-10 flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 min-w-[60px] justify-center ${
           language === 'en'
-            ? 'bg-amber-500 text-white shadow-lg'
-            : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+            ? 'text-white shadow-lg scale-105'
+            : 'text-slate-300 hover:text-white hover:scale-105'
         }`}
         data-testid="language-en"
       >
-        EN
+        <span className="text-base">🇬🇧</span>
+        <span className="font-bold">EN</span>
       </button>
     </div>
   );
