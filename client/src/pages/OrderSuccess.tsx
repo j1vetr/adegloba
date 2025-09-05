@@ -36,10 +36,10 @@ export default function OrderSuccess() {
 
   // Auto-redirect to dashboard immediately
   useEffect(() => {
-    // 1.5 saniye sonra direkt dashboard'a yönlendir
+    // 2.5 saniye sonra direkt dashboard'a yönlendir
     const timer = setTimeout(() => {
       window.location.href = '/panel';
-    }, 1500);
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, []);
