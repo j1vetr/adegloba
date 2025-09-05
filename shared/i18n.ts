@@ -1171,7 +1171,20 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       confirmPassword: "Подтвердите пароль",
       usernameOrEmail: "Имя пользователя или email",
       usernameOnly: "Имя пользователя",
-      emailLabel: "Email"
+      emailLabel: "Электронная почта",
+      phoneNumber: "Телефон",
+      selectShip: "Выбор судна",
+      chooseShip: "Выберите судно",
+      loadingShips: "Загрузка судов...",
+      loginNow: "Войти сейчас",
+      joinMessage: "Присоединяйтесь к системе для надёжного интернет-соединения на море",
+      createNewAccount: "Создать аккаунт",
+      systemAccess: "Для доступа к системе заполните данные",
+      registrationProcessing: "Регистрация...",
+      privateSystemNotice: "Эта система предназначена только для клиентов AdeGloba Starlink System.",
+      emailPlaceholder: "Введите адрес эл. почты",
+      passwordPlaceholder: "Введите пароль (не менее 6 символов)",
+      phonePlaceholder: "900 123 45 67"
     },
 
     dashboard: {
