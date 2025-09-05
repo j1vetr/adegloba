@@ -517,19 +517,19 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(id: string): Promise<boolean> {
     try {
       return await db.transaction(async (tx) => {
-        // First, unassign any credentials assigned to this user
+        // GÜVENLIK FIX: Kredentialleri havuza geri döndürme, kalıcı olarak işaretle
         await tx
           .update(credentialPools)
           .set({
-            isAssigned: false,
-            assignedToUserId: null,
-            assignedToOrderId: null,
-            assignedAt: null,
+            isConsumed: true, // Kalıcı olarak kullanılmış işaretle
+            assignedToUserId: null, // User referansını temizle
+            assignedToOrderId: null, // Order referansını temizle  
             updatedAt: new Date()
+            // isAssigned: false, <- KALDIRMA! Kredentialin kullanılmış olduğunu göster
           })
           .where(eq(credentialPools.assignedToUserId, id));
 
-        // Then delete the user
+        // Sonra kullanıcıyı sil
         const result = await tx
           .delete(users)
           .where(eq(users.id, id));
@@ -646,7 +646,11 @@ export class DatabaseStorage implements IStorage {
 
   async getAvailableCredentialsForPlan(planId: string): Promise<CredentialPool[]> {
     return db.select().from(credentialPools)
-      .where(and(eq(credentialPools.planId, planId), eq(credentialPools.isAssigned, false)))
+      .where(and(
+        eq(credentialPools.planId, planId), 
+        eq(credentialPools.isAssigned, false),
+        eq(credentialPools.isConsumed, false) // Kullanılmış kredentialleri hariç tut
+      ))
       .orderBy(credentialPools.createdAt);
   }
 
@@ -665,7 +669,11 @@ export class DatabaseStorage implements IStorage {
         assignedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(and(eq(credentialPools.id, credentialId), eq(credentialPools.isAssigned, false)))
+      .where(and(
+        eq(credentialPools.id, credentialId), 
+        eq(credentialPools.isAssigned, false),
+        eq(credentialPools.isConsumed, false) // Kullanılmış kredentialleri hariç tut
+      ))
       .returning();
     return updatedCredential;
   }
@@ -1323,17 +1331,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Credential Pool operations
-  async getCredentialPoolsByShip(shipId: string): Promise<CredentialPool[]> {
+  async getCredentialPoolsByPlan(planId: string): Promise<CredentialPool[]> {
     return db.select().from(credentialPools)
-      .where(eq(credentialPools.shipId, shipId))
+      .where(eq(credentialPools.planId, planId)) // planId kullan
       .orderBy(credentialPools.createdAt);
   }
 
-  async getAvailableCredentials(shipId: string): Promise<CredentialPool[]> {
+  async getAvailableCredentials(planId: string): Promise<CredentialPool[]> {
     return db.select().from(credentialPools)
       .where(and(
-        eq(credentialPools.shipId, shipId),
-        eq(credentialPools.isAssigned, false)
+        eq(credentialPools.planId, planId), // planId kullan, shipId değil
+        eq(credentialPools.isAssigned, false),
+        eq(credentialPools.isConsumed, false) // Kullanılmış kredentialleri hariç tut
       ))
       .orderBy(credentialPools.createdAt);
   }
@@ -1349,13 +1358,19 @@ export class DatabaseStorage implements IStorage {
 
 
   async unassignCredential(credentialId: string): Promise<void> {
+    // NOT: Bu fonksiyon sadece iptal edilen siparişler için kullanılmalı
+    // Kullanıcı silindiğinde credentials consumed olarak işaretlenmeli
     const [credential] = await db.update(credentialPools)
       .set({
         isAssigned: false,
         assignedToOrderId: null,
         assignedAt: null
+        // isConsumed değiştirilmiyor - iptal durumunda credential tekrar kullanılabilir
       })
-      .where(eq(credentialPools.id, credentialId))
+      .where(and(
+        eq(credentialPools.id, credentialId),
+        eq(credentialPools.isConsumed, false) // Sadece consumed olmayan kredentialler
+      ))
       .returning();
 
     // Also update any orders that had this credential assigned

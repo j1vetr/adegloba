@@ -108,6 +108,7 @@ export const credentialPools = pgTable("credential_pools", {
   username: varchar("username").notNull(),
   password: varchar("password").notNull(),
   isAssigned: boolean("is_assigned").notNull().default(false),
+  isConsumed: boolean("is_consumed").notNull().default(false), // Kalıcı kullanım işareti
   assignedToOrderId: varchar("assigned_to_order_id").references(() => orders.id, { onDelete: "set null" }),
   assignedToUserId: varchar("assigned_to_user_id").references(() => users.id, { onDelete: "set null" }),
   assignedAt: timestamp("assigned_at"),
