@@ -111,6 +111,37 @@ export interface Translation {
     };
   };
 
+  packages: {
+    title: string;
+    subtitle: string;
+    shipId: string;
+    unspecified: string;
+    dataPackages: string;
+    loadingPackages: string;
+    highSpeedData: string;
+    available: string;
+    monthEndValidity: string;
+    monthEndValidityDesc: string;
+    starlinkTech: string;
+    starlinkTechDesc: string;
+    internetData: string;
+    internetDataDesc: string;
+    addToCart: string;
+    adding: string;
+    addedToCart: string;
+    addedToCartDesc: string;
+    error: string;
+    noPackagesTitle: string;
+    noPackagesDesc: string;
+    contactAdmin: string;
+    highSpeedTitle: string;
+    highSpeedDesc: string;
+    flexiblePackagesTitle: string;
+    flexiblePackagesDesc: string;
+    shipSpecificTitle: string;
+    shipSpecificDesc: string;
+  };
+
   // Profile
   profile: {
     title: string;
@@ -444,6 +475,37 @@ export const translations: Record<'tr' | 'en', Translation> = {
         noExpiredPackagesDesc: "Henüz süresi dolmuş paketiniz bulunmamaktadır. Aktif paketleriniz sona erdiğinde burada görünecek.",
         paginationText: "Toplam {total} paket • Sayfa {current} / {totalPages}"
       }
+    },
+
+    packages: {
+      title: "AdeGloba Starlink System - Data Paketleri",
+      subtitle: "Geminiz için özel olarak tasarlanmış Starlink data paketlerini keşfedin",
+      shipId: "Gemi ID:",
+      unspecified: "Belirtilmemiş",
+      dataPackages: "Data Paketleri",
+      loadingPackages: "Paketler yükleniyor...",
+      highSpeedData: "Yüksek Hızlı Data",
+      available: "Satışta",
+      monthEndValidity: "Ay Sonu Geçerlilik",
+      monthEndValidityDesc: "Paket ay sonuna kadar aktif",
+      starlinkTech: "Starlink Teknolojisi",
+      starlinkTechDesc: "Düşük gecikme, yüksek hız",
+      internetData: "İnternet",
+      internetDataDesc: "Yüksek hızlı deniz interneti",
+      addToCart: "Sepete Ekle",
+      adding: "Ekleniyor...",
+      addedToCart: "Sepete Eklendi",
+      addedToCartDesc: "Paket başarıyla sepete eklendi",
+      error: "Hata",
+      noPackagesTitle: "Henüz Paket Bulunamadı",
+      noPackagesDesc: "Seçili gemi için henüz aktif paket bulunmamaktadır.",
+      contactAdmin: "Lütfen admin ile iletişime geçin.",
+      highSpeedTitle: "Yüksek Hız",
+      highSpeedDesc: "Starlink uydu teknolojisiyle denizde yüksek hızda internet erişimi",
+      flexiblePackagesTitle: "Esnek Paketler",
+      flexiblePackagesDesc: "İhtiyacınıza göre farklı GB seçenekleri ve geçerlilik süreleri",
+      shipSpecificTitle: "Gemiye Özel",
+      shipSpecificDesc: "Her gemi için özelleştirilmiş paket seçenekleri"
     },
 
     profile: {
@@ -785,6 +847,37 @@ export const translations: Record<'tr' | 'en', Translation> = {
         noExpiredPackagesDesc: "You don't have any expired packages yet. When your active packages expire, they will appear here.",
         paginationText: "Total {total} packages • Page {current} / {totalPages}"
       }
+    },
+
+    packages: {
+      title: "AdeGloba Starlink System - Data Packages",
+      subtitle: "Discover Starlink data packages specially designed for your vessel",
+      shipId: "Ship ID:",
+      unspecified: "Unspecified",
+      dataPackages: "Data Packages",
+      loadingPackages: "Loading packages...",
+      highSpeedData: "High Speed Data",
+      available: "Available",
+      monthEndValidity: "Month-End Validity",
+      monthEndValidityDesc: "Package active until end of month",
+      starlinkTech: "Starlink Technology",
+      starlinkTechDesc: "Low latency, high speed",
+      internetData: "Internet",
+      internetDataDesc: "High-speed maritime internet",
+      addToCart: "Add to Cart",
+      adding: "Adding...",
+      addedToCart: "Added to Cart",
+      addedToCartDesc: "Package successfully added to cart",
+      error: "Error",
+      noPackagesTitle: "No Packages Found Yet",
+      noPackagesDesc: "No active packages found for the selected vessel.",
+      contactAdmin: "Please contact admin.",
+      highSpeedTitle: "High Speed",
+      highSpeedDesc: "High-speed internet access at sea with Starlink satellite technology",
+      flexiblePackagesTitle: "Flexible Packages",
+      flexiblePackagesDesc: "Different GB options and validity periods according to your needs",
+      shipSpecificTitle: "Vessel Specific",
+      shipSpecificDesc: "Customized package options for each vessel"
     },
 
     profile: {

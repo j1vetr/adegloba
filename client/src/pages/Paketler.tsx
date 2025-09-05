@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ type PlanWithStock = Plan & {
 export default function Paketler() {
   const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
     queryKey: ["/api/user/ship-plans"],
@@ -34,8 +36,8 @@ export default function Paketler() {
     },
     onSuccess: () => {
       toast({
-        title: "Sepete Eklendi",
-        description: "Paket başarıyla sepete eklendi",
+        title: t.packages.addedToCart,
+        description: t.packages.addedToCartDesc,
       });
       window.location.href = '/sepet';
     },
@@ -44,7 +46,7 @@ export default function Paketler() {
       const errorMessage = error.message || "Sepete eklenemedi";
       
       toast({
-        title: "Hata",
+        title: t.packages.error,
         description: errorMessage,
         variant: "destructive",
       });
@@ -83,19 +85,19 @@ export default function Paketler() {
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
             </div>
             <span className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Data Paketleri
+              {t.packages.dataPackages}
             </span>
           </div>
           <div className="text-center">
             <h1 className="text-4xl font-bold text-white mb-4">
-              AdeGloba Starlink System - Data Paketleri
+              {t.packages.title}
             </h1>
             <p className="text-slate-400 text-lg">
-              Geminiz için özel olarak tasarlanmış Starlink data paketlerini keşfedin
+              {t.packages.subtitle}
             </p>
             <div className="flex items-center justify-center mt-4 text-slate-300">
               <ShipIcon className="h-5 w-5 mr-2" />
-              <span>Gemi ID: {user.ship_id || 'Belirtilmemiş'}</span>
+              <span>{t.packages.shipId} {user.ship_id || t.packages.unspecified}</span>
             </div>
           </div>
         </div>
@@ -104,7 +106,7 @@ export default function Paketler() {
         {plansLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
-            <span className="ml-3 text-slate-300">Paketler yükleniyor...</span>
+            <span className="ml-3 text-slate-300">{t.packages.loadingPackages}</span>
           </div>
         ) : userShipPlans?.length ? (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -138,7 +140,7 @@ export default function Paketler() {
                         <span className="text-4xl font-bold text-white">{plan.dataLimitGb}</span>
                         <span className="text-2xl text-blue-400 font-semibold">GB</span>
                       </div>
-                      <p className="text-blue-300 text-sm mt-1 font-medium">Yüksek Hızlı Data</p>
+                      <p className="text-blue-300 text-sm mt-1 font-medium">{t.packages.highSpeedData}</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -149,7 +151,7 @@ export default function Paketler() {
                     <div className="inline-flex items-center px-3 py-1 bg-green-600/20 rounded-full border border-green-500/30">
                       <Package className="h-4 w-4 text-green-400 mr-2" />
                       <span className="text-sm font-medium text-green-400">
-                        Satışta
+                        {t.packages.available}
                       </span>
                     </div>
                   </div>
@@ -168,8 +170,8 @@ export default function Paketler() {
                     <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
                       <Package className="h-4 w-4 mr-2 flex-shrink-0 text-blue-400" />
                       <div>
-                        <span className="font-medium text-white">{plan.dataLimitGb} GB İnternet</span>
-                        <p className="text-xs text-slate-400 mt-1">Yüksek hızlı deniz interneti</p>
+                        <span className="font-medium text-white">{plan.dataLimitGb} GB {t.packages.internetData}</span>
+                        <p className="text-xs text-slate-400 mt-1">{t.packages.internetDataDesc}</p>
                       </div>
                     </div>
                     
@@ -177,8 +179,8 @@ export default function Paketler() {
                     <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
                       <Calendar className="h-4 w-4 mr-2 flex-shrink-0 text-green-400" />
                       <div>
-                        <span className="font-medium text-white">Ay Sonu Geçerlilik</span>
-                        <p className="text-xs text-slate-400 mt-1">Paket ay sonuna kadar aktif</p>
+                        <span className="font-medium text-white">{t.packages.monthEndValidity}</span>
+                        <p className="text-xs text-slate-400 mt-1">{t.packages.monthEndValidityDesc}</p>
                       </div>
                     </div>
                     
@@ -186,8 +188,8 @@ export default function Paketler() {
                     <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
                       <Zap className="h-4 w-4 mr-2 flex-shrink-0 text-yellow-400" />
                       <div>
-                        <span className="font-medium text-white">Starlink Teknolojisi</span>
-                        <p className="text-xs text-slate-400 mt-1">Düşük gecikme, yüksek hız</p>
+                        <span className="font-medium text-white">{t.packages.starlinkTech}</span>
+                        <p className="text-xs text-slate-400 mt-1">{t.packages.starlinkTechDesc}</p>
                       </div>
                     </div>
                     
@@ -209,11 +211,11 @@ export default function Paketler() {
                     {addToCartMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Ekleniyor...
+                        {t.packages.adding}
                       </>
                     ) : (
                       <>
-                        Sepete Ekle
+                        {t.packages.addToCart}
                         <Package className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                       </>
                     )}
@@ -232,13 +234,13 @@ export default function Paketler() {
           <div className="text-center py-12">
             <Package className="h-16 w-16 text-slate-400 mx-auto mb-6" />
             <h3 className="text-xl font-semibold text-white mb-4">
-              Henüz Paket Bulunamadı
+              {t.packages.noPackagesTitle}
             </h3>
             <p className="text-slate-400 mb-6">
-              Seçili gemi için henüz aktif paket bulunmamaktadır.
+              {t.packages.noPackagesDesc}
             </p>
             <p className="text-sm text-slate-500">
-              Lütfen admin ile iletişime geçin.
+              {t.packages.contactAdmin}
             </p>
           </div>
         )}
@@ -247,25 +249,25 @@ export default function Paketler() {
         <div className="mt-16 grid gap-6 md:grid-cols-3">
           <Card className="bg-slate-900/50 border-slate-700/50 text-center p-6">
             <Zap className="h-8 w-8 text-yellow-400 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-white mb-2">Yüksek Hız</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">{t.packages.highSpeedTitle}</h3>
             <p className="text-slate-400 text-sm">
-              Starlink uydu teknolojisiyle denizde yüksek hızda internet erişimi
+              {t.packages.highSpeedDesc}
             </p>
           </Card>
           
           <Card className="bg-slate-900/50 border-slate-700/50 text-center p-6">
             <Package className="h-8 w-8 text-blue-400 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-white mb-2">Esnek Paketler</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">{t.packages.flexiblePackagesTitle}</h3>
             <p className="text-slate-400 text-sm">
-              İhtiyacınıza göre farklı GB seçenekleri ve geçerlilik süreleri
+              {t.packages.flexiblePackagesDesc}
             </p>
           </Card>
           
           <Card className="bg-slate-900/50 border-slate-700/50 text-center p-6">
             <ShipIcon className="h-8 w-8 text-cyan-400 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-white mb-2">Gemiye Özel</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">{t.packages.shipSpecificTitle}</h3>
             <p className="text-slate-400 text-sm">
-              Her gemi için özelleştirilmiş paket seçenekleri
+              {t.packages.shipSpecificDesc}
             </p>
           </Card>
         </div>
