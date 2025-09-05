@@ -26,91 +26,91 @@ export default function KullanimKilavuzu() {
   const steps = [
     {
       id: 1,
-      title: "Hesap Oluşturun ve Giriş Yapın",
+      title: t.userGuide?.step1Title || "Hesap Oluşturun ve Giriş Yapın",
       icon: <User className="w-8 h-8 text-cyan-400" />,
-      description: "AdeGloba Starlink sistemine kayıt olun ve güvenli giriş yapın",
+      description: t.userGuide?.step1Desc || "AdeGloba Starlink sistemine kayıt olun ve güvenli giriş yapın",
       details: [
-        "Ana sayfadan 'Kayıt Ol' butonuna tıklayın",
-        "E-posta adresinizi ve güçlü bir şifre belirleyin",
-        "Hesabınızı doğruladıktan sonra 'Giriş Yap' ile sisteme girin",
-        "Profil sayfasından kişisel bilgilerinizi tamamlayın"
+        t.userGuide?.step1Detail1 || "Ana sayfadan 'Kayıt Ol' butonuna tıklayın",
+        t.userGuide?.step1Detail2 || "E-posta adresinizi ve güçlü bir şifre belirleyin",
+        t.userGuide?.step1Detail3 || "Hesabınızı doğruladıktan sonra 'Giriş Yap' ile sisteme girin",
+        t.userGuide?.step1Detail4 || "Profil sayfasından kişisel bilgilerinizi tamamlayın"
       ],
-      buttonText: "Giriş Yap",
+      buttonText: t.userGuide?.step1Button || "Giriş Yap",
       buttonAction: () => setLocation("/giris"),
       color: "from-blue-500 to-cyan-500"
     },
     {
       id: 2,
-      title: "Paketleri İnceleyin",
+      title: t.userGuide?.step2Title || "Paketleri İnceleyin",
       icon: <Package className="w-8 h-8 text-green-400" />,
-      description: "Size uygun veri paketlerini keşfedin ve karşılaştırın",
+      description: t.userGuide?.step2Desc || "Size uygun veri paketlerini keşfedin ve karşılaştırın",
       details: [
-        "Müşteri panelinden 'Paketler' bölümüne gidin",
-        "Farklı veri limitlerini (50GB, 100GB, 200GB) inceleyin",
-        "Fiyatları ve paket özelliklerini karşılaştırın",
-        "İhtiyacınıza uygun paketi seçin"
+        t.userGuide?.step2Detail1 || "Müşteri panelinden 'Paketler' bölümüne gidin",
+        t.userGuide?.step2Detail2 || "Farklı veri limitlerini (50GB, 100GB, 200GB) inceleyin",
+        t.userGuide?.step2Detail3 || "Fiyatları ve paket özelliklerini karşılaştırın",
+        t.userGuide?.step2Detail4 || "İhtiyacınıza uygun paketi seçin"
       ],
-      buttonText: "Paketleri Gör",
+      buttonText: t.userGuide?.step2Button || "Paketleri Gör",
       buttonAction: () => setLocation("/paketler"),
       color: "from-green-500 to-emerald-500"
     },
     {
       id: 3,
-      title: "Sepete Ekleme ve Satın Alma",
+      title: t.userGuide?.step3Title || "Sepete Ekleme ve Satın Alma",
       icon: <ShoppingCart className="w-8 h-8 text-purple-400" />,
-      description: "Seçtiğiniz paketleri sepete ekleyin ve güvenli ödeme yapın",
+      description: t.userGuide?.step3Desc || "Seçtiğiniz paketleri sepete ekleyin ve güvenli ödeme yapın",
       details: [
-        "Beğendiğiniz paketi 'Sepete Ekle' ile sepete atın",
-        "Sepet sayfasından paket detaylarını kontrol edin",
-        "Kupon kodunuz varsa uygulayın",
-        "PayPal veya kredi kartı ile güvenli ödeme yapın"
+        t.userGuide?.step3Detail1 || "Beğendiğiniz paketi 'Sepete Ekle' ile sepete atın",
+        t.userGuide?.step3Detail2 || "Sepet sayfasından paket detaylarını kontrol edin",
+        t.userGuide?.step3Detail3 || "Kupon kodunuz varsa uygulayın",
+        t.userGuide?.step3Detail4 || "PayPal veya kredi kartı ile güvenli ödeme yapın"
       ],
-      buttonText: "Sepeti Gör",
+      buttonText: t.userGuide?.step3Button || "Sepeti Gör",
       buttonAction: () => setLocation("/sepet"),
       color: "from-purple-500 to-pink-500"
     },
     {
       id: 4,
-      title: "Ödeme ve Aktivasyon",
+      title: t.userGuide?.step4Title || "Ödeme ve Aktivasyon",
       icon: <CreditCard className="w-8 h-8 text-yellow-400" />,
-      description: "Ödemenizi tamamlayın ve paketinizi anında kullanmaya başlayın",
+      description: t.userGuide?.step4Desc || "Ödemenizi tamamlayın ve paketinizi anında kullanmaya başlayın",
       details: [
-        "Ödeme sayfasında bilgilerinizi güvenle girin",
-        "PayPal hesabınızla veya kredi kartınızla ödeme yapın",
-        "Ödeme onayından sonra paketiniz otomatik aktif olur",
-        "Giriş bilgileriniz e-posta ile gönderilir"
+        t.userGuide?.step4Detail1 || "Ödeme sayfasında bilgilerinizi güvenle girin",
+        t.userGuide?.step4Detail2 || "PayPal hesabınızla veya kredi kartınızla ödeme yapın",
+        t.userGuide?.step4Detail3 || "Ödeme onayından sonra paketiniz otomatik aktif olur",
+        t.userGuide?.step4Detail4 || "Giriş bilgileriniz e-posta ile gönderilir"
       ],
-      buttonText: "Panel",
+      buttonText: t.userGuide?.step4Button || "Panel",
       buttonAction: () => setLocation("/panel"),
       color: "from-yellow-500 to-orange-500"
     },
     {
       id: 5,
-      title: "Profil Yönetimi",
+      title: t.userGuide?.step5Title || "Profil Yönetimi",
       icon: <Monitor className="w-8 h-8 text-indigo-400" />,
-      description: "Kişisel bilgilerinizi güncelleyin ve hesabınızı yönetin",
+      description: t.userGuide?.step5Desc || "Kişisel bilgilerinizi güncelleyin ve hesabınızı yönetin",
       details: [
-        "Müşteri panelinden 'Profil' sayfasına gidin",
-        "Ad, soyad ve iletişim bilgilerinizi güncelleyin",
-        "Şifrenizi değiştirmek için güvenlik ayarlarını kullanın",
-        "Hesap bilgilerinizi düzenli olarak kontrol edin"
+        t.userGuide?.step5Detail1 || "Müşteri panelinden 'Profil' sayfasına gidin",
+        t.userGuide?.step5Detail2 || "Ad, soyad ve iletişim bilgilerinizi güncelleyin",
+        t.userGuide?.step5Detail3 || "Şifrenizi değiştirmek için güvenlik ayarlarını kullanın",
+        t.userGuide?.step5Detail4 || "Hesap bilgilerinizi düzenli olarak kontrol edin"
       ],
-      buttonText: "Profil",
+      buttonText: t.userGuide?.step5Button || "Profil",
       buttonAction: () => setLocation("/profil"),
       color: "from-indigo-500 to-blue-500"
     },
     {
       id: 6,
-      title: "Destek Alma",
+      title: t.userGuide?.step6Title || "Destek Alma",
       icon: <HelpCircle className="w-8 h-8 text-red-400" />,
-      description: "Sorunlarınız için profesyonel destek alın",
+      description: t.userGuide?.step6Desc || "Sorunlarınız için profesyonel destek alın",
       details: [
-        "Panelden 'Destek' bölümüne gidin",
-        "Yeni destek talebi oluşturun",
-        "Sorununuzu detaylı olarak açıklayın",
-        "WhatsApp destek hattından anlık yardım alın"
+        t.userGuide?.step6Detail1 || "Panelden 'Destek' bölümüne gidin",
+        t.userGuide?.step6Detail2 || "Yeni destek talebi oluşturun",
+        t.userGuide?.step6Detail3 || "Sorununuzu detaylı olarak açıklayın",
+        t.userGuide?.step6Detail4 || "WhatsApp destek hattından anlık yardım alın"
       ],
-      buttonText: "Destek",
+      buttonText: t.userGuide?.step6Button || "Destek",
       buttonAction: () => setLocation("/destek"),
       color: "from-red-500 to-pink-500"
     }
@@ -119,23 +119,23 @@ export default function KullanimKilavuzu() {
   const features = [
     {
       icon: <Wifi className="w-6 h-6 text-cyan-400" />,
-      title: "Anlık Aktivasyon",
-      description: "Ödeme sonrası paketiniz anında aktif olur"
+      title: t.userGuide?.instantActivation || "Anlık Aktivasyon",
+      description: t.userGuide?.instantDesc || "Ödeme sonrası paketiniz anında aktif olur"
     },
     {
       icon: <Globe className="w-6 h-6 text-green-400" />,
-      title: "Global Kapsama",
-      description: "Dünyanın her yerinde internet erişimi"
+      title: t.userGuide?.globalCoverage || "Global Kapsama",
+      description: t.userGuide?.globalDesc || "Dünyanın her yerinde internet erişimi"
     },
     {
       icon: <Shield className="w-6 h-6 text-blue-400" />,
-      title: "Güvenli Ödeme",
-      description: "PayPal ve SSL ile korumalı işlemler"
+      title: t.userGuide?.securePayment || "Güvenli Ödeme",
+      description: t.userGuide?.secureDesc || "PayPal ve SSL ile korumalı işlemler"
     },
     {
       icon: <Phone className="w-6 h-6 text-purple-400" />,
-      title: "7/24 Destek",
-      description: "Her an ulaşabileceğiniz teknik destek"
+      title: t.userGuide?.support247 || "7/24 Destek",
+      description: t.userGuide?.supportDesc || "Her an ulaşabileceğiniz teknik destek"
     }
   ];
 
@@ -257,10 +257,10 @@ export default function KullanimKilavuzu() {
             </div>
             
             <h3 className="text-2xl font-bold text-white mb-4">
-              Hâlâ Yardıma İhtiyacınız Var mı?
+              {t.userGuide?.needHelp || 'Hâlâ Yardıma İhtiyacınız Var mı?'}
             </h3>
             <p className="text-slate-300 mb-6 max-w-2xl mx-auto">
-              Herhangi bir adımda zorlanırsanız profesyonel destek ekibimiz size yardımcı olmaktan mutluluk duyar
+              {t.userGuide?.needHelpDesc || 'Herhangi bir adımda zorlanırsanız profesyonel destek ekibimiz size yardımcı olmaktan mutluluk duyar'}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -269,7 +269,7 @@ export default function KullanimKilavuzu() {
                 className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-semibold"
               >
                 <HelpCircle className="w-5 h-5 mr-2" />
-                Destek Talebi Oluştur
+                {t.userGuide?.createTicket || 'Destek Talebi Oluştur'}
               </Button>
               
               <Button
@@ -277,7 +277,7 @@ export default function KullanimKilavuzu() {
                 className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-3 rounded-xl font-semibold"
               >
                 <Phone className="w-5 h-5 mr-2" />
-                WhatsApp Destek
+                {t.userGuide?.whatsappSupport || 'WhatsApp Destek'}
               </Button>
             </div>
             
