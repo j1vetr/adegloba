@@ -3,7 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
 import { setupAuth, isAuthenticated } from "./standaloneAuth";
-import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
+import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault, createPayPalClient } from "./paypal";
+import { OrdersController } from "@paypal/paypal-server-sdk";
 import { OrderService } from "./services/orderService";
 import { CouponService } from "./services/couponService";
 import { ExpiryService } from "./services/expiryService";
@@ -687,7 +688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Complete payment for cart-based order
+  // Complete payment for cart-based order - WITH STRICT VALIDATION
   app.post('/api/cart/complete-payment', async (req: any, res) => {
     if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -696,6 +697,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session.userId;
       const { paypalOrderId, couponCode } = req.body;
+
+      console.log(`🔒 STRICT VALIDATION: Complete payment request for PayPal Order: ${paypalOrderId}`);
+
+      // KESIN KONTROL: PayPal Order ID'yi backend'de re-verify et
+      if (paypalOrderId && paypalOrderId !== 'manual-payment') {
+        console.log(`🔍 Re-verifying PayPal Order status: ${paypalOrderId}`);
+        
+        // PayPal SDK ile order'ı tekrar sorgula
+        const settings = await storage.getSettingsByCategory('payment');
+        const paypalClientId = settings.find(s => s.key === 'paypalClientId')?.value;
+        const paypalSecret = settings.find(s => s.key === 'paypalClientSecret')?.value;
+        
+        if (paypalClientId && paypalSecret) {
+          // PayPal client oluştur
+          const originalClientId = process.env.PAYPAL_CLIENT_ID;
+          const originalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
+          
+          process.env.PAYPAL_CLIENT_ID = paypalClientId;
+          process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
+          
+          try {
+            const client = await createPayPalClient();
+            const ordersController = new OrdersController(client);
+            
+            // PayPal'dan order detaylarını çek
+            const { body } = await ordersController.getOrder({ id: paypalOrderId });
+            const orderDetails = JSON.parse(String(body));
+            
+            console.log(`🔍 PayPal Order Status Check:`, {
+              orderId: paypalOrderId,
+              status: orderDetails.status,
+              captureStatus: orderDetails.purchase_units?.[0]?.payments?.captures?.[0]?.status
+            });
+            
+            // KESIN KONTROL: Capture status COMPLETED olmak zorunda
+            const captureDetails = orderDetails.purchase_units?.[0]?.payments?.captures?.[0];
+            if (!captureDetails || captureDetails.status !== 'COMPLETED') {
+              console.error(`❌ PAYMENT REJECTED: Order ${paypalOrderId} capture status is not COMPLETED:`, captureDetails?.status);
+              return res.status(400).json({ 
+                message: 'Payment verification failed - payment was not completed successfully',
+                paypalStatus: captureDetails?.status || 'UNKNOWN',
+                verified: false
+              });
+            }
+            
+            console.log(`✅ PAYMENT VERIFIED: Order ${paypalOrderId} has COMPLETED capture status`);
+            
+          } finally {
+            // Restore environment variables
+            if (originalClientId) process.env.PAYPAL_CLIENT_ID = originalClientId;
+            if (originalClientSecret) process.env.PAYPAL_CLIENT_SECRET = originalClientSecret;
+          }
+        }
+      }
 
       // Get user to get ship ID
       const user = await storage.getUserById(userId);

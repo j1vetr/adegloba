@@ -255,30 +255,51 @@ export default function CreditCardDrawer({
       }
 
       const captureData = await captureResponse.json();
-      console.log('PayPal card payment captured:', captureData);
+      console.log('🔍 PayPal card payment capture response:', captureData);
 
-      // Sadece COMPLETED status'ta success çağır
-      if (captureData.status === 'COMPLETED') {
-        console.log('✅ Payment captured successfully:', captureData.status);
+      // DOUBLE-CHECK: Hem order status hem de capture details kontrol et
+      const orderStatus = captureData.status;
+      const captureDetails = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+      const captureStatus = captureDetails?.status;
+
+      console.log('🔒 STRICT VALIDATION - Capture Details:', {
+        orderStatus,
+        captureStatus,
+        captureId: captureDetails?.id,
+        processorResponse: captureDetails?.processor_response
+      });
+
+      // Çifte kontrol: Hem order COMPLETED hem capture COMPLETED olmalı
+      if (orderStatus === 'COMPLETED' && captureStatus === 'COMPLETED') {
+        console.log('✅ Payment fully verified - both order and capture COMPLETED');
         
         toast({
           title: "Ödeme Başarılı",
           description: "Kredi kartı ödemesi başarıyla tamamlandı.",
         });
         
-        // Sadece başarılı capture'da backend'e complete-payment gönder
+        // Sadece tam doğrulanmış ödemede backend'e complete-payment gönder
         onSuccess?.({ 
           method: 'card', 
           amount, 
           currency,
           orderId: createData.id,
-          paymentId: captureData.id,
+          paymentId: captureDetails.id,
           paypalOrderId: createData.id
         });
       } else {
-        // DECLINED, FAILED, PENDING vs. durumları error
-        console.error('❌ Payment capture failed with status:', captureData.status);
-        throw new Error(`Ödeme başarısız: ${captureData.status}`);
+        // DECLINED, FAILED, PENDING veya eksik validation - kesinlikle error
+        console.error('❌ Payment verification failed:', {
+          orderStatus,
+          captureStatus,
+          reason: captureDetails?.processor_response?.response_code || 'Unknown'
+        });
+        
+        const errorMessage = captureStatus === 'DECLINED' 
+          ? 'Ödeme reddedildi - kart bilgilerini kontrol edin'
+          : `Ödeme tamamlanamadı (${captureStatus || orderStatus})`;
+          
+        throw new Error(errorMessage);
       }
       
     } catch (error) {

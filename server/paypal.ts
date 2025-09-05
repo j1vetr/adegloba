@@ -39,7 +39,7 @@ async function getPayPalSettings() {
 }
 
 // Create PayPal client dynamically
-async function createPayPalClient() {
+export async function createPayPalClient() {
   const settings = await getPayPalSettings();
   
   return new Client({
