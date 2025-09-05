@@ -444,7 +444,7 @@ export default function Kayit() {
                   onChange={handleChange}
                   required
                   className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
-                  placeholder="E-posta adresinizi girin"
+                  placeholder={t.auth.emailPlaceholder}
                   data-testid="input-email"
                 />
               </div>
@@ -462,7 +462,7 @@ export default function Kayit() {
                   onChange={handleChange}
                   required
                   className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
-                  placeholder="Şifrenizi girin (en az 6 karakter)"
+                  placeholder={t.auth.passwordPlaceholder}
                   data-testid="input-password"
                 />
               </div>
@@ -491,7 +491,7 @@ export default function Kayit() {
                     onChange={handleChange}
                     required
                     className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm flex-1"
-                    placeholder="532 123 45 67"
+                    placeholder={t.auth.phonePlaceholder}
                     data-testid="input-phone-number"
                   />
                 </div>
@@ -560,7 +560,7 @@ export default function Kayit() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Kayıt işlemi devam ediyor...
+                    {t.auth.registrationProcessing}
                   </>
                 ) : (
                   <>
@@ -572,7 +572,7 @@ export default function Kayit() {
               
               {/* Private system notice */}
               <p className="text-xs text-slate-500 text-center">
-                Bu sistem AdeGloba Starlink System müşterilerine özeldir.
+                {t.auth.privateSystemNotice}
               </p>
             </form>
 

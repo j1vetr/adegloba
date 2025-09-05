@@ -46,6 +46,19 @@ export interface Translation {
     usernameOrEmail: string;
     usernameOnly: string;
     emailLabel: string;
+    phoneNumber: string;
+    selectShip: string;
+    chooseShip: string;
+    loadingShips: string;
+    loginNow: string;
+    joinMessage: string;
+    createNewAccount: string;
+    systemAccess: string;
+    registrationProcessing: string;
+    privateSystemNotice: string;
+    emailPlaceholder: string;
+    passwordPlaceholder: string;
+    phonePlaceholder: string;
   };
 
   // Dashboard & Panel
@@ -405,7 +418,20 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       loginNow: "Şimdi Giriş Yap",
       usernameOrEmail: "Kullanıcı Adı / E-posta",
       usernameOnly: "Kullanıcı Adı",
-      emailLabel: "E-posta"
+      emailLabel: "E-posta",
+      phoneNumber: "Telefon",
+      selectShip: "Gemi Seçimi",
+      chooseShip: "Gemi seçiniz",
+      loadingShips: "Gemiler yükleniyor...",
+      loginNow: "Giriş yap",
+      joinMessage: "Denizde güvenilir internet bağlantısı için sisteme katılın",
+      createNewAccount: "Yeni Hesap Oluştur",
+      systemAccess: "Sistem erişimi için lütfen bilgilerinizi girin",
+      registrationProcessing: "Kayıt işlemi devam ediyor...",
+      privateSystemNotice: "Bu sistem AdeGloba Starlink System müşterilerine özeldir.",
+      emailPlaceholder: "E-posta adresinizi girin",
+      passwordPlaceholder: "Şifrenizi girin (en az 6 karakter)",
+      phonePlaceholder: "532 123 45 67"
     },
     profile: {
       fullName: "Ad Soyad",
@@ -716,7 +742,11 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       quantity: "Adet",
       category: "Kategori",
       type: "Tür",
-      details: "Detaylar"
+      details: "Detaylar",
+      removed: "Kaldırıldı",
+      cleared: "Temizlendi",
+      created: "Oluşturuldu",
+      redirecting: "Yönlendiriliyor..."
     }
   },
   
@@ -1088,7 +1118,11 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       quantity: "Quantity",
       category: "Category",
       type: "Type",
-      details: "Details"
+      details: "Details",
+      removed: "Removed",
+      cleared: "Cleared",
+      created: "Created",
+      redirecting: "Redirecting..."
     }
   },
 
@@ -1416,7 +1450,11 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       actions: "Действия",
       category: "Категория",
       type: "Тип",
-      details: "Детали"
+      details: "Детали",
+      removed: "Удалено",
+      cleared: "Очищено",
+      created: "Создано",
+      redirecting: "Перенаправление..."
     }
   }
 };
