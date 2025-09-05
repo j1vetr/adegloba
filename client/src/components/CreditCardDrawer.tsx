@@ -273,20 +273,52 @@ export default function CreditCardDrawer({
       if (orderStatus === 'COMPLETED' && captureStatus === 'COMPLETED') {
         console.log('✅ Payment fully verified - both order and capture COMPLETED');
         
+        // Ödeme kontrolü başarılı - artık backend'e complete-payment gönderebiliriz
         toast({
-          title: "Ödeme Başarılı",
-          description: "Kredi kartı ödemesi başarıyla tamamlandı.",
+          title: "Ödeme Kontrol Ediliyor",
+          description: "Ödeme doğrulandı, işleminiz tamamlanıyor...",
         });
         
-        // Sadece tam doğrulanmış ödemede backend'e complete-payment gönder
-        onSuccess?.({ 
-          method: 'card', 
-          amount, 
-          currency,
-          orderId: createData.id,
-          paymentId: captureDetails.id,
-          paypalOrderId: createData.id
-        });
+        // Backend'e complete-payment gönder ve sonucunu bekle
+        try {
+          const completeResponse = await fetch('/api/cart/complete-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              paypalOrderId: createData.id,
+              couponCode: '' // TODO: Coupon code'u buraya ekle
+            }),
+          });
+
+          if (!completeResponse.ok) {
+            const errorData = await completeResponse.json();
+            throw new Error(errorData.message || 'Ödeme tamamlanırken hata oluştu');
+          }
+
+          const completeData = await completeResponse.json();
+          console.log('✅ Order completed with credentials assigned:', completeData);
+          
+          // Sadece backend başarılıysa success callback'i çağır
+          toast({
+            title: "Ödeme Başarılı!",
+            description: "Kredi kartı ödemesi tamamlandı ve paketler etkinleştirildi.",
+          });
+          
+          onSuccess?.({ 
+            method: 'card', 
+            amount, 
+            currency,
+            orderId: createData.id,
+            paymentId: captureDetails.id,
+            paypalOrderId: createData.id
+          });
+          
+        } catch (backendError) {
+          console.error('❌ Backend complete-payment failed:', backendError);
+          throw new Error(`Ödeme işlemi tamamlanamadı: ${backendError.message}`);
+        }
       } else {
         // DECLINED, FAILED, PENDING veya eksik validation - kesinlikle error
         console.error('❌ Payment verification failed:', {

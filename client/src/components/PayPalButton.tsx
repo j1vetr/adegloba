@@ -247,37 +247,50 @@ export default function PayPalButton({
             console.log('PayPal payment captured:', captureData);
             
             if (captureData.status === 'COMPLETED') {
-              // Complete the order in our backend and assign credentials
-              const completeResponse = await fetch('/api/cart/complete-payment', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  paypalOrderId: data.orderID,
-                  couponCode: couponCode || ''
-                }),
-              });
-
-              if (!completeResponse.ok) {
-                const errorText = await completeResponse.text();
-                throw new Error(`Order completion failed: ${errorText}`);
-              }
-
-              const completeData = await completeResponse.json();
-              console.log('Order completed with credentials assigned:', completeData);
-              
+              // Ödeme kontrol ediliyor bildirimi
               toast({
-                title: "Ödeme Başarılı",
-                description: "PayPal ödemesi tamamlandı ve paketler etkinleştirildi. Yönlendiriliyorsunuz...",
+                title: "Ödeme Kontrol Ediliyor",
+                description: "PayPal ödemesi doğrulandı, işleminiz tamamlanıyor...",
               });
               
-              // Redirect to success page after 1.5 seconds
-              setTimeout(() => {
-                window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureData.id}`;
-              }, 1500);
+              // Complete the order in our backend and assign credentials
+              try {
+                const completeResponse = await fetch('/api/cart/complete-payment', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    paypalOrderId: data.orderID,
+                    couponCode: couponCode || ''
+                  }),
+                });
+
+                if (!completeResponse.ok) {
+                  const errorData = await completeResponse.json();
+                  throw new Error(errorData.message || 'Ödeme tamamlanırken hata oluştu');
+                }
+
+                const completeData = await completeResponse.json();
+                console.log('✅ PayPal order completed with credentials assigned:', completeData);
+                
+                // Sadece backend başarılıysa success bildirimi ve yönlendirme
+                toast({
+                  title: "Ödeme Başarılı!",
+                  description: "PayPal ödemesi tamamlandı ve paketler etkinleştirildi. Yönlendiriliyorsunuz...",
+                });
+                
+                // Redirect to success page after 1.5 seconds
+                setTimeout(() => {
+                  window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureData.id}`;
+                }, 1500);
+                
+              } catch (backendError) {
+                console.error('❌ PayPal backend complete-payment failed:', backendError);
+                throw new Error(`PayPal ödeme işlemi tamamlanamadı: ${backendError.message}`);
+              }
             } else {
-              throw new Error('Payment not completed');
+              throw new Error('PayPal ödemesi tamamlanmadı');
             }
           } catch (error) {
             console.error('Payment capture error:', error);
