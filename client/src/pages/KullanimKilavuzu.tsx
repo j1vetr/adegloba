@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { UserNavigation } from "@/components/UserNavigation";
 import { 
   ShoppingCart, 
   CreditCard, 
@@ -19,6 +21,7 @@ import {
 
 export default function KullanimKilavuzu() {
   const [, setLocation] = useLocation();
+  const { t } = useLanguage();
 
   const steps = [
     {
@@ -138,23 +141,24 @@ export default function KullanimKilavuzu() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <UserNavigation />
       {/* Header */}
       <div className="bg-slate-900/50 border-b border-slate-700/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">
-                📚 Kullanım Kılavuzu
+                📚 {t.userGuide?.title || 'Kullanım Kılavuzu'}
               </h1>
               <p className="text-slate-300">
-                AdeGloba Starlink sistemini nasıl kullanacağınızı adım adım öğrenin
+                {t.userGuide?.description || 'AdeGloba Starlink sistemini nasıl kullanacağınızı adım adım öğrenin'}
               </p>
             </div>
             <Button
               onClick={() => setLocation("/panel")}
               className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
             >
-              Panele Dön
+              {t.userGuide?.backToPanel || 'Panele Dön'}
             </Button>
           </div>
         </div>
@@ -178,10 +182,10 @@ export default function KullanimKilavuzu() {
         <div className="space-y-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-white mb-4">
-              6 Adımda Starlink Paketi Satın Alın
+              {t.userGuide?.stepsTitle || '6 Adımda Starlink Paketi Satın Alın'}
             </h2>
             <p className="text-slate-300 max-w-2xl mx-auto">
-              Sistemi ilk kez kullanıyorsanız aşağıdaki adımları takip ederek kolayca paket satın alabilirsiniz
+              {t.userGuide?.stepsSubtitle || 'Sistemi ilk kez kullanıyorsanız aşağıdaki adımları takip ederek kolayca paket satın alabilirsiniz'}
             </p>
           </div>
 
