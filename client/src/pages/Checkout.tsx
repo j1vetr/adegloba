@@ -260,7 +260,7 @@ export default function Checkout() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin text-cyan-400 mx-auto mb-4" />
-            <p className="text-slate-300">Ödeme sayfası yükleniyor...</p>
+            <p className="text-slate-300">{t.checkout.loading}</p>
           </div>
         </div>
       </div>
@@ -298,10 +298,10 @@ export default function Checkout() {
             </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-4">
-            Ödeme
+            {t.checkout.title}
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-            Siparişinizi tamamlayın ve Starlink bağlantınızı başlatın
+            {t.checkout.description}
           </p>
         </div>
 
@@ -312,7 +312,7 @@ export default function Checkout() {
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-white flex items-center">
                   <Package className="h-5 w-5 mr-2 text-cyan-400" />
-                  Sipariş Detayları
+                  {t.checkout.orderDetails}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -369,7 +369,7 @@ export default function Checkout() {
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-white flex items-center">
                   <Tag className="h-5 w-5 mr-2 text-green-400" />
-                  Kupon Kodu
+                  {t.checkout.couponCode}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -377,7 +377,7 @@ export default function Checkout() {
                   <div className="flex space-x-2">
                     <Input 
                       type="text" 
-                      placeholder="Kupon kodunu girin"
+                      placeholder={t.checkout.couponPlaceholder}
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
                       disabled={!!appliedCoupon}
@@ -460,7 +460,7 @@ export default function Checkout() {
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-white flex items-center">
                   <CreditCard className="h-5 w-5 mr-2 text-cyan-400" />
-                  Ödeme Özeti
+                  {t.checkout.orderSummary}
                 </CardTitle>
               </CardHeader>
               
@@ -478,7 +478,7 @@ export default function Checkout() {
                     <div className="flex justify-between text-green-400 animate-slide-in-right">
                       <span className="flex items-center">
                         <Tag className="h-4 w-4 mr-1" />
-                        Kupon İndirimi
+                        {t.checkout.couponDiscount}
                       </span>
                       <span className="font-semibold text-green-400 price-highlight" data-testid="checkout-discount">
                         -{formatPrice(currentDiscount)}
@@ -507,7 +507,7 @@ export default function Checkout() {
                 <div className="space-y-4">
                   <div className="text-center">
                     <div className="text-sm text-slate-400 mb-4">
-                      Güvenli ödeme ile tamamlayın
+                      {t.checkout.securePayment}
                     </div>
                   </div>
                   
@@ -520,7 +520,7 @@ export default function Checkout() {
                         data-testid="credit-card-button"
                       >
                         <CreditCard className="h-6 w-6" />
-                        <span>Kredi Kartı & Banka Kartı ile Ödeme</span>
+                        <span>{t.checkout.cardPayment}</span>
                       </Button>
                       
                       <div className="text-center text-sm text-slate-400">
@@ -551,7 +551,7 @@ export default function Checkout() {
                 <div className="text-center text-xs text-slate-400 flex items-center justify-center bg-slate-800/30 p-3 rounded-lg hover:bg-slate-800/50 transition-all duration-300">
                   <div className="mr-2 text-green-400 animate-pulse">🔒</div>
                   <div>
-                    <div className="font-medium">Güvenli 256-bit SSL şifreleme</div>
+                    <div className="font-medium">{t.checkout.secureSsl}</div>
                     <div>Kart bilgileriniz güvende</div>
                   </div>
                 </div>
