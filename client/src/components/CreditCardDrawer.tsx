@@ -306,14 +306,10 @@ export default function CreditCardDrawer({
             description: "Kredi kartı ödemesi tamamlandı ve paketler etkinleştirildi.",
           });
           
-          onSuccess?.({ 
-            method: 'card', 
-            amount, 
-            currency,
-            orderId: createData.id,
-            paymentId: captureDetails.id,
-            paypalOrderId: createData.id
-          });
+          // Direkt success sayfasına yönlendir - complete-payment zaten yapıldı
+          setTimeout(() => {
+            window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureDetails.id}`;
+          }, 1500);
           
         } catch (backendError) {
           console.error('❌ Backend complete-payment failed:', backendError);

@@ -34,12 +34,13 @@ export default function OrderSuccess() {
   // Find the specific order by ID
   const verifiedOrder = ordersData?.find((order: any) => order.id === orderDetails?.orderId);
 
-  // Countdown and auto-redirect
+  // Countdown and auto-redirect to dashboard
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          setLocation("/panel");
+          // Direkt dashboard'a yönlendir
+          window.location.href = '/panel';
           return 0;
         }
         return prev - 1;
@@ -47,7 +48,7 @@ export default function OrderSuccess() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [setLocation]);
+  }, []);
 
   const handleRedirectNow = () => {
     setLocation("/panel");
