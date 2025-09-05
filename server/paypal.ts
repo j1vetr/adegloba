@@ -191,16 +191,59 @@ export async function capturePaypalOrder(req: Request, res: Response) {
     const client = await createPayPalClient();
     const ordersController = new OrdersController(client);
     
-    const collect = {
+    // İlk önce order durumunu kontrol et
+    console.log(`🔍 Checking PayPal order status first: ${orderID}`);
+    const getOrderCollect = {
       id: orderID,
       prefer: "return=minimal",
     };
+    
+    let jsonResponse, httpStatusCode;
+    
+    try {
+      // Order'ın mevcut durumunu al
+      const { body: getBody, ...getHttpResponse } = 
+        await ordersController.getOrder(getOrderCollect);
+      
+      const getOrderResponse = JSON.parse(String(getBody));
+      const currentOrderStatus = getOrderResponse.status;
+      
+      console.log('🔍 Current PayPal Order Status:', currentOrderStatus);
+      
+      if (currentOrderStatus === 'COMPLETED') {
+        // Order zaten captured - tekrar capture yapmaya gerek yok
+        console.log('✅ Order already captured - using existing order data');
+        jsonResponse = getOrderResponse;
+        httpStatusCode = getHttpResponse.statusCode;
+      } else {
+        // Order henüz captured değil - normal capture yap
+        console.log('🔄 Order not captured yet - proceeding with capture');
+        const captureCollect = {
+          id: orderID,
+          prefer: "return=minimal",
+        };
 
-    const { body, ...httpResponse } =
-          await ordersController.captureOrder(collect);
+        const { body, ...httpResponse } =
+              await ordersController.captureOrder(captureCollect);
 
-    const jsonResponse = JSON.parse(String(body));
-    const httpStatusCode = httpResponse.statusCode;
+        jsonResponse = JSON.parse(String(body));
+        httpStatusCode = httpResponse.statusCode;
+      }
+    } catch (captureError) {
+      // Eğer ORDER_ALREADY_CAPTURED hatası gelirse, order durumunu tekrar kontrol et
+      if (captureError && typeof captureError === 'object' && 
+          captureError.body && captureError.body.includes('ORDER_ALREADY_CAPTURED')) {
+        
+        console.log('🔄 ORDER_ALREADY_CAPTURED detected - fetching order details');
+        const { body: getBody, ...getHttpResponse } = 
+          await ordersController.getOrder(getOrderCollect);
+        
+        jsonResponse = JSON.parse(String(getBody));
+        httpStatusCode = getHttpResponse.statusCode;
+      } else {
+        throw captureError; // Başka bir hata ise tekrar fırlat
+      }
+    }
 
     console.log('🔍 PayPal Capture Response Debug:', {
       httpStatusCode,
