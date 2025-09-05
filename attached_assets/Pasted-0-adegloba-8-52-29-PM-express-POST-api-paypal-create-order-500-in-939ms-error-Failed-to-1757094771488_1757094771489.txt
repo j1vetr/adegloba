@@ -1,0 +1,106 @@
+0|adegloba  | 8:52:29 PM [express] POST /api/paypal/create-order 500 in 939ms :: {"error":"Failed to create order.…
+0|adegloba  | 🔍 PayPal Order Request Debug: {
+0|adegloba  |   amount: '3.25',
+0|adegloba  |   currency: 'USD',
+0|adegloba  |   intent: 'CAPTURE',
+0|adegloba  |   paymentMethod: 'CARD',
+0|adegloba  |   hasCardDetails: true,
+0|adegloba  |   cardNumber: '5421****'
+0|adegloba  | }
+0|adegloba  | 🔧 Adding card paymentSource to PayPal order
+0|adegloba  | 📤 PayPal Order Body: {
+0|adegloba  |   "intent": "CAPTURE",
+0|adegloba  |   "purchaseUnits": [
+0|adegloba  |     {
+0|adegloba  |       "amount": {
+0|adegloba  |         "currencyCode": "USD",
+0|adegloba  |         "value": "3.25"
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   ],
+0|adegloba  |   "paymentSource": {
+0|adegloba  |     "card": {
+0|adegloba  |       "number": "5421190199944306",
+0|adegloba  |       "securityCode": "809",
+0|adegloba  |       "expiry": "2031-06",
+0|adegloba  |       "name": "emir simsek",
+0|adegloba  |       "billingAddress": {
+0|adegloba  |         "addressLine1": "Molla Mehmet Sokak No:7 anadolu kavagi istanbul",
+0|adegloba  |         "addressLine2": "",
+0|adegloba  |         "adminArea2": "Istanbul",
+0|adegloba  |         "adminArea1": "TR",
+0|adegloba  |         "postalCode": "34000",
+0|adegloba  |         "countryCode": "TR"
+0|adegloba  |       },
+0|adegloba  |       "attributes": {
+0|adegloba  |         "verification": {
+0|adegloba  |           "method": "SCA_WHEN_REQUIRED"
+0|adegloba  |         }
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | info: Request POST https://api-m.paypal.com/v1/oauth2/token
+0|adegloba  | info: Request body {"type":"form","content":[{"key":"grant_type","value":"client_credentials"}]}
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"date":"Fri, 05 Sep 2025 17:52:34 GMT","content-type":"application/json","transfer-encoding":"chunked","connection":"keep-alive","access-control-expose-headers":"**Redacted**","border-ip":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","paypal-debug-id":"**Redacted**","pragma":"no-cache","processing-ip":"**Redacted**","server-timing":"**Redacted**","set-cookie":"**Redacted**","vary":"Accept-Encoding","x-paypal-token-service":"**Redacted**","cf-cache-status":"**Redacted**","strict-transport-security":"**Redacted**","server":"cloudflare","cf-ray":"**Redacted**"}
+0|adegloba  | info: Request POST https://api-m.paypal.com/v2/checkout/orders application/json
+0|adegloba  | info: Request body {"type":"text","content":"{\"intent\":\"CAPTURE\",\"purchase_units\":[{\"amount\":{\"currency_code\":\"USD\",\"value\":\"3.25\"}}],\"payment_source\":{\"card\":{\"name\":\"emir simsek\",\"number\":\"5421190199944306\",\"expiry\":\"2031-06\",\"security_code\":\"809\",\"billing_address\":{\"address_line_1\":\"Molla Mehmet Sokak No:7 anadolu kavagi istanbul\",\"address_line_2\":\"\",\"admin_area_2\":\"Istanbul\",\"admin_area_1\":\"TR\",\"postal_code\":\"34000\",\"country_code\":\"TR\"},\"attributes\":{\"verification\":{\"method\":\"SCA_WHEN_REQUIRED\"}}}}}"}
+0|adegloba  | info: Response 422 483 application/json
+0|adegloba  | info: Response headers {"date":"Fri, 05 Sep 2025 17:52:35 GMT","content-type":"application/json","content-length":"483","connection":"keep-alive","cf-ray":"**Redacted**","access-control-expose-headers":"**Redacted**","application_id":"**Redacted**","border-ip":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","caller_acct_num":"**Redacted**","paypal-debug-id":"**Redacted**","processing-ip":"**Redacted**","server-timing":"**Redacted**","set-cookie":"**Redacted**","vary":"Accept-Encoding","cf-cache-status":"**Redacted**","strict-transport-security":"**Redacted**","server":"cloudflare"}
+0|adegloba  | Failed to create order: CustomError
+0|adegloba  |     at CustomError.ApiError [as constructor] (/var/www/adegloba/node_modules/@apimatic/core/lib/errors/apiError.js:17:28)
+0|adegloba  |     at new CustomError (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/errors/customError.js:14:42)
+0|adegloba  |     at DefaultRequestBuilder.<anonymous> (/var/www/adegloba/node_modules/@apimatic/core/lib/http/requestBuilder.js:686:33)
+0|adegloba  |     at step (/var/www/adegloba/node_modules/tslib/tslib.js:196:27)
+0|adegloba  |     at Object.next (/var/www/adegloba/node_modules/tslib/tslib.js:177:57)
+0|adegloba  |     at fulfilled (/var/www/adegloba/node_modules/tslib/tslib.js:167:62)
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+0|adegloba  |   request: {
+0|adegloba  |     method: 'POST',
+0|adegloba  |     url: 'https://api-m.paypal.com/v2/checkout/orders',
+0|adegloba  |     headers: {
+0|adegloba  |       'Content-Type': 'application/json',
+0|adegloba  |       'PayPal-Request-Id': 'order-1757094754294-8ja7zhcjk5a',
+0|adegloba  |       Prefer: 'return=minimal',
+0|adegloba  |       authorization: 'Bearer A21AANLwUTGuJBL0eGRRy_QpshpRApmfWc2d-0NRG836RgDPibb2D5bhZjigVp3ej1jepDn8mgIFKQPDNueidrFPUjwuDJ-Xg',
+0|adegloba  |       'user-agent': 'PayPal REST API TypeScript SDK, Version: 1.1.0, on OS linux',
+0|adegloba  |       accept: 'application/json'
+0|adegloba  |     },
+0|adegloba  |     body: {
+0|adegloba  |       type: 'text',
+0|adegloba  |       content: '{"intent":"CAPTURE","purchase_units":[{"amount":{"currency_code":"USD","value":"3.25"}}],"payment_source":{"card":{"name":"emir simsek","number":"5421190199944306","expiry":"2031-06","security_code":"809","billing_address":{"address_line_1":"Molla Mehmet Sokak No:7 anadolu kavagi istanbul","address_line_2":"","admin_area_2":"Istanbul","admin_area_1":"TR","postal_code":"34000","country_code":"TR"},"attributes":{"verification":{"method":"SCA_WHEN_REQUIRED"}}}}}'
+0|adegloba  |     }
+0|adegloba  |   },
+0|adegloba  |   statusCode: 422,
+0|adegloba  |   headers: {
+0|adegloba  |     date: 'Fri, 05 Sep 2025 17:52:35 GMT',
+0|adegloba  |     'content-type': 'application/json',
+0|adegloba  |     'content-length': '483',
+0|adegloba  |     connection: 'keep-alive',
+0|adegloba  |     'cf-ray': '97a794c7cfc06937-FRA',
+0|adegloba  |     'access-control-expose-headers': 'Server-Timing',
+0|adegloba  |     application_id: 'APP-3W289051PE867384J',
+0|adegloba  |     'border-ip': '10.163.132.140',
+0|adegloba  |     'cache-control': 'max-age=0, no-cache, no-store, must-revalidate',
+0|adegloba  |     caller_acct_num: 'U7YXXEN63ELEC',
+0|adegloba  |     'paypal-debug-id': 'ce23cf015c053',
+0|adegloba  |     'processing-ip': '10.94.35.16',
+0|adegloba  |     'server-timing': 'traceparent;desc="00-0000000000000000000ce23cf015c053-3235c4026e6cd562-01"',
+0|adegloba  |     'set-cookie': 'l7_az=ccg13.slc; Path=/; Domain=paypal.com; Expires=Fri, 05 Sep 2025 18:22:35 GMT; HttpOnly; Secure,__cf_bm=XgcY7YqXgkbVCrOu8E8W.TF5EzErzpYT5XdkhSqhQnc-1757094755-1.0.1.1-3gpaTtzcujRzaYAL1kJtnYAF9lJV0dyKCKrXOx7SAEeiVVPU2_7upoU967hqiCzq3LjumnPCBIaH3JE95FQWVtfc4uXnYbDjNxTx2nTtVdY; path=/; expires=Fri, 05-Sep-25 18:22:35 GMT; domain=.api-m.paypal.com; HttpOnly; Secure; SameSite=None',
+0|adegloba  |     vary: 'Accept-Encoding',
+0|adegloba  |     'cf-cache-status': 'DYNAMIC',
+0|adegloba  |     'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+0|adegloba  |     server: 'cloudflare'
+0|adegloba  |   },
+0|adegloba  |   body: '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"PAYER_CANNOT_PAY","description":"Payer cannot pay for this transaction. Please contact the payer to find other ways to pay for this transaction."}],"message":"The requested action could not be performed, semantically incorrect, or failed business validation.","debug_id":"ce23cf015c053","links":[{"href":"https://developer.paypal.com/api/rest/reference/orders/v2/errors/#PAYER_CANNOT_PAY","rel":"information_link","method":"GET"}]}',
+0|adegloba  |   result: [Object: null prototype] {
+0|adegloba  |     name: 'UNPROCESSABLE_ENTITY',
+0|adegloba  |     details: [ [Object: null prototype] ],
+0|adegloba  |     message: 'The requested action could not be performed, semantically incorrect, or failed business validation.',
+0|adegloba  |     debug_id: 'ce23cf015c053',
+0|adegloba  |     links: [ [Object: null prototype] ]
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | 8:52:35 PM [express] POST /api/paypal/create-order 500 in 855ms :: {"error":"Failed to create order.…
+
