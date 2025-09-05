@@ -149,8 +149,11 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
             </Button>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          {/* Mobile menu button with language selector */}
+          <div className="md:hidden flex items-center space-x-3">
+            {/* Language Selector - Mobile */}
+            <LanguageSelector className="scale-90" />
+            
             <Button
               variant="ghost"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
