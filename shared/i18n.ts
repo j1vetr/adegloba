@@ -347,7 +347,7 @@ export interface Translation {
   };
 }
 
-export const translations: Record<'tr' | 'en', Translation> = {
+export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
   tr: {
     landing: {
       heroTitle1: "AÇIK DENİZDE",
@@ -1089,6 +1089,334 @@ export const translations: Record<'tr' | 'en', Translation> = {
       category: "Category",
       type: "Type",
       details: "Details"
+    }
+  },
+
+  ru: {
+    landing: {
+      heroTitle1: "В ОТКРЫТОМ МОРЕ",
+      heroTitle2: "НЕТ ГРАНИЦ",
+      heroDescription: "Система морского интернета AdeGloba Starlink обеспечивает бесперебойную связь на любой широте мирового океана",
+      features: {
+        starlink: "Технология Starlink",
+        maritime: "Морской Интернет",
+        instant: "Мгновенная Активация",
+        global: "Глобальное Покрытие"
+      },
+      buttons: {
+        register: "Регистрация",
+        login: "Вход"
+      },
+      trustBadges: {
+        securePayment: "Безопасная Оплата",
+        instantActivation: "Мгновенная Активация",
+        globalCoverage: "Глобальное Покрытие"
+      }
+    },
+
+    auth: {
+      systemLogin: "Вход в систему AdeGloba Starlink",
+      welcomeMessage: "Добро пожаловать в систему управления морским интернетом",
+      accountLogin: "Вход в аккаунт",
+      username: "Имя пользователя",
+      password: "Пароль",
+      loginButton: "Войти",
+      registerButton: "Зарегистрироваться",
+      notRegistered: "Еще не зарегистрированы?",
+      alreadyHaveAccount: "Уже есть аккаунт?",
+      systemRegistration: "Регистрация в системе AdeGloba Starlink",
+      noAccount: "Нет аккаунта?",
+      loginProcessing: "Выполняется вход...",
+      invalidCredentials: "Неверные учетные данные",
+      loginFailed: "Ошибка входа",
+      registerSuccess: "Регистрация успешна",
+      fullName: "Полное имя",
+      email: "Электронная почта",
+      phone: "Телефон",
+      address: "Адрес",
+      confirmPassword: "Подтвердите пароль",
+      usernameOrEmail: "Имя пользователя или email",
+      usernameOnly: "Имя пользователя",
+      emailLabel: "Email"
+    },
+
+    dashboard: {
+      title: "Система AdeGloba Starlink - Панель управления",
+      welcome: "Добро пожаловать в панель управления",
+      systemNotice: "Система морского интернета для клиентов AdeGloba",
+      managementDescription: "Управляйте своими пакетами данных Starlink и следите за использованием",
+      navigation: {
+        home: "Главная",
+        packages: "Пакеты",
+        guide: "Руководство",
+        support: "Поддержка",
+        profile: "Профиль",
+        cart: "Корзина",
+        logout: "Выход",
+        admin: "Администратор"
+      },
+      sections: {
+        activePackages: "Активные пакеты",
+        expired: "Истекшие",
+        purchaseHistory: "История покупок",
+        packagesShort: "Пакеты",
+        historyShort: "История",
+        expiredShort: "Истекшие"
+      },
+      stats: {
+        activePlans: "Активных планов",
+        totalSpent: "Общие расходы",
+        shipsConnected: "Подключенных судов"
+      },
+      purchase: {
+        buyDataPackage: "Купить пакет данных",
+        createOrder: "Создать заказ",
+        noActivePackages: "Пока нет активных пакетов",
+        noOrdersYet: "У вас пока нет истории заказов.",
+        startBrowsing: "Начните просматривать наши пакеты данных",
+        browsePlans: "Просмотреть планы"
+      },
+      status: {
+        active: "Активный",
+        expired: "Истекший",
+        pending: "Ожидание",
+        processing: "Обработка",
+        completed: "Завершен",
+        refunded: "Возвращен",
+        cancelled: "Отменен",
+        daysLeft: "дней осталось"
+      },
+      texts: {
+        loadingPackages: "Загрузка пакетов...",
+        noActivePackages: "Пока нет активных пакетов",
+        noActivePackagesDesc: "Купите свой первый пакет данных в системе AdeGloba Starlink и начните пользоваться бесперебойным интернетом.",
+        buyFirstPackage: "Купить первый пакет",
+        noPurchaseHistory: "У вас пока нет истории покупок.",
+        ship: "Судно:",
+        expiredPackagesTitle: "Мои истекшие пакеты",
+        loadingExpiredPackages: "Загрузка истекших пакетов...",
+        noExpiredPackages: "Нет истекших пакетов",
+        noExpiredPackagesDesc: "У вас пока нет истекших пакетов. Когда ваши активные пакеты истекут, они появятся здесь.",
+        paginationText: "Всего {total} пакетов • Страница {current} / {totalPages}"
+      }
+    },
+
+    packages: {
+      title: "Система AdeGloba Starlink - Пакеты данных",
+      subtitle: "Откройте для себя пакеты данных Starlink, специально разработанные для вашего судна",
+      shipId: "ID судна:",
+      unspecified: "Не указано",
+      dataPackages: "Пакеты данных",
+      loadingPackages: "Загрузка пакетов...",
+      highSpeedData: "Высокоскоростные данные",
+      available: "Доступно",
+      monthEndValidity: "Действительность до конца месяца",
+      monthEndValidityDesc: "Пакет активен до конца месяца",
+      starlinkTech: "Технология Starlink",
+      starlinkTechDesc: "Низкая задержка, высокая скорость",
+      internetData: "Интернет",
+      internetDataDesc: "Высокоскоростной морской интернет",
+      addToCart: "Добавить в корзину",
+      adding: "Добавление...",
+      addedToCart: "Добавлено в корзину",
+      addedToCartDesc: "Пакет успешно добавлен в корзину",
+      error: "Ошибка",
+      noPackagesTitle: "Пакеты пока не найдены",
+      noPackagesDesc: "Для выбранного судна пока нет активных пакетов.",
+      contactAdmin: "Пожалуйста, свяжитесь с администратором.",
+      highSpeedTitle: "Высокая скорость",
+      highSpeedDesc: "Высокоскоростной интернет в море с использованием спутниковой технологии Starlink",
+      flexiblePackagesTitle: "Гибкие пакеты",
+      flexiblePackagesDesc: "Различные варианты ГБ и сроки действия в соответствии с вашими потребностями",
+      shipSpecificTitle: "Специально для судна",
+      shipSpecificDesc: "Индивидуальные варианты пакетов для каждого судна"
+    },
+
+    profile: {
+      title: "Система AdeGloba Starlink - Профиль",
+      personalInfo: "Информация о профиле",
+      editProfile: "Редактировать профиль",
+      saveChanges: "Сохранить изменения",
+      username: "Имя пользователя",
+      fullName: "Полное имя",
+      email: "Электронная почта",
+      phone: "Телефон",
+      address: "Адрес",
+      shipId: "ID судна",
+      profileUpdated: "Профиль обновлен",
+      profileUpdateSuccess: "Ваш профиль был успешно обновлен",
+      profileUpdateError: "Ошибка при обновлении профиля",
+      registrationDate: "Дата регистрации",
+      changePassword: "Изменить пароль",
+      cannotChange: "Невозможно изменить"
+    },
+
+    guide: {
+      title: "Руководство пользователя AdeGloba Starlink",
+      subtitle: "Изучите, как эффективно использовать вашу систему морского интернета",
+      sections: "Разделы"
+    },
+
+    cart: {
+      title: "Система AdeGloba Starlink - Корзина покупок",
+      yourCart: "Ваша корзина",
+      emptyCart: "Ваша корзина пуста",
+      emptyCartDesc: "Начните добавлять пакеты данных в корзину для покупки",
+      browsePlans: "Просмотреть планы",
+      removeFromCart: "Удалить из корзины",
+      quantity: "Количество",
+      price: "Цена",
+      total: "Итого",
+      checkout: "Оформить заказ",
+      updating: "Обновление...",
+      couponCode: "Код купона",
+      applyCoupon: "Применить купон",
+      couponApplied: "Купон применен",
+      invalidCoupon: "Неверный или истекший купон",
+      discount: "Скидка",
+      subtotal: "Промежуточная сумма",
+      validUntil: "Действительно до",
+      monthEndExpiry: "Срок действия до конца месяца",
+      couponHint: "У вас есть код скидки?",
+      couponDescription: "Введите код купона для получения скидки на ваш заказ"
+    },
+
+    checkout: {
+      title: "Система AdeGloba Starlink - Оформление заказа",
+      orderSummary: "Сводка заказа",
+      paymentMethod: "Способ оплаты",
+      payWithPayPal: "Оплатить через PayPal",
+      payWithCard: "Оплатить кредитной картой",
+      processing: "Обработка...",
+      secureCheckout: "Безопасная оплата",
+      orderTotal: "Итого по заказу",
+      taxes: "Налоги",
+      discount: "Скидка",
+      finalTotal: "Итоговая сумма",
+      billingInfo: "Платежная информация",
+      firstName: "Имя",
+      lastName: "Фамилия",
+      email: "Электронная почта",
+      phone: "Телефон",
+      address: "Адрес",
+      city: "Город",
+      country: "Страна",
+      postalCode: "Почтовый индекс",
+      cardNumber: "Номер карты",
+      expiryDate: "Срок действия",
+      cvv: "CVV",
+      completeOrder: "Завершить заказ",
+      paymentProcessing: "Обработка платежа...",
+      orderSuccess: "Заказ успешно создан",
+      orderError: "Ошибка при создании заказа",
+      invalidPayment: "Неверная платежная информация",
+      paymentFailed: "Ошибка платежа",
+      redirecting: "Перенаправление...",
+      orderCreated: "Заказ создан",
+      orderCreatedDesc: "Ваш заказ был успешно создан и отправлен на обработку",
+      backToDashboard: "Вернуться на панель управления",
+      orderCancelled: "Заказ отменен",
+      orderCancelledDesc: "Ваш заказ был отменен. Вы можете попробовать еще раз.",
+      amount: "Сумма",
+      status: "Статус",
+      paid: "Оплачено"
+    },
+
+    admin: {
+      title: "Панель администратора",
+      navigation: {
+        dashboard: "Панель управления",
+        users: "Пользователи",
+        ships: "Суда",
+        plans: "Планы",
+        orders: "Заказы",
+        coupons: "Купоны",
+        settings: "Настройки",
+        emailMarketing: "Email-маркетинг",
+        reports: "Отчеты",
+        logs: "Логи"
+      },
+      actions: {
+        add: "Добавить",
+        edit: "Редактировать",
+        delete: "Удалить",
+        save: "Сохранить",
+        cancel: "Отменить",
+        view: "Просмотреть",
+        export: "Экспорт",
+        import: "Импорт",
+        refresh: "Обновить",
+        search: "Поиск",
+        filter: "Фильтр",
+        activate: "Активировать",
+        deactivate: "Деактивировать",
+        send: "Отправить",
+        test: "Тест"
+      },
+      status: {
+        active: "Активный",
+        inactive: "Неактивный",
+        pending: "Ожидание",
+        completed: "Завершен",
+        failed: "Ошибка",
+        cancelled: "Отменен"
+      }
+    },
+
+    support: {
+      title: "Поддержка AdeGloba Starlink",
+      subtitle: "Мы здесь, чтобы помочь вам с вашей системой морского интернета",
+      contactUs: "Свяжитесь с нами",
+      whatsapp: "WhatsApp",
+      email: "Электронная почта",
+      subject: "Тема",
+      message: "Сообщение",
+      sendReply: "Отправить ответ",
+      ticketList: "Список заявок"
+    },
+
+    common: {
+      loading: "Загрузка...",
+      save: "Сохранить",
+      cancel: "Отменить",
+      delete: "Удалить",
+      edit: "Редактировать",
+      add: "Добавить",
+      search: "Поиск",
+      filter: "Фильтр",
+      export: "Экспорт",
+      import: "Импорт",
+      refresh: "Обновить",
+      yes: "Да",
+      no: "Нет",
+      ok: "ОК",
+      error: "Ошибка",
+      success: "Успех",
+      warning: "Предупреждение",
+      info: "Информация",
+      close: "Закрыть",
+      open: "Открыть",
+      select: "Выбрать",
+      confirm: "Подтвердить",
+      submit: "Отправить",
+      reset: "Сбросить",
+      clear: "Очистить",
+      all: "Все",
+      none: "Ничего",
+      other: "Другое",
+      date: "Дата",
+      time: "Время",
+      name: "Имя",
+      description: "Описание",
+      price: "Цена",
+      quantity: "Количество",
+      total: "Итого",
+      status: "Статус",
+      action: "Действие",
+      actions: "Действия",
+      category: "Категория",
+      type: "Тип",
+      details: "Детали"
     }
   }
 };
