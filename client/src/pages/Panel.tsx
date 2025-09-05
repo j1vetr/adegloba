@@ -130,7 +130,7 @@ export default function Panel() {
             <p className="text-slate-400 text-sm lg:text-base">
               {t.dashboard.welcome}, <span className="text-white font-medium">{user.username}</span>
               {user.ship && (
-                <> • <span className="text-amber-400 font-medium">Gemi: {user.ship.name}</span></>
+                <> • <span className="text-amber-400 font-medium">{t.dashboard.texts.ship} {user.ship.name}</span></>
               )}
             </p>
           </div>
@@ -151,7 +151,7 @@ export default function Panel() {
             >
               <Package className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">{t.dashboard.sections.activePackages}</span>
-              <span className="sm:hidden">Paketler</span>
+              <span className="sm:hidden">{t.dashboard.sections.packagesShort}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
@@ -160,7 +160,7 @@ export default function Panel() {
             >
               <History className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">{t.dashboard.sections.purchaseHistory}</span>
-              <span className="sm:hidden">Geçmiş</span>
+              <span className="sm:hidden">{t.dashboard.sections.historyShort}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="expired" 
@@ -169,7 +169,7 @@ export default function Panel() {
             >
               <Archive className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">{t.dashboard.sections.expired} Paketlerim</span>
-              <span className="sm:hidden">Bitmiş</span>
+              <span className="sm:hidden">{t.dashboard.sections.expiredShort}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -186,7 +186,7 @@ export default function Panel() {
                 {packagesLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
-                    <span className="ml-3 text-slate-300">Paketler yükleniyor...</span>
+                    <span className="ml-3 text-slate-300">{t.dashboard.texts.loadingPackages}</span>
                   </div>
                 ) : (activePackages as any)?.length ? (
                   <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -321,13 +321,13 @@ export default function Panel() {
                       <Package className="h-16 w-16 text-slate-400 mx-auto" />
                       <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl" />
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-3">Henüz Aktif Paket Yok</h3>
+                    <h3 className="text-xl font-semibold text-white mb-3">{t.dashboard.texts.noActivePackages}</h3>
                     <p className="text-slate-400 mb-6 max-w-md mx-auto">
-                      AdeGloba Starlink System'de ilk data paketinizi satın alın ve kesintisiz internete başlayın.
+                      {t.dashboard.texts.noActivePackagesDesc}
                     </p>
                     <Link href="/paketler">
                       <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-blue-500/25 transition-all duration-300">
-                        İlk Paketinizi Satın Alın
+                        {t.dashboard.texts.buyFirstPackage}
                       </Button>
                     </Link>
                   </div>
@@ -395,7 +395,7 @@ export default function Panel() {
                 ) : (
                   <div className="text-center py-8">
                     <History className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <p className="text-slate-400">Henüz satın alım geçmişiniz bulunmamaktadır.</p>
+                    <p className="text-slate-400">{t.dashboard.texts.noPurchaseHistory}</p>
                   </div>
                 )}
               </CardContent>

@@ -68,6 +68,9 @@ export interface Translation {
       activePackages: string;
       expired: string;
       purchaseHistory: string;
+      packagesShort: string;
+      historyShort: string;
+      expiredShort: string;
     };
     stats: {
       activePlans: string;
@@ -92,6 +95,13 @@ export interface Translation {
       refunded: string;
       cancelled: string;
       daysLeft: string;
+    };
+    texts: {
+      loadingPackages: string;
+      noActivePackages: string;
+      noActivePackagesDesc: string;
+      buyFirstPackage: string;
+      noPurchaseHistory: string;
     };
   };
 
@@ -386,7 +396,10 @@ export const translations: Record<'tr' | 'en', Translation> = {
       sections: {
         activePackages: "Aktif Paketlerim",
         expired: "Süresi Doldu",
-        purchaseHistory: "Geçmiş Satın Alımlar"
+        purchaseHistory: "Geçmiş Satın Alımlar",
+        packagesShort: "Paketler",
+        historyShort: "Geçmiş",
+        expiredShort: "Bitmiş"
       },
       stats: {
         activePlans: "Aktif Planlar",
@@ -411,6 +424,14 @@ export const translations: Record<'tr' | 'en', Translation> = {
         refunded: "İade Edildi",
         cancelled: "İptal Edildi",
         daysLeft: "gün kaldı"
+      },
+      texts: {
+        loadingPackages: "Paketler yükleniyor...",
+        noActivePackages: "Henüz Aktif Paket Yok",
+        noActivePackagesDesc: "AdeGloba Starlink System'de ilk data paketinizi satın alın ve kesintisiz internete başlayın.",
+        buyFirstPackage: "İlk Paketinizi Satın Alın",
+        noPurchaseHistory: "Henüz satın alım geçmişiniz bulunmamaktadır.",
+        ship: "Gemi:"
       }
     },
 
@@ -711,7 +732,10 @@ export const translations: Record<'tr' | 'en', Translation> = {
       sections: {
         activePackages: "My Active Packages",
         expired: "Expired",
-        purchaseHistory: "Purchase History"
+        purchaseHistory: "Purchase History",
+        packagesShort: "Packages",
+        historyShort: "History",
+        expiredShort: "Expired"
       },
       stats: {
         activePlans: "Active Plans",
@@ -736,6 +760,14 @@ export const translations: Record<'tr' | 'en', Translation> = {
         refunded: "Refunded",
         cancelled: "Cancelled",
         daysLeft: "days left"
+      },
+      texts: {
+        loadingPackages: "Loading packages...",
+        noActivePackages: "No Active Packages Yet",
+        noActivePackagesDesc: "Purchase your first data package in AdeGloba Starlink System and start uninterrupted internet.",
+        buyFirstPackage: "Buy Your First Package",
+        noPurchaseHistory: "You don't have any purchase history yet.",
+        ship: "Ship:"
       }
     },
 

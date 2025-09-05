@@ -102,7 +102,7 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
             <Link href="/panel">
               <div className="flex items-center cursor-pointer">
                 <span className="text-xl font-bold bg-gradient-to-r from-yellow-400 via-amber-400 to-blue-500 bg-clip-text text-transparent hover:from-yellow-300 hover:via-amber-300 hover:to-blue-400 transition-all duration-300">
-                  AG Starlink System
+                  ADS
                 </span>
               </div>
             </Link>
