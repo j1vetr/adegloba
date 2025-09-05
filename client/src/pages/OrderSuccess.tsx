@@ -34,24 +34,18 @@ export default function OrderSuccess() {
   // Find the specific order by ID
   const verifiedOrder = ordersData?.find((order: any) => order.id === orderDetails?.orderId);
 
-  // Countdown and auto-redirect to dashboard
+  // Auto-redirect to dashboard immediately
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          // Direkt dashboard'a yönlendir
-          window.location.href = '/panel';
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    // 1.5 saniye sonra direkt dashboard'a yönlendir
+    const timer = setTimeout(() => {
+      window.location.href = '/panel';
+    }, 1500);
 
-    return () => clearInterval(timer);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleRedirectNow = () => {
-    setLocation("/panel");
+    window.location.href = '/panel';
   };
 
   // Allow access without orderId for testing/direct access
@@ -150,7 +144,7 @@ export default function OrderSuccess() {
             <div className="flex items-center justify-center space-x-3 text-cyan-400 mb-4">
               <Clock className="w-5 h-5" />
               <span className="text-lg font-semibold">
-                Ödemeniz kabul edildi — {countdown} saniye içinde müşteri paneline yönlendiriliyorsunuz
+                Ödemeniz kabul edildi — müşteri paneline yönlendiriliyorsunuz
               </span>
             </div>
             
