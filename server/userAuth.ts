@@ -344,7 +344,7 @@ export function setupUserAuth(app: Express) {
         // For security, don't reveal if email exists or not
         return res.json({ 
           success: true, 
-          message: "Eğer bu e-posta adresine kayıtlı bir hesap varsa, şifre sıfırlama talimatları gönderildi." 
+          message: "Eğer e-posta adresiniz doğru ise şifre sıfırlama e-postası mailine iletilmiştir." 
         });
       }
 

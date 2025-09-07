@@ -34,7 +34,7 @@ export default function ForgotPassword() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setSuccess(t.auth.passwordResetSent);
+        setSuccess(t.auth.passwordResetSecurity);
         setEmail("");
       } else {
         setError(data.message || t.auth.passwordResetError);

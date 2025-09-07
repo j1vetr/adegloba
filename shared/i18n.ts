@@ -67,6 +67,7 @@ export interface Translation {
     sendPasswordReset: string;
     sendingPasswordReset: string;
     passwordResetSent: string;
+    passwordResetSecurity: string;
     passwordResetError: string;
     backToLogin: string;
     connectionError: string;
@@ -450,7 +451,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       forgotPasswordDescription: "E-posta adresinizi girin, yeni şifre gönderelim",
       sendPasswordReset: "Şifre Gönder",
       sendingPasswordReset: "Gönderiliyor...",
-      passwordResetSent: "Şifre sıfırlama e-postası gönderildi! E-posta kutunuzu kontrol edin.",
+      passwordResetSent: "Yeni şifreniz e-posta adresinize gönderildi.",
+      passwordResetSecurity: "Eğer e-posta adresiniz doğru ise şifre sıfırlama e-postası mailine iletilmiştir.",
       passwordResetError: "Bir hata oluştu. Lütfen tekrar deneyin.",
       backToLogin: "Giriş Sayfasına Dön",
       connectionError: "Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin."
@@ -925,7 +927,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       forgotPasswordDescription: "Enter your email address and we'll send you a new password",
       sendPasswordReset: "Send Password",
       sendingPasswordReset: "Sending...",
-      passwordResetSent: "Password reset email sent! Please check your inbox.",
+      passwordResetSent: "New password has been sent to your email address.",
+      passwordResetSecurity: "If your email address is correct, a password reset email has been sent to your inbox.",
       passwordResetError: "An error occurred. Please try again.",
       backToLogin: "Back to Login",
       connectionError: "Connection error. Please check your internet connection."
@@ -1124,7 +1127,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       forgotPasswordDescription: "Enter your email address and we'll send you a new password",
       sendPasswordReset: "Send Password",
       sendingPasswordReset: "Sending...",
-      passwordResetSent: "Password reset email sent! Please check your inbox.",
+      passwordResetSent: "New password has been sent to your email address.",
+      passwordResetSecurity: "If your email address is correct, a password reset email has been sent to your inbox.",
       passwordResetError: "An error occurred. Please try again.",
       backToLogin: "Back to Login",
       connectionError: "Connection error. Please check your internet connection.",
@@ -1399,7 +1403,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       forgotPasswordDescription: "Введите ваш email и мы отправим вам новый пароль",
       sendPasswordReset: "Отправить пароль",
       sendingPasswordReset: "Отправляется...",
-      passwordResetSent: "Письмо для сброса пароля отправлено! Проверьте вашу почту.",
+      passwordResetSent: "Новый пароль отправлен на ваш email адрес.",
+      passwordResetSecurity: "Если ваш email адрес правильный, письмо со сбросом пароля было отправлено на вашу почту.",
       passwordResetError: "Произошла ошибка. Попробуйте еще раз.",
       backToLogin: "Вернуться к входу",
       connectionError: "Ошибка соединения. Проверьте ваше интернет-соединение."
