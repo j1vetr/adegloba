@@ -212,13 +212,13 @@ export default function Giris() {
                   </button>
                 </p>
                 <p className="text-slate-400 text-sm">
-                  Şifrenizi mi unuttunuz?{" "}
+                  {t.auth.notRegistered?.replace('Kayıtlı değil misiniz?', 'Şifrenizi mi unuttunuz?') || 'Şifrenizi mi unuttunuz?'}{" "}
                   <button
                     onClick={() => setLocation("/sifremi-unuttum")}
                     className="text-amber-400 hover:text-amber-300 underline transition-colors"
                     data-testid="link-forgot-password"
                   >
-                    Şifremi Unuttum
+                    {t.auth.forgotPassword}
                   </button>
                 </p>
               </div>

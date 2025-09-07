@@ -59,6 +59,17 @@ export interface Translation {
     emailPlaceholder: string;
     passwordPlaceholder: string;
     phonePlaceholder: string;
+    
+    // Forgot Password
+    forgotPassword: string;
+    forgotPasswordTitle: string;
+    forgotPasswordDescription: string;
+    sendPasswordReset: string;
+    sendingPasswordReset: string;
+    passwordResetSent: string;
+    passwordResetError: string;
+    backToLogin: string;
+    connectionError: string;
   };
 
   // Dashboard & Panel
@@ -431,7 +442,18 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       privateSystemNotice: "Bu sistem AdeGloba Starlink System müşterilerine özeldir.",
       emailPlaceholder: "E-posta adresinizi girin",
       passwordPlaceholder: "Şifrenizi girin (en az 6 karakter)",
-      phonePlaceholder: "532 123 45 67"
+      phonePlaceholder: "532 123 45 67",
+      
+      // Forgot Password
+      forgotPassword: "Şifremi Unuttum",
+      forgotPasswordTitle: "Şifremi Unuttum",
+      forgotPasswordDescription: "E-posta adresinizi girin, yeni şifre gönderelim",
+      sendPasswordReset: "Şifre Gönder",
+      sendingPasswordReset: "Gönderiliyor...",
+      passwordResetSent: "Şifre sıfırlama e-postası gönderildi! E-posta kutunuzu kontrol edin.",
+      passwordResetError: "Bir hata oluştu. Lütfen tekrar deneyin.",
+      backToLogin: "Giriş Sayfasına Dön",
+      connectionError: "Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin."
     },
     profile: {
       fullName: "Ad Soyad",
@@ -1072,6 +1094,17 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       phoneNumber: "Phone Number",
       phonePlaceholder: "+1 234 567 8900",
       
+      // Forgot Password
+      forgotPassword: "Forgot Password",
+      forgotPasswordTitle: "Forgot Password",
+      forgotPasswordDescription: "Enter your email address and we'll send you a new password",
+      sendPasswordReset: "Send Password",
+      sendingPasswordReset: "Sending...",
+      passwordResetSent: "Password reset email sent! Please check your inbox.",
+      passwordResetError: "An error occurred. Please try again.",
+      backToLogin: "Back to Login",
+      connectionError: "Connection error. Please check your internet connection.",
+      
       paymentSuccess: "Payment Successful",
       paymentSuccessDesc: "Your order has been completed successfully!",
       paymentError: "Payment Error",
@@ -1334,7 +1367,18 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       privateSystemNotice: "Эта система предназначена только для клиентов AdeGloba Starlink System.",
       emailPlaceholder: "Введите адрес эл. почты",
       passwordPlaceholder: "Введите пароль (не менее 6 символов)",
-      phonePlaceholder: "900 123 45 67"
+      phonePlaceholder: "900 123 45 67",
+      
+      // Forgot Password
+      forgotPassword: "Забыл пароль",
+      forgotPasswordTitle: "Забыл пароль",
+      forgotPasswordDescription: "Введите ваш email и мы отправим вам новый пароль",
+      sendPasswordReset: "Отправить пароль",
+      sendingPasswordReset: "Отправляется...",
+      passwordResetSent: "Письмо для сброса пароля отправлено! Проверьте вашу почту.",
+      passwordResetError: "Произошла ошибка. Попробуйте еще раз.",
+      backToLogin: "Вернуться к входу",
+      connectionError: "Ошибка соединения. Проверьте ваше интернет-соединение."
     },
 
     dashboard: {

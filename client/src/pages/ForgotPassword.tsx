@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
+import { useLanguage, LanguageSelector } from "@/contexts/LanguageContext";
 import adeGlobaLogo from "@assets/adegloba-1_1756252463127.png";
 
 export default function ForgotPassword() {
   const [, setLocation] = useLocation();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -32,13 +34,13 @@ export default function ForgotPassword() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setSuccess("Şifre sıfırlama e-postası gönderildi! E-posta kutunuzu kontrol edin.");
+        setSuccess(t.auth.passwordResetSent);
         setEmail("");
       } else {
-        setError(data.message || "Bir hata oluştu. Lütfen tekrar deneyin.");
+        setError(data.message || t.auth.passwordResetError);
       }
     } catch (error) {
-      setError("Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.");
+      setError(t.auth.connectionError);
     } finally {
       setIsLoading(false);
     }
@@ -54,6 +56,11 @@ export default function ForgotPassword() {
       </div>
 
       <div className="relative z-10 w-full max-w-md">
+        {/* Language Selector */}
+        <div className="flex justify-end mb-4">
+          <LanguageSelector />
+        </div>
+        
         {/* Header with Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
@@ -63,15 +70,15 @@ export default function ForgotPassword() {
               className="h-16 sm:h-20 object-contain filter drop-shadow-lg"
             />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Şifremi Unuttum</h1>
-          <p className="text-slate-400 text-sm sm:text-base">E-posta adresinizi girin, yeni şifre gönderelim</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{t.auth.forgotPasswordTitle}</h1>
+          <p className="text-slate-400 text-sm sm:text-base">{t.auth.forgotPasswordDescription}</p>
         </div>
 
         <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-700/50 shadow-2xl">
           <CardHeader className="pb-6">
             <div className="text-center text-white text-xl flex items-center justify-center gap-2">
               <Mail className="h-5 w-5 text-amber-400" />
-              <span className="font-semibold">E-posta Adresiniz</span>
+              <span className="font-semibold">{t.auth.emailLabel}</span>
             </div>
           </CardHeader>
           <CardContent>
@@ -83,7 +90,7 @@ export default function ForgotPassword() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-amber-500"
-                  placeholder="ornek@email.com"
+                  placeholder={t.auth.emailPlaceholder}
                   data-testid="input-email"
                 />
               </div>
@@ -113,12 +120,12 @@ export default function ForgotPassword() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Gönderiliyor...
+                    {t.auth.sendingPasswordReset}
                   </>
                 ) : (
                   <>
                     <Mail className="mr-2 h-5 w-5" />
-                    Şifre Gönder
+                    {t.auth.sendPasswordReset}
                   </>
                 )}
               </Button>
@@ -132,7 +139,7 @@ export default function ForgotPassword() {
                 data-testid="button-back-login"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Giriş Sayfasına Dön
+                {t.auth.backToLogin}
               </button>
             </div>
           </CardContent>
