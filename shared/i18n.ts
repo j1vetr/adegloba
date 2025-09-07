@@ -904,7 +904,31 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       loginNow: "Sign In Now",
       usernameOrEmail: "Username / Email",
       usernameOnly: "Username",
-      emailLabel: "Email"
+      emailLabel: "Email",
+      phoneLabel: "Phone",
+      shipSelection: "Ship Selection",
+      chooseShipOption: "Choose a ship",
+      loadingShipsText: "Loading ships...",
+      loginNowButton: "Sign in",
+      joinText: "Join for reliable internet connection at sea",
+      createAccountButton: "Create New Account",
+      systemAccessText: "Please enter your information for system access",
+      registrationProcessing: "Registration in progress...",
+      privateSystemNotice: "This system is exclusive to AdeGloba Starlink System customers.",
+      emailPlaceholder: "Enter your email address",
+      passwordPlaceholder: "Enter your password (minimum 6 characters)",
+      phonePlaceholder: "+1 234 567 8900",
+      
+      // Forgot Password
+      forgotPassword: "Forgot Password",
+      forgotPasswordTitle: "Forgot Password",
+      forgotPasswordDescription: "Enter your email address and we'll send you a new password",
+      sendPasswordReset: "Send Password",
+      sendingPasswordReset: "Sending...",
+      passwordResetSent: "Password reset email sent! Please check your inbox.",
+      passwordResetError: "An error occurred. Please try again.",
+      backToLogin: "Back to Login",
+      connectionError: "Connection error. Please check your internet connection."
     },
     profile: {
       fullName: "Full Name",
