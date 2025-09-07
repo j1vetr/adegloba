@@ -777,6 +777,38 @@ export class EmailService {
           </div>
         `);
 
+      case 'password_reset':
+        return baseTemplate.replace('{{content}}', `
+          <h2>🔑 Şifre Sıfırlama</h2>
+          <p>Merhaba <span class="highlight">{{userName}}</span>,</p>
+          <p>AdeGloba Starlink sisteminiz için şifre sıfırlama talebiniz alınmıştır. Yeni şifreniz aşağıda yer almaktadır:</p>
+          
+          <div class="order-details">
+            <div class="status-badge">🔐 Yeni Şifreniz</div>
+            <div class="order-item" style="background: #1e293b; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+              <span style="font-family: 'Courier New', monospace; font-size: 24px; color: #facc15; font-weight: bold; letter-spacing: 2px;">{{newPassword}}</span>
+            </div>
+          </div>
+          
+          <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #92400e; margin: 0; font-weight: 600;">⚠️ Güvenlik Uyarısı</p>
+            <p style="color: #92400e; margin: 5px 0 0 0; font-size: 14px;">
+              Giriş yaptıktan sonra şifrenizi değiştirmeniz önerilir. Profil sayfanızdan yeni bir şifre belirleyebilirsiniz.
+            </p>
+          </div>
+          
+          <p>Sisteme giriş yapmak için aşağıdaki butona tıklayabilirsiniz:</p>
+          <div style="text-align: center;">
+            <a href="{{loginUrl}}" class="button">🚀 Sisteme Giriş Yap</a>
+          </div>
+          
+          <p style="margin-top: 30px; font-size: 14px; color: #64748b;">
+            Eğer bu işlemi siz yapmadıysanız, lütfen derhal <a href="mailto:{{supportEmail}}" style="color: #facc15;">{{supportEmail}}</a> adresinden bizimle iletişime geçin.
+          </p>
+          
+          <p>İyi denizler! ⚓</p>
+        `);
+
       default:
         return baseTemplate.replace('{{content}}', '<p>Email content not found.</p>');
     }

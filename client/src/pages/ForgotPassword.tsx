@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, ArrowLeft, Satellite, Waves } from "lucide-react";
-import adeGlobaLogo from "@assets/adegloba-logo.png";
+import adeGlobaLogo from "@assets/adegloba-1_1756252463127.png";
 
 export default function ForgotPassword() {
   const [, setLocation] = useLocation();

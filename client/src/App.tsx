@@ -41,6 +41,7 @@ import UserTickets from "@/pages/UserTickets";
 import TicketDetail from "@/pages/TicketDetail";
 import Profil from "@/pages/Profil";
 import KullanimKilavuzu from "@/pages/KullanimKilavuzu";
+import ForgotPassword from "@/pages/ForgotPassword";
 import PushNotifications from "@/pages/admin/PushNotifications";
 import EmailMarketing from "@/pages/admin/EmailMarketing";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
@@ -58,6 +59,7 @@ function Router() {
       {/* User Auth Routes - Turkish */}
       <Route path="/kayit" component={Kayit} />
       <Route path="/giris" component={Giris} />
+      <Route path="/sifremi-unuttum" component={ForgotPassword} />
       
       {/* Admin Routes - protected */}
       <Route path="/admin">

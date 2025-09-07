@@ -325,6 +325,76 @@ export function setupUserAuth(app: Express) {
       res.status(500).json({ message: 'Internal server error' });
     }
   });
+
+  // Forgot Password - Send reset email
+  app.post("/api/user/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "E-posta adresi gereklidir" 
+        });
+      }
+
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // For security, don't reveal if email exists or not
+        return res.json({ 
+          success: true, 
+          message: "Eğer bu e-posta adresine kayıtlı bir hesap varsa, şifre sıfırlama talimatları gönderildi." 
+        });
+      }
+
+      // Reset password and get new one
+      const resetResult = await storage.resetUserPassword(user.id);
+      if (!resetResult) {
+        return res.status(500).json({ 
+          success: false, 
+          message: "Şifre sıfırlama işlemi başarısız" 
+        });
+      }
+
+      // Send password reset email
+      try {
+        const baseUrlSetting = await storage.getSetting('base_url');
+        const baseUrl = baseUrlSetting?.value || 'https://adegloba.toov.com.tr';
+        
+        await emailService.sendEmail(
+          user.email,
+          'Şifre Sıfırlama - AdeGloba Starlink System',
+          'password_reset',
+          {
+            userName: user.full_name || user.username,
+            newPassword: resetResult.newPassword,
+            loginUrl: baseUrl + '/giris',
+            supportEmail: 'support@adegloba.com'
+          }
+        );
+        
+        console.log(`📧 Password reset email sent to: ${user.email}`);
+        
+        res.json({ 
+          success: true, 
+          message: "Yeni şifreniz e-posta adresinize gönderildi." 
+        });
+      } catch (emailError) {
+        console.error('Failed to send password reset email:', emailError);
+        res.status(500).json({ 
+          success: false, 
+          message: "E-posta gönderimi başarısız" 
+        });
+      }
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Şifre sıfırlama işlemi sırasında bir hata oluştu" 
+      });
+    }
+  });
 }
 
 // Middleware to check if user is authenticated
