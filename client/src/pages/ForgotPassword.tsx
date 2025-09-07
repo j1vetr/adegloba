@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Mail, ArrowLeft, Satellite, Waves } from "lucide-react";
+import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import adeGlobaLogo from "@assets/adegloba-1_1756252463127.png";
 
 export default function ForgotPassword() {
@@ -45,33 +45,32 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center p-4">
-      {/* Background Effects */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+      {/* Subtle background effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-10 left-10 sm:top-20 sm:left-20 w-40 h-40 sm:w-80 sm:h-80 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-10 right-10 sm:bottom-20 sm:right-20 w-32 h-32 sm:w-60 sm:h-60 bg-gradient-to-r from-slate-600/10 to-slate-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:40px_40px] sm:bg-[size:60px_60px]" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Header */}
+        {/* Header with Logo */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4 space-x-2">
-            <div className="relative">
-              <Satellite className="h-8 w-8 text-blue-400" />
-              <Waves className="h-4 w-4 text-cyan-400 absolute -bottom-1 -right-1" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              AdeGloba
-            </span>
+          <div className="flex items-center justify-center mb-6">
+            <img 
+              src={adeGlobaLogo} 
+              alt="AdeGloba Limited" 
+              className="h-16 sm:h-20 object-contain filter drop-shadow-lg"
+            />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Şifremi Unuttum</h1>
-          <p className="text-slate-400">E-posta adresinizi girin, yeni şifre gönderelim</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Şifremi Unuttum</h1>
+          <p className="text-slate-400 text-sm sm:text-base">E-posta adresinizi girin, yeni şifre gönderelim</p>
         </div>
 
-        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-          <CardHeader className="space-y-1 pb-4">
-            <div className="flex items-center space-x-2 text-blue-400">
-              <Mail className="h-5 w-5" />
+        <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-700/50 shadow-2xl">
+          <CardHeader className="pb-6">
+            <div className="text-center text-white text-xl flex items-center justify-center gap-2">
+              <Mail className="h-5 w-5 text-amber-400" />
               <span className="font-semibold">E-posta Adresiniz</span>
             </div>
           </CardHeader>
@@ -83,7 +82,7 @@ export default function ForgotPassword() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                  className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-amber-500"
                   placeholder="ornek@email.com"
                   data-testid="input-email"
                 />
@@ -119,7 +118,7 @@ export default function ForgotPassword() {
                 ) : (
                   <>
                     <Mail className="mr-2 h-5 w-5" />
-                    Şifre Sıfırlama E-postası Gönder
+                    Şifre Gönder
                   </>
                 )}
               </Button>
