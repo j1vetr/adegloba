@@ -198,18 +198,30 @@ export default function Giris() {
               </Button>
             </form>
 
-            {/* Register Link & Home Button */}
+            {/* Register Link & Forgot Password & Home Button */}
             <div className="mt-6 text-center space-y-4">
-              <p className="text-slate-400 text-sm">
-                Henüz hesabınız yok mu?{" "}
-                <button
-                  onClick={() => setLocation("/kayit")}
-                  className="text-amber-400 hover:text-amber-300 underline transition-colors"
-                  data-testid="link-register"
-                >
-                  {t.auth.registerButton}
-                </button>
-              </p>
+              <div className="space-y-2">
+                <p className="text-slate-400 text-sm">
+                  Henüz hesabınız yok mu?{" "}
+                  <button
+                    onClick={() => setLocation("/kayit")}
+                    className="text-amber-400 hover:text-amber-300 underline transition-colors"
+                    data-testid="link-register"
+                  >
+                    {t.auth.registerButton}
+                  </button>
+                </p>
+                <p className="text-slate-400 text-sm">
+                  Şifrenizi mi unuttunuz?{" "}
+                  <button
+                    onClick={() => setLocation("/sifremi-unuttum")}
+                    className="text-amber-400 hover:text-amber-300 underline transition-colors"
+                    data-testid="link-forgot-password"
+                  >
+                    Şifremi Unuttum
+                  </button>
+                </p>
+              </div>
               
               <div className="pt-2 border-t border-slate-600/30">
                 <button

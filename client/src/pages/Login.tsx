@@ -165,6 +165,20 @@ export default function Login() {
                 )}
               </Button>
             </form>
+
+            {/* Admin Forgot Password Link */}
+            <div className="mt-4 text-center">
+              <p className="text-slate-400 text-sm">
+                Admin şifrenizi mi unuttunuz?{" "}
+                <button
+                  onClick={() => setLocation("/sifremi-unuttum")}
+                  className="text-blue-400 hover:text-blue-300 underline transition-colors"
+                  data-testid="link-admin-forgot-password"
+                >
+                  Şifremi Unuttum
+                </button>
+              </p>
+            </div>
           </CardContent>
         </Card>
 
