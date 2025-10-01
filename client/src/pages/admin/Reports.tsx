@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import AdminLayout from "@/components/AdminLayout";
-import { BarChart3, TrendingUp, DollarSign, Package, Download, FileSpreadsheet, FileText, Mail } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Package, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 type DateRange = 'last7days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear';
@@ -24,7 +24,6 @@ export default function Reports() {
   const [selectedShip, setSelectedShip] = useState<string>('all');
   const [dateRange, setDateRange] = useState<DateRange>('thisMonth');
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [isSendingReport, setIsSendingReport] = useState(false);
 
   // Export function
   const handleExport = (format: 'excel' | 'csv') => {
@@ -44,32 +43,6 @@ export default function Reports() {
     document.body.removeChild(link);
     
     setIsExportDialogOpen(false);
-  };
-
-  // Send monthly report email
-  const handleSendMonthlyReport = async () => {
-    setIsSendingReport(true);
-    try {
-      const response = await fetch('/api/admin/reports/send-monthly', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        alert('✅ Aylık rapor e-postası başarıyla gönderildi!');
-      } else {
-        alert('❌ Rapor gönderimi başarısız: ' + (data.message || 'Bilinmeyen hata'));
-      }
-    } catch (error) {
-      console.error('Error sending monthly report:', error);
-      alert('❌ Rapor gönderimi başarısız: Bağlantı hatası');
-    } finally {
-      setIsSendingReport(false);
-    }
   };
 
   // Get ships for dropdown
@@ -133,33 +106,13 @@ export default function Reports() {
               Raporlama Filtreleri
             </h2>
             
-            <div className="flex gap-3">
-              <Button 
-                onClick={handleSendMonthlyReport}
-                disabled={isSendingReport}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
-                data-testid="button-send-monthly-report"
-              >
-                {isSendingReport ? (
-                  <>
-                    <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Gönderiliyor...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="w-4 h-4 mr-2" />
-                    Ay Sonu Raporu Gönder
-                  </>
-                )}
-              </Button>
-              
-              <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white">
-                    <Download className="w-4 h-4 mr-2" />
-                    Rapor İndir
-                  </Button>
-                </DialogTrigger>
+            <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white">
+                  <Download className="w-4 h-4 mr-2" />
+                  Rapor İndir
+                </Button>
+              </DialogTrigger>
               <DialogContent className="bg-slate-900 border-slate-700 text-white">
                 <DialogHeader>
                   <DialogTitle className="text-white">Rapor Dışa Aktarım</DialogTitle>
@@ -200,8 +153,7 @@ export default function Reports() {
                   </div>
                 </div>
               </DialogContent>
-              </Dialog>
-            </div>
+            </Dialog>
           </div>
           
           <div className="grid gap-4 md:grid-cols-2">
