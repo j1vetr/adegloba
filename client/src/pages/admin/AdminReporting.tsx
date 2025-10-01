@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import AdminLayout from "@/components/AdminLayout";
-import { Send, Calendar, Ship as ShipIcon, Mail, CheckCircle2, AlertCircle, Info } from "lucide-react";
+import { Send, Calendar, Ship as ShipIcon, Mail, CheckCircle2, AlertCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 const turkishMonths = [
@@ -325,28 +325,6 @@ export default function AdminReporting() {
               </div>
             </div>
           )}
-        </Card>
-
-        {/* SMTP Info Card */}
-        <Card className="glassmorphism border-slate-700 p-6">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/20 mt-1">
-              <Info className="w-5 h-5 text-blue-400" />
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-2">SMTP Ayarları Bilgisi</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Rapor gönderimi için kullanılan SMTP ayarları <strong className="text-white">veritabanı settings tablosundan</strong> alınmaktadır:
-              </p>
-              <ul className="text-slate-400 text-sm mt-2 space-y-1 ml-4">
-                <li>• <code className="text-blue-300 bg-slate-800 px-1 rounded">admin_email</code> - Raporun gönderileceği e-posta adresi</li>
-                <li>• <code className="text-blue-300 bg-slate-800 px-1 rounded">smtp_host</code>, <code className="text-blue-300 bg-slate-800 px-1 rounded">smtp_port</code>, <code className="text-blue-300 bg-slate-800 px-1 rounded">smtp_user</code>, <code className="text-blue-300 bg-slate-800 px-1 rounded">smtp_password</code> - SMTP sunucu bilgileri</li>
-              </ul>
-              <p className="text-slate-400 text-sm mt-3">
-                Bu ayarları değiştirmek için <strong className="text-primary">Ayarlar → Destek Ayarları</strong> sayfasını kullanabilirsiniz.
-              </p>
-            </div>
-          </div>
         </Card>
 
       </div>
