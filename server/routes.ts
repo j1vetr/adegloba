@@ -1146,6 +1146,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin - Send monthly report manually
+  app.post('/api/admin/reports/send-monthly', isAdminAuthenticated, async (req, res) => {
+    try {
+      console.log('📧 Manual monthly report trigger requested by admin');
+      
+      const { triggerMonthlyReport } = await import('./emailScheduler');
+      await triggerMonthlyReport();
+      
+      res.json({ 
+        success: true, 
+        message: 'Aylık rapor e-postası başarıyla gönderildi' 
+      });
+    } catch (error) {
+      console.error("Error sending monthly report:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Rapor gönderimi başarısız" 
+      });
+    }
+  });
+
   // Admin authentication routes (using session-based auth)
   app.get('/api/admin/me', isAdminAuthenticated, async (req: any, res) => {
     try {
