@@ -34,6 +34,7 @@ import UsersManagementNew from "@/pages/admin/UsersManagementNew";
 import SettingsManagement from "@/pages/admin/SettingsManagement";
 import SiteSettings from "@/pages/admin/SiteSettings";
 import Reports from "@/pages/admin/Reports";
+import AdminReporting from "@/pages/admin/AdminReporting";
 import TicketManagement from "@/pages/admin/TicketManagement";
 import SystemLogs from "@/pages/admin/SystemLogs";
 import { EmailSettings } from "@/pages/admin/EmailSettings";
@@ -123,6 +124,12 @@ function Router() {
       <Route path="/admin/reports">
         <AdminProtectedRoute>
           <Reports />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/admin-reporting">
+        <AdminProtectedRoute>
+          <AdminReporting />
         </AdminProtectedRoute>
       </Route>
       
