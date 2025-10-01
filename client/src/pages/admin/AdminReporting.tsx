@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import AdminLayout from "@/components/AdminLayout";
-import { Send, Calendar, Ship as ShipIcon, Mail, CheckCircle2 } from "lucide-react";
+import { Send, Calendar, Ship as ShipIcon, Mail, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 const turkishMonths = [
@@ -34,6 +34,7 @@ export default function AdminReporting() {
   const [selectedYear, setSelectedYear] = useState<string>(String(currentYear));
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   // Get ships for dropdown
   const { data: ships } = useQuery({
@@ -73,24 +74,58 @@ export default function AdminReporting() {
   });
 
   const handleSendReport = async () => {
+    // Clear previous status
+    setStatusMessage(null);
+    
     // Validation
     if (reportType === 'daterange') {
       if (!startDate || !endDate) {
-        alert('❌ Lütfen başlangıç ve bitiş tarihlerini seçin');
+        setStatusMessage({ 
+          type: 'error', 
+          message: 'Lütfen başlangıç ve bitiş tarihlerini seçin' 
+        });
         return;
       }
       if (new Date(startDate) > new Date(endDate)) {
-        alert('❌ Başlangıç tarihi bitiş tarihinden sonra olamaz');
+        setStatusMessage({ 
+          type: 'error', 
+          message: 'Başlangıç tarihi bitiş tarihinden sonra olamaz' 
+        });
         return;
       }
     }
 
     try {
-      await sendReportMutation.mutateAsync();
-      alert('✅ Excel raporu admin e-posta adresinize gönderildi!');
+      const response = await sendReportMutation.mutateAsync();
+      
+      // Check if response has success field
+      if (response && response.success) {
+        setStatusMessage({ 
+          type: 'success', 
+          message: response.message || 'Excel raporu admin e-posta adresinize gönderildi!' 
+        });
+      } else {
+        setStatusMessage({ 
+          type: 'error', 
+          message: response?.message || 'E-posta gönderimi başarısız oldu. SMTP ayarlarınızı kontrol edin.' 
+        });
+      }
     } catch (error: any) {
       console.error('Error sending report:', error);
-      alert('❌ Rapor gönderimi başarısız: ' + (error.message || 'Bilinmeyen hata'));
+      
+      // Parse error message from response
+      let errorMessage = 'E-posta gönderimi başarısız oldu';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      setStatusMessage({ 
+        type: 'error', 
+        message: errorMessage + '. SMTP ayarlarınızı Ayarlar sayfasından kontrol edin.' 
+      });
     }
   };
 
@@ -268,18 +303,50 @@ export default function AdminReporting() {
             </Button>
           </div>
 
-          {/* Success Message */}
-          {sendReportMutation.isSuccess && (
-            <div className="mt-4 p-4 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-400" />
+          {/* Status Messages */}
+          {statusMessage && (
+            <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${
+              statusMessage.type === 'success' 
+                ? 'bg-green-500/10 border border-green-500/20' 
+                : 'bg-red-500/10 border border-red-500/20'
+            }`}>
+              {statusMessage.type === 'success' ? (
+                <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-400 mt-0.5" />
+              )}
               <div>
-                <p className="text-green-400 font-medium">Rapor başarıyla gönderildi!</p>
-                <p className="text-slate-400 text-sm">
-                  Excel dosyası e-posta adresinize gönderildi. Lütfen gelen kutunuzu kontrol edin.
+                <p className={`font-medium ${statusMessage.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                  {statusMessage.type === 'success' ? 'Başarılı!' : 'Hata'}
+                </p>
+                <p className="text-slate-400 text-sm mt-1">
+                  {statusMessage.message}
                 </p>
               </div>
             </div>
           )}
+        </Card>
+
+        {/* SMTP Info Card */}
+        <Card className="glassmorphism border-slate-700 p-6">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/20 mt-1">
+              <Info className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <h4 className="text-white font-semibold mb-2">SMTP Ayarları Bilgisi</h4>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Rapor gönderimi için kullanılan SMTP ayarları <strong className="text-white">veritabanı settings tablosundan</strong> alınmaktadır:
+              </p>
+              <ul className="text-slate-400 text-sm mt-2 space-y-1 ml-4">
+                <li>• <code className="text-blue-300 bg-slate-800 px-1 rounded">admin_email</code> - Raporun gönderileceği e-posta adresi</li>
+                <li>• <code className="text-blue-300 bg-slate-800 px-1 rounded">smtp_host</code>, <code className="text-blue-300 bg-slate-800 px-1 rounded">smtp_port</code>, <code className="text-blue-300 bg-slate-800 px-1 rounded">smtp_user</code>, <code className="text-blue-300 bg-slate-800 px-1 rounded">smtp_password</code> - SMTP sunucu bilgileri</li>
+              </ul>
+              <p className="text-slate-400 text-sm mt-3">
+                Bu ayarları değiştirmek için <strong className="text-primary">Ayarlar → Destek Ayarları</strong> sayfasını kullanabilirsiniz.
+              </p>
+            </div>
+          </div>
         </Card>
 
       </div>
