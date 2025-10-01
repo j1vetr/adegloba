@@ -1146,23 +1146,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin - Send monthly report manually
-  app.post('/api/admin/reports/send-monthly', isAdminAuthenticated, async (req, res) => {
+  // Admin - Send custom report via email
+  app.post('/api/admin/reports/send-email', isAdminAuthenticated, async (req, res) => {
     try {
-      console.log('📧 Manual monthly report trigger requested by admin');
+      console.log('📧 Custom report email requested by admin');
       
-      const { triggerMonthlyReport } = await import('./emailScheduler');
-      await triggerMonthlyReport();
+      const { month, year, startDate, endDate, shipId } = req.body;
       
-      res.json({ 
-        success: true, 
-        message: 'Aylık rapor e-postası başarıyla gönderildi' 
-      });
+      // Import required functions
+      const { generateExcelReport } = await import('./emailScheduler');
+      const fs = await import('fs');
+      
+      // Calculate date range
+      let reportStartDate: Date;
+      let reportEndDate: Date;
+      let reportTitle: string;
+      
+      if (month && year) {
+        // Monthly report
+        const monthNum = parseInt(month) - 1; // JS months are 0-indexed
+        const yearNum = parseInt(year);
+        reportStartDate = new Date(yearNum, monthNum, 1);
+        reportEndDate = new Date(yearNum, monthNum + 1, 0);
+        
+        const turkishMonths = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                              'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+        reportTitle = `${turkishMonths[monthNum]} ${yearNum}`;
+      } else if (startDate && endDate) {
+        // Date range report
+        reportStartDate = new Date(startDate);
+        reportEndDate = new Date(endDate);
+        
+        const formatDate = (date: Date) => {
+          return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`;
+        };
+        reportTitle = `${formatDate(reportStartDate)} - ${formatDate(reportEndDate)}`;
+      } else {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Tarih bilgisi eksik' 
+        });
+      }
+      
+      // Get report data
+      const reportData = await storage.getReportData(
+        shipId || undefined,
+        reportStartDate,
+        reportEndDate
+      );
+      
+      if (reportData.length === 0) {
+        return res.status(404).json({ 
+          success: false,
+          message: 'Seçilen tarih aralığında veri bulunamadı' 
+        });
+      }
+      
+      // Calculate totals
+      const totals = {
+        totalOrders: reportData.reduce((sum, item) => sum + item.totalOrders, 0),
+        totalRevenue: reportData.reduce((sum, item) => sum + item.totalRevenue, 0),
+        totalDataGB: reportData.reduce((sum, item) => sum + item.totalDataGB, 0),
+        packagesSold: reportData.reduce((sum, item) => sum + item.packagesSold, 0),
+      };
+      
+      // Generate Excel file
+      const excelFilePath = await generateExcelReport(reportData, reportTitle);
+      
+      // Get admin email
+      const adminEmailSetting = await storage.getSetting('admin_email');
+      const adminEmail = adminEmailSetting?.value || 'support@adegloba.space';
+      
+      // Get base URL
+      const baseUrlSetting = await storage.getSetting('base_url');
+      const baseUrl = baseUrlSetting?.value || 'https://adegloba.toov.com.tr';
+      
+      // Format ship statistics HTML for email
+      const shipStatsHtml = reportData.map(ship => 
+        `<li><strong>${ship.shipName}:</strong> ${ship.totalOrders} ödenen sipariş, ${ship.packagesSold} paket, ${ship.totalDataGB}GB veri, $${ship.totalRevenue.toFixed(2)} gelir</li>`
+      ).join('');
+      
+      // Send email with Excel attachment
+      const success = await emailService.sendEmailWithAttachment(
+        adminEmail,
+        `${reportTitle} Finans Raporu - AdeGloba Starlink System`,
+        'admin_monthly_report',
+        {
+          reportMonth: reportTitle,
+          shipStats: `<ul>${shipStatsHtml}</ul>`,
+          totalOrders: totals.totalOrders.toString(),
+          totalRevenue: totals.totalRevenue.toFixed(2),
+          totalDataGB: totals.totalDataGB.toString(),
+          packagesSold: totals.packagesSold.toString(),
+          adminUrl: baseUrl + '/admin',
+        },
+        [{
+          filename: `rapor-${reportTitle.toLowerCase().replace(/[^a-z0-9]/g, '-')}.xlsx`,
+          path: excelFilePath,
+          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }]
+      );
+      
+      // Clean up temp file
+      try {
+        fs.unlinkSync(excelFilePath);
+      } catch (cleanupError) {
+        console.warn('Warning: Could not delete temp Excel file:', cleanupError);
+      }
+      
+      if (success) {
+        console.log(`✅ Custom report sent successfully: ${reportTitle}`);
+        res.json({ 
+          success: true, 
+          message: 'Rapor e-postası başarıyla gönderildi' 
+        });
+      } else {
+        console.error(`❌ Failed to send custom report: ${reportTitle}`);
+        res.status(500).json({ 
+          success: false,
+          message: 'E-posta gönderimi başarısız oldu' 
+        });
+      }
+      
     } catch (error) {
-      console.error("Error sending monthly report:", error);
+      console.error("Error sending custom report:", error);
       res.status(500).json({ 
         success: false,
-        message: "Rapor gönderimi başarısız" 
+        message: "Rapor gönderimi başarısız: " + (error instanceof Error ? error.message : 'Bilinmeyen hata')
       });
     }
   });

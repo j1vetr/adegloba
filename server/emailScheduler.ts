@@ -124,7 +124,7 @@ async function generateAndSendMonthlyReport() {
 }
 
 // Generate Excel report file using Reports page logic
-async function generateExcelReport(reportData: any[], reportMonth: string): Promise<string> {
+export async function generateExcelReport(reportData: any[], reportMonth: string): Promise<string> {
   const workbook = XLSX.utils.book_new();
   
   const excelData = reportData.map(item => ({
