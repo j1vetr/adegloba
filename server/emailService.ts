@@ -1,4 +1,5 @@
-import * as nodemailer from 'nodemailer';
+import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 import sgMail from '@sendgrid/mail';
 import crypto from 'crypto-js';
 import { storage } from './storage';
@@ -213,25 +214,40 @@ export class EmailService {
       
       console.log(`🔧 Attempting SMTP connection to ${settings.smtpHost}:${smtpPort} (secure: ${isSecure})`);
       
-      const transporter = nodemailer.createTransporter({
-        host: settings.smtpHost,
-        port: smtpPort,
-        secure: isSecure, // true for 465 (SSL), false for other ports (STARTTLS)
-        requireTLS: !isSecure, // Force STARTTLS for non-SSL ports
-        auth: {
-          user: settings.smtpUser,
-          pass: settings.smtpPass || '',
-        },
-        tls: {
-          rejectUnauthorized: false, // Allow self-signed certificates
-          servername: settings.smtpHost // Set servername for SNI
-        },
-        connectionTimeout: 30000, // 30 seconds timeout
-        greetingTimeout: 10000,
-        socketTimeout: 30000,
-        debug: false, // Disable verbose debug
-        logger: false
-      });
+      // Create transporter - handle both ES module and CommonJS
+      let transporter: Transporter;
+      try {
+        const createTransport = (nodemailer as any).createTransport || 
+                               (nodemailer as any).default?.createTransport ||
+                               nodemailer.createTransporter;
+        
+        if (!createTransport) {
+          throw new Error('Could not find nodemailer createTransport method');
+        }
+        
+        transporter = createTransport({
+          host: settings.smtpHost,
+          port: smtpPort,
+          secure: isSecure, // true for 465 (SSL), false for other ports (STARTTLS)
+          requireTLS: !isSecure, // Force STARTTLS for non-SSL ports
+          auth: {
+            user: settings.smtpUser,
+            pass: settings.smtpPass || '',
+          },
+          tls: {
+            rejectUnauthorized: false, // Allow self-signed certificates
+            servername: settings.smtpHost // Set servername for SNI
+          },
+          connectionTimeout: 30000, // 30 seconds timeout
+          greetingTimeout: 10000,
+          socketTimeout: 30000,
+          debug: false, // Disable verbose debug
+          logger: false
+        });
+      } catch (transportError) {
+        console.error('Failed to create transporter:', transportError);
+        throw new Error(`Transporter creation failed: ${transportError instanceof Error ? transportError.message : 'Unknown error'}`);
+      }
 
       // Test connection before sending
       console.log('🔧 Testing SMTP connection...');
@@ -271,25 +287,40 @@ export class EmailService {
       
       console.log(`🔧 Attempting SMTP connection to ${settings.smtpHost}:${smtpPort} (secure: ${isSecure})`);
       
-      const transporter = nodemailer.createTransporter({
-        host: settings.smtpHost,
-        port: smtpPort,
-        secure: isSecure,
-        requireTLS: !isSecure,
-        auth: {
-          user: settings.smtpUser,
-          pass: settings.smtpPass || '',
-        },
-        tls: {
-          rejectUnauthorized: false,
-          servername: settings.smtpHost
-        },
-        connectionTimeout: 30000,
-        greetingTimeout: 10000,
-        socketTimeout: 30000,
-        debug: false,
-        logger: false
-      });
+      // Create transporter - handle both ES module and CommonJS
+      let transporter: Transporter;
+      try {
+        const createTransport = (nodemailer as any).createTransport || 
+                               (nodemailer as any).default?.createTransport ||
+                               nodemailer.createTransporter;
+        
+        if (!createTransport) {
+          throw new Error('Could not find nodemailer createTransport method');
+        }
+        
+        transporter = createTransport({
+          host: settings.smtpHost,
+          port: smtpPort,
+          secure: isSecure,
+          requireTLS: !isSecure,
+          auth: {
+            user: settings.smtpUser,
+            pass: settings.smtpPass || '',
+          },
+          tls: {
+            rejectUnauthorized: false,
+            servername: settings.smtpHost
+          },
+          connectionTimeout: 30000,
+          greetingTimeout: 10000,
+          socketTimeout: 30000,
+          debug: false,
+          logger: false
+        });
+      } catch (transportError) {
+        console.error('Failed to create transporter:', transportError);
+        throw new Error(`Transporter creation failed: ${transportError instanceof Error ? transportError.message : 'Unknown error'}`);
+      }
 
       console.log('🔧 Testing SMTP connection...');
       await transporter.verify();
