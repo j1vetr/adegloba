@@ -1,0 +1,22 @@
+0|adegloba  | 🔧 Attempting SMTP connection to posta.kumsaati.com.tr:587 (secure: false)
+0|adegloba  | SMTP sending error: TypeError: nodemailer.createTransporter is not a function
+0|adegloba  |     at EmailService.sendViaSMTP (file:///var/www/adegloba/dist/index.js:2359:42)
+0|adegloba  |     at EmailService.sendEmail (file:///var/www/adegloba/dist/index.js:2276:36)
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|adegloba  |     at async file:///var/www/adegloba/dist/index.js:3379:9
+0|adegloba  | 📧 Welcome email sent to: asdasd@asdasd.com
+0|adegloba  | 🔧 Attempting SMTP connection to posta.kumsaati.com.tr:587 (secure: false)
+0|adegloba  | SMTP sending error: TypeError: nodemailer.createTransporter is not a function
+0|adegloba  |     at EmailService.sendViaSMTP (file:///var/www/adegloba/dist/index.js:2359:42)
+0|adegloba  |     at EmailService.sendEmail (file:///var/www/adegloba/dist/index.js:2276:36)
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|adegloba  |     at async file:///var/www/adegloba/dist/index.js:3400:9
+0|adegloba  | 📧 Admin notification sent for new user: asdasd@asdasd.com
+0|adegloba  | 6:10:47 AM [express] POST /api/user/register 201 in 210ms :: {"success":true,"message":"Kayıt başarı…
+0|adegloba  | 6:10:47 AM [express] GET /api/user/me 200 in 3ms :: {"id":"0cbd26a5-062a-4478-8e40-36ff68ecb5f6","us…
+0|adegloba  | 6:10:47 AM [express] GET /api/cart 304 in 5ms :: {"items":[],"subtotal":0,"total":0,"itemCount":0,"s…
+0|adegloba  | 6:10:47 AM [express] GET /api/user/orders 304 in 4ms :: []
+0|adegloba  | Found 0 active packages for user 0cbd26a5-062a-4478-8e40-36ff68ecb5f6
+0|adegloba  | 6:10:47 AM [express] GET /api/user/active-packages 304 in 7ms :: []
+0|adegloba  | 6:10:47 AM [express] GET /api/user/expired-packages 304 in 7ms :: {"packages":[],"pagination":{"curr…
+0|adegloba  | 6:10:52 AM [express] GET /api/cart 304 in 4ms :: {"items":[],"subtotal":0,"total":0,"itemCount":0,"s…

@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import * as nodemailer from 'nodemailer';
 import sgMail from '@sendgrid/mail';
 import crypto from 'crypto-js';
 import { storage } from './storage';
