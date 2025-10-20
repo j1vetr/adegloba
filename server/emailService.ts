@@ -213,7 +213,14 @@ export class EmailService {
       
       console.log(`🔧 Attempting SMTP connection to ${settings.smtpHost}:${smtpPort} (secure: ${isSecure})`);
       
-      const transporter = nodemailer.createTransport({
+      // Handle both ES module and CommonJS imports
+      const createTransporter = nodemailer.createTransporter || (nodemailer as any).default?.createTransporter;
+      
+      if (!createTransporter) {
+        throw new Error('nodemailer.createTransporter is not available');
+      }
+      
+      const transporter = createTransporter({
         host: settings.smtpHost,
         port: smtpPort,
         secure: isSecure, // true for 465 (SSL), false for other ports (STARTTLS)
@@ -271,7 +278,14 @@ export class EmailService {
       
       console.log(`🔧 Attempting SMTP connection to ${settings.smtpHost}:${smtpPort} (secure: ${isSecure})`);
       
-      const transporter = nodemailer.createTransporter({
+      // Handle both ES module and CommonJS imports
+      const createTransporter = nodemailer.createTransporter || (nodemailer as any).default?.createTransporter;
+      
+      if (!createTransporter) {
+        throw new Error('nodemailer.createTransporter is not available');
+      }
+      
+      const transporter = createTransporter({
         host: settings.smtpHost,
         port: smtpPort,
         secure: isSecure,
