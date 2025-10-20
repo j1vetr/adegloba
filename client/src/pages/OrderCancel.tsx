@@ -19,12 +19,20 @@ export default function OrderCancel() {
     const orderId = urlParams.get('orderId');
     const amount = urlParams.get('amount');
     const reason = urlParams.get('reason');
+    const paypalToken = urlParams.get('token'); // PayPal cancel return
+    
+    // Clear sessionStorage if coming from PayPal cancel
+    if (paypalToken) {
+      console.log('PayPal cancel detected, clearing pending payment');
+      sessionStorage.removeItem('pendingPayment');
+    }
     
     setOrderStatus(status);
     setOrderDetails({
       orderId,
       amount,
-      reason: reason || getDefaultReason(status)
+      reason: reason || getDefaultReason(status),
+      paypalCancelled: !!paypalToken
     });
   }, []);
 
