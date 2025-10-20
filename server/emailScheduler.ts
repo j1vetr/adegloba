@@ -152,13 +152,15 @@ export async function generateExcelReport(reportData: any[], reportMonth: string
   // Save to temp file
   const tempDir = path.join(process.cwd(), 'temp');
   if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir, { recursive: true });
+    fs.mkdirSync(tempDir, { recursive: true, mode: 0o755 });
+    console.log('📁 Created temp directory with permissions 0o755');
   }
   
   const fileName = `aylık-rapor-${reportMonth.toLowerCase().replace(' ', '-')}-${Date.now()}.xlsx`;
   const filePath = path.join(tempDir, fileName);
   
   XLSX.writeFile(workbook, filePath);
+  console.log(`📄 Excel file created at: ${filePath}`);
   
   return filePath;
 }
