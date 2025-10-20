@@ -4,110 +4,25 @@ import { CheckCircle2, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
 export default function OrderSuccess() {
   const [, setLocation] = useLocation();
   const [countdown, setCountdown] = useState(5);
   const [orderDetails, setOrderDetails] = useState<any>(null);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentProcessed, setPaymentProcessed] = useState(false);
-  const { toast } = useToast();
 
-  // Parse URL parameters and process PayPal redirect
+  // Parse URL parameters for order details
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const paypalToken = urlParams.get('token'); // PayPal order ID
-    const payerId = urlParams.get('PayerID');
     const orderId = urlParams.get('orderId');
     const amount = urlParams.get('amount');
     const paymentId = urlParams.get('paymentId');
     
-    // Check if this is a PayPal redirect return
-    if (paypalToken && !paymentProcessed && !isProcessingPayment) {
-      console.log('PayPal redirect detected, processing payment...', { paypalToken, payerId });
-      handlePayPalReturn(paypalToken, payerId);
-    } else {
-      // Regular order success flow (non-PayPal redirect)
-      setOrderDetails({
-        orderId,
-        amount,
-        paymentId
-      });
-    }
+    setOrderDetails({
+      orderId,
+      amount,
+      paymentId
+    });
   }, []);
-
-  // Handle PayPal hosted checkout return
-  const handlePayPalReturn = async (paypalOrderId: string, payerId: string | null) => {
-    try {
-      setIsProcessingPayment(true);
-      
-      // Get pending payment info from sessionStorage
-      const pendingPaymentStr = sessionStorage.getItem('pendingPayment');
-      const pendingPayment = pendingPaymentStr ? JSON.parse(pendingPaymentStr) : {};
-      
-      console.log('Pending payment data:', pendingPayment);
-      
-      // Capture PayPal order
-      console.log('Capturing PayPal order:', paypalOrderId);
-      const captureResponse = await apiRequest('POST', '/api/paypal/capture-order', {
-        orderId: paypalOrderId
-      });
-      
-      const captureResult = await captureResponse.json();
-      console.log('PayPal capture result:', captureResult);
-      
-      // Check if capture was successful
-      if (captureResult.status === 'COMPLETED') {
-        // Complete internal order
-        const internalOrderId = pendingPayment.internalOrderId;
-        
-        if (internalOrderId) {
-          console.log('Completing internal order:', internalOrderId);
-          const completeResponse = await apiRequest('POST', `/api/orders/${internalOrderId}/complete`, {
-            paypalOrderId: paypalOrderId,
-            couponCode: pendingPayment.couponCode
-          });
-          
-          const completeResult = await completeResponse.json();
-          console.log('Internal order completion result:', completeResult);
-          
-          // Set order details for display
-          setOrderDetails({
-            orderId: internalOrderId,
-            amount: pendingPayment.amount,
-            paymentId: paypalOrderId
-          });
-        }
-        
-        // Clear sessionStorage
-        sessionStorage.removeItem('pendingPayment');
-        
-        setPaymentProcessed(true);
-        setIsProcessingPayment(false);
-        
-        toast({
-          title: "Ödeme Başarılı!",
-          description: "PayPal ödemeniz başarıyla tamamlandı.",
-        });
-      } else {
-        throw new Error(`PayPal capture failed: ${captureResult.status}`);
-      }
-    } catch (error) {
-      console.error('PayPal payment processing error:', error);
-      setIsProcessingPayment(false);
-      
-      toast({
-        title: "Ödeme İşleme Hatası",
-        description: "Ödemeniz alındı ancak işlenirken bir sorun oluştu. Lütfen destek ekibiyle iletişime geçin.",
-        variant: "destructive",
-      });
-      
-      // Still show success but with warning
-      setPaymentProcessed(true);
-    }
-  };
 
   // Verify order exists and get details
   const { data: ordersData, isLoading, error } = useQuery({
@@ -137,19 +52,12 @@ export default function OrderSuccess() {
   // Only redirect if there's an explicit error after trying to load
 
   // Show loading state
-  if (isLoading || isProcessingPayment) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-cyan-400 mx-auto mb-4" />
-          <p className="text-slate-300">
-            {isProcessingPayment ? 'PayPal ödemeniz işleniyor...' : 'Sipariş detayları kontrol ediliyor...'}
-          </p>
-          {isProcessingPayment && (
-            <p className="text-sm text-slate-400 mt-2">
-              Lütfen bekleyin, sayfayı kapatmayın...
-            </p>
-          )}
+          <p className="text-slate-300">Sipariş detayları kontrol ediliyor...</p>
         </div>
       </div>
     );
