@@ -88,13 +88,14 @@ export async function getClientToken() {
 
 export async function createPaypalOrder(req: Request, res: Response) {
   try {
-    const { amount, currency, intent, paymentMethod, cardDetails } = req.body;
+    const { amount, currency, intent, paymentMethod, cardDetails, orderId } = req.body;
     
     console.log('🔍 PayPal Order Request Debug:', {
       amount,
       currency,
       intent,
       paymentMethod,
+      orderId,
       hasCardDetails: !!cardDetails,
       cardNumber: cardDetails?.number ? cardDetails.number.slice(0, 4) + '****' : 'None'
     });
@@ -119,6 +120,10 @@ export async function createPaypalOrder(req: Request, res: Response) {
         .json({ error: "Invalid intent. Intent is required." });
     }
 
+    // Get base URL from settings
+    const baseUrlSetting = await storage.getSetting('base_url');
+    const baseUrl = baseUrlSetting?.value || 'https://adegloba.toov.com.tr';
+
     // Create PayPal client dynamically from database settings
     const client = await createPayPalClient();
     const ordersController = new OrdersController(client);
@@ -136,9 +141,34 @@ export async function createPaypalOrder(req: Request, res: Response) {
       ],
     };
 
-    // Add paymentSource for credit card payments  
+    // Add application_context for hosted redirect flow
+    if (paymentMethod === 'HOSTED_REDIRECT' || paymentMethod === 'CARD_REDIRECT') {
+      console.log('🔧 Adding application_context for hosted redirect flow');
+      
+      // Build return URL with order ID if provided
+      const returnUrl = orderId 
+        ? `${baseUrl}/checkout/success?orderId=${orderId}`
+        : `${baseUrl}/checkout/success`;
+      
+      const cancelUrl = orderId
+        ? `${baseUrl}/checkout/cancel?orderId=${orderId}`
+        : `${baseUrl}/checkout/cancel`;
+      
+      orderBody.applicationContext = {
+        returnUrl: returnUrl,
+        cancelUrl: cancelUrl,
+        brandName: 'AdeGloba Starlink',
+        landingPage: 'BILLING', // Direct to credit card form
+        userAction: 'PAY_NOW',
+        shippingPreference: 'NO_SHIPPING'
+      };
+      
+      console.log('🔗 Redirect URLs configured:', { returnUrl, cancelUrl });
+    }
+
+    // Add paymentSource for direct credit card payments (legacy flow)
     if (req.body.paymentMethod === 'CARD' && req.body.cardDetails) {
-      console.log('🔧 Adding card paymentSource to PayPal order');
+      console.log('🔧 Adding card paymentSource to PayPal order (direct card processing)');
       orderBody.paymentSource = {
         card: {
           number: req.body.cardDetails.number,
@@ -166,7 +196,7 @@ export async function createPaypalOrder(req: Request, res: Response) {
 
     const collect = {
       body: orderBody,
-      prefer: "return=minimal",
+      prefer: "return=representation", // Changed to get full response with links
       paypalRequestId: `order-${Date.now()}-${Math.random().toString(36).substring(2)}`,
     };
 
@@ -175,6 +205,12 @@ export async function createPaypalOrder(req: Request, res: Response) {
 
     const jsonResponse = JSON.parse(String(body));
     const httpStatusCode = httpResponse.statusCode;
+
+    console.log('✅ PayPal Order Created:', {
+      orderId: jsonResponse.id,
+      status: jsonResponse.status,
+      links: jsonResponse.links?.map((l: any) => ({ rel: l.rel, href: l.href }))
+    });
 
     res.status(httpStatusCode).json(jsonResponse);
   } catch (error) {

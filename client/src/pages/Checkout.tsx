@@ -13,7 +13,6 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useLanguage } from "@/contexts/LanguageContext";
-import CreditCardDrawer from "@/components/CreditCardDrawer";
 
 export default function Checkout() {
   const [location] = useLocation();
@@ -24,7 +23,7 @@ export default function Checkout() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [discount, setDiscount] = useState(0);
   const [couponValidating, setCouponValidating] = useState(false);
-  const [creditCardDrawerOpen, setCreditCardDrawerOpen] = useState(false);
+  const [isRedirectingToPayPal, setIsRedirectingToPayPal] = useState(false);
 
   // Get order ID from URL params (if coming from cart checkout)
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
@@ -108,6 +107,56 @@ export default function Checkout() {
       }
     },
   });
+
+  // Handle credit card redirect to PayPal hosted checkout
+  const handleCreditCardPayment = async () => {
+    try {
+      setIsRedirectingToPayPal(true);
+      
+      const amount = currentTotal.toFixed(2);
+      
+      // Create PayPal order with hosted redirect
+      const response = await apiRequest('POST', '/api/paypal/create-order', {
+        amount,
+        currency: 'USD',
+        intent: 'CAPTURE',
+        paymentMethod: 'CARD_REDIRECT', // Signal for hosted redirect flow
+        orderId: orderId || undefined // Pass our internal order ID if available
+      });
+      
+      const paypalOrder = await response.json();
+      
+      console.log('PayPal Order Response:', paypalOrder);
+      
+      // Find approve URL from links
+      const approveLink = paypalOrder.links?.find((link: any) => link.rel === 'approve');
+      
+      if (!approveLink) {
+        throw new Error('PayPal approve link not found');
+      }
+      
+      // Store order info in sessionStorage for success page
+      sessionStorage.setItem('pendingPayment', JSON.stringify({
+        paypalOrderId: paypalOrder.id,
+        internalOrderId: orderId,
+        amount,
+        couponCode: appliedCoupon?.code
+      }));
+      
+      // Redirect to PayPal hosted checkout page
+      console.log('Redirecting to PayPal:', approveLink.href);
+      window.location.href = approveLink.href;
+      
+    } catch (error) {
+      console.error('PayPal redirect error:', error);
+      setIsRedirectingToPayPal(false);
+      toast({
+        title: "Ödeme Hatası",
+        description: "PayPal ödeme sayfasına yönlendirilemedi. Lütfen tekrar deneyin.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const completeOrderMutation = useMutation({
     mutationFn: async (paypalOrderId: string) => {
@@ -513,20 +562,30 @@ export default function Checkout() {
                   
                   {currentTotal > 0 ? (
                     <div className="space-y-4 animate-slide-in-up">
-                      {/* Credit Card & Debit Card Payment Button */}
+                      {/* Credit Card & Debit Card Payment Button - PayPal Hosted */}
                       <Button
-                        onClick={() => setCreditCardDrawerOpen(true)}
-                        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 rounded-xl text-lg btn-interactive transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-blue-500/25"
+                        onClick={handleCreditCardPayment}
+                        disabled={isRedirectingToPayPal}
+                        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 rounded-xl text-lg btn-interactive transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
                         data-testid="credit-card-button"
                       >
-                        <CreditCard className="h-6 w-6" />
-                        <span>{t.checkout.cardPayment}</span>
+                        {isRedirectingToPayPal ? (
+                          <>
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                            <span>PayPal'a Yönlendiriliyor...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-6 w-6" />
+                            <span>{t.checkout.cardPayment}</span>
+                          </>
+                        )}
                       </Button>
                       
                       <div className="text-center text-sm text-slate-400">
                         <div className="flex items-center justify-center space-x-2">
                           <Shield className="h-4 w-4 text-green-400" />
-                          <span>{t.checkout.secure3D || '3D Secure secure payment'}</span>
+                          <span>PayPal Güvenli Ödeme - PCI Compliant</span>
                         </div>
                       </div>
                     </div>
@@ -561,29 +620,6 @@ export default function Checkout() {
         </div>
       </div>
 
-      {/* Credit Card Payment Drawer */}
-      <CreditCardDrawer
-        isOpen={creditCardDrawerOpen}
-        onClose={() => setCreditCardDrawerOpen(false)}
-        amount={currentTotal.toFixed(2)}
-        currency="USD"
-        onSuccess={(paymentData) => {
-          setCreditCardDrawerOpen(false);
-          toast({
-            title: "Ödeme Başarılı",
-            description: "Kredi kartı ödemesi başarıyla tamamlandı!",
-          });
-          // Call complete payment with PayPal Order ID
-          completeOrderMutation.mutate(paymentData.paypalOrderId || paymentData.orderId || 'card_payment_' + Date.now());
-        }}
-        onError={(error) => {
-          toast({
-            title: "Ödeme Hatası",
-            description: "Kredi kartı ödemesi başarısız oldu. Lütfen tekrar deneyin.",
-            variant: "destructive",
-          });
-        }}
-      />
     </div>
   );
 }
