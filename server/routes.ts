@@ -1277,6 +1277,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin - Stock Management
+  app.get('/api/admin/stock-management', isAdminAuthenticated, async (req, res) => {
+    try {
+      // Get all credential stats
+      const credentialStats = await storage.getAllCredentialStats();
+      
+      // Get all plans to map planId to plan details
+      const allPlans = await storage.getAllPlans();
+      const planMap = new Map(allPlans.map(plan => [plan.id, plan]));
+      
+      // Get all ships to map shipId to ship details
+      const allShips = await storage.getAllShips();
+      const shipMap = new Map(allShips.map(ship => [ship.id, ship]));
+      
+      // Build stock items array with plan and ship details
+      const stockItems = Object.entries(credentialStats).map(([planId, stats]) => {
+        const plan = planMap.get(planId);
+        const ship = plan?.shipId ? shipMap.get(plan.shipId) : undefined;
+        
+        // Determine stock level based on availability percentage
+        let stockLevel: 'critical' | 'low' | 'adequate' = 'adequate';
+        if (stats.total > 0) {
+          const availablePercent = (stats.available / stats.total) * 100;
+          if (availablePercent < 10) {
+            stockLevel = 'critical';
+          } else if (availablePercent < 30) {
+            stockLevel = 'low';
+          }
+        }
+        
+        return {
+          planId,
+          planName: plan?.name || 'Bilinmeyen Paket',
+          shipName: ship?.name || 'Bilinmeyen Gemi',
+          total: stats.total,
+          assigned: stats.assigned,
+          available: stats.available,
+          stockLevel
+        };
+      }).filter(item => item.total > 0); // Only show plans that have credentials
+      
+      // Sort by stock level (critical first, then low, then adequate)
+      stockItems.sort((a, b) => {
+        const levelOrder = { critical: 0, low: 1, adequate: 2 };
+        if (levelOrder[a.stockLevel] !== levelOrder[b.stockLevel]) {
+          return levelOrder[a.stockLevel] - levelOrder[b.stockLevel];
+        }
+        // Within same level, sort by ship name then plan name
+        if (a.shipName !== b.shipName) {
+          return a.shipName.localeCompare(b.shipName, 'tr');
+        }
+        return a.planName.localeCompare(b.planName, 'tr');
+      });
+      
+      res.json(stockItems);
+    } catch (error) {
+      console.error("Error fetching stock management data:", error);
+      res.status(500).json({ message: "Failed to fetch stock data" });
+    }
+  });
+
   // Admin authentication routes (using session-based auth)
   app.get('/api/admin/me', isAdminAuthenticated, async (req: any, res) => {
     try {

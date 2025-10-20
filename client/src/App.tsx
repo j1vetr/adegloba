@@ -35,6 +35,7 @@ import SettingsManagement from "@/pages/admin/SettingsManagement";
 import SiteSettings from "@/pages/admin/SiteSettings";
 import Reports from "@/pages/admin/Reports";
 import AdminReporting from "@/pages/admin/AdminReporting";
+import StockManagement from "@/pages/admin/StockManagement";
 import TicketManagement from "@/pages/admin/TicketManagement";
 import SystemLogs from "@/pages/admin/SystemLogs";
 import { EmailSettings } from "@/pages/admin/EmailSettings";
@@ -130,6 +131,12 @@ function Router() {
       <Route path="/admin/admin-reporting">
         <AdminProtectedRoute>
           <AdminReporting />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/stock-management">
+        <AdminProtectedRoute>
+          <StockManagement />
         </AdminProtectedRoute>
       </Route>
       

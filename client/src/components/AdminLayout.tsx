@@ -21,7 +21,8 @@ import {
   Mail,
   BarChart3,
   Bell,
-  Send
+  Send,
+  PackageCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -61,6 +62,7 @@ const navigationCategories = [
     items: [
       { name: 'Raporlama', href: '/admin/reports', icon: BarChart3 },
       { name: 'Admin Raporlama', href: '/admin/admin-reporting', icon: Send },
+      { name: 'Stok Yönetimi', href: '/admin/stock-management', icon: PackageCheck },
     ]
   },
   {
