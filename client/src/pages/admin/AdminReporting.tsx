@@ -66,10 +66,31 @@ export default function AdminReporting() {
         payload.endDate = endDate;
       }
 
-      return await apiRequest('POST', '/api/admin/reports/send-email', payload);
+      const response = await apiRequest('POST', '/api/admin/reports/send-email', payload);
+      return response;
     },
-    onSuccess: () => {
-      // Success handled in component
+    onSuccess: (data: any) => {
+      if (data?.success) {
+        setStatusMessage({
+          type: 'success',
+          message: data.message || 'Rapor e-postası başarıyla gönderildi'
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error('Error sending report:', error);
+      let errorMessage = 'Rapor gönderimi başarısız oldu';
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      setStatusMessage({
+        type: 'error',
+        message: errorMessage
+      });
     },
   });
 
@@ -78,7 +99,15 @@ export default function AdminReporting() {
     setStatusMessage(null);
     
     // Validation
-    if (reportType === 'daterange') {
+    if (reportType === 'monthly') {
+      if (!selectedMonth || !selectedYear) {
+        setStatusMessage({
+          type: 'error',
+          message: 'Lütfen ay ve yıl seçiniz'
+        });
+        return;
+      }
+    } else {
       if (!startDate || !endDate) {
         setStatusMessage({ 
           type: 'error', 
@@ -95,38 +124,8 @@ export default function AdminReporting() {
       }
     }
 
-    try {
-      const response = await sendReportMutation.mutateAsync();
-      
-      // Check if response has success field
-      if (response && response.success) {
-        setStatusMessage({ 
-          type: 'success', 
-          message: response.message || 'Excel raporu admin e-posta adresinize gönderildi!' 
-        });
-      } else {
-        setStatusMessage({ 
-          type: 'error', 
-          message: response?.message || 'E-posta gönderimi başarısız oldu. SMTP ayarlarınızı kontrol edin.' 
-        });
-      }
-    } catch (error: any) {
-      console.error('Error sending report:', error);
-      
-      // Parse error message from response
-      let errorMessage = 'E-posta gönderimi başarısız oldu';
-      
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-      
-      setStatusMessage({ 
-        type: 'error', 
-        message: errorMessage + '. SMTP ayarlarınızı Ayarlar sayfasından kontrol edin.' 
-      });
-    }
+    // Trigger mutation - onSuccess and onError handlers will manage the response
+    sendReportMutation.mutate();
   };
 
   // Generate years for dropdown (last 3 years + current year)

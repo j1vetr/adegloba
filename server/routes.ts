@@ -1148,14 +1148,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin - Send custom report via email
   app.post('/api/admin/reports/send-email', isAdminAuthenticated, async (req, res) => {
+    let excelFilePath: string | null = null;
+    
     try {
       console.log('📧 Custom report email requested by admin');
       
       const { month, year, startDate, endDate, shipId } = req.body;
-      
-      // Import required functions
-      const { generateExcelReport } = await import('./emailScheduler');
-      const fs = await import('fs');
       
       // Calculate date range
       let reportStartDate: Date;
@@ -1188,6 +1186,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      console.log(`📊 Generating report for: ${reportTitle}`);
+      
       // Get report data
       const reportData = await storage.getReportData(
         shipId || undefined,
@@ -1196,11 +1196,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (reportData.length === 0) {
+        console.log('⚠️ No data found for selected date range');
         return res.status(404).json({ 
           success: false,
           message: 'Seçilen tarih aralığında veri bulunamadı' 
         });
       }
+      
+      console.log(`📊 Found ${reportData.length} ship(s) with data`);
       
       // Calculate totals
       const totals = {
@@ -1210,12 +1213,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         packagesSold: reportData.reduce((sum, item) => sum + item.packagesSold, 0),
       };
       
+      console.log(`📊 Totals: ${totals.totalOrders} orders, $${totals.totalRevenue.toFixed(2)} revenue`);
+      
       // Generate Excel file
-      const excelFilePath = await generateExcelReport(reportData, reportTitle);
+      try {
+        const { generateExcelReport } = await import('./emailScheduler');
+        excelFilePath = await generateExcelReport(reportData, reportTitle);
+        console.log(`📄 Excel file created: ${excelFilePath}`);
+      } catch (excelError) {
+        console.error('❌ Error generating Excel file:', excelError);
+        throw new Error(`Excel dosyası oluşturulamadı: ${excelError instanceof Error ? excelError.message : 'Bilinmeyen hata'}`);
+      }
       
       // Get admin email
       const adminEmailSetting = await storage.getSetting('admin_email');
-      const adminEmail = adminEmailSetting?.value || 'support@adegloba.space';
+      const adminEmail = adminEmailSetting?.value;
+      
+      if (!adminEmail) {
+        console.error('❌ Admin email not configured in settings');
+        throw new Error('Admin e-posta adresi ayarlanmamış. Lütfen Ayarlar sayfasından admin_email değerini belirleyin.');
+      }
+      
+      console.log(`📧 Sending report to: ${adminEmail}`);
       
       // Get base URL
       const baseUrlSetting = await storage.getSetting('base_url');
@@ -1227,31 +1246,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ).join('');
       
       // Send email with Excel attachment
-      const success = await emailService.sendEmailWithAttachment(
-        adminEmail,
-        `${reportTitle} Finans Raporu - AdeGloba Starlink System`,
-        'admin_monthly_report',
-        {
-          reportMonth: reportTitle,
-          shipStats: `<ul>${shipStatsHtml}</ul>`,
-          totalOrders: totals.totalOrders.toString(),
-          totalRevenue: totals.totalRevenue.toFixed(2),
-          totalDataGB: totals.totalDataGB.toString(),
-          packagesSold: totals.packagesSold.toString(),
-          adminUrl: baseUrl + '/admin',
-        },
-        [{
-          filename: `rapor-${reportTitle.toLowerCase().replace(/[^a-z0-9]/g, '-')}.xlsx`,
-          path: excelFilePath,
-          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        }]
-      );
+      let success = false;
+      try {
+        success = await emailService.sendEmailWithAttachment(
+          adminEmail,
+          `${reportTitle} Finans Raporu - AdeGloba Starlink System`,
+          'admin_monthly_report',
+          {
+            reportMonth: reportTitle,
+            shipStats: `<ul>${shipStatsHtml}</ul>`,
+            totalOrders: totals.totalOrders.toString(),
+            totalRevenue: totals.totalRevenue.toFixed(2),
+            totalDataGB: totals.totalDataGB.toString(),
+            packagesSold: totals.packagesSold.toString(),
+            adminUrl: baseUrl + '/admin',
+          },
+          [{
+            filename: `rapor-${reportTitle.toLowerCase().replace(/[^a-z0-9]/g, '-')}.xlsx`,
+            path: excelFilePath,
+            contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          }]
+        );
+      } catch (emailError) {
+        console.error('❌ Error sending email:', emailError);
+        throw new Error(`E-posta gönderilemedi: ${emailError instanceof Error ? emailError.message : 'Bilinmeyen hata'}`);
+      }
       
       // Clean up temp file
-      try {
-        fs.unlinkSync(excelFilePath);
-      } catch (cleanupError) {
-        console.warn('Warning: Could not delete temp Excel file:', cleanupError);
+      if (excelFilePath) {
+        try {
+          const fs = await import('fs');
+          fs.unlinkSync(excelFilePath);
+          console.log('🗑️ Temp Excel file deleted');
+        } catch (cleanupError) {
+          console.warn('⚠️ Warning: Could not delete temp Excel file:', cleanupError);
+        }
       }
       
       if (success) {
@@ -1261,18 +1290,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'Rapor e-postası başarıyla gönderildi' 
         });
       } else {
-        console.error(`❌ Failed to send custom report: ${reportTitle}`);
+        console.error(`❌ Email service returned false for: ${reportTitle}`);
         res.status(500).json({ 
           success: false,
-          message: 'E-posta gönderimi başarısız oldu' 
+          message: 'E-posta gönderimi başarısız oldu. SMTP ayarlarını kontrol edin.' 
         });
       }
       
     } catch (error) {
-      console.error("Error sending custom report:", error);
+      console.error("❌ Error sending custom report:", error);
+      
+      // Clean up temp file if it exists
+      if (excelFilePath) {
+        try {
+          const fs = await import('fs');
+          fs.unlinkSync(excelFilePath);
+        } catch (cleanupError) {
+          // Ignore cleanup errors
+        }
+      }
+      
       res.status(500).json({ 
         success: false,
-        message: "Rapor gönderimi başarısız: " + (error instanceof Error ? error.message : 'Bilinmeyen hata')
+        message: error instanceof Error ? error.message : 'Rapor gönderimi başarısız: Bilinmeyen hata'
       });
     }
   });
