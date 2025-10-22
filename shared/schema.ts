@@ -671,3 +671,100 @@ export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one })
 
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+// User Segmentation table - for categorizing users into groups
+export const userSegments = pgTable("user_segments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  segment: varchar("segment").notNull(), // 'VIP', 'Active', 'Passive', 'At-Risk', 'New'
+  tags: text("tags").array(), // Custom tags like 'high-value', 'frequent-buyer', etc.
+  score: integer("score").default(0), // Engagement/Loyalty score
+  lastPurchaseDate: timestamp("last_purchase_date"),
+  totalSpent: decimal("total_spent", { precision: 10, scale: 2 }).default('0'),
+  orderCount: integer("order_count").default(0),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  unique().on(table.userId)
+]);
+
+// Error Logs table - for tracking application errors
+export const errorLogs = pgTable("error_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  errorType: varchar("error_type").notNull(), // 'frontend', 'backend', 'database', 'payment'
+  severity: varchar("severity").notNull().default('medium'), // 'low', 'medium', 'high', 'critical'
+  message: text("message").notNull(),
+  stack: text("stack"),
+  url: varchar("url"),
+  method: varchar("method"), // HTTP method for backend errors
+  statusCode: integer("status_code"),
+  userId: varchar("user_id").references(() => users.id),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  metadata: jsonb("metadata"), // Additional context
+  resolved: boolean("resolved").default(false),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by").references(() => admin_users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_error_logs_created").on(table.createdAt),
+  index("idx_error_logs_severity").on(table.severity),
+  index("idx_error_logs_type").on(table.errorType)
+]);
+
+// System Metrics table - for tracking system health and performance
+export const systemMetrics = pgTable("system_metrics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  metricType: varchar("metric_type").notNull(), // 'cpu', 'memory', 'database', 'api_response_time', 'uptime'
+  value: decimal("value", { precision: 10, scale: 2 }).notNull(),
+  unit: varchar("unit").notNull(), // 'percent', 'ms', 'mb', 'gb', 'requests'
+  metadata: jsonb("metadata"), // Additional metric data
+  timestamp: timestamp("timestamp").defaultNow(),
+}, (table) => [
+  index("idx_system_metrics_type_timestamp").on(table.metricType, table.timestamp)
+]);
+
+// Relations
+export const userSegmentsRelations = relations(userSegments, ({ one }) => ({
+  user: one(users, {
+    fields: [userSegments.userId],
+    references: [users.id],
+  }),
+}));
+
+export const errorLogsRelations = relations(errorLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [errorLogs.userId],
+    references: [users.id],
+  }),
+  resolvedByAdmin: one(admin_users, {
+    fields: [errorLogs.resolvedBy],
+    references: [admin_users.id],
+  }),
+}));
+
+// Insert schemas
+export const insertUserSegmentSchema = createInsertSchema(userSegments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertErrorLogSchema = createInsertSchema(errorLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSystemMetricSchema = createInsertSchema(systemMetrics).omit({
+  id: true,
+  timestamp: true,
+});
+
+// Types
+export type InsertUserSegment = z.infer<typeof insertUserSegmentSchema>;
+export type UserSegment = typeof userSegments.$inferSelect;
+export type InsertErrorLog = z.infer<typeof insertErrorLogSchema>;
+export type ErrorLog = typeof errorLogs.$inferSelect;
+export type InsertSystemMetric = z.infer<typeof insertSystemMetricSchema>;
+export type SystemMetric = typeof systemMetrics.$inferSelect;
