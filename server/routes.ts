@@ -1004,6 +1004,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin - Dashboard Revenue Chart Data
+  app.get('/api/admin/dashboard/revenue', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { timeRange = '30d' } = req.query;
+      
+      let days = 30;
+      if (timeRange === '7d') days = 7;
+      else if (timeRange === '90d') days = 90;
+
+      const revenueData = await storage.getDashboardRevenue(days);
+      res.json(revenueData);
+    } catch (error) {
+      console.error('Error fetching revenue data:', error);
+      res.status(500).json({ message: 'Failed to fetch revenue data' });
+    }
+  });
+
+  // Admin - Dashboard Popular Packages
+  app.get('/api/admin/dashboard/popular-packages', isAdminAuthenticated, async (req, res) => {
+    try {
+      const popularPackages = await storage.getPopularPackages();
+      res.json(popularPackages);
+    } catch (error) {
+      console.error('Error fetching popular packages:', error);
+      res.status(500).json({ message: 'Failed to fetch popular packages' });
+    }
+  });
+
+  // Admin - Dashboard Recent Activities
+  app.get('/api/admin/dashboard/activities', isAdminAuthenticated, async (req, res) => {
+    try {
+      const activities = await storage.getRecentActivities(20);
+      res.json(activities);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      res.status(500).json({ message: 'Failed to fetch activities' });
+    }
+  });
+
   // Admin - Reports
   app.get('/api/admin/reports', isAdminAuthenticated, async (req, res) => {
     try {
@@ -3747,6 +3786,313 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error sending marketing emails:', error);
       res.status(500).json({ message: 'Failed to send emails' });
+    }
+  });
+
+  // Dashboard API endpoints
+  app.get('/api/admin/dashboard/revenue', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { range = '30d' } = req.query;
+      const days = range === '7d' ? 7 : range === '90d' ? 90 : 30;
+      
+      const orders = await storage.getAllOrders();
+      const now = new Date();
+      const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      
+      // Filter paid orders within range
+      const paidOrders = orders.filter(o => 
+        o.status === 'paid' && 
+        o.paidAt && 
+        new Date(o.paidAt) >= startDate
+      );
+      
+      // Group by date
+      const revenueByDate = new Map<string, { revenue: number; orders: number }>();
+      
+      for (let i = 0; i < days; i++) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const dateKey = date.toISOString().split('T')[0];
+        revenueByDate.set(dateKey, { revenue: 0, orders: 0 });
+      }
+      
+      paidOrders.forEach(order => {
+        const dateKey = new Date(order.paidAt!).toISOString().split('T')[0];
+        const existing = revenueByDate.get(dateKey) || { revenue: 0, orders: 0 };
+        revenueByDate.set(dateKey, {
+          revenue: existing.revenue + Number(order.totalUsd),
+          orders: existing.orders + 1
+        });
+      });
+      
+      const result = Array.from(revenueByDate.entries())
+        .map(([date, data]) => ({ date, ...data }))
+        .reverse();
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching revenue data:', error);
+      res.status(500).json({ message: 'Failed to fetch revenue data' });
+    }
+  });
+
+  app.get('/api/admin/dashboard/popular-packages', isAdminAuthenticated, async (req, res) => {
+    try {
+      const orders = await storage.getAllOrders();
+      const packageCounts = new Map<string, { count: number; revenue: number }>();
+      
+      for (const order of orders) {
+        if (order.status === 'paid' && order.items) {
+          for (const item of order.items) {
+            const planName = item.plan?.name || 'Unknown';
+            const existing = packageCounts.get(planName) || { count: 0, revenue: 0 };
+            packageCounts.set(planName, {
+              count: existing.count + item.quantity,
+              revenue: existing.revenue + Number(item.priceUsd) * item.quantity
+            });
+          }
+        }
+      }
+      
+      const result = Array.from(packageCounts.entries())
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching popular packages:', error);
+      res.status(500).json({ message: 'Failed to fetch popular packages' });
+    }
+  });
+
+  app.get('/api/admin/dashboard/activities', isAdminAuthenticated, async (req, res) => {
+    try {
+      const orders = await storage.getAllOrders();
+      const users = await storage.getAllUsers();
+      const activities: any[] = [];
+      
+      // Recent orders
+      const recentOrders = orders
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 10);
+      
+      recentOrders.forEach(order => {
+        const user = users.find(u => u.id === order.userId);
+        activities.push({
+          id: `order-${order.id}`,
+          type: 'order',
+          message: `${user?.username || 'Kullanıcı'} yeni sipariş oluşturdu - $${Number(order.totalUsd).toFixed(2)}`,
+          timestamp: order.createdAt,
+          status: order.status === 'paid' ? 'success' : order.status === 'pending' ? 'pending' : 'failed'
+        });
+      });
+      
+      // Recent users
+      const recentUsers = users
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5);
+      
+      recentUsers.forEach(user => {
+        activities.push({
+          id: `user-${user.id}`,
+          type: 'user',
+          message: `${user.username} sisteme kayıt oldu`,
+          timestamp: user.created_at,
+          status: 'success'
+        });
+      });
+      
+      // Sort by timestamp
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      res.json(activities.slice(0, 20));
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      res.status(500).json({ message: 'Failed to fetch activities' });
+    }
+  });
+
+  // Database Backup & Restore endpoints
+  app.post('/api/admin/database/backup', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { spawn } = await import('child_process');
+      const { promisify } = await import('util');
+      const exec = promisify((await import('child_process')).exec);
+      
+      const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+      const filename = `backup-${timestamp}.sql`;
+      const backupPath = `./backups/${filename}`;
+      
+      // Create backups directory if it doesn't exist
+      const fs = await import('fs');
+      const fsp = fs.promises;
+      await fsp.mkdir('./backups', { recursive: true });
+      
+      // Get database connection details from DATABASE_URL
+      const dbUrl = process.env.DATABASE_URL;
+      if (!dbUrl) {
+        return res.status(500).json({ message: 'DATABASE_URL not configured' });
+      }
+      
+      // Parse DATABASE_URL
+      const url = new URL(dbUrl);
+      const dbHost = url.hostname;
+      const dbPort = url.port || '5432';
+      const dbName = url.pathname.slice(1);
+      const dbUser = url.username;
+      const dbPassword = url.password;
+      
+      // Use pg_dump to create backup
+      const pgDumpCommand = `PGPASSWORD="${dbPassword}" pg_dump -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -F c -f ${backupPath}`;
+      
+      await exec(pgDumpCommand);
+      
+      // Get file stats
+      const stats = await fsp.stat(backupPath);
+      
+      res.json({
+        success: true,
+        filename,
+        size: stats.size,
+        path: backupPath,
+        createdAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Backup error:', error);
+      res.status(500).json({ message: 'Backup failed: ' + (error as Error).message });
+    }
+  });
+
+  app.get('/api/admin/database/backups', isAdminAuthenticated, async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const fsp = fs.promises;
+      const path = await import('path');
+      
+      const backupsDir = './backups';
+      
+      try {
+        await fsp.access(backupsDir);
+      } catch {
+        await fsp.mkdir(backupsDir, { recursive: true });
+        return res.json([]);
+      }
+      
+      const files = await fsp.readdir(backupsDir);
+      const backupFiles = files.filter(f => f.endsWith('.sql'));
+      
+      const backups = await Promise.all(
+        backupFiles.map(async (filename) => {
+          const filePath = path.join(backupsDir, filename);
+          const stats = await fsp.stat(filePath);
+          
+          return {
+            filename,
+            size: stats.size,
+            createdAt: stats.mtime.toISOString(),
+            path: filePath
+          };
+        })
+      );
+      
+      backups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      res.json(backups);
+    } catch (error) {
+      console.error('Error listing backups:', error);
+      res.status(500).json({ message: 'Failed to list backups' });
+    }
+  });
+
+  app.get('/api/admin/database/backups/:filename', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { filename } = req.params;
+      const backupPath = `./backups/${filename}`;
+      
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      // Security check - ensure filename doesn't contain path traversal
+      const normalizedPath = path.normalize(backupPath);
+      if (!normalizedPath.startsWith('./backups/')) {
+        return res.status(400).json({ message: 'Invalid filename' });
+      }
+      
+      res.download(backupPath, filename);
+    } catch (error) {
+      console.error('Error downloading backup:', error);
+      res.status(500).json({ message: 'Failed to download backup' });
+    }
+  });
+
+  app.post('/api/admin/database/restore', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { filename } = req.body;
+      
+      if (!filename) {
+        return res.status(400).json({ message: 'Filename required' });
+      }
+      
+      const backupPath = `./backups/${filename}`;
+      const { promisify } = await import('util');
+      const exec = promisify((await import('child_process')).exec);
+      const fs = await import('fs');
+      
+      // Check if backup file exists
+      try {
+        await fs.promises.access(backupPath);
+      } catch {
+        return res.status(404).json({ message: 'Backup file not found' });
+      }
+      
+      // Get database connection details
+      const dbUrl = process.env.DATABASE_URL;
+      if (!dbUrl) {
+        return res.status(500).json({ message: 'DATABASE_URL not configured' });
+      }
+      
+      const url = new URL(dbUrl);
+      const dbHost = url.hostname;
+      const dbPort = url.port || '5432';
+      const dbName = url.pathname.slice(1);
+      const dbUser = url.username;
+      const dbPassword = url.password;
+      
+      // Use pg_restore to restore database
+      const pgRestoreCommand = `PGPASSWORD="${dbPassword}" pg_restore -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -c ${backupPath}`;
+      
+      await exec(pgRestoreCommand);
+      
+      res.json({
+        success: true,
+        message: 'Database restored successfully'
+      });
+    } catch (error) {
+      console.error('Restore error:', error);
+      res.status(500).json({ message: 'Restore failed: ' + (error as Error).message });
+    }
+  });
+
+  app.delete('/api/admin/database/backups/:filename', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { filename } = req.params;
+      const backupPath = `./backups/${filename}`;
+      
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      // Security check
+      const normalizedPath = path.normalize(backupPath);
+      if (!normalizedPath.startsWith('./backups/')) {
+        return res.status(400).json({ message: 'Invalid filename' });
+      }
+      
+      await fs.promises.unlink(backupPath);
+      
+      res.json({ success: true, message: 'Backup deleted' });
+    } catch (error) {
+      console.error('Error deleting backup:', error);
+      res.status(500).json({ message: 'Failed to delete backup' });
     }
   });
 

@@ -454,15 +454,7 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       passwordResetSent: "Yeni şifreniz e-posta adresinize gönderildi.",
       passwordResetSecurity: "Eğer e-posta adresiniz doğru ise şifre sıfırlama e-postası mailine iletilmiştir.",
       passwordResetError: "Bir hata oluştu. Lütfen tekrar deneyin.",
-      backToLogin: "Giriş Sayfasına Dön",
-      connectionError: "Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin."
-    },
-    profile: {
-      fullName: "Ad Soyad",
-      email: "E-posta Adresi",
-      phone: "Telefon Numarası",
-      address: "Adres",
-      confirmPassword: "Şifre Tekrar"
+      backToLogin: "Giriş Sayfasına Dön"
     },
     
     dashboard: {
@@ -622,7 +614,6 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       secure3D: "3D Secure ile güvenli ödeme",
       cardPayment: "Kart ile Ödeme",
       processing: "İşleniyor...",
-      proceedToPayment: "Ödemeye Geç",
       
       cardInfo: "Kart Bilgileri",
       cardNumber: "Kart Numarası",
@@ -645,11 +636,9 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       phoneNumber: "Telefon Numarası",
       phonePlaceholder: "0532 123 45 67",
       
-      paymentSuccess: "Ödeme Başarılı",
       paymentSuccessDesc: "Siparişiniz başarıyla tamamlandı!",
       paymentError: "Ödeme Hatası",
       paymentCancelled: "Ödeme İptal Edildi",
-      paymentFailed: "Ödeme Başarısız",
       paymentTimeout: "İşlem Zaman Aşımı",
       orderNotFound: "Sipariş Bulunamadı",
       invalidCard: "Kart bilgileri geçersiz. Lütfen doğru bilgilerle tekrar deneyin.",
@@ -662,9 +651,6 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       backToPanel: "Panele Dön",
       
       orderId: "Sipariş ID",
-      couponApplied: "✅ Kupon Başarıyla Uygulandı!",
-      couponDiscount: "kuponunuz",
-      totalDiscount: "indirim sağladı. Toplam indirimi",
       couponError: "❌ Kupon Hatası",
       amount: "Tutar",
       status: "Durum",
@@ -841,11 +827,7 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       quantity: "Adet",
       category: "Kategori",
       type: "Tür",
-      details: "Detaylar",
-      removed: "Kaldırıldı",
-      cleared: "Temizlendi",
-      created: "Oluşturuldu",
-      redirecting: "Yönlendiriliyor..."
+      details: "Detaylar"
     }
   },
   
@@ -930,15 +912,7 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       passwordResetSent: "New password has been sent to your email address.",
       passwordResetSecurity: "If your email address is correct, a password reset email has been sent to your inbox.",
       passwordResetError: "An error occurred. Please try again.",
-      backToLogin: "Back to Login",
-      connectionError: "Connection error. Please check your internet connection."
-    },
-    profile: {
-      fullName: "Full Name",
-      email: "Email Address",
-      phone: "Phone Number",
-      address: "Address",
-      confirmPassword: "Confirm Password"
+      backToLogin: "Back to Login"
     },
     
     dashboard: {
@@ -1098,7 +1072,6 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       proceedToPayment: "Proceed to Payment",
       cardPayment: "Pay with Card",
       processing: "Processing...",
-      proceedToPayment: "Proceed to Payment",
       
       cardInfo: "Card Information",
       cardNumber: "Card Number",
@@ -1121,23 +1094,9 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       phoneNumber: "Phone Number",
       phonePlaceholder: "+1 234 567 8900",
       
-      // Forgot Password
-      forgotPassword: "Forgot Password",
-      forgotPasswordTitle: "Forgot Password",
-      forgotPasswordDescription: "Enter your email address and we'll send you a new password",
-      sendPasswordReset: "Send Password",
-      sendingPasswordReset: "Sending...",
-      passwordResetSent: "New password has been sent to your email address.",
-      passwordResetSecurity: "If your email address is correct, a password reset email has been sent to your inbox.",
-      passwordResetError: "An error occurred. Please try again.",
-      backToLogin: "Back to Login",
-      connectionError: "Connection error. Please check your internet connection.",
-      
-      paymentSuccess: "Payment Successful",
       paymentSuccessDesc: "Your order has been completed successfully!",
       paymentError: "Payment Error",
       paymentCancelled: "Payment Cancelled",
-      paymentFailed: "Payment Failed",
       paymentTimeout: "Transaction Timeout",
       orderNotFound: "Order Not Found",
       invalidCard: "Invalid card details. Please try again with correct information.",
@@ -1150,9 +1109,6 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       backToPanel: "Back to Panel",
       
       orderId: "Order ID",
-      couponApplied: "✅ Coupon Applied Successfully!",
-      couponDiscount: "coupon provided",
-      totalDiscount: "discount. Total discount",
       couponError: "❌ Coupon Error",
       amount: "Amount",
       status: "Status",
@@ -1329,11 +1285,7 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       quantity: "Quantity",
       category: "Category",
       type: "Type",
-      details: "Details",
-      removed: "Removed",
-      cleared: "Cleared",
-      created: "Created",
-      redirecting: "Redirecting..."
+      details: "Details"
     }
   },
 
@@ -1597,7 +1549,6 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       orderSuccess: "Заказ успешно создан",
       orderError: "Ошибка при создании заказа",
       invalidPayment: "Неверная платежная информация",
-      paymentFailed: "Ошибка платежа",
       redirecting: "Перенаправление...",
       orderCreated: "Заказ создан",
       orderCreatedDesc: "Ваш заказ был успешно создан и отправлен на обработку",

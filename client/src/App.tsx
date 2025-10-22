@@ -46,6 +46,7 @@ import KullanimKilavuzu from "@/pages/KullanimKilavuzu";
 import ForgotPassword from "@/pages/ForgotPassword";
 import PushNotifications from "@/pages/admin/PushNotifications";
 import EmailMarketing from "@/pages/admin/EmailMarketing";
+import DatabaseBackup from "@/pages/admin/DatabaseBackup";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
@@ -167,6 +168,12 @@ function Router() {
       <Route path="/admin/email-marketing">
         <AdminProtectedRoute>
           <EmailMarketing />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/database-backup">
+        <AdminProtectedRoute>
+          <DatabaseBackup />
         </AdminProtectedRoute>
       </Route>
       

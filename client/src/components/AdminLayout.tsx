@@ -84,6 +84,7 @@ const navigationCategories = [
       { name: 'Site Ayarları', href: '/admin/site-settings', icon: Settings },
       { name: 'Genel Ayarlar', href: '/admin/settings', icon: Settings },
       { name: 'E-Mail Ayarları', href: '/admin/email-settings', icon: Mail },
+      { name: 'Veritabanı Yedekleme', href: '/admin/database-backup', icon: FileText },
       { name: 'Sistem Logları', href: '/admin/logs', icon: FileText },
     ]
   }
