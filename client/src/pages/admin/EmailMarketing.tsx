@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { 
   Mail, 
@@ -22,7 +23,11 @@ import {
   Loader2,
   UserCheck,
   UserX,
-  Globe
+  Globe,
+  Trash2,
+  Package,
+  PackageX,
+  Timer
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import AdminLayout from '@/components/AdminLayout';
@@ -43,6 +48,8 @@ interface EmailTemplate {
   name: string;
   subject: string;
   content: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface EmailCampaign {
@@ -64,12 +71,14 @@ export default function EmailMarketing() {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [activeTab, setActiveTab] = useState('compose');
+  const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   
   // Email form state
   const [emailForm, setEmailForm] = useState({
     subject: '',
     content: '',
-    recipientType: 'all', // all, active, inactive, selected
+    recipientType: 'all', // all, active, inactive, selected, withPackages, withoutPackages, expiringSoon
     selectedUsers: [] as string[],
     useTemplate: false,
     selectedTemplate: '',
@@ -132,9 +141,47 @@ export default function EmailMarketing() {
           new Date(user.last_login_at) <= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
       case 'selected':
         return users.filter(user => emailForm.selectedUsers.includes(user.id));
+      case 'withPackages':
+        // This will be handled by backend - for now show all
+        return users;
+      case 'withoutPackages':
+        // This will be handled by backend - for now show all
+        return users;
+      case 'expiringSoon':
+        // This will be handled by backend - for now show all
+        return users;
       default:
         return [];
     }
+  };
+
+  const deleteTemplate = async (templateId: string) => {
+    const template = templates.find(t => t.id === templateId);
+    const confirm = window.confirm(
+      `"${template?.name}" şablonunu silmek istediğinizden emin misiniz?`
+    );
+
+    if (!confirm) return;
+
+    try {
+      await apiRequest('DELETE', `/api/admin/email-marketing/templates/${templateId}`);
+      toast({
+        title: 'Başarılı',
+        description: 'Şablon silindi'
+      });
+      loadTemplates();
+    } catch (error) {
+      toast({
+        title: 'Hata',
+        description: 'Şablon silinirken hata oluştu',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const viewTemplate = (template: EmailTemplate) => {
+    setPreviewTemplate(template);
+    setShowPreviewModal(true);
   };
 
   const handleTemplateSelect = (templateId: string) => {
@@ -453,6 +500,24 @@ export default function EmailMarketing() {
                                 new Date(u.last_login_at) <= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length})
                             </div>
                           </SelectItem>
+                          <SelectItem value="withPackages">
+                            <div className="flex items-center">
+                              <Package className="w-4 h-4 mr-2" />
+                              Paket Almış Kullanıcılar
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="withoutPackages">
+                            <div className="flex items-center">
+                              <PackageX className="w-4 h-4 mr-2" />
+                              Paket Almamış Kullanıcılar
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="expiringSoon">
+                            <div className="flex items-center">
+                              <Timer className="w-4 h-4 mr-2" />
+                              Paketi Dolmak Üzere Olanlar
+                            </div>
+                          </SelectItem>
                           <SelectItem value="selected">Seçili Kullanıcılar</SelectItem>
                         </SelectContent>
                       </Select>
@@ -589,31 +654,63 @@ export default function EmailMarketing() {
           <TabsContent value="templates">
             <Card className="admin-card">
               <CardHeader>
-                <CardTitle className="text-white">E-mail Şablonları</CardTitle>
+                <CardTitle className="text-white flex items-center justify-between">
+                  <span>E-mail Şablonları</span>
+                  <Badge variant="outline" className="text-slate-300">
+                    {templates.length} Şablon
+                  </Badge>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {templates.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                    <p className="text-slate-400">Henüz şablon oluşturulmamış</p>
+                  <div className="text-center py-12">
+                    <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                    <p className="text-slate-400 text-lg">Henüz şablon oluşturulmamış</p>
+                    <p className="text-slate-500 text-sm mt-2">E-mail oluştur sekmesinden yeni şablon kaydedin</p>
                   </div>
                 ) : (
                   <div className="grid gap-4">
                     {templates.map(template => (
-                      <div key={template.id} className="border border-slate-700 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-white font-medium">{template.name}</h3>
-                            <p className="text-sm text-slate-400 mt-1">{template.subject}</p>
+                      <div key={template.id} className="border border-slate-700 rounded-lg p-5 hover:border-slate-600 transition-colors">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-white font-semibold text-lg mb-1">{template.name}</h3>
+                            <p className="text-sm text-slate-400 mb-3">{template.subject}</p>
+                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                              <span>Oluşturulma: {new Date(template.createdAt).toLocaleDateString('tr-TR')}</span>
+                            </div>
                           </div>
-                          <Button
-                            onClick={() => handleTemplateSelect(template.id)}
-                            variant="outline"
-                            size="sm"
-                            className="admin-button-use"
-                          >
-                            Kullan
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => viewTemplate(template)}
+                              variant="outline"
+                              size="sm"
+                              className="admin-button-secondary"
+                              data-testid={`button-preview-template-${template.id}`}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Önizle
+                            </Button>
+                            <Button
+                              onClick={() => handleTemplateSelect(template.id)}
+                              variant="outline"
+                              size="sm"
+                              className="admin-button-primary"
+                              data-testid={`button-use-template-${template.id}`}
+                            >
+                              <Send className="w-4 h-4 mr-1" />
+                              Kullan
+                            </Button>
+                            <Button
+                              onClick={() => deleteTemplate(template.id)}
+                              variant="outline"
+                              size="sm"
+                              className="border-red-900 text-red-400 hover:bg-red-950/50"
+                              data-testid={`button-delete-template-${template.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -623,6 +720,53 @@ export default function EmailMarketing() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Template Preview Modal */}
+        <Dialog open={showPreviewModal} onOpenChange={setShowPreviewModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700">
+            <DialogHeader>
+              <DialogTitle className="text-white text-2xl">{previewTemplate?.name}</DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Konu: {previewTemplate?.subject}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+              <div className="bg-white rounded-lg p-6">
+                <div 
+                  dangerouslySetInnerHTML={{ 
+                    __html: previewTemplate?.content
+                      .replace(/{kullanici_adi}/g, 'Örnek Kullanıcı')
+                      .replace(/{email}/g, 'ornek@email.com')
+                      .replace(/{telefon}/g, '+90 555 123 45 67') || ''
+                  }}
+                />
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <Button
+                  onClick={() => setShowPreviewModal(false)}
+                  variant="outline"
+                  className="admin-button-secondary"
+                  data-testid="button-close-preview"
+                >
+                  Kapat
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (previewTemplate) {
+                      handleTemplateSelect(previewTemplate.id);
+                      setShowPreviewModal(false);
+                    }
+                  }}
+                  className="admin-button-primary"
+                  data-testid="button-use-from-preview"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Bu Şablonu Kullan
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

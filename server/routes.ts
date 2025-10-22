@@ -3600,6 +3600,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/admin/email-marketing/templates/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteEmailTemplate(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Template not found' });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting email template:', error);
+      res.status(500).json({ message: 'Failed to delete template' });
+    }
+  });
+
   app.get('/api/admin/email-marketing/campaigns', isAdminAuthenticated, async (req, res) => {
     try {
       const campaigns = await storage.getEmailCampaigns();
@@ -3633,6 +3649,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'inactive':
           recipients = allUsers.filter(user => !user.last_login_at || 
             new Date(user.last_login_at) <= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+          break;
+        case 'withPackages':
+          // Users who have ordered packages
+          const ordersData = await storage.getAllOrders();
+          const usersWithOrders = new Set(ordersData.map(o => o.userId));
+          recipients = allUsers.filter(user => usersWithOrders.has(user.id));
+          break;
+        case 'withoutPackages':
+          // Users who have never ordered packages
+          const allOrdersData = await storage.getAllOrders();
+          const usersWithAnyOrders = new Set(allOrdersData.map(o => o.userId));
+          recipients = allUsers.filter(user => !usersWithAnyOrders.has(user.id));
+          break;
+        case 'expiringSoon':
+          // Users with packages expiring in next 7 days
+          // Get all orders and check their expiry dates
+          const allOrders = await storage.getAllOrders();
+          const expiringUsers = new Set<string>();
+          
+          for (const order of allOrders) {
+            if (order.status === 'paid' && order.expiresAt) {
+              const expiryDate = new Date(order.expiresAt);
+              const now = new Date();
+              const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+              
+              // Expiring in next 7 days
+              if (daysUntilExpiry > 0 && daysUntilExpiry <= 7) {
+                expiringUsers.add(order.userId);
+              }
+            }
+          }
+          
+          recipients = allUsers.filter(user => expiringUsers.has(user.id));
           break;
         case 'selected':
           recipients = allUsers.filter(user => selectedUsers.includes(user.id));

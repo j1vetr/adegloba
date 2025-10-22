@@ -10,6 +10,7 @@ import { setupAuth, seedDefaultAdmin } from "./auth";
 import { logCleanupService } from "./services/logCleanupService";
 import { OrderCancelService } from "./services/orderCancelService";
 import { storage } from "./storage";
+import { initializeDefaultEmailTemplates } from "./emailTemplates";
 
 const app = express();
 app.use(express.json());
@@ -105,6 +106,9 @@ app.use((req, res, next) => {
   
   const { seedInitialShips } = await import('./shipSeed');
   await seedInitialShips();
+  
+  // Initialize default email marketing templates
+  await initializeDefaultEmailTemplates();
   
   // Start log cleanup service
   logCleanupService.startCleanupScheduler();
