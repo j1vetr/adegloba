@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -8,53 +9,59 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
-import Home from "@/pages/Home";
-import ShipPlans from "@/pages/ShipPlans";
-import Cart from "@/pages/Cart";
-import Checkout from "@/pages/Checkout";
-import OrderSuccess from "@/pages/OrderSuccess";
-import OrderCancel from "@/pages/OrderCancel";
-import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import Kayit from "@/pages/Kayit";
 import Giris from "@/pages/Giris";
 import Panel from "@/pages/Panel";
 import Paketler from "@/pages/Paketler";
 import Sepet from "@/pages/Sepet";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
-import ShipsManagement from "@/pages/admin/ShipsManagement";
-import PackagesManagement from "@/pages/admin/PackagesManagement";
-
-import ShipPackages from "@/pages/admin/ShipPackages";
-import CredentialPoolsNew from "@/pages/admin/CredentialPoolsNew";
-
-import CouponsManagementNew from "@/pages/admin/CouponsManagementNew";
-import OrdersManagement from "@/pages/admin/OrdersManagement";
-import UsersManagementNew from "@/pages/admin/UsersManagementNew";
-import SettingsManagement from "@/pages/admin/SettingsManagement";
-import SiteSettings from "@/pages/admin/SiteSettings";
-import Reports from "@/pages/admin/Reports";
-import AdminReporting from "@/pages/admin/AdminReporting";
-import StockManagement from "@/pages/admin/StockManagement";
-import TicketManagement from "@/pages/admin/TicketManagement";
-import SystemLogs from "@/pages/admin/SystemLogs";
-import { EmailSettings } from "@/pages/admin/EmailSettings";
+import OrderSuccess from "@/pages/OrderSuccess";
+import OrderCancel from "@/pages/OrderCancel";
+import Checkout from "@/pages/Checkout";
 import UserTickets from "@/pages/UserTickets";
 import TicketDetail from "@/pages/TicketDetail";
 import Profil from "@/pages/Profil";
 import KullanimKilavuzu from "@/pages/KullanimKilavuzu";
 import ForgotPassword from "@/pages/ForgotPassword";
-import PushNotifications from "@/pages/admin/PushNotifications";
-import EmailMarketing from "@/pages/admin/EmailMarketing";
-import DatabaseBackup from "@/pages/admin/DatabaseBackup";
-import FinancialReports from "@/pages/admin/FinancialReports";
-import ShipAnalytics from "@/pages/admin/ShipAnalytics";
-import UserSegmentation from "@/pages/admin/UserSegmentation";
-import SystemHealth from "@/pages/admin/SystemHealth";
-import ErrorManagement from "@/pages/admin/ErrorManagement";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+
+const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
+const ShipsManagement = lazy(() => import("@/pages/admin/ShipsManagement"));
+const PackagesManagement = lazy(() => import("@/pages/admin/PackagesManagement"));
+const ShipPackages = lazy(() => import("@/pages/admin/ShipPackages"));
+const CredentialPoolsNew = lazy(() => import("@/pages/admin/CredentialPoolsNew"));
+const CouponsManagementNew = lazy(() => import("@/pages/admin/CouponsManagementNew"));
+const OrdersManagement = lazy(() => import("@/pages/admin/OrdersManagement"));
+const UsersManagementNew = lazy(() => import("@/pages/admin/UsersManagementNew"));
+const SettingsManagement = lazy(() => import("@/pages/admin/SettingsManagement"));
+const SiteSettings = lazy(() => import("@/pages/admin/SiteSettings"));
+const Reports = lazy(() => import("@/pages/admin/Reports"));
+const AdminReporting = lazy(() => import("@/pages/admin/AdminReporting"));
+const StockManagement = lazy(() => import("@/pages/admin/StockManagement"));
+const TicketManagement = lazy(() => import("@/pages/admin/TicketManagement"));
+const SystemLogs = lazy(() => import("@/pages/admin/SystemLogs"));
+const EmailSettings = lazy(() => import("@/pages/admin/EmailSettings").then(m => ({ default: m.EmailSettings })));
+const PushNotifications = lazy(() => import("@/pages/admin/PushNotifications"));
+const EmailMarketing = lazy(() => import("@/pages/admin/EmailMarketing"));
+const DatabaseBackup = lazy(() => import("@/pages/admin/DatabaseBackup"));
+const FinancialReports = lazy(() => import("@/pages/admin/FinancialReports"));
+const ShipAnalytics = lazy(() => import("@/pages/admin/ShipAnalytics"));
+const UserSegmentation = lazy(() => import("@/pages/admin/UserSegmentation"));
+const SystemHealth = lazy(() => import("@/pages/admin/SystemHealth"));
+const ErrorManagement = lazy(() => import("@/pages/admin/ErrorManagement"));
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-400 mx-auto mb-4"></div>
+        <p className="text-blue-200">Yükleniyor...</p>
+      </div>
+    </div>
+  );
+}
 
 function Router() {
   const { isAuthenticated, isLoading } = useUserAuth();
@@ -69,146 +76,188 @@ function Router() {
       <Route path="/giris" component={Giris} />
       <Route path="/sifremi-unuttum" component={ForgotPassword} />
       
-      {/* Admin Routes - protected */}
+      {/* Admin Routes - protected with lazy loading */}
       <Route path="/admin">
         <AdminProtectedRoute>
-          <AdminDashboard />
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminDashboard />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/ships">
         <AdminProtectedRoute>
-          <ShipsManagement />
+          <Suspense fallback={<LoadingFallback />}>
+            <ShipsManagement />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/packages">
         <AdminProtectedRoute>
-          <PackagesManagement />
+          <Suspense fallback={<LoadingFallback />}>
+            <PackagesManagement />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
-
-      
-
-      
       <Route path="/admin/credential-pools">
         <AdminProtectedRoute>
-          <CredentialPoolsNew />
+          <Suspense fallback={<LoadingFallback />}>
+            <CredentialPoolsNew />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/coupons">
         <AdminProtectedRoute>
-          <CouponsManagementNew />
+          <Suspense fallback={<LoadingFallback />}>
+            <CouponsManagementNew />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/orders">
         <AdminProtectedRoute>
-          <OrdersManagement />
+          <Suspense fallback={<LoadingFallback />}>
+            <OrdersManagement />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/users">
         <AdminProtectedRoute>
-          <UsersManagementNew />
+          <Suspense fallback={<LoadingFallback />}>
+            <UsersManagementNew />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/settings">
         <AdminProtectedRoute>
-          <SettingsManagement />
+          <Suspense fallback={<LoadingFallback />}>
+            <SettingsManagement />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/site-settings">
         <AdminProtectedRoute>
-          <SiteSettings />
+          <Suspense fallback={<LoadingFallback />}>
+            <SiteSettings />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/reports">
         <AdminProtectedRoute>
-          <Reports />
+          <Suspense fallback={<LoadingFallback />}>
+            <Reports />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/admin-reporting">
         <AdminProtectedRoute>
-          <AdminReporting />
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminReporting />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/stock-management">
         <AdminProtectedRoute>
-          <StockManagement />
+          <Suspense fallback={<LoadingFallback />}>
+            <StockManagement />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/tickets">
         <AdminProtectedRoute>
-          <TicketManagement />
+          <Suspense fallback={<LoadingFallback />}>
+            <TicketManagement />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/logs">
         <AdminProtectedRoute>
-          <SystemLogs />
+          <Suspense fallback={<LoadingFallback />}>
+            <SystemLogs />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/email-settings">
         <AdminProtectedRoute>
-          <EmailSettings />
+          <Suspense fallback={<LoadingFallback />}>
+            <EmailSettings />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/push-notifications">
         <AdminProtectedRoute>
-          <PushNotifications />
+          <Suspense fallback={<LoadingFallback />}>
+            <PushNotifications />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/email-marketing">
         <AdminProtectedRoute>
-          <EmailMarketing />
+          <Suspense fallback={<LoadingFallback />}>
+            <EmailMarketing />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/database-backup">
         <AdminProtectedRoute>
-          <DatabaseBackup />
+          <Suspense fallback={<LoadingFallback />}>
+            <DatabaseBackup />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/financial-reports">
         <AdminProtectedRoute>
-          <FinancialReports />
+          <Suspense fallback={<LoadingFallback />}>
+            <FinancialReports />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/ship-analytics">
         <AdminProtectedRoute>
-          <ShipAnalytics />
+          <Suspense fallback={<LoadingFallback />}>
+            <ShipAnalytics />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/user-segmentation">
         <AdminProtectedRoute>
-          <UserSegmentation />
+          <Suspense fallback={<LoadingFallback />}>
+            <UserSegmentation />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/system-health">
         <AdminProtectedRoute>
-          <SystemHealth />
+          <Suspense fallback={<LoadingFallback />}>
+            <SystemHealth />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       
       <Route path="/admin/error-management">
         <AdminProtectedRoute>
-          <ErrorManagement />
+          <Suspense fallback={<LoadingFallback />}>
+            <ErrorManagement />
+          </Suspense>
         </AdminProtectedRoute>
       </Route>
       

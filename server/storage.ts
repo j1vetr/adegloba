@@ -2900,32 +2900,6 @@ export class DatabaseStorage implements IStorage {
     return await this.getTicketsByUserId(userId);
   }
 
-  async getUserCredentials(userId: string): Promise<any[]> {
-    const results = await db
-      .select({
-        credential: credentialPools,
-        orderCredential: orderCredentials,
-        plan: plans,
-        ship: ships,
-      })
-      .from(orderCredentials)
-      .innerJoin(orders, eq(orderCredentials.orderId, orders.id))
-      .innerJoin(credentialPools, eq(orderCredentials.credentialId, credentialPools.id))
-      .innerJoin(plans, eq(credentialPools.planId, plans.id))
-      .innerJoin(ships, eq(plans.shipId, ships.id))
-      .where(eq(orders.userId, userId))
-      .orderBy(desc(orderCredentials.deliveredAt));
-
-    return results.map(r => ({
-      id: r.credential.id,
-      shipName: r.ship.name,
-      planName: r.plan.name,
-      username: r.credential.username,
-      password: r.credential.password,
-      deliveredAt: r.orderCredential.deliveredAt,
-    }));
-  }
-
   // System Health & Performance Implementation
   async getSystemHealth(): Promise<{
     status: string;
