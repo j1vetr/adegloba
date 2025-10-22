@@ -141,7 +141,9 @@ Preferred communication style: Simple, everyday language.
 
 ## Database Design
 - **Primary Database**: PostgreSQL via Neon serverless connection
+- **Production Environment**: ONLY PostgreSQL is used - no other database systems (MySQL, MongoDB, SQLite, etc.)
 - **Schema Management**: Drizzle Kit for migrations and schema management
+- **Migration Strategy**: Use `npm run db:push --force` for schema synchronization
 - **Key Tables**:
   - Users (integrated with Replit Auth)
   - Ships (vessel management with slug-based routing)
@@ -151,6 +153,12 @@ Preferred communication style: Simple, everyday language.
   - Coupons (discount system with validation rules)
   - Settings (application configuration)
   - Sessions (mandatory for Replit Auth)
+  - System Logs (audit trail with 7-day retention)
+  - Email Logs (communication history tracking)
+  - Credential Pools (package-based credential management)
+  - User Segments (analytics and segmentation)
+  - Error Logs (system error tracking)
+  - System Metrics (performance monitoring)
 
 ## Service Layer Architecture
 - **OrderService**: Handles order creation, validation, and processing logic
