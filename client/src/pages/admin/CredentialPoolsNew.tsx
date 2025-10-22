@@ -62,6 +62,7 @@ export default function CredentialPoolsNew() {
   const [planFilter, setPlanFilter] = useState<string>('all');
   const [showPasswords, setShowPasswords] = useState(false);
   const [importText, setImportText] = useState('');
+  const [selectedShipForImport, setSelectedShipForImport] = useState('');
   const [selectedPlanForImport, setSelectedPlanForImport] = useState('');
   const [editingCredential, setEditingCredential] = useState<CredentialWithDetails | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -156,6 +157,13 @@ export default function CredentialPoolsNew() {
   // No need for client-side filtering now - it's done on the server
   const filteredCredentials = credentials;
 
+  // Filter plans by selected ship for import modal
+  const filteredPlansForImport = useMemo(() => {
+    if (!plans) return [];
+    if (!selectedShipForImport) return plans;
+    return plans.filter((plan: Plan) => plan.shipId === selectedShipForImport);
+  }, [plans, selectedShipForImport]);
+
   // Paginated plan breakdown
   const paginatedPlanBreakdown = useMemo(() => {
     if (!credentialStats.planBreakdown.length) return [];
@@ -196,9 +204,7 @@ export default function CredentialPoolsNew() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/credentials"] });
-      setIsImportOpen(false);
-      setImportText('');
-      setSelectedPlanForImport('');
+      handleCloseImportModal();
       toast({
         title: "Başarılı",
         description: `${data.created} kimlik bilgisi başarıyla içe aktarıldı.`,
@@ -313,6 +319,25 @@ export default function CredentialPoolsNew() {
     setDeleteCredentials(credentialsToDelete);
   };
 
+  const handleShipChangeForImport = (shipId: string) => {
+    setSelectedShipForImport(shipId);
+    setSelectedPlanForImport(''); // Reset plan selection when ship changes
+  };
+
+  const handleOpenImportModal = () => {
+    setSelectedShipForImport('');
+    setSelectedPlanForImport('');
+    setImportText('');
+    setIsImportOpen(true);
+  };
+
+  const handleCloseImportModal = () => {
+    setSelectedShipForImport('');
+    setSelectedPlanForImport('');
+    setImportText('');
+    setIsImportOpen(false);
+  };
+
   const handleImport = () => {
     if (!selectedPlanForImport || !importText.trim()) {
       toast({
@@ -401,7 +426,7 @@ export default function CredentialPoolsNew() {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={() => setIsImportOpen(true)}
+              onClick={handleOpenImportModal}
               variant="outline"
               className="border-gray-600 text-gray-300 hover:bg-gray-700"
               data-testid="import-credentials-button"
@@ -952,7 +977,7 @@ export default function CredentialPoolsNew() {
         </Dialog>
 
         {/* Import Credentials Dialog */}
-        <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
+        <Dialog open={isImportOpen} onOpenChange={handleCloseImportModal}>
           <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl">
             <DialogHeader>
               <DialogTitle className="text-white">Kimlik Bilgilerini Toplu İçe Aktar</DialogTitle>
@@ -963,13 +988,45 @@ export default function CredentialPoolsNew() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-slate-300">Hedef Paket *</Label>
-                <Select value={selectedPlanForImport} onValueChange={setSelectedPlanForImport}>
+                <Label className="text-slate-300">Gemi Seç *</Label>
+                <Select value={selectedShipForImport} onValueChange={handleShipChangeForImport}>
                   <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                    <SelectValue placeholder="Kimlik bilgilerinin ekleneceği paketi seçin..." />
+                    <SelectValue placeholder="Önce gemi seçin..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {plans?.map((plan: Plan) => {
+                    {ships?.map((ship: Ship) => (
+                      <SelectItem key={ship.id} value={ship.id}>
+                        <div className="flex items-center gap-2">
+                          <ShipIcon className="h-4 w-4" />
+                          {ship.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-slate-300">Hedef Paket *</Label>
+                <Select 
+                  value={selectedPlanForImport} 
+                  onValueChange={setSelectedPlanForImport}
+                  disabled={!selectedShipForImport}
+                >
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white disabled:opacity-50">
+                    <SelectValue placeholder={
+                      selectedShipForImport 
+                        ? "Kimlik bilgilerinin ekleneceği paketi seçin..." 
+                        : "Önce gemi seçin..."
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredPlansForImport.length === 0 && selectedShipForImport && (
+                      <div className="px-2 py-4 text-sm text-gray-400 text-center">
+                        Bu gemiye ait paket bulunamadı
+                      </div>
+                    )}
+                    {filteredPlansForImport.map((plan: Plan) => {
                       const ship = ships?.find((s: Ship) => s.id === plan.shipId);
                       return (
                         <SelectItem key={plan.id} value={plan.id}>
@@ -1003,7 +1060,7 @@ export default function CredentialPoolsNew() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsImportOpen(false)}
+                  onClick={handleCloseImportModal}
                   className="border-slate-600 text-slate-300 hover:bg-slate-700"
                 >
                   İptal
