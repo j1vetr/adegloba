@@ -22,7 +22,12 @@ import {
   BarChart3,
   Bell,
   Send,
-  PackageCheck
+  PackageCheck,
+  DollarSign,
+  Activity,
+  UserCheck,
+  AlertCircle,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -66,6 +71,14 @@ const navigationCategories = [
     ]
   },
   {
+    name: 'Analitik',
+    items: [
+      { name: 'Finansal Raporlar', href: '/admin/financial-reports', icon: DollarSign },
+      { name: 'Gemi Analitik', href: '/admin/ship-analytics', icon: TrendingUp },
+      { name: 'Kullanıcı Segmentasyonu', href: '/admin/user-segmentation', icon: UserCheck },
+    ]
+  },
+  {
     name: 'Destek',
     items: [
       { name: 'Destek Talepleri', href: '/admin/tickets', icon: HelpCircle },
@@ -81,6 +94,8 @@ const navigationCategories = [
   {
     name: 'Sistem',
     items: [
+      { name: 'Sistem Sağlığı', href: '/admin/system-health', icon: Activity },
+      { name: 'Hata Yönetimi', href: '/admin/error-management', icon: AlertCircle },
       { name: 'Site Ayarları', href: '/admin/site-settings', icon: Settings },
       { name: 'Genel Ayarlar', href: '/admin/settings', icon: Settings },
       { name: 'E-Mail Ayarları', href: '/admin/email-settings', icon: Mail },

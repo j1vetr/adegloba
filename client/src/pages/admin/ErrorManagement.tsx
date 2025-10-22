@@ -62,9 +62,7 @@ export default function ErrorManagement() {
 
   const resolveErrorMutation = useMutation({
     mutationFn: async (errorId: string) => {
-      return await apiRequest(`/api/admin/system/error-logs/${errorId}/resolve`, {
-        method: 'POST',
-      });
+      return await apiRequest('POST', `/api/admin/system/error-logs/${errorId}/resolve`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/system/error-logs'] });

@@ -46,9 +46,7 @@ export default function UserSegmentation() {
 
   const updateScoresMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/admin/segmentation/update-scores', {
-        method: 'POST',
-      });
+      return await apiRequest('POST', '/api/admin/segmentation/update-scores');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/segmentation/users'] });

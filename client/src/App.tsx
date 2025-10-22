@@ -47,6 +47,11 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import PushNotifications from "@/pages/admin/PushNotifications";
 import EmailMarketing from "@/pages/admin/EmailMarketing";
 import DatabaseBackup from "@/pages/admin/DatabaseBackup";
+import FinancialReports from "@/pages/admin/FinancialReports";
+import ShipAnalytics from "@/pages/admin/ShipAnalytics";
+import UserSegmentation from "@/pages/admin/UserSegmentation";
+import SystemHealth from "@/pages/admin/SystemHealth";
+import ErrorManagement from "@/pages/admin/ErrorManagement";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
@@ -174,6 +179,36 @@ function Router() {
       <Route path="/admin/database-backup">
         <AdminProtectedRoute>
           <DatabaseBackup />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/financial-reports">
+        <AdminProtectedRoute>
+          <FinancialReports />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/ship-analytics">
+        <AdminProtectedRoute>
+          <ShipAnalytics />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/user-segmentation">
+        <AdminProtectedRoute>
+          <UserSegmentation />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/system-health">
+        <AdminProtectedRoute>
+          <SystemHealth />
+        </AdminProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/error-management">
+        <AdminProtectedRoute>
+          <ErrorManagement />
         </AdminProtectedRoute>
       </Route>
       
