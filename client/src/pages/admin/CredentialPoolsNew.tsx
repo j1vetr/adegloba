@@ -64,6 +64,7 @@ export default function CredentialPoolsNew() {
   const [importText, setImportText] = useState('');
   const [selectedShipForImport, setSelectedShipForImport] = useState('');
   const [selectedPlanForImport, setSelectedPlanForImport] = useState('');
+  const [selectedFileName, setSelectedFileName] = useState<string>('');
   const [editingCredential, setEditingCredential] = useState<CredentialWithDetails | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
@@ -324,10 +325,49 @@ export default function CredentialPoolsNew() {
     setSelectedPlanForImport(''); // Reset plan selection when ship changes
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.txt')) {
+      toast({
+        title: "Hata",
+        description: "Lütfen sadece .txt dosyası yükleyin.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Read file content
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      setImportText(content);
+      setSelectedFileName(file.name);
+      toast({
+        title: "Başarılı",
+        description: `${file.name} dosyası yüklendi.`,
+      });
+    };
+    reader.onerror = () => {
+      toast({
+        title: "Hata",
+        description: "Dosya okunurken bir hata oluştu.",
+        variant: "destructive",
+      });
+    };
+    reader.readAsText(file);
+
+    // Reset input to allow re-uploading the same file
+    event.target.value = '';
+  };
+
   const handleOpenImportModal = () => {
     setSelectedShipForImport('');
     setSelectedPlanForImport('');
     setImportText('');
+    setSelectedFileName('');
     setIsImportOpen(true);
   };
 
@@ -335,6 +375,7 @@ export default function CredentialPoolsNew() {
     setSelectedShipForImport('');
     setSelectedPlanForImport('');
     setImportText('');
+    setSelectedFileName('');
     setIsImportOpen(false);
   };
 
@@ -1043,7 +1084,48 @@ export default function CredentialPoolsNew() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-300">Kimlik Bilgileri *</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-slate-300">Kimlik Bilgileri *</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept=".txt"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="credential-file-upload"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('credential-file-upload')?.click()}
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      .txt Dosya Yükle
+                    </Button>
+                  </div>
+                </div>
+                
+                {selectedFileName && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-blue-900/20 border border-blue-600/30 rounded-md">
+                    <Check className="h-4 w-4 text-blue-400" />
+                    <span className="text-sm text-blue-300">{selectedFileName}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setImportText('');
+                        setSelectedFileName('');
+                      }}
+                      className="ml-auto h-6 w-6 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                
                 <Textarea
                   value={importText}
                   onChange={(e) => setImportText(e.target.value)}
@@ -1052,7 +1134,7 @@ export default function CredentialPoolsNew() {
                   data-testid="import-credentials-textarea"
                 />
                 <p className="text-xs text-gray-400">
-                  Format: Her satırda "kullanıcıadı,şifre" şeklinde yazın.
+                  Format: Her satırda "kullanıcıadı,şifre" şeklinde yazın. İsterseniz dosya yükleyebilir veya direkt yazabilirsiniz.
                 </p>
               </div>
 
