@@ -15,6 +15,9 @@ import {
   ticketAttachments,
   emailSettings,
   emailLogs,
+  userSegments,
+  errorLogs,
+  systemMetrics,
   type User,
   type InsertUser,
   type AdminUser,
@@ -187,6 +190,84 @@ export interface IStorage {
   getCancelledOrdersCount(): Promise<number>;
   getPendingOrdersCount(): Promise<number>;
   getReportData(shipId?: string, startDate?: Date, endDate?: Date): Promise<any[]>;
+  
+  // Financial Reports API
+  getFinancialSummary(startDate?: Date, endDate?: Date): Promise<{
+    totalRevenue: number;
+    totalOrders: number;
+    averageOrderValue: number;
+    totalDiscounts: number;
+  }>;
+  getPackageProfitability(): Promise<Array<{
+    planId: string;
+    planName: string;
+    shipName: string;
+    totalSold: number;
+    totalRevenue: number;
+    averagePrice: number;
+  }>>;
+  getRevenueOverTime(period: 'daily' | 'monthly' | 'yearly', startDate?: Date, endDate?: Date): Promise<Array<{
+    period: string;
+    revenue: number;
+    orders: number;
+  }>>;
+  
+  // Ship Analytics API
+  getShipAnalytics(): Promise<Array<{
+    shipId: string;
+    shipName: string;
+    totalRevenue: number;
+    totalOrders: number;
+    activeUsers: number;
+    totalPackagesSold: number;
+  }>>;
+  getShipPerformanceComparison(): Promise<Array<{
+    shipId: string;
+    shipName: string;
+    monthlyRevenue: number;
+    monthlyOrders: number;
+    growthRate: number;
+  }>>;
+  
+  // User Segmentation API
+  getUserSegmentations(): Promise<any[]>;
+  getUserSegmentByUserId(userId: string): Promise<any | null>;
+  createUserSegment(segment: any): Promise<any>;
+  updateUserSegment(userId: string, data: any): Promise<any | null>;
+  deleteUserSegment(userId: string): Promise<boolean>;
+  updateUserSegmentScores(): Promise<void>;
+  getUsersBySegment(segment: string): Promise<User[]>;
+  
+  // Communication History API
+  getUserEmailHistory(userId: string): Promise<EmailLog[]>;
+  getUserTicketHistory(userId: string): Promise<Ticket[]>;
+  getUserCredentials(userId: string): Promise<any[]>;
+  
+  // System Health & Performance API
+  getSystemHealth(): Promise<{
+    status: string;
+    uptime: number;
+    databaseConnected: boolean;
+    errorRate: number;
+  }>;
+  getDatabaseStats(): Promise<{
+    totalUsers: number;
+    totalOrders: number;
+    totalShips: number;
+    totalPlans: number;
+    databaseSize: string;
+  }>;
+  getErrorLogs(options?: {
+    page?: number;
+    pageSize?: number;
+    severity?: string;
+    errorType?: string;
+    resolved?: boolean;
+  }): Promise<{ logs: any[]; total: number }>;
+  createErrorLog(errorData: any): Promise<any>;
+  resolveErrorLog(id: string, resolvedBy: string): Promise<any | null>;
+  getSystemMetrics(metricType?: string, startDate?: Date, endDate?: Date): Promise<any[]>;
+  recordSystemMetric(metric: any): Promise<any>;
   
   // System logs operations
   createSystemLog(logData: InsertSystemLog): Promise<SystemLog>;
@@ -2462,6 +2543,546 @@ export class DatabaseStorage implements IStorage {
       .where(eq(emailCampaigns.id, id))
       .returning();
     return updated;
+  }
+
+  // Financial Reports Implementation
+  async getFinancialSummary(startDate?: Date, endDate?: Date): Promise<{
+    totalRevenue: number;
+    totalOrders: number;
+    averageOrderValue: number;
+    totalDiscounts: number;
+  }> {
+    let query = db
+      .select({
+        totalRevenue: sql<number>`COALESCE(SUM(CAST(${orders.totalUsd} AS DECIMAL)), 0)`,
+        totalOrders: sql<number>`COUNT(*)`,
+        totalDiscounts: sql<number>`COALESCE(SUM(CAST(${orders.discountUsd} AS DECIMAL)), 0)`,
+      })
+      .from(orders)
+      .where(or(eq(orders.status, 'paid'), eq(orders.status, 'completed')));
+
+    if (startDate) {
+      query = query.where(gte(orders.paidAt, startDate));
+    }
+    if (endDate) {
+      query = query.where(lte(orders.paidAt, endDate));
+    }
+
+    const [result] = await query;
+    const totalRevenue = Number(result.totalRevenue) || 0;
+    const totalOrders = Number(result.totalOrders) || 0;
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    return {
+      totalRevenue,
+      totalOrders,
+      averageOrderValue,
+      totalDiscounts: Number(result.totalDiscounts) || 0,
+    };
+  }
+
+  async getPackageProfitability(): Promise<Array<{
+    planId: string;
+    planName: string;
+    shipName: string;
+    totalSold: number;
+    totalRevenue: number;
+    averagePrice: number;
+  }>> {
+    const results = await db
+      .select({
+        planId: orderItems.planId,
+        planName: plans.name,
+        shipName: ships.name,
+        totalSold: sql<number>`SUM(${orderItems.qty})`,
+        totalRevenue: sql<number>`SUM(CAST(${orderItems.lineTotalUsd} AS DECIMAL))`,
+      })
+      .from(orderItems)
+      .innerJoin(orders, eq(orderItems.orderId, orders.id))
+      .innerJoin(plans, eq(orderItems.planId, plans.id))
+      .innerJoin(ships, eq(plans.shipId, ships.id))
+      .where(or(eq(orders.status, 'paid'), eq(orders.status, 'completed')))
+      .groupBy(orderItems.planId, plans.name, ships.name);
+
+    return results.map(r => ({
+      planId: r.planId,
+      planName: r.planName,
+      shipName: r.shipName,
+      totalSold: Number(r.totalSold) || 0,
+      totalRevenue: Number(r.totalRevenue) || 0,
+      averagePrice: Number(r.totalSold) > 0 ? Number(r.totalRevenue) / Number(r.totalSold) : 0,
+    }));
+  }
+
+  async getRevenueOverTime(period: 'daily' | 'monthly' | 'yearly', startDate?: Date, endDate?: Date): Promise<Array<{
+    period: string;
+    revenue: number;
+    orders: number;
+  }>> {
+    let dateFormat: string;
+    switch (period) {
+      case 'daily':
+        dateFormat = 'YYYY-MM-DD';
+        break;
+      case 'monthly':
+        dateFormat = 'YYYY-MM';
+        break;
+      case 'yearly':
+        dateFormat = 'YYYY';
+        break;
+    }
+
+    let query = db
+      .select({
+        period: sql<string>`TO_CHAR(${orders.paidAt}, '${sql.raw(dateFormat)}')`,
+        revenue: sql<number>`SUM(CAST(${orders.totalUsd} AS DECIMAL))`,
+        orders: sql<number>`COUNT(*)`,
+      })
+      .from(orders)
+      .where(
+        and(
+          or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
+          isNotNull(orders.paidAt)
+        )
+      )
+      .groupBy(sql`TO_CHAR(${orders.paidAt}, '${sql.raw(dateFormat)}')`);
+
+    if (startDate) {
+      query = query.where(gte(orders.paidAt, startDate));
+    }
+    if (endDate) {
+      query = query.where(lte(orders.paidAt, endDate));
+    }
+
+    const results = await query;
+    return results.map(r => ({
+      period: r.period || '',
+      revenue: Number(r.revenue) || 0,
+      orders: Number(r.orders) || 0,
+    }));
+  }
+
+  // Ship Analytics Implementation
+  async getShipAnalytics(): Promise<Array<{
+    shipId: string;
+    shipName: string;
+    totalRevenue: number;
+    totalOrders: number;
+    activeUsers: number;
+    totalPackagesSold: number;
+  }>> {
+    const results = await db
+      .select({
+        shipId: ships.id,
+        shipName: ships.name,
+        totalRevenue: sql<number>`COALESCE(SUM(CAST(${orders.totalUsd} AS DECIMAL)), 0)`,
+        totalOrders: sql<number>`COUNT(DISTINCT ${orders.id})`,
+        activeUsers: sql<number>`COUNT(DISTINCT ${orders.userId})`,
+        totalPackagesSold: sql<number>`COALESCE(SUM(${orderItems.qty}), 0)`,
+      })
+      .from(ships)
+      .leftJoin(orders, and(
+        eq(ships.id, orders.shipId),
+        or(eq(orders.status, 'paid'), eq(orders.status, 'completed'))
+      ))
+      .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+      .groupBy(ships.id, ships.name);
+
+    return results.map(r => ({
+      shipId: r.shipId,
+      shipName: r.shipName,
+      totalRevenue: Number(r.totalRevenue) || 0,
+      totalOrders: Number(r.totalOrders) || 0,
+      activeUsers: Number(r.activeUsers) || 0,
+      totalPackagesSold: Number(r.totalPackagesSold) || 0,
+    }));
+  }
+
+  async getShipPerformanceComparison(): Promise<Array<{
+    shipId: string;
+    shipName: string;
+    monthlyRevenue: number;
+    monthlyOrders: number;
+    growthRate: number;
+  }>> {
+    const currentMonth = new Date();
+    currentMonth.setDate(1);
+    const lastMonth = new Date(currentMonth);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+    const currentResults = await db
+      .select({
+        shipId: ships.id,
+        shipName: ships.name,
+        revenue: sql<number>`COALESCE(SUM(CAST(${orders.totalUsd} AS DECIMAL)), 0)`,
+        orders: sql<number>`COUNT(*)`,
+      })
+      .from(ships)
+      .leftJoin(orders, and(
+        eq(ships.id, orders.shipId),
+        or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
+        gte(orders.paidAt, currentMonth)
+      ))
+      .groupBy(ships.id, ships.name);
+
+    const lastResults = await db
+      .select({
+        shipId: ships.id,
+        revenue: sql<number>`COALESCE(SUM(CAST(${orders.totalUsd} AS DECIMAL)), 0)`,
+      })
+      .from(ships)
+      .leftJoin(orders, and(
+        eq(ships.id, orders.shipId),
+        or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
+        gte(orders.paidAt, lastMonth),
+        lt(orders.paidAt, currentMonth)
+      ))
+      .groupBy(ships.id);
+
+    const lastRevenueMap = new Map(lastResults.map(r => [r.shipId, Number(r.revenue) || 0]));
+
+    return currentResults.map(r => {
+      const currentRevenue = Number(r.revenue) || 0;
+      const lastRevenue = lastRevenueMap.get(r.shipId) || 0;
+      const growthRate = lastRevenue > 0 ? ((currentRevenue - lastRevenue) / lastRevenue) * 100 : 0;
+
+      return {
+        shipId: r.shipId,
+        shipName: r.shipName,
+        monthlyRevenue: currentRevenue,
+        monthlyOrders: Number(r.orders) || 0,
+        growthRate,
+      };
+    });
+  }
+
+  // User Segmentation Implementation
+  async getUserSegmentations(): Promise<any[]> {
+    return await db
+      .select({
+        userSegment: userSegments,
+        user: users,
+      })
+      .from(userSegments)
+      .innerJoin(users, eq(userSegments.userId, users.id))
+      .orderBy(desc(userSegments.score));
+  }
+
+  async getUserSegmentByUserId(userId: string): Promise<any | null> {
+    const [result] = await db
+      .select()
+      .from(userSegments)
+      .where(eq(userSegments.userId, userId));
+    return result || null;
+  }
+
+  async createUserSegment(segment: any): Promise<any> {
+    const [created] = await db
+      .insert(userSegments)
+      .values(segment)
+      .returning();
+    return created;
+  }
+
+  async updateUserSegment(userId: string, data: any): Promise<any | null> {
+    const [updated] = await db
+      .update(userSegments)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(userSegments.userId, userId))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteUserSegment(userId: string): Promise<boolean> {
+    try {
+      await db
+        .delete(userSegments)
+        .where(eq(userSegments.userId, userId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting user segment:', error);
+      return false;
+    }
+  }
+
+  async updateUserSegmentScores(): Promise<void> {
+    // Get all users with their order stats
+    const usersStats = await db
+      .select({
+        userId: users.id,
+        totalOrders: sql<number>`COUNT(DISTINCT ${orders.id})`,
+        totalSpent: sql<number>`COALESCE(SUM(CAST(${orders.totalUsd} AS DECIMAL)), 0)`,
+        lastPurchase: sql<Date>`MAX(${orders.paidAt})`,
+      })
+      .from(users)
+      .leftJoin(orders, and(
+        eq(users.id, orders.userId),
+        or(eq(orders.status, 'paid'), eq(orders.status, 'completed'))
+      ))
+      .groupBy(users.id);
+
+    // Calculate segments and scores
+    for (const userStat of usersStats) {
+      const totalOrders = Number(userStat.totalOrders) || 0;
+      const totalSpent = Number(userStat.totalSpent) || 0;
+      const daysSinceLastPurchase = userStat.lastPurchase
+        ? Math.floor((Date.now() - new Date(userStat.lastPurchase).getTime()) / (1000 * 60 * 60 * 24))
+        : 999;
+
+      let segment = 'New';
+      let score = 0;
+
+      if (totalOrders >= 10 && totalSpent >= 1000) {
+        segment = 'VIP';
+        score = 100 + totalOrders * 2;
+      } else if (totalOrders >= 3 && daysSinceLastPurchase < 30) {
+        segment = 'Active';
+        score = 50 + totalOrders * 5;
+      } else if (totalOrders >= 1 && daysSinceLastPurchase < 90) {
+        segment = 'Passive';
+        score = 25 + totalOrders;
+      } else if (totalOrders >= 1 && daysSinceLastPurchase >= 90) {
+        segment = 'At-Risk';
+        score = 10;
+      }
+
+      // Upsert segment
+      const existing = await this.getUserSegmentByUserId(userStat.userId);
+      if (existing) {
+        await this.updateUserSegment(userStat.userId, {
+          segment,
+          score,
+          totalSpent: totalSpent.toString(),
+          orderCount: totalOrders,
+          lastPurchaseDate: userStat.lastPurchase,
+        });
+      } else {
+        await this.createUserSegment({
+          userId: userStat.userId,
+          segment,
+          score,
+          totalSpent: totalSpent.toString(),
+          orderCount: totalOrders,
+          lastPurchaseDate: userStat.lastPurchase,
+        });
+      }
+    }
+  }
+
+  async getUsersBySegment(segment: string): Promise<User[]> {
+    const results = await db
+      .select({
+        user: users,
+      })
+      .from(userSegments)
+      .innerJoin(users, eq(userSegments.userId, users.id))
+      .where(eq(userSegments.segment, segment));
+
+    return results.map(r => r.user);
+  }
+
+  // Communication History Implementation
+  async getUserEmailHistory(userId: string): Promise<EmailLog[]> {
+    const user = await this.getUserById(userId);
+    if (!user) return [];
+
+    return await db
+      .select()
+      .from(emailLogs)
+      .where(eq(emailLogs.toEmail, user.email))
+      .orderBy(desc(emailLogs.createdAt));
+  }
+
+  async getUserTicketHistory(userId: string): Promise<Ticket[]> {
+    return await this.getTicketsByUserId(userId);
+  }
+
+  async getUserCredentials(userId: string): Promise<any[]> {
+    const results = await db
+      .select({
+        credential: credentialPools,
+        orderCredential: orderCredentials,
+        plan: plans,
+        ship: ships,
+      })
+      .from(orderCredentials)
+      .innerJoin(orders, eq(orderCredentials.orderId, orders.id))
+      .innerJoin(credentialPools, eq(orderCredentials.credentialId, credentialPools.id))
+      .innerJoin(plans, eq(credentialPools.planId, plans.id))
+      .innerJoin(ships, eq(plans.shipId, ships.id))
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orderCredentials.deliveredAt));
+
+    return results.map(r => ({
+      id: r.credential.id,
+      shipName: r.ship.name,
+      planName: r.plan.name,
+      username: r.credential.username,
+      password: r.credential.password,
+      deliveredAt: r.orderCredential.deliveredAt,
+    }));
+  }
+
+  // System Health & Performance Implementation
+  async getSystemHealth(): Promise<{
+    status: string;
+    uptime: number;
+    databaseConnected: boolean;
+    errorRate: number;
+  }> {
+    try {
+      // Test database connection
+      await db.select({ count: sql<number>`1` }).from(users).limit(1);
+
+      // Get error rate (errors in last hour)
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const [errorCount] = await db
+        .select({
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(errorLogs)
+        .where(gte(errorLogs.createdAt, oneHourAgo));
+
+      const uptime = process.uptime();
+      const errorRate = Number(errorCount.count) || 0;
+
+      return {
+        status: errorRate > 100 ? 'degraded' : 'healthy',
+        uptime,
+        databaseConnected: true,
+        errorRate,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        uptime: process.uptime(),
+        databaseConnected: false,
+        errorRate: 0,
+      };
+    }
+  }
+
+  async getDatabaseStats(): Promise<{
+    totalUsers: number;
+    totalOrders: number;
+    totalShips: number;
+    totalPlans: number;
+    databaseSize: string;
+  }> {
+    const [userCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(users);
+    const [orderCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(orders);
+    const [shipCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(ships);
+    const [planCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(plans);
+
+    // Get database size (PostgreSQL specific)
+    const [sizeResult] = await db.execute<{ size: string }>(sql`
+      SELECT pg_size_pretty(pg_database_size(current_database())) as size
+    `);
+
+    return {
+      totalUsers: Number(userCount.count) || 0,
+      totalOrders: Number(orderCount.count) || 0,
+      totalShips: Number(shipCount.count) || 0,
+      totalPlans: Number(planCount.count) || 0,
+      databaseSize: sizeResult?.size || 'Unknown',
+    };
+  }
+
+  async getErrorLogs(options?: {
+    page?: number;
+    pageSize?: number;
+    severity?: string;
+    errorType?: string;
+    resolved?: boolean;
+  }): Promise<{ logs: any[]; total: number }> {
+    const page = options?.page || 1;
+    const pageSize = options?.pageSize || 50;
+    const offset = (page - 1) * pageSize;
+
+    let conditions: any[] = [];
+    
+    if (options?.severity) {
+      conditions.push(eq(errorLogs.severity, options.severity));
+    }
+    if (options?.errorType) {
+      conditions.push(eq(errorLogs.errorType, options.errorType));
+    }
+    if (options?.resolved !== undefined) {
+      conditions.push(eq(errorLogs.resolved, options.resolved));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const logs = await db
+      .select()
+      .from(errorLogs)
+      .where(whereClause)
+      .orderBy(desc(errorLogs.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(errorLogs)
+      .where(whereClause);
+
+    return {
+      logs,
+      total: Number(count) || 0,
+    };
+  }
+
+  async createErrorLog(errorData: any): Promise<any> {
+    const [created] = await db
+      .insert(errorLogs)
+      .values(errorData)
+      .returning();
+    return created;
+  }
+
+  async resolveErrorLog(id: string, resolvedBy: string): Promise<any | null> {
+    const [resolved] = await db
+      .update(errorLogs)
+      .set({
+        resolved: true,
+        resolvedAt: new Date(),
+        resolvedBy,
+      })
+      .where(eq(errorLogs.id, id))
+      .returning();
+    return resolved || null;
+  }
+
+  async getSystemMetrics(metricType?: string, startDate?: Date, endDate?: Date): Promise<any[]> {
+    let query = db.select().from(systemMetrics);
+
+    let conditions: any[] = [];
+    if (metricType) {
+      conditions.push(eq(systemMetrics.metricType, metricType));
+    }
+    if (startDate) {
+      conditions.push(gte(systemMetrics.timestamp, startDate));
+    }
+    if (endDate) {
+      conditions.push(lte(systemMetrics.timestamp, endDate));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query.orderBy(desc(systemMetrics.timestamp));
+  }
+
+  async recordSystemMetric(metric: any): Promise<any> {
+    const [recorded] = await db
+      .insert(systemMetrics)
+      .values(metric)
+      .returning();
+    return recorded;
   }
 }
 

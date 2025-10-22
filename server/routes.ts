@@ -3945,6 +3945,214 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Financial Reports API Endpoints
+  app.get('/api/admin/financial/summary', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const summary = await storage.getFinancialSummary(
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching financial summary:', error);
+      res.status(500).json({ message: 'Failed to fetch financial summary' });
+    }
+  });
+
+  app.get('/api/admin/financial/package-profitability', isAdminAuthenticated, async (req, res) => {
+    try {
+      const profitability = await storage.getPackageProfitability();
+      res.json(profitability);
+    } catch (error) {
+      console.error('Error fetching package profitability:', error);
+      res.status(500).json({ message: 'Failed to fetch package profitability' });
+    }
+  });
+
+  app.get('/api/admin/financial/revenue-over-time', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { period = 'monthly', startDate, endDate } = req.query;
+      const revenueData = await storage.getRevenueOverTime(
+        period as 'daily' | 'monthly' | 'yearly',
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+      res.json(revenueData);
+    } catch (error) {
+      console.error('Error fetching revenue over time:', error);
+      res.status(500).json({ message: 'Failed to fetch revenue over time' });
+    }
+  });
+
+  // Ship Analytics API Endpoints
+  app.get('/api/admin/analytics/ships', isAdminAuthenticated, async (req, res) => {
+    try {
+      const analytics = await storage.getShipAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching ship analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch ship analytics' });
+    }
+  });
+
+  app.get('/api/admin/analytics/ships/performance', isAdminAuthenticated, async (req, res) => {
+    try {
+      const performance = await storage.getShipPerformanceComparison();
+      res.json(performance);
+    } catch (error) {
+      console.error('Error fetching ship performance:', error);
+      res.status(500).json({ message: 'Failed to fetch ship performance' });
+    }
+  });
+
+  // User Segmentation API Endpoints
+  app.get('/api/admin/segmentation/users', isAdminAuthenticated, async (req, res) => {
+    try {
+      const segmentations = await storage.getUserSegmentations();
+      res.json(segmentations);
+    } catch (error) {
+      console.error('Error fetching user segmentations:', error);
+      res.status(500).json({ message: 'Failed to fetch user segmentations' });
+    }
+  });
+
+  app.get('/api/admin/segmentation/users/:userId', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const segment = await storage.getUserSegmentByUserId(userId);
+      res.json(segment);
+    } catch (error) {
+      console.error('Error fetching user segment:', error);
+      res.status(500).json({ message: 'Failed to fetch user segment' });
+    }
+  });
+
+  app.post('/api/admin/segmentation/users/:userId', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const segment = await storage.updateUserSegment(userId, req.body);
+      res.json(segment);
+    } catch (error) {
+      console.error('Error updating user segment:', error);
+      res.status(500).json({ message: 'Failed to update user segment' });
+    }
+  });
+
+  app.post('/api/admin/segmentation/update-scores', isAdminAuthenticated, async (req, res) => {
+    try {
+      await storage.updateUserSegmentScores();
+      res.json({ success: true, message: 'User segment scores updated' });
+    } catch (error) {
+      console.error('Error updating segment scores:', error);
+      res.status(500).json({ message: 'Failed to update segment scores' });
+    }
+  });
+
+  app.get('/api/admin/segmentation/segments/:segment/users', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { segment } = req.params;
+      const users = await storage.getUsersBySegment(segment);
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users by segment:', error);
+      res.status(500).json({ message: 'Failed to fetch users by segment' });
+    }
+  });
+
+  // System Health & Performance API Endpoints
+  app.get('/api/admin/system/health', isAdminAuthenticated, async (req, res) => {
+    try {
+      const health = await storage.getSystemHealth();
+      res.json(health);
+    } catch (error) {
+      console.error('Error fetching system health:', error);
+      res.status(500).json({ message: 'Failed to fetch system health' });
+    }
+  });
+
+  app.get('/api/admin/system/database-stats', isAdminAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getDatabaseStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching database stats:', error);
+      res.status(500).json({ message: 'Failed to fetch database stats' });
+    }
+  });
+
+  app.get('/api/admin/system/error-logs', isAdminAuthenticated, async (req, res) => {
+    try {
+      const {
+        page = 1,
+        pageSize = 50,
+        severity,
+        errorType,
+        resolved
+      } = req.query;
+
+      const result = await storage.getErrorLogs({
+        page: parseInt(page as string),
+        pageSize: parseInt(pageSize as string),
+        severity: severity as string,
+        errorType: errorType as string,
+        resolved: resolved === 'true' ? true : resolved === 'false' ? false : undefined,
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching error logs:', error);
+      res.status(500).json({ message: 'Failed to fetch error logs' });
+    }
+  });
+
+  app.post('/api/admin/system/error-logs', isAdminAuthenticated, async (req, res) => {
+    try {
+      const errorLog = await storage.createErrorLog(req.body);
+      res.json(errorLog);
+    } catch (error) {
+      console.error('Error creating error log:', error);
+      res.status(500).json({ message: 'Failed to create error log' });
+    }
+  });
+
+  app.post('/api/admin/system/error-logs/:id/resolve', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const adminId = req.session?.adminUser?.id || 'unknown';
+      const resolved = await storage.resolveErrorLog(id, adminId);
+      res.json(resolved);
+    } catch (error) {
+      console.error('Error resolving error log:', error);
+      res.status(500).json({ message: 'Failed to resolve error log' });
+    }
+  });
+
+  app.get('/api/admin/system/metrics', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { metricType, startDate, endDate } = req.query;
+      const metrics = await storage.getSystemMetrics(
+        metricType as string,
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error fetching system metrics:', error);
+      res.status(500).json({ message: 'Failed to fetch system metrics' });
+    }
+  });
+
+  app.post('/api/admin/system/metrics', isAdminAuthenticated, async (req, res) => {
+    try {
+      const metric = await storage.recordSystemMetric(req.body);
+      res.json(metric);
+    } catch (error) {
+      console.error('Error recording system metric:', error);
+      res.status(500).json({ message: 'Failed to record system metric' });
+    }
+  });
+
   // Run startup check after a short delay
   setTimeout(startupIncompleteOrdersCheck, 5000);
   
