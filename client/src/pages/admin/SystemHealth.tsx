@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import AdminLayout from "@/components/AdminLayout";
 import {
   Activity,
@@ -12,7 +13,11 @@ import {
   Server,
   HardDrive,
   Users,
-  ShoppingCart
+  ShoppingCart,
+  Cpu,
+  MemoryStick,
+  Globe,
+  Zap
 } from "lucide-react";
 
 interface SystemHealth {
@@ -20,6 +25,16 @@ interface SystemHealth {
   uptime: number;
   databaseConnected: boolean;
   errorRate: number;
+  platform: string;
+  hostname: string;
+  osType: string;
+  osRelease: string;
+  cpuUsage: number;
+  memoryUsage: number;
+  totalMemory: number;
+  freeMemory: number;
+  nginxStatus?: string;
+  nodeVersion: string;
 }
 
 interface DatabaseStats {
@@ -67,6 +82,29 @@ export default function SystemHealthPage() {
     }
   };
 
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case 'healthy':
+        return 'text-green-400';
+      case 'Running':
+      case 'active':
+      case 'Bağlı':
+        return 'text-green-400';
+      case 'degraded':
+        return 'text-yellow-400';
+      default:
+        return 'text-red-400';
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const configs = {
       'healthy': { 
@@ -97,230 +135,259 @@ export default function SystemHealthPage() {
     );
   };
 
-  const healthCards = [
-    {
-      title: "Sistem Durumu",
-      value: health?.status || 'unknown',
-      description: "Genel sistem sağlığı",
-      icon: Activity,
-      color: health?.status === 'healthy' ? "text-green-400" : "text-red-400",
-      bgColor: health?.status === 'healthy' ? "from-green-500/20 to-emerald-500/20" : "from-red-500/20 to-pink-500/20",
-      borderColor: health?.status === 'healthy' ? "border-green-500/30" : "border-red-500/30",
-      isStatus: true
-    },
-    {
-      title: "Veritabanı",
-      value: health?.databaseConnected ? 'Bağlı' : 'Bağlı Değil',
-      description: "PostgreSQL durumu",
-      icon: Database,
-      color: health?.databaseConnected ? "text-blue-400" : "text-red-400",
-      bgColor: "from-blue-500/20 to-cyan-500/20",
-      borderColor: "border-blue-500/30"
-    },
-    {
-      title: "Çalışma Süresi",
-      value: formatUptime(health?.uptime || 0),
-      description: "Kesintisiz çalışma",
-      icon: Clock,
-      color: "text-purple-400",
-      bgColor: "from-purple-500/20 to-pink-500/20",
-      borderColor: "border-purple-500/30"
-    },
-    {
-      title: "Hata Oranı",
-      value: `${health?.errorRate || 0}`,
-      description: "Son 1 saatteki hatalar",
-      icon: AlertCircle,
-      color: health?.errorRate && health.errorRate > 50 ? "text-red-400" : "text-green-400",
-      bgColor: "from-orange-500/20 to-red-500/20",
-      borderColor: "border-orange-500/30"
-    }
-  ];
-
-  const dbStatsCards = [
-    {
-      title: "Toplam Kullanıcı",
-      value: dbStats?.totalUsers || 0,
-      description: "Kayıtlı kullanıcı sayısı",
-      icon: Users,
-      color: "text-blue-400"
-    },
-    {
-      title: "Toplam Sipariş",
-      value: dbStats?.totalOrders || 0,
-      description: "Tüm siparişler",
-      icon: ShoppingCart,
-      color: "text-green-400"
-    },
-    {
-      title: "Toplam Gemi",
-      value: dbStats?.totalShips || 0,
-      description: "Aktif gemiler",
-      icon: Server,
-      color: "text-purple-400"
-    },
-    {
-      title: "Veritabanı Boyutu",
-      value: dbStats?.databaseSize || 'N/A',
-      description: "Disk kullanımı",
-      icon: HardDrive,
-      color: "text-cyan-400"
-    }
-  ];
-
   return (
     <AdminLayout title="Sistem Sağlığı">
-      <div className="space-y-8 animate-slide-up">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="glass-card p-6 rounded-2xl border border-primary/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white neon-text mb-2">
-                Sistem Sağlığı & Performans
-              </h1>
-              <p className="text-light-gray">
-                Sistem durumu, veritabanı metrikleri ve performans izleme
-              </p>
-            </div>
-            <div className="hidden md:flex items-center space-x-4">
-              <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-gradient-neon flex items-center justify-center neon-glow mb-2">
-                  <Activity className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-xs text-light-gray">Canlı İzleme</span>
-              </div>
-            </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Sistem Sağlığı & Performans
+            </h1>
+            <p className="text-slate-400">
+              Production sunucu durumu ve performans metrikleri
+            </p>
           </div>
+          {health && getStatusBadge(health.status)}
         </div>
 
-        {/* Health Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {healthCards.map((card, index) => {
-            const Icon = card.icon;
-            return (
-              <Card
-                key={index}
-                className="glass-card border-slate-700/50 hover:border-cyan-500/30 transition-all duration-300 card-hover"
-                data-testid={`card-health-${index}`}
-              >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-300">
-                    {card.title}
-                  </CardTitle>
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${card.bgColor} border ${card.borderColor} flex items-center justify-center`}>
-                    <Icon className={`h-5 w-5 ${card.color}`} />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {card.isStatus ? (
-                    <div className="mb-2" data-testid={`value-${index}`}>
-                      {healthLoading ? (
-                        <div className="text-slate-400">Yükleniyor...</div>
-                      ) : (
-                        getStatusBadge(card.value)
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-2xl font-bold text-white mb-1" data-testid={`value-${index}`}>
-                      {healthLoading ? '...' : card.value}
-                    </div>
-                  )}
-                  <p className="text-xs text-light-gray">
-                    {card.description}
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
+        {/* System Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* System Status */}
+          <Card className="bg-slate-900/50 border-slate-700">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Sistem Durumu
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className={`text-2xl font-bold ${getStatusColor(health?.status)}`}>
+                  {health?.status === 'healthy' ? 'Sağlıklı' : health?.status || 'Bilinmiyor'}
+                </p>
+                <p className="text-xs text-slate-500">Genel sistem sağlığı</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Database */}
+          <Card className="bg-slate-900/50 border-slate-700">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                Veritabanı
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className={`text-2xl font-bold ${getStatusColor(health?.databaseConnected ? 'Bağlı' : undefined)}`}>
+                  {health?.databaseConnected ? 'Bağlı' : 'Bağlı Değil'}
+                </p>
+                <p className="text-xs text-slate-500">PostgreSQL durumu</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Uptime */}
+          <Card className="bg-slate-900/50 border-slate-700">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Çalışma Süresi
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className="text-2xl font-bold text-purple-400">
+                  {formatUptime(health?.uptime || 0)}
+                </p>
+                <p className="text-xs text-slate-500">Kesintisiz çalışma</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Error Rate */}
+          <Card className="bg-slate-900/50 border-slate-700">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Hata Oranı
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className={`text-2xl font-bold ${health?.errorRate && health.errorRate > 50 ? 'text-red-400' : 'text-green-400'}`}>
+                  {health?.errorRate || 0}
+                </p>
+                <p className="text-xs text-slate-500">Son 1 saatteki hatalar</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Server Information */}
+        <Card className="bg-slate-900/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Server className="h-5 w-5" />
+              Sunucu Bilgileri
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* OS Info */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <Globe className="h-4 w-4" />
+                  <span>İşletim Sistemi</span>
+                </div>
+                <p className="text-lg font-medium text-white">{health?.osType || 'N/A'}</p>
+                <p className="text-xs text-slate-500">Platform: {health?.platform || 'N/A'}</p>
+                <p className="text-xs text-slate-500">Version: {health?.osRelease || 'N/A'}</p>
+              </div>
+
+              {/* Hostname */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <Server className="h-4 w-4" />
+                  <span>Hostname</span>
+                </div>
+                <p className="text-lg font-medium text-white break-all">{health?.hostname || 'N/A'}</p>
+                <p className="text-xs text-slate-500">Sunucu adı</p>
+              </div>
+
+              {/* Node Version */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <Zap className="h-4 w-4" />
+                  <span>Node.js</span>
+                </div>
+                <p className="text-lg font-medium text-white">{health?.nodeVersion || 'N/A'}</p>
+                <p className="text-xs text-slate-500">Runtime version</p>
+              </div>
+
+              {/* Nginx Status */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <Globe className="h-4 w-4" />
+                  <span>Nginx</span>
+                </div>
+                <p className={`text-lg font-medium ${getStatusColor(health?.nginxStatus)}`}>
+                  {health?.nginxStatus || 'N/A'}
+                </p>
+                <p className="text-xs text-slate-500">Web server durumu</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Resource Usage */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* CPU Usage */}
+          <Card className="bg-slate-900/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Cpu className="h-5 w-5" />
+                CPU Kullanımı
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-400">Load Average</span>
+                <span className="text-lg font-semibold text-white">{health?.cpuUsage?.toFixed(2) || 0}%</span>
+              </div>
+              <Progress 
+                value={health?.cpuUsage || 0} 
+                className="h-3"
+              />
+              <p className="text-xs text-slate-500">
+                {health?.cpuUsage && health.cpuUsage > 80 
+                  ? 'Yüksek CPU kullanımı tespit edildi' 
+                  : 'CPU kullanımı normal seviyede'}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Memory Usage */}
+          <Card className="bg-slate-900/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <MemoryStick className="h-5 w-5" />
+                Bellek Kullanımı
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-400">
+                  {formatBytes(health?.totalMemory ? health.totalMemory - (health.freeMemory || 0) : 0)} / {formatBytes(health?.totalMemory || 0)}
+                </span>
+                <span className="text-lg font-semibold text-white">{health?.memoryUsage?.toFixed(2) || 0}%</span>
+              </div>
+              <Progress 
+                value={health?.memoryUsage || 0} 
+                className="h-3"
+              />
+              <p className="text-xs text-slate-500">
+                Kullanılabilir: {formatBytes(health?.freeMemory || 0)}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Database Statistics */}
-        <Card className="glass-card border-slate-700/50">
+        <Card className="bg-slate-900/50 border-slate-700">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl font-bold text-white neon-text">
-                  Veritabanı İstatistikleri
-                </CardTitle>
-                <CardDescription className="text-light-gray">
-                  Veritabanı boyutu ve kayıt sayıları
-                </CardDescription>
-              </div>
-              <Database className="h-6 w-6 text-cyan-400" />
-            </div>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Veritabanı İstatistikleri
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {dbStatsCards.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <div
-                    key={index}
-                    className="glass-card p-4 rounded-xl border border-slate-700/50 hover:border-cyan-500/30 transition-all"
-                    data-testid={`stat-db-${index}`}
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center">
-                        <Icon className={`h-5 w-5 ${stat.color}`} />
-                      </div>
-                      <div className="text-sm font-medium text-slate-300">{stat.title}</div>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-1" data-testid={`stat-value-${index}`}>
-                      {statsLoading ? '...' : stat.value}
-                    </div>
-                    <div className="text-xs text-light-gray">{stat.description}</div>
-                  </div>
-                );
-              })}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {/* Total Users */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <Users className="h-4 w-4" />
+                  <span>Kullanıcılar</span>
+                </div>
+                <p className="text-3xl font-bold text-blue-400">{dbStats?.totalUsers || 0}</p>
+              </div>
+
+              {/* Total Orders */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <ShoppingCart className="h-4 w-4" />
+                  <span>Siparişler</span>
+                </div>
+                <p className="text-3xl font-bold text-green-400">{dbStats?.totalOrders || 0}</p>
+              </div>
+
+              {/* Total Ships */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <Server className="h-4 w-4" />
+                  <span>Gemiler</span>
+                </div>
+                <p className="text-3xl font-bold text-purple-400">{dbStats?.totalShips || 0}</p>
+              </div>
+
+              {/* Database Size */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <HardDrive className="h-4 w-4" />
+                  <span>DB Boyutu</span>
+                </div>
+                <p className="text-3xl font-bold text-cyan-400">{dbStats?.databaseSize || 'N/A'}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* System Information */}
-        <Card className="glass-card border-slate-700/50">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-white neon-text">
-              Sistem Bilgileri
-            </CardTitle>
-            <CardDescription className="text-light-gray">
-              Detaylı sistem metrikleri ve yapılandırma
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-slate-800">
-                <div className="flex items-center gap-3">
-                  <Server className="h-5 w-5 text-blue-400" />
-                  <span className="text-slate-300">Platform</span>
-                </div>
-                <span className="text-white font-medium">AdeGloba Starlink System</span>
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-slate-800">
-                <div className="flex items-center gap-3">
-                  <Database className="h-5 w-5 text-green-400" />
-                  <span className="text-slate-300">Veritabanı Tipi</span>
-                </div>
-                <span className="text-white font-medium">PostgreSQL (Neon)</span>
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-slate-800">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-purple-400" />
-                  <span className="text-slate-300">Zaman Dilimi</span>
-                </div>
-                <span className="text-white font-medium">Europe/Istanbul (UTC+3)</span>
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <Activity className="h-5 w-5 text-cyan-400" />
-                  <span className="text-slate-300">Otomatik Yenileme</span>
-                </div>
-                <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
-                  Aktif (30 saniye)
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Auto Refresh Notice */}
+        <div className="text-center text-sm text-slate-500">
+          <p>Sistem metrikleri 30 saniyede bir otomatik güncellenir</p>
+        </div>
       </div>
     </AdminLayout>
   );

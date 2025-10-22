@@ -69,6 +69,11 @@ import {
 import { getDaysRemainingIstanbul, isExpiredIstanbul, getEndOfMonthIstanbul } from './utils/dateUtils';
 import { db } from "./db";
 import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt, lt } from "drizzle-orm";
+import * as os from 'os';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 // Interface for storage operations
 export interface IStorage {
@@ -2906,6 +2911,16 @@ export class DatabaseStorage implements IStorage {
     uptime: number;
     databaseConnected: boolean;
     errorRate: number;
+    platform: string;
+    hostname: string;
+    osType: string;
+    osRelease: string;
+    cpuUsage: number;
+    memoryUsage: number;
+    totalMemory: number;
+    freeMemory: number;
+    nginxStatus?: string;
+    nodeVersion: string;
   }> {
     try {
       // Test database connection
@@ -2923,18 +2938,61 @@ export class DatabaseStorage implements IStorage {
       const uptime = process.uptime();
       const errorRate = Number(errorCount.count) || 0;
 
+      // System information
+      const totalMemory = os.totalmem();
+      const freeMemory = os.freemem();
+      const memoryUsage = ((totalMemory - freeMemory) / totalMemory) * 100;
+
+      // CPU usage calculation
+      const cpus = os.cpus();
+      const avgLoad = os.loadavg()[0];
+      const cpuUsage = (avgLoad / cpus.length) * 100;
+
+      // Try to get nginx status (production)
+      let nginxStatus = 'Unknown';
+      try {
+        const { stdout } = await execAsync('systemctl is-active nginx 2>/dev/null || echo "not-installed"');
+        nginxStatus = stdout.trim() === 'active' ? 'Running' : 'Not Running';
+      } catch (error) {
+        nginxStatus = 'Not Available';
+      }
+
       return {
         status: errorRate > 100 ? 'degraded' : 'healthy',
         uptime,
         databaseConnected: true,
         errorRate,
+        platform: os.platform(),
+        hostname: os.hostname(),
+        osType: os.type(),
+        osRelease: os.release(),
+        cpuUsage: Math.round(cpuUsage * 100) / 100,
+        memoryUsage: Math.round(memoryUsage * 100) / 100,
+        totalMemory,
+        freeMemory,
+        nginxStatus,
+        nodeVersion: process.version,
       };
     } catch (error) {
+      const totalMemory = os.totalmem();
+      const freeMemory = os.freemem();
+      const memoryUsage = ((totalMemory - freeMemory) / totalMemory) * 100;
+
       return {
         status: 'error',
         uptime: process.uptime(),
         databaseConnected: false,
         errorRate: 0,
+        platform: os.platform(),
+        hostname: os.hostname(),
+        osType: os.type(),
+        osRelease: os.release(),
+        cpuUsage: 0,
+        memoryUsage: Math.round(memoryUsage * 100) / 100,
+        totalMemory,
+        freeMemory,
+        nginxStatus: 'Error',
+        nodeVersion: process.version,
       };
     }
   }
@@ -2952,16 +3010,18 @@ export class DatabaseStorage implements IStorage {
     const [planCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(plans);
 
     // Get database size (PostgreSQL specific)
-    const [sizeResult] = await db.execute<{ size: string }>(sql`
+    const sizeResult = await db.execute<{ size: string }>(sql`
       SELECT pg_size_pretty(pg_database_size(current_database())) as size
     `);
+
+    const dbSize = sizeResult.rows?.[0]?.size || 'Unknown';
 
     return {
       totalUsers: Number(userCount.count) || 0,
       totalOrders: Number(orderCount.count) || 0,
       totalShips: Number(shipCount.count) || 0,
       totalPlans: Number(planCount.count) || 0,
-      databaseSize: sizeResult?.size || 'Unknown',
+      databaseSize: dbSize,
     };
   }
 
