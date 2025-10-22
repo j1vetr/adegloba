@@ -1549,6 +1549,47 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  async getUserCredentials(userId: string): Promise<Array<{
+    id: string;
+    shipName: string;
+    planName: string;
+    username: string;
+    password: string;
+    deliveredAt: Date;
+  }>> {
+    try {
+      const userCredentials = await db
+        .select({
+          id: orderCredentials.id,
+          shipName: ships.name,
+          planName: plans.name,
+          username: credentialPools.username,
+          password: credentialPools.password,
+          deliveredAt: orderCredentials.deliveredAt,
+        })
+        .from(orderCredentials)
+        .innerJoin(orders, eq(orderCredentials.orderId, orders.id))
+        .innerJoin(ships, eq(orders.shipId, ships.id))
+        .innerJoin(credentialPools, eq(orderCredentials.credentialId, credentialPools.id))
+        .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+        .innerJoin(plans, eq(orderItems.planId, plans.id))
+        .where(eq(orders.userId, userId))
+        .orderBy(desc(orderCredentials.deliveredAt));
+
+      return userCredentials.map(cred => ({
+        id: cred.id,
+        shipName: cred.shipName || 'Bilinmiyor',
+        planName: cred.planName || 'Bilinmiyor',
+        username: cred.username || '',
+        password: cred.password || '',
+        deliveredAt: cred.deliveredAt || new Date(),
+      }));
+    } catch (error) {
+      console.error('Error fetching user credentials:', error);
+      return [];
+    }
+  }
+
   // Manual package assignment
   async createManualPackageAssignment({
     userId,

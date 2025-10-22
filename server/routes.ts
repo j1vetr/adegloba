@@ -1572,6 +1572,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/users/:id/credentials", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const credentials = await storage.getUserCredentials(id);
+      res.json(credentials);
+    } catch (error: any) {
+      console.error("Error fetching user credentials:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Manual package assignment to user
   app.post("/api/admin/users/:id/assign-package", isAdminAuthenticated, async (req, res) => {
     try {

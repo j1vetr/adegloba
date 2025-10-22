@@ -179,9 +179,22 @@ interface UserDetailsProps {
   onBack: () => void;
 }
 
+interface UserCredential {
+  id: string;
+  shipName: string;
+  planName: string;
+  username: string;
+  password: string;
+  deliveredAt: string;
+}
+
 function UserDetails({ user, onBack }: UserDetailsProps) {
   const { data: userOrders, isLoading: ordersLoading } = useQuery({
     queryKey: ["/api/admin/users", user.id, "orders"],
+  });
+
+  const { data: userCredentials, isLoading: credentialsLoading } = useQuery<UserCredential[]>({
+    queryKey: ["/api/admin/users", user.id, "credentials"],
   });
 
   const formatPrice = (price: string | number) => {
@@ -424,6 +437,74 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
                       </TableCell>
                       <TableCell className="text-gray-300">
                         {order.paidAt ? formatDate(order.paidAt) : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* User Credentials */}
+      <Card className="glass-card border-border/50">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Key className="h-5 w-5 text-green-400" />
+            Alınan Kimlik Bilgileri ({userCredentials?.length || 0})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {credentialsLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+              <p className="text-gray-400">Kimlik bilgileri yükleniyor...</p>
+            </div>
+          ) : !userCredentials?.length ? (
+            <div className="text-center py-8">
+              <Key className="mx-auto h-12 w-12 text-gray-500 mb-4" />
+              <p className="text-gray-400">Henüz alınmış kimlik bilgisi bulunmuyor.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-gray-700 hover:bg-gray-800/50">
+                    <TableHead className="text-gray-300">Gemi</TableHead>
+                    <TableHead className="text-gray-300">Paket</TableHead>
+                    <TableHead className="text-gray-300">Kullanıcı Adı</TableHead>
+                    <TableHead className="text-gray-300">Şifre</TableHead>
+                    <TableHead className="text-gray-300">Teslim Tarihi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userCredentials.map((credential) => (
+                    <TableRow key={credential.id} className="border-gray-700 hover:bg-gray-800/50">
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <ShipIcon className="h-4 w-4 text-blue-400" />
+                          <span className="text-white">{credential.shipName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-purple-400" />
+                          <span className="text-white">{credential.planName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-mono text-cyan-400">
+                          {credential.username}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-mono text-green-400">
+                          {credential.password}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-300">
+                        {formatDate(credential.deliveredAt)}
                       </TableCell>
                     </TableRow>
                   ))}
