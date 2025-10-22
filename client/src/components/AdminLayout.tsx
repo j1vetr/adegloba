@@ -75,7 +75,6 @@ const navigationCategories = [
     items: [
       { name: 'Finansal Raporlar', href: '/admin/financial-reports', icon: DollarSign },
       { name: 'Gemi Analitik', href: '/admin/ship-analytics', icon: TrendingUp },
-      { name: 'Kullanıcı Segmentasyonu', href: '/admin/user-segmentation', icon: UserCheck },
     ]
   },
   {

@@ -2552,23 +2552,24 @@ export class DatabaseStorage implements IStorage {
     averageOrderValue: number;
     totalDiscounts: number;
   }> {
-    let query = db
+    const conditions = [or(eq(orders.status, 'paid'), eq(orders.status, 'completed'))];
+
+    if (startDate) {
+      conditions.push(gte(orders.paidAt, startDate));
+    }
+    if (endDate) {
+      conditions.push(lte(orders.paidAt, endDate));
+    }
+
+    const [result] = await db
       .select({
         totalRevenue: sql<number>`COALESCE(SUM(CAST(${orders.totalUsd} AS DECIMAL)), 0)`,
         totalOrders: sql<number>`COUNT(*)`,
         totalDiscounts: sql<number>`COALESCE(SUM(CAST(${orders.discountUsd} AS DECIMAL)), 0)`,
       })
       .from(orders)
-      .where(or(eq(orders.status, 'paid'), eq(orders.status, 'completed')));
+      .where(and(...conditions));
 
-    if (startDate) {
-      query = query.where(gte(orders.paidAt, startDate));
-    }
-    if (endDate) {
-      query = query.where(lte(orders.paidAt, endDate));
-    }
-
-    const [result] = await query;
     const totalRevenue = Number(result.totalRevenue) || 0;
     const totalOrders = Number(result.totalOrders) || 0;
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
@@ -2632,29 +2633,28 @@ export class DatabaseStorage implements IStorage {
         break;
     }
 
-    let query = db
+    const conditions = [
+      or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
+      isNotNull(orders.paidAt)
+    ];
+
+    if (startDate) {
+      conditions.push(gte(orders.paidAt, startDate));
+    }
+    if (endDate) {
+      conditions.push(lte(orders.paidAt, endDate));
+    }
+
+    const results = await db
       .select({
         period: sql<string>`TO_CHAR(${orders.paidAt}, '${sql.raw(dateFormat)}')`,
         revenue: sql<number>`SUM(CAST(${orders.totalUsd} AS DECIMAL))`,
         orders: sql<number>`COUNT(*)`,
       })
       .from(orders)
-      .where(
-        and(
-          or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
-          isNotNull(orders.paidAt)
-        )
-      )
+      .where(and(...conditions))
       .groupBy(sql`TO_CHAR(${orders.paidAt}, '${sql.raw(dateFormat)}')`);
 
-    if (startDate) {
-      query = query.where(gte(orders.paidAt, startDate));
-    }
-    if (endDate) {
-      query = query.where(lte(orders.paidAt, endDate));
-    }
-
-    const results = await query;
     return results.map(r => ({
       period: r.period || '',
       revenue: Number(r.revenue) || 0,

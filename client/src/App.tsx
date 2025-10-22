@@ -48,7 +48,6 @@ const EmailMarketing = lazy(() => import("@/pages/admin/EmailMarketing"));
 const DatabaseBackup = lazy(() => import("@/pages/admin/DatabaseBackup"));
 const FinancialReports = lazy(() => import("@/pages/admin/FinancialReports"));
 const ShipAnalytics = lazy(() => import("@/pages/admin/ShipAnalytics"));
-const UserSegmentation = lazy(() => import("@/pages/admin/UserSegmentation"));
 const SystemHealth = lazy(() => import("@/pages/admin/SystemHealth"));
 const ErrorManagement = lazy(() => import("@/pages/admin/ErrorManagement"));
 
@@ -233,14 +232,6 @@ function Router() {
         <AdminProtectedRoute>
           <Suspense fallback={<LoadingFallback />}>
             <ShipAnalytics />
-          </Suspense>
-        </AdminProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/user-segmentation">
-        <AdminProtectedRoute>
-          <Suspense fallback={<LoadingFallback />}>
-            <UserSegmentation />
           </Suspense>
         </AdminProtectedRoute>
       </Route>

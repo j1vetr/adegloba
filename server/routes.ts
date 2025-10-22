@@ -3856,15 +3856,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/database/backups/:filename', isAdminAuthenticated, async (req, res) => {
     try {
       const { filename } = req.params;
-      const backupPath = `./backups/${filename}`;
       
-      const fs = await import('fs');
       const path = await import('path');
+      const fs = await import('fs');
       
       // Security check - ensure filename doesn't contain path traversal
-      const normalizedPath = path.normalize(backupPath);
-      if (!normalizedPath.startsWith('./backups/')) {
+      if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
         return res.status(400).json({ message: 'Invalid filename' });
+      }
+      
+      if (!filename.endsWith('.sql')) {
+        return res.status(400).json({ message: 'Invalid file type' });
+      }
+      
+      const backupsDir = path.resolve('./backups');
+      const backupPath = path.join(backupsDir, filename);
+      
+      // Check if file exists
+      try {
+        await fs.promises.access(backupPath);
+      } catch {
+        return res.status(404).json({ message: 'Backup file not found' });
       }
       
       res.download(backupPath, filename);
