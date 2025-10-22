@@ -183,7 +183,7 @@ export interface IStorage {
   getCredentialsForOrder(orderId: string): Promise<any[]>;
 
   // Statistics
-  getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number; cancelledOrders: number; pendingOrders: number }>;
+  getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number; cancelledOrders: number; pendingOrders: number; activeTickets: number }>;
   getCancelledOrdersCount(): Promise<number>;
   getPendingOrdersCount(): Promise<number>;
   getReportData(shipId?: string, startDate?: Date, endDate?: Date): Promise<any[]>;
@@ -1054,7 +1054,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Statistics
-  async getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number; cancelledOrders: number; pendingOrders: number }> {
+  async getOrderStats(): Promise<{ totalRevenue: number; activeUsers: number; activePackages: number; totalOrders: number; cancelledOrders: number; pendingOrders: number; activeTickets: number }> {
     try {
       // Total Revenue and Orders from paid and completed orders
       const [revenueStats] = await db
@@ -1094,13 +1094,22 @@ export class DatabaseStorage implements IStorage {
           )
         );
 
+      // Active Tickets - count of open tickets
+      const [activeTicketsStats] = await db
+        .select({
+          activeTickets: sql<number>`COUNT(*)`
+        })
+        .from(tickets)
+        .where(eq(tickets.status, 'open'));
+
       return {
         totalRevenue: Number(revenueStats.totalRevenue) || 0,
         activeUsers: Number(activeUsersStats.activeUsers) || 0,
         activePackages: Number(activePackagesStats.activePackages) || 0,
         totalOrders: Number(revenueStats.totalOrders) || 0,
         cancelledOrders: Number(revenueStats.cancelledOrders) || 0,
-        pendingOrders: Number(revenueStats.pendingOrders) || 0
+        pendingOrders: Number(revenueStats.pendingOrders) || 0,
+        activeTickets: Number(activeTicketsStats.activeTickets) || 0
       };
     } catch (error) {
       console.error('Error fetching order stats:', error);
@@ -1110,7 +1119,8 @@ export class DatabaseStorage implements IStorage {
         activePackages: 0,
         totalOrders: 0,
         cancelledOrders: 0,
-        pendingOrders: 0
+        pendingOrders: 0,
+        activeTickets: 0
       };
     }
   }

@@ -28,6 +28,7 @@ interface DashboardStats {
   totalOrders: number;
   cancelledOrders: number;
   pendingOrders: number;
+  activeTickets: number;
 }
 
 interface RecentOrder {
@@ -171,6 +172,15 @@ export default function AdminDashboard() {
       trend: "sipariş",
       trendUp: true,
       color: "text-purple-400"
+    },
+    {
+      title: "Aktif Destek Talepleri",
+      value: stats?.activeTickets || 0,
+      description: "Açık destek talepleri",
+      icon: AlertCircle,
+      trend: "talep",
+      trendUp: false,
+      color: "text-orange-400"
     }
   ];
 
@@ -200,7 +210,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statCards.map((stat, index) => {
             const Icon = stat.icon;
             return (
