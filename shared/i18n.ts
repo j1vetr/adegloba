@@ -203,6 +203,7 @@ export interface Translation {
     favoriteError: string;
     addedToFavorites: string;
     removedFromFavorites: string;
+    removeFromFavorites: string;
   };
 
   // Profile
@@ -622,7 +623,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       shipSpecificDesc: "Her gemi için özelleştirilmiş paket seçenekleri",
       favoriteError: "Favori işlemi başarısız oldu",
       addedToFavorites: "Favorilere eklendi",
-      removedFromFavorites: "Favorilerden kaldırıldı"
+      removedFromFavorites: "Favorilerden kaldırıldı",
+      removeFromFavorites: "Favorilerden Kaldır"
     },
 
     profile: {
@@ -1117,7 +1119,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       shipSpecificDesc: "Customized package options for each vessel",
       favoriteError: "Favorite operation failed",
       addedToFavorites: "Added to favorites",
-      removedFromFavorites: "Removed from favorites"
+      removedFromFavorites: "Removed from favorites",
+      removeFromFavorites: "Remove from Favorites"
     },
 
     profile: {
@@ -1600,7 +1603,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       shipSpecificDesc: "Индивидуальные варианты пакетов для каждого судна",
       favoriteError: "Ошибка операции избранного",
       addedToFavorites: "Добавлено в избранное",
-      removedFromFavorites: "Удалено из избранного"
+      removedFromFavorites: "Удалено из избранного",
+      removeFromFavorites: "Удалить из избранного"
     },
 
     profile: {
