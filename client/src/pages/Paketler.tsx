@@ -124,7 +124,7 @@ export default function Paketler() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-6 space-x-2">
+          <div className="flex items-center justify-center space-x-2">
             <div className="relative">
               <Package className="h-8 w-8 text-blue-400" />
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
@@ -132,18 +132,6 @@ export default function Paketler() {
             <span className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
               {t.packages.dataPackages}
             </span>
-          </div>
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-white mb-4">
-              {t.packages.title}
-            </h1>
-            <p className="text-slate-400 text-lg">
-              {t.packages.subtitle}
-            </p>
-            <div className="flex items-center justify-center mt-4 text-slate-300">
-              <ShipIcon className="h-5 w-5 mr-2" />
-              <span>{t.packages.shipId} {user.ship_id || t.packages.unspecified}</span>
-            </div>
           </div>
         </div>
 
