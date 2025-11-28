@@ -183,16 +183,21 @@ export function setupUserAuth(app: Express) {
       }
 
       // PCI DSS: Check if account is locked
-      if (isAccountLocked(user.locked_until)) {
-        const remainingMinutes = Math.ceil(
-          (new Date(user.locked_until!).getTime() - Date.now()) / (1000 * 60)
-        );
-        return res.status(403).json({ 
-          success: false, 
-          message: `Hesabınız çok fazla başarısız giriş denemesi nedeniyle kilitlendi. ${remainingMinutes} dakika sonra tekrar deneyin.`,
-          code: "ACCOUNT_LOCKED",
-          remainingMinutes
-        });
+      if (user.locked_until) {
+        if (isAccountLocked(user.locked_until)) {
+          const remainingMinutes = Math.ceil(
+            (new Date(user.locked_until!).getTime() - Date.now()) / (1000 * 60)
+          );
+          return res.status(403).json({ 
+            success: false, 
+            message: `Hesabınız çok fazla başarısız giriş denemesi nedeniyle kilitlendi. ${remainingMinutes} dakika sonra tekrar deneyin.`,
+            code: "ACCOUNT_LOCKED",
+            remainingMinutes
+          });
+        } else {
+          // PCI DSS: Lockout period has expired, clear the lockout
+          await storage.unlockUserAccount(user.id);
+        }
       }
 
       const validPassword = await bcrypt.compare(password, user.password_hash);

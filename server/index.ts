@@ -47,8 +47,9 @@ app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.resolve(import.meta.dirname, '..', 'public', 'pwa-icon-192.png'));
 });
 
-// Session configuration
+// Session configuration with PCI DSS 15-minute timeout
 const PgStore = connectPgSimple(session);
+const PCI_SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes for PCI DSS compliance
 app.use(session({
   store: new PgStore({
     pool: pool,
@@ -58,8 +59,9 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'starlink-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
+  rolling: true, // PCI DSS: Reset cookie expiry on each request (activity-based)
   cookie: {
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    maxAge: PCI_SESSION_TIMEOUT_MS, // 15 minutes for PCI DSS compliance
     secure: process.env.NODE_ENV === 'production'
   }
 }));
