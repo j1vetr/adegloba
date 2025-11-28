@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive, Zap, Copy } from "lucide-react";
+import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive, Zap, Copy, Heart, ShoppingCart } from "lucide-react";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { Order, User, Ship } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Order, User, Ship, FavoritePlan, Plan } from "@shared/schema";
 import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
 
 export default function Panel() {
@@ -56,6 +57,54 @@ export default function Panel() {
       return response.json();
     },
     enabled: !!user
+  });
+
+  const { data: favorites, isLoading: favoritesLoading } = useQuery<(FavoritePlan & { plan: Plan })[]>({
+    queryKey: ["/api/favorites"],
+    enabled: !!user
+  });
+
+  const addToCartMutation = useMutation({
+    mutationFn: async (planId: string) => {
+      const response = await apiRequest('POST', '/api/cart', {
+        planId: planId,
+        quantity: 1
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: t.packages.addedToCart,
+        description: t.packages.addedToCartDesc,
+      });
+      window.location.href = '/sepet';
+    },
+    onError: () => {
+      toast({
+        title: t.common.error,
+        description: "Sepete eklenemedi",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeFavoriteMutation = useMutation({
+    mutationFn: async (planId: string) => {
+      await apiRequest('DELETE', `/api/favorites/${planId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: t.packages.removedFromFavorites,
+        variant: "default",
+      });
+    },
+    onError: () => {
+      toast({
+        title: t.packages.favoriteError,
+        variant: "destructive",
+      });
+    },
   });
 
   if (authLoading) {
@@ -143,7 +192,7 @@ export default function Panel() {
         </div>
 
         <Tabs defaultValue="packages" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border-slate-700/50 rounded-lg p-1">
+          <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 border-slate-700/50 rounded-lg p-1">
             <TabsTrigger 
               value="packages" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
@@ -152,6 +201,15 @@ export default function Panel() {
               <Package className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">{t.dashboard.sections.activePackages}</span>
               <span className="sm:hidden">{t.dashboard.sections.packagesShort}</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="favorites" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
+              data-testid="tab-favorites"
+            >
+              <Heart className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">{t.dashboard.sections.favorites || 'Favorilerim'}</span>
+              <span className="sm:hidden">{t.dashboard.sections.favoritesShort || 'Fav'}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
@@ -328,6 +386,105 @@ export default function Panel() {
                     <Link href="/paketler">
                       <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-blue-500/25 transition-all duration-300">
                         {t.dashboard.texts.buyFirstPackage}
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Favorite Packages */}
+          <TabsContent value="favorites" className="space-y-4">
+            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2 text-lg">
+                  <Heart className="h-5 w-5 text-red-400" />
+                  {t.dashboard.sections.favorites || 'Favori Paketlerim'} {favorites?.length ? `(${favorites.length})` : ''}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {favoritesLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-red-400" />
+                    <span className="ml-3 text-slate-300">Favoriler yükleniyor...</span>
+                  </div>
+                ) : favorites?.length ? (
+                  <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    {favorites.map((fav) => (
+                      <Card key={fav.id} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-red-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10" data-testid={`favorite-card-${fav.id}`}>
+                        <CardContent className="p-6">
+                          <div className="text-center mb-4">
+                            <h3 className="font-bold text-white text-xl mb-3">{fav.plan.name}</h3>
+                            
+                            {/* GB Display */}
+                            <div className="bg-gradient-to-r from-red-600/20 to-pink-600/20 rounded-xl p-4 mb-4 border border-red-500/30">
+                              <div className="flex items-baseline justify-center gap-1">
+                                <span className="text-4xl font-bold text-white">{fav.plan.dataLimitGb}</span>
+                                <span className="text-2xl text-red-400 font-semibold">GB</span>
+                              </div>
+                              <p className="text-red-300 text-sm mt-1 font-medium">Starlink Data Paketi</p>
+                            </div>
+
+                            {/* Price */}
+                            <div className="mb-4">
+                              <span className="text-2xl font-bold text-white">${Number(fav.plan.priceUsd).toFixed(2)}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            {/* Add to Cart Button */}
+                            <Button
+                              onClick={() => addToCartMutation.mutate(fav.plan.id)}
+                              disabled={addToCartMutation.isPending}
+                              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-2"
+                              data-testid={`button-add-cart-${fav.id}`}
+                            >
+                              {addToCartMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <ShoppingCart className="mr-2 h-4 w-4" />
+                                  {t.packages.addToCart}
+                                </>
+                              )}
+                            </Button>
+                            
+                            {/* Remove from Favorites Button */}
+                            <Button
+                              onClick={() => removeFavoriteMutation.mutate(fav.plan.id)}
+                              disabled={removeFavoriteMutation.isPending}
+                              variant="outline"
+                              className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                              data-testid={`button-remove-favorite-${fav.id}`}
+                            >
+                              {removeFavoriteMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Heart className="mr-2 h-4 w-4 fill-current" />
+                                  {t.packages.removedFromFavorites || 'Favorilerden Kaldır'}
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="relative mb-6">
+                      <Heart className="h-16 w-16 text-slate-400 mx-auto" />
+                      <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-3">{t.dashboard.sections.noFavorites || 'Henüz Favori Paket Yok'}</h3>
+                    <p className="text-slate-400 mb-6 max-w-md mx-auto">
+                      {t.dashboard.sections.noFavoritesDesc || 'Beğendiğiniz paketleri favorilere ekleyerek hızlıca satın alabilirsiniz.'}
+                    </p>
+                    <Link href="/paketler">
+                      <Button className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-red-500/25 transition-all duration-300">
+                        {t.dashboard.sections.browsePackages || 'Paketleri Keşfet'}
                       </Button>
                     </Link>
                   </div>

@@ -126,6 +126,11 @@ export interface Translation {
       packagesShort: string;
       historyShort: string;
       expiredShort: string;
+      favorites: string;
+      favoritesShort: string;
+      noFavorites: string;
+      noFavoritesDesc: string;
+      browsePackages: string;
     };
     stats: {
       activePlans: string;
@@ -195,6 +200,9 @@ export interface Translation {
     flexiblePackagesDesc: string;
     shipSpecificTitle: string;
     shipSpecificDesc: string;
+    favoriteError: string;
+    addedToFavorites: string;
+    removedFromFavorites: string;
   };
 
   // Profile
@@ -537,7 +545,12 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
         purchaseHistory: "Geçmiş Satın Alımlar",
         packagesShort: "Paketler",
         historyShort: "Geçmiş",
-        expiredShort: "Bitmiş"
+        expiredShort: "Bitmiş",
+        favorites: "Favorilerim",
+        favoritesShort: "Fav",
+        noFavorites: "Henüz Favori Paket Yok",
+        noFavoritesDesc: "Beğendiğiniz paketleri favorilere ekleyerek hızlıca satın alabilirsiniz.",
+        browsePackages: "Paketleri Keşfet"
       },
       stats: {
         activePlans: "Aktif Planlar",
@@ -606,7 +619,10 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       flexiblePackagesTitle: "Esnek Paketler",
       flexiblePackagesDesc: "İhtiyacınıza göre farklı GB seçenekleri ve geçerlilik süreleri",
       shipSpecificTitle: "Gemiye Özel",
-      shipSpecificDesc: "Her gemi için özelleştirilmiş paket seçenekleri"
+      shipSpecificDesc: "Her gemi için özelleştirilmiş paket seçenekleri",
+      favoriteError: "Favori işlemi başarısız oldu",
+      addedToFavorites: "Favorilere eklendi",
+      removedFromFavorites: "Favorilerden kaldırıldı"
     },
 
     profile: {
@@ -1024,7 +1040,12 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
         purchaseHistory: "Purchase History",
         packagesShort: "Packages",
         historyShort: "History",
-        expiredShort: "Expired"
+        expiredShort: "Expired",
+        favorites: "My Favorites",
+        favoritesShort: "Fav",
+        noFavorites: "No Favorite Packages Yet",
+        noFavoritesDesc: "Add packages to favorites for quick purchases.",
+        browsePackages: "Browse Packages"
       },
       stats: {
         activePlans: "Active Plans",
@@ -1093,7 +1114,10 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       flexiblePackagesTitle: "Flexible Packages",
       flexiblePackagesDesc: "Different GB options and validity periods according to your needs",
       shipSpecificTitle: "Vessel Specific",
-      shipSpecificDesc: "Customized package options for each vessel"
+      shipSpecificDesc: "Customized package options for each vessel",
+      favoriteError: "Favorite operation failed",
+      addedToFavorites: "Added to favorites",
+      removedFromFavorites: "Removed from favorites"
     },
 
     profile: {
@@ -1500,7 +1524,12 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
         purchaseHistory: "История покупок",
         packagesShort: "Пакеты",
         historyShort: "История",
-        expiredShort: "Истекшие"
+        expiredShort: "Истекшие",
+        favorites: "Избранное",
+        favoritesShort: "Изб",
+        noFavorites: "Нет избранных пакетов",
+        noFavoritesDesc: "Добавляйте понравившиеся пакеты в избранное для быстрых покупок.",
+        browsePackages: "Просмотреть пакеты"
       },
       stats: {
         activePlans: "Активных планов",
@@ -1568,7 +1597,10 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       flexiblePackagesTitle: "Гибкие пакеты",
       flexiblePackagesDesc: "Различные варианты ГБ и сроки действия в соответствии с вашими потребностями",
       shipSpecificTitle: "Специально для судна",
-      shipSpecificDesc: "Индивидуальные варианты пакетов для каждого судна"
+      shipSpecificDesc: "Индивидуальные варианты пакетов для каждого судна",
+      favoriteError: "Ошибка операции избранного",
+      addedToFavorites: "Добавлено в избранное",
+      removedFromFavorites: "Удалено из избранного"
     },
 
     profile: {

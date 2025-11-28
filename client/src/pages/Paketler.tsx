@@ -4,12 +4,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRight, X, Info, ChevronRight } from "lucide-react";
+import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRight, X, Info, ChevronRight, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useRef } from "react";
-import type { Plan } from "@shared/schema";
+import type { Plan, FavoritePlan } from "@shared/schema";
 
 // Extended plan type with stock information
 type PlanWithStock = Plan & {
@@ -26,6 +26,33 @@ export default function Paketler() {
   const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
     queryKey: ["/api/user/ship-plans"],
     enabled: !!user?.ship_id
+  });
+
+  const { data: favorites } = useQuery<(FavoritePlan & { plan: Plan })[]>({
+    queryKey: ["/api/favorites"],
+    enabled: !!user
+  });
+
+  const favoriteIds = new Set(favorites?.map(f => f.planId) || []);
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async ({ planId, isFavorite }: { planId: string; isFavorite: boolean }) => {
+      if (isFavorite) {
+        await apiRequest('DELETE', `/api/favorites/${planId}`);
+      } else {
+        await apiRequest('POST', `/api/favorites/${planId}`);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+    },
+    onError: () => {
+      toast({
+        title: t.packages.error,
+        description: t.packages.favoriteError || "Favori işlemi başarısız",
+        variant: "destructive",
+      });
+    },
   });
 
   const scrollToPackage = (planId: string) => {
@@ -175,6 +202,27 @@ export default function Paketler() {
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
                 <CardHeader className="relative z-10 text-center pb-4">
+                  {/* Favorite Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavoriteMutation.mutate({ 
+                        planId: plan.id, 
+                        isFavorite: favoriteIds.has(plan.id) 
+                      });
+                    }}
+                    className="absolute top-3 right-3 p-2 rounded-full transition-all duration-300 hover:scale-110 z-20"
+                    data-testid={`button-favorite-${plan.id}`}
+                  >
+                    <Heart 
+                      className={`h-5 w-5 transition-all duration-300 ${
+                        favoriteIds.has(plan.id)
+                          ? 'fill-red-500 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]' 
+                          : 'text-slate-400 hover:text-red-400'
+                      }`} 
+                    />
+                  </button>
+
                   <div className="flex items-center justify-center mb-4">
                     <div className="relative">
                       <Package className="h-12 w-12 transition-colors duration-300 text-blue-400 group-hover:text-cyan-400" />
