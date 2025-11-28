@@ -8,7 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, User, Mail, Lock, Ship as ShipIcon, MapPin, UserPlus, Phone, Home } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2, User, Mail, Lock, Ship as ShipIcon, MapPin, UserPlus, Phone, Home, FileText } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -28,6 +31,8 @@ export default function Kayit() {
     ship_id: "",
     address: ""
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsDialog, setShowTermsDialog] = useState(false);
 
   const allCountryCodes = [
     { code: "+93", country: "Afganistan", flag: "🇦🇫" },
@@ -543,6 +548,75 @@ export default function Kayit() {
                 />
               </div>
 
+              {/* Terms of Service Checkbox */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="terms"
+                    checked={termsAccepted}
+                    onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                    className="mt-1 border-slate-500 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                    data-testid="checkbox-terms"
+                  />
+                  <div className="flex flex-col">
+                    <label htmlFor="terms" className="text-sm text-slate-300 cursor-pointer leading-relaxed">
+                      <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
+                        <DialogTrigger asChild>
+                          <button 
+                            type="button" 
+                            className="text-amber-400 hover:text-amber-300 underline inline-flex items-center gap-1"
+                            data-testid="button-view-terms"
+                          >
+                            <FileText className="h-3 w-3" />
+                            {t.auth.termsTitle}
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-slate-900/95 border-slate-700 backdrop-blur-xl max-w-3xl max-h-[80vh]">
+                          <DialogHeader>
+                            <DialogTitle className="text-white flex items-center gap-2">
+                              <FileText className="h-5 w-5 text-amber-400" />
+                              {t.auth.termsTitle}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <ScrollArea className="h-[60vh] pr-4">
+                            <div className="text-slate-300 text-sm space-y-4 whitespace-pre-wrap">
+                              <h3 className="text-lg font-bold text-amber-400">STARLINK MARITIME SERVICE TERMS</h3>
+                              <p>Starlink İnternet Hizmetleri Limited (5. Kat, Beaux Lane House, Mercer Street Lower, Dublin 2 D02 DH60) ("Bu Şartlar'da Starlink olarak bilinir"), size, müşteri, bu Deniz Hizmet Şartları ("Şartlar") kapsamında iki yönlü uydu tabanlı internet hizmeti ("Hizmetler") ve ekipman ("Starlink Kiti" veya "Kit") sunar.</p>
+                              
+                              <h4 className="font-semibold text-white mt-4">1. STARLINK KİT VE HİZMETLERİN SATIN ALINMASI</h4>
+                              <p><strong>1.1 Hizmetler.</strong> Starlink, Hizmetleri ve Starlink Kiti'ni Siparişinizde kayıtlı olan yargı alanındaki bir gemi veya deniz tesisi için sağlayacaktır ("Kayıtlı Gemi(ler)").</p>
+                              <p><strong>1.2 Yeniden Satış ve İzin Verilen Kullanım.</strong> Hizmetlere sadece çalışanlarınıza, yolcularınıza ve Kayıtlı Gemi'nin mürettebatına erişim sağlayabilirsiniz, ancak bu kullanım bu Anlaşmayı ihlal etmemelidir.</p>
+                              <p><strong>1.3 Starlink Kiti Üzerindeki Başlık.</strong> Starlink, başlık hakkını Starlink Kiti ve isteğe bağlı aksesuarlar üzerinde size teslim anında devreder.</p>
+                              <p><strong>1.4 Anlaşma Süresi.</strong> Hizmetleri almak için bir asgari sözleşme süresi bulunmamaktadır.</p>
+                              <p><strong>1.5 Yazılım Güncellemeleri ve Lisans Şartları.</strong> Starlink Kiti üzerine yüklenen yazılım kopyaları ve güncellemeleri size teslim anında satılmaz, yalnızca size kişisel olarak lisanslanır.</p>
+                              <p><strong>1.6 Ödemeler ve Abonelik Ücretleri.</strong> Ekipman için bir defaya mahsus satın alma fiyatı, nakliye ve işleme ücretleri ve uygulanabilir vergiler ödenecektir.</p>
+                              
+                              <h4 className="font-semibold text-white mt-4">4. DEĞİŞİKLİKLER VE İPTAL</h4>
+                              <p><strong>4.1 Starlink Tarafından Yapılan Değişiklikler.</strong> Starlink, zaman zaman Hizmet Planları, fiyatlar, bu Şartlar, Kit sürümleri ve Starlink Özellikleri'ni değiştirebilir veya sona erdirebilir.</p>
+                              <p><strong>4.2 Müşteri Tarafından Hizmet İptali.</strong> Aylık tekrarlayan ödemeyi durdurabilir, Hizmetleri iptal edebilir ve bu Anlaşmayı Starlink hesabınız aracılığıyla herhangi bir zamanda sonlandırabilirsiniz.</p>
+                              <p><strong>4.3 Kit İade ve Tam İade.</strong> Herhangi bir nedenle, Starlink Kiti ve herhangi bir aksesuarı ödeme tarihinden itibaren 30 gün içinde hasarsız olarak tam bir geri ödeme için iade edebilirsiniz.</p>
+                              
+                              <h4 className="font-semibold text-white mt-4">5. SINIRLI GARANTİ VE SORUMLULUK</h4>
+                              <p><strong>5.1 Sınırlı Garanti.</strong> Starlink, Starlink Kit'inin ve Hizmetlerin performans hedeflerini karşılamak üzere makul çaba sarf edecektir.</p>
+                              <p><strong>5.4 REDLER.</strong> STARLINK STARLINK KIT'İ VE HİZMETLERİ "OLDUĞU GİBİ" SAĞLAR VE HERHANGİ BİR AÇIK GARANTİ VEYA TEMSİL OLMAKSIZIN SUNAR.</p>
+                              <p><strong>5.6 RİSKİN ÜSTLENİLMESİ.</strong> HİZMETLERİN EĞLENCE HİZMETLERİ OLDUĞUNU VE BİR GEMİNİN KRİTİK, GÖREV KRİTİK VEYA CAN GÜVENLİĞİ HİZMETİ OLARAK UYGUN OLMADIĞINI KABUL EDERSİNİZ.</p>
+                              
+                              <h4 className="font-semibold text-white mt-4">6. UYUMLULUK</h4>
+                              <p><strong>6.1 Genel.</strong> Bu Anlaşma kapsamındaki yükümlülüklerle ilgili olarak geçerli veya ilişkili olan tüm yasalara ve düzenlemelere uymak zorundasınız.</p>
+                              <p><strong>6.2 Gizlilik.</strong> Starlink, kişisel bilgilerle ilgili olarak "veri sorumlusu" olarak hareket eder.</p>
+                            </div>
+                          </ScrollArea>
+                        </DialogContent>
+                      </Dialog>
+                      {" "}'nı okudum ve kabul ediyorum
+                    </label>
+                    {!termsAccepted && (
+                      <span className="text-xs text-amber-500/80 mt-1">* {t.auth.termsRequired}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {error && (
                 <Alert className="border-red-500/50 bg-red-500/10 backdrop-blur-sm">
                   <AlertDescription className="text-red-400">
@@ -553,8 +627,8 @@ export default function Kayit() {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 hover:from-amber-700 hover:via-amber-600 hover:to-yellow-600 text-slate-900 h-12 text-lg font-bold shadow-2xl hover:shadow-amber-500/25 transition-all duration-300 hover:scale-105"
-                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 hover:from-amber-700 hover:via-amber-600 hover:to-yellow-600 text-slate-900 h-12 text-lg font-bold shadow-2xl hover:shadow-amber-500/25 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                disabled={isLoading || !termsAccepted}
                 data-testid="button-register"
               >
                 {isLoading ? (

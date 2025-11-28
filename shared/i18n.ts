@@ -71,6 +71,36 @@ export interface Translation {
     passwordResetError: string;
     backToLogin: string;
     connectionError: string;
+    
+    // Terms of Service
+    termsAccept: string;
+    termsRequired: string;
+    termsTitle: string;
+  };
+
+  // Password Update Page
+  passwordUpdate: {
+    title: string;
+    subtitle: string;
+    securityNotice: string;
+    currentPassword: string;
+    currentPasswordPlaceholder: string;
+    newPassword: string;
+    newPasswordPlaceholder: string;
+    confirmPassword: string;
+    confirmPasswordPlaceholder: string;
+    requirements: string;
+    minLength: string;
+    hasLetter: string;
+    hasNumber: string;
+    passwordsMatch: string;
+    updateButton: string;
+    updating: string;
+    logoutButton: string;
+    successMessage: string;
+    errorMessage: string;
+    passwordMismatch: string;
+    securityCompliance: string;
   };
 
   // Dashboard & Panel
@@ -442,7 +472,7 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       registrationProcessing: "Kayıt işlemi devam ediyor...",
       privateSystemNotice: "Bu sistem AdeGloba Starlink System müşterilerine özeldir.",
       emailPlaceholder: "E-posta adresinizi girin",
-      passwordPlaceholder: "Şifrenizi girin (en az 6 karakter)",
+      passwordPlaceholder: "Şifrenizi girin (en az 12 karakter)",
       phonePlaceholder: "532 123 45 67",
       
       // Forgot Password
@@ -454,7 +484,36 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       passwordResetSent: "Yeni şifreniz e-posta adresinize gönderildi.",
       passwordResetSecurity: "Eğer e-posta adresiniz doğru ise şifre sıfırlama e-postası mailine iletilmiştir.",
       passwordResetError: "Bir hata oluştu. Lütfen tekrar deneyin.",
-      backToLogin: "Giriş Sayfasına Dön"
+      backToLogin: "Giriş Sayfasına Dön",
+      
+      // Terms of Service
+      termsAccept: "Starlink Maritime Hizmet Koşulları'nı okudum ve kabul ediyorum",
+      termsRequired: "Kayıt olmak için hizmet koşullarını kabul etmeniz gerekmektedir",
+      termsTitle: "Starlink Maritime Hizmet Koşulları"
+    },
+    
+    passwordUpdate: {
+      title: "Şifre Güncelleme",
+      subtitle: "PCI DSS Güvenlik Standartları",
+      securityNotice: "Güvenlik standartlarını karşılamak için şifrenizi güncellemeniz gerekmektedir. Şifrenizi güncellemeden sisteme erişemezsiniz.",
+      currentPassword: "Mevcut Şifre",
+      currentPasswordPlaceholder: "Mevcut şifrenizi girin",
+      newPassword: "Yeni Şifre",
+      newPasswordPlaceholder: "Yeni şifrenizi girin",
+      confirmPassword: "Yeni Şifre (Tekrar)",
+      confirmPasswordPlaceholder: "Yeni şifrenizi tekrar girin",
+      requirements: "Şifre Gereksinimleri:",
+      minLength: "En az 12 karakter",
+      hasLetter: "En az bir harf (a-z veya A-Z)",
+      hasNumber: "En az bir rakam (0-9)",
+      passwordsMatch: "Şifreler eşleşiyor",
+      updateButton: "Şifreyi Güncelle",
+      updating: "Güncelleniyor...",
+      logoutButton: "Çıkış Yap",
+      successMessage: "Şifreniz başarıyla güncellendi",
+      errorMessage: "Şifre güncellenemedi",
+      passwordMismatch: "Yeni şifreler eşleşmiyor",
+      securityCompliance: "AdeGloba Starlink System - PCI DSS Uyumlu Güvenlik"
     },
     
     dashboard: {
@@ -900,7 +959,7 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       registrationProcessing: "Registration in progress...",
       privateSystemNotice: "This system is exclusive to AdeGloba Starlink System customers.",
       emailPlaceholder: "Enter your email address",
-      passwordPlaceholder: "Enter your password (minimum 6 characters)",
+      passwordPlaceholder: "Enter your password (minimum 12 characters)",
       phonePlaceholder: "+1 234 567 8900",
       
       // Forgot Password
@@ -912,7 +971,36 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       passwordResetSent: "New password has been sent to your email address.",
       passwordResetSecurity: "If your email address is correct, a password reset email has been sent to your inbox.",
       passwordResetError: "An error occurred. Please try again.",
-      backToLogin: "Back to Login"
+      backToLogin: "Back to Login",
+      
+      // Terms of Service
+      termsAccept: "I have read and accept the Starlink Maritime Service Terms",
+      termsRequired: "You must accept the service terms to register",
+      termsTitle: "Starlink Maritime Service Terms"
+    },
+    
+    passwordUpdate: {
+      title: "Password Update",
+      subtitle: "PCI DSS Security Standards",
+      securityNotice: "You must update your password to meet security standards. You cannot access the system without updating your password.",
+      currentPassword: "Current Password",
+      currentPasswordPlaceholder: "Enter your current password",
+      newPassword: "New Password",
+      newPasswordPlaceholder: "Enter your new password",
+      confirmPassword: "Confirm New Password",
+      confirmPasswordPlaceholder: "Re-enter your new password",
+      requirements: "Password Requirements:",
+      minLength: "At least 12 characters",
+      hasLetter: "At least one letter (a-z or A-Z)",
+      hasNumber: "At least one number (0-9)",
+      passwordsMatch: "Passwords match",
+      updateButton: "Update Password",
+      updating: "Updating...",
+      logoutButton: "Sign Out",
+      successMessage: "Your password has been updated successfully",
+      errorMessage: "Failed to update password",
+      passwordMismatch: "New passwords do not match",
+      securityCompliance: "AdeGloba Starlink System - PCI DSS Compliant Security"
     },
     
     dashboard: {
@@ -1346,7 +1434,7 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       registrationProcessing: "Регистрация...",
       privateSystemNotice: "Эта система предназначена только для клиентов AdeGloba Starlink System.",
       emailPlaceholder: "Введите адрес эл. почты",
-      passwordPlaceholder: "Введите пароль (не менее 6 символов)",
+      passwordPlaceholder: "Введите пароль (не менее 12 символов)",
       phonePlaceholder: "900 123 45 67",
       
       // Forgot Password
@@ -1359,7 +1447,36 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       passwordResetSecurity: "Если ваш email адрес правильный, письмо со сбросом пароля было отправлено на вашу почту.",
       passwordResetError: "Произошла ошибка. Попробуйте еще раз.",
       backToLogin: "Вернуться к входу",
-      connectionError: "Ошибка соединения. Проверьте ваше интернет-соединение."
+      connectionError: "Ошибка соединения. Проверьте ваше интернет-соединение.",
+      
+      // Terms of Service
+      termsAccept: "Я прочитал(а) и принимаю Условия морского сервиса Starlink",
+      termsRequired: "Для регистрации необходимо принять условия сервиса",
+      termsTitle: "Условия морского сервиса Starlink"
+    },
+    
+    passwordUpdate: {
+      title: "Обновление пароля",
+      subtitle: "Стандарты безопасности PCI DSS",
+      securityNotice: "Вам необходимо обновить пароль для соответствия стандартам безопасности. Без обновления пароля доступ к системе невозможен.",
+      currentPassword: "Текущий пароль",
+      currentPasswordPlaceholder: "Введите текущий пароль",
+      newPassword: "Новый пароль",
+      newPasswordPlaceholder: "Введите новый пароль",
+      confirmPassword: "Подтверждение пароля",
+      confirmPasswordPlaceholder: "Повторите новый пароль",
+      requirements: "Требования к паролю:",
+      minLength: "Минимум 12 символов",
+      hasLetter: "Минимум одна буква (a-z или A-Z)",
+      hasNumber: "Минимум одна цифра (0-9)",
+      passwordsMatch: "Пароли совпадают",
+      updateButton: "Обновить пароль",
+      updating: "Обновление...",
+      logoutButton: "Выйти",
+      successMessage: "Ваш пароль успешно обновлён",
+      errorMessage: "Не удалось обновить пароль",
+      passwordMismatch: "Новые пароли не совпадают",
+      securityCompliance: "AdeGloba Starlink System - Безопасность PCI DSS"
     },
 
     dashboard: {

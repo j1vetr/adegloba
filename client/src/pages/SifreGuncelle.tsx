@@ -8,10 +8,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Lock, Shield, CheckCircle2, AlertTriangle, Eye, EyeOff, LogOut } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useUserAuth } from "@/hooks/useUserAuth";
+import { useLanguage, LanguageSelector } from "@/contexts/LanguageContext";
 import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
 
 export default function SifreGuncelle() {
   const [location, setLocation] = useLocation();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -141,6 +143,11 @@ export default function SifreGuncelle() {
       </div>
 
       <div className="relative z-10 w-full max-w-md">
+        {/* Language Selector */}
+        <div className="absolute top-0 right-0">
+          <LanguageSelector />
+        </div>
+
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
             <img 
@@ -150,18 +157,17 @@ export default function SifreGuncelle() {
             />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            Şifre Güncelleme
+            {t.passwordUpdate.title}
           </h1>
           <p className="text-slate-400 text-sm sm:text-base">
-            PCI DSS Güvenlik Standartları
+            {t.passwordUpdate.subtitle}
           </p>
         </div>
 
         <Alert className="border-amber-500/50 bg-amber-500/10 backdrop-blur-sm mb-6">
           <AlertTriangle className="h-4 w-4 text-amber-400" />
           <AlertDescription className="text-amber-300">
-            Güvenlik standartlarını karşılamak için şifrenizi güncellemeniz gerekmektedir. 
-            Şifrenizi güncellemeden sisteme erişemezsiniz.
+            {t.passwordUpdate.securityNotice}
           </AlertDescription>
         </Alert>
 
@@ -169,10 +175,10 @@ export default function SifreGuncelle() {
           <CardHeader className="pb-4">
             <CardTitle className="text-center text-white text-xl flex items-center justify-center gap-2">
               <Shield className="h-5 w-5 text-amber-400" />
-              Zorunlu Şifre Güncelleme
+              {t.passwordUpdate.title}
             </CardTitle>
             <CardDescription className="text-center text-slate-400">
-              Yeni şifreniz en az 12 karakter olmalı ve harf ile rakam içermelidir.
+              {t.passwordUpdate.requirements} {t.passwordUpdate.minLength}, {t.passwordUpdate.hasLetter}, {t.passwordUpdate.hasNumber}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -180,7 +186,7 @@ export default function SifreGuncelle() {
               <div className="space-y-2">
                 <Label htmlFor="currentPassword" className="text-slate-300 flex items-center gap-2 font-medium">
                   <Lock className="h-4 w-4 text-amber-400" />
-                  Mevcut Şifre
+                  {t.passwordUpdate.currentPassword}
                 </Label>
                 <div className="relative">
                   <Input
@@ -191,7 +197,7 @@ export default function SifreGuncelle() {
                     onChange={handleChange}
                     required
                     className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm pr-10"
-                    placeholder="Mevcut şifrenizi girin"
+                    placeholder={t.passwordUpdate.currentPasswordPlaceholder}
                     data-testid="input-current-password"
                   />
                   <button
@@ -207,7 +213,7 @@ export default function SifreGuncelle() {
               <div className="space-y-2">
                 <Label htmlFor="newPassword" className="text-slate-300 flex items-center gap-2 font-medium">
                   <Lock className="h-4 w-4 text-amber-400" />
-                  Yeni Şifre
+                  {t.passwordUpdate.newPassword}
                 </Label>
                 <div className="relative">
                   <Input
@@ -218,7 +224,7 @@ export default function SifreGuncelle() {
                     onChange={handleChange}
                     required
                     className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm pr-10"
-                    placeholder="Yeni şifrenizi girin"
+                    placeholder={t.passwordUpdate.newPasswordPlaceholder}
                     data-testid="input-new-password"
                   />
                   <button
@@ -234,7 +240,7 @@ export default function SifreGuncelle() {
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-slate-300 flex items-center gap-2 font-medium">
                   <Lock className="h-4 w-4 text-amber-400" />
-                  Yeni Şifre (Tekrar)
+                  {t.passwordUpdate.confirmPassword}
                 </Label>
                 <div className="relative">
                   <Input
@@ -245,7 +251,7 @@ export default function SifreGuncelle() {
                     onChange={handleChange}
                     required
                     className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm pr-10"
-                    placeholder="Yeni şifrenizi tekrar girin"
+                    placeholder={t.passwordUpdate.confirmPasswordPlaceholder}
                     data-testid="input-confirm-password"
                   />
                   <button
@@ -259,11 +265,11 @@ export default function SifreGuncelle() {
               </div>
 
               <div className="bg-slate-800/30 rounded-lg p-4 space-y-2">
-                <p className="text-sm font-medium text-slate-300 mb-3">Şifre Gereksinimleri:</p>
-                <ValidationItem valid={passwordValidation.minLength} text="En az 12 karakter" />
-                <ValidationItem valid={passwordValidation.hasLetter} text="En az bir harf (a-z veya A-Z)" />
-                <ValidationItem valid={passwordValidation.hasNumber} text="En az bir rakam (0-9)" />
-                <ValidationItem valid={passwordValidation.passwordsMatch} text="Şifreler eşleşiyor" />
+                <p className="text-sm font-medium text-slate-300 mb-3">{t.passwordUpdate.requirements}</p>
+                <ValidationItem valid={passwordValidation.minLength} text={t.passwordUpdate.minLength} />
+                <ValidationItem valid={passwordValidation.hasLetter} text={t.passwordUpdate.hasLetter} />
+                <ValidationItem valid={passwordValidation.hasNumber} text={t.passwordUpdate.hasNumber} />
+                <ValidationItem valid={passwordValidation.passwordsMatch} text={t.passwordUpdate.passwordsMatch} />
               </div>
 
               {success && (
@@ -292,12 +298,12 @@ export default function SifreGuncelle() {
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Güncelleniyor...
+                    {t.passwordUpdate.updating}
                   </>
                 ) : (
                   <>
                     <Shield className="h-4 w-4 mr-2" />
-                    Şifreyi Güncelle
+                    {t.passwordUpdate.updateButton}
                   </>
                 )}
               </Button>
@@ -310,14 +316,14 @@ export default function SifreGuncelle() {
                 data-testid="button-logout"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Çıkış Yap
+                {t.passwordUpdate.logoutButton}
               </Button>
             </form>
           </CardContent>
         </Card>
 
         <p className="text-center text-slate-500 text-xs mt-6">
-          AdeGloba Starlink System - PCI DSS Uyumlu Güvenlik
+          {t.passwordUpdate.securityCompliance}
         </p>
       </div>
     </div>
