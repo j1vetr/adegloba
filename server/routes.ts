@@ -835,6 +835,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Favorite plans endpoints
+  app.get('/api/favorites', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const favorites = await storage.getFavoritePlans(userId);
+      res.json(favorites);
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+      res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
+  app.post('/api/favorites/:planId', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const { planId } = req.params;
+      const favorite = await storage.addFavoritePlan(userId, planId);
+      res.json(favorite);
+    } catch (error) {
+      console.error("Error adding favorite:", error);
+      res.status(500).json({ message: "Failed to add favorite" });
+    }
+  });
+
+  app.delete('/api/favorites/:planId', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const { planId } = req.params;
+      await storage.removeFavoritePlan(userId, planId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+      res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  app.get('/api/favorites/check/:planId', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const { planId } = req.params;
+      const isFavorite = await storage.isFavoritePlan(userId, planId);
+      res.json({ isFavorite });
+    } catch (error) {
+      console.error("Error checking favorite:", error);
+      res.status(500).json({ message: "Failed to check favorite" });
+    }
+  });
+
   // Admin routes - temporarily simplified for development
   const adminMiddleware = async (req: any, res: any, next: any) => {
     // For now, just check if user is authenticated - in production you'd check admin role

@@ -65,6 +65,9 @@ import {
   pushSubscriptions,
   type PushSubscription,
   type InsertPushSubscription,
+  favoritePlans,
+  type FavoritePlan,
+  type InsertFavoritePlan,
 } from "@shared/schema";
 import { getDaysRemainingIstanbul, isExpiredIstanbul, getEndOfMonthIstanbul } from './utils/dateUtils';
 import { db } from "./db";
@@ -335,6 +338,12 @@ export interface IStorage {
   getPushSubscriptionsForShips(shipIds: string[]): Promise<PushSubscription[]>;
   deletePushSubscriptionsForUser(userId: string, endpoint?: string): Promise<void>;
   deactivatePushSubscription(subscriptionId: string): Promise<void>;
+
+  // Favorite plans operations
+  getFavoritePlans(userId: string): Promise<(FavoritePlan & { plan: Plan })[]>;
+  addFavoritePlan(userId: string, planId: string): Promise<FavoritePlan>;
+  removeFavoritePlan(userId: string, planId: string): Promise<void>;
+  isFavoritePlan(userId: string, planId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3226,6 +3235,64 @@ export class DatabaseStorage implements IStorage {
       .values(metric)
       .returning();
     return recorded;
+  }
+
+  // Favorite plans operations
+  async getFavoritePlans(userId: string): Promise<(FavoritePlan & { plan: Plan })[]> {
+    const results = await db
+      .select({
+        favorite: favoritePlans,
+        plan: plans
+      })
+      .from(favoritePlans)
+      .innerJoin(plans, eq(favoritePlans.planId, plans.id))
+      .where(eq(favoritePlans.userId, userId))
+      .orderBy(desc(favoritePlans.createdAt));
+    
+    return results.map(r => ({
+      ...r.favorite,
+      plan: r.plan
+    }));
+  }
+
+  async addFavoritePlan(userId: string, planId: string): Promise<FavoritePlan> {
+    const [favorite] = await db
+      .insert(favoritePlans)
+      .values({ userId, planId })
+      .onConflictDoNothing()
+      .returning();
+    
+    if (!favorite) {
+      const [existing] = await db
+        .select()
+        .from(favoritePlans)
+        .where(and(
+          eq(favoritePlans.userId, userId),
+          eq(favoritePlans.planId, planId)
+        ));
+      return existing;
+    }
+    return favorite;
+  }
+
+  async removeFavoritePlan(userId: string, planId: string): Promise<void> {
+    await db
+      .delete(favoritePlans)
+      .where(and(
+        eq(favoritePlans.userId, userId),
+        eq(favoritePlans.planId, planId)
+      ));
+  }
+
+  async isFavoritePlan(userId: string, planId: string): Promise<boolean> {
+    const [result] = await db
+      .select()
+      .from(favoritePlans)
+      .where(and(
+        eq(favoritePlans.userId, userId),
+        eq(favoritePlans.planId, planId)
+      ));
+    return !!result;
   }
 }
 
