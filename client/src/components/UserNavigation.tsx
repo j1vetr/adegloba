@@ -243,7 +243,7 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
               data-testid="mobile-bottom-favorites"
             >
               <Heart className={`h-5 w-5 mb-1 ${location === "/panel" && typeof window !== "undefined" && window.location.search.includes("tab=favorites") ? "fill-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]" : ""}`} />
-              <span className="text-xs font-medium">{t.dashboard.sections.favoritesShort}</span>
+              <span className="text-xs font-medium">{t.dashboard.sections.favorites}</span>
             </button>
           </Link>
 
