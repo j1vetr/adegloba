@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
+import { useSearch } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,28 @@ export default function Panel() {
   const { t } = useLanguage();
   const [expiredPage, setExpiredPage] = useState(1);
   const expiredPageSize = 6;
+  const searchString = useSearch();
+  
+  // URL'den tab parametresini oku
+  const getInitialTab = () => {
+    const params = new URLSearchParams(searchString);
+    const tab = params.get('tab');
+    if (tab && ['packages', 'favorites', 'history', 'expired'].includes(tab)) {
+      return tab;
+    }
+    return 'packages';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+  
+  // URL değiştiğinde tab'ı güncelle
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const tab = params.get('tab');
+    if (tab && ['packages', 'favorites', 'history', 'expired'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchString]);
 
   const copyToClipboard = async (text: string, type: string) => {
     try {
@@ -191,7 +214,7 @@ export default function Panel() {
           </Link>
         </div>
 
-        <Tabs defaultValue="packages" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 border-slate-700/50 rounded-lg p-1">
             <TabsTrigger 
               value="packages" 
