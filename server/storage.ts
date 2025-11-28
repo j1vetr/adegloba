@@ -95,6 +95,18 @@ export interface IStorage {
   getRecentUsers(limit: number): Promise<(User & { ship?: Ship })[]>;
   getRecentOrders(limit: number): Promise<(Order & { user?: User })[]>;
   
+  // PCI DSS Compliance operations
+  updateUserActivity(userId: string): Promise<void>;
+  incrementFailedLoginAttempts(userId: string): Promise<number>;
+  resetFailedLoginAttempts(userId: string): Promise<void>;
+  lockUserAccount(userId: string, lockedUntil: Date): Promise<void>;
+  unlockUserAccount(userId: string): Promise<void>;
+  setPasswordResetRequired(userId: string, required: boolean): Promise<void>;
+  updateLastLogin(userId: string): Promise<void>;
+  setFirstLoginCompleted(userId: string): Promise<void>;
+  markAllUsersResetRequired(): Promise<number>;
+  deactivateInactiveUsers(daysThreshold: number): Promise<number>;
+  
   // Admin User operations
   getAdminUser(id: string): Promise<AdminUser | undefined>;
   getAdminUserByUsername(username: string): Promise<AdminUser | undefined>;
@@ -627,6 +639,103 @@ export class DatabaseStorage implements IStorage {
       console.error("Error deleting user:", error);
       return false;
     }
+  }
+
+  // PCI DSS Compliance operations
+  async updateUserActivity(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ last_activity_at: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  async incrementFailedLoginAttempts(userId: string): Promise<number> {
+    const [result] = await db
+      .update(users)
+      .set({ failed_login_attempts: sql`${users.failed_login_attempts} + 1` })
+      .where(eq(users.id, userId))
+      .returning({ failed_login_attempts: users.failed_login_attempts });
+    return result?.failed_login_attempts || 0;
+  }
+
+  async resetFailedLoginAttempts(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ failed_login_attempts: 0, locked_until: null })
+      .where(eq(users.id, userId));
+  }
+
+  async lockUserAccount(userId: string, lockedUntil: Date): Promise<void> {
+    await db
+      .update(users)
+      .set({ locked_until: lockedUntil })
+      .where(eq(users.id, userId));
+  }
+
+  async unlockUserAccount(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ locked_until: null, failed_login_attempts: 0 })
+      .where(eq(users.id, userId));
+  }
+
+  async setPasswordResetRequired(userId: string, required: boolean): Promise<void> {
+    await db
+      .update(users)
+      .set({ reset_required: required })
+      .where(eq(users.id, userId));
+  }
+
+  async updateLastLogin(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        last_login_at: new Date(),
+        last_activity_at: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async setFirstLoginCompleted(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ first_login_completed: true })
+      .where(eq(users.id, userId));
+  }
+
+  async markAllUsersResetRequired(): Promise<number> {
+    const result = await db
+      .update(users)
+      .set({ reset_required: true })
+      .returning({ id: users.id });
+    return result.length;
+  }
+
+  async deactivateInactiveUsers(daysThreshold: number): Promise<number> {
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() - daysThreshold);
+    
+    const result = await db
+      .update(users)
+      .set({ is_active: false })
+      .where(
+        and(
+          eq(users.is_active, true),
+          or(
+            and(
+              isNotNull(users.last_login_at),
+              lt(users.last_login_at, thresholdDate)
+            ),
+            and(
+              isNull(users.last_login_at),
+              lt(users.created_at, thresholdDate)
+            )
+          )
+        )
+      )
+      .returning({ id: users.id });
+    
+    return result.length;
   }
 
   // Ship operations

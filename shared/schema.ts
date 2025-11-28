@@ -36,6 +36,14 @@ export const users = pgTable("users", {
   ship_id: varchar("ship_id").references(() => ships.id),
   address: text("address"),
   created_at: timestamp("created_at").defaultNow(),
+  // PCI DSS Compliance fields
+  reset_required: boolean("reset_required").notNull().default(false), // Şifre sıfırlama zorunluluğu
+  failed_login_attempts: integer("failed_login_attempts").notNull().default(0), // Başarısız giriş sayısı
+  locked_until: timestamp("locked_until"), // Hesap kilit süresi (30 dk sonra null olur)
+  last_login_at: timestamp("last_login_at"), // Son giriş tarihi
+  last_activity_at: timestamp("last_activity_at"), // Son aktivite (15 dk oturum kontrolü)
+  is_active: boolean("is_active").notNull().default(true), // Hesap aktifliği (90 gün inaktif = false)
+  first_login_completed: boolean("first_login_completed").notNull().default(false), // İlk giriş tamamlandı mı
 });
 
 // Admin users table for admin panel access
