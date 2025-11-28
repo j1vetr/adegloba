@@ -4,10 +4,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRight, X, Info } from "lucide-react";
+import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRight, X, Info, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
+import { useRef } from "react";
 import type { Plan } from "@shared/schema";
 
 // Extended plan type with stock information
@@ -20,11 +21,28 @@ export default function Paketler() {
   const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
     queryKey: ["/api/user/ship-plans"],
     enabled: !!user?.ship_id
   });
+
+  const scrollToPackage = (planId: string) => {
+    const element = cardRefs.current[planId];
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center'
+      });
+      element.classList.add('ring-2', 'ring-cyan-400', 'ring-offset-2', 'ring-offset-slate-900');
+      setTimeout(() => {
+        element.classList.remove('ring-2', 'ring-cyan-400', 'ring-offset-2', 'ring-offset-slate-900');
+      }, 2000);
+    }
+  };
+
+  const sortedPlans = userShipPlans?.slice().sort((a, b) => a.dataLimitGb - b.dataLimitGb);
 
   const addToCartMutation = useMutation({
     mutationFn: async (planId: string) => {
@@ -78,7 +96,7 @@ export default function Paketler() {
       <UserNavigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6 space-x-2">
             <div className="relative">
               <Package className="h-8 w-8 text-blue-400" />
@@ -102,6 +120,39 @@ export default function Paketler() {
           </div>
         </div>
 
+        {/* Quick Access GB Buttons */}
+        {sortedPlans && sortedPlans.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Zap className="h-4 w-4 text-amber-400" />
+              <span className="text-sm text-slate-400 font-medium">Hızlı Erişim</span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+              {sortedPlans.map((plan) => (
+                <button
+                  key={`quick-${plan.id}`}
+                  onClick={() => scrollToPackage(plan.id)}
+                  className="group relative px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/20 hover:-translate-y-0.5"
+                  data-testid={`quick-access-${plan.dataLimitGb}gb`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl sm:text-2xl font-bold text-white group-hover:text-cyan-300 transition-colors">
+                      {plan.dataLimitGb}
+                    </span>
+                    <span className="text-sm sm:text-base font-semibold text-cyan-400 group-hover:text-cyan-300 transition-colors">
+                      GB
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500 group-hover:text-slate-400 mt-0.5">
+                    ${Number(plan.priceUsd).toFixed(0)}
+                  </div>
+                  <ChevronRight className="absolute right-1 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Packages Grid */}
         {plansLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -112,7 +163,8 @@ export default function Paketler() {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {userShipPlans.map((plan) => (
               <Card 
-                key={plan.id} 
+                key={plan.id}
+                ref={(el) => { cardRefs.current[plan.id] = el; }}
                 className="group relative overflow-hidden bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50 hover:border-blue-500/50 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-2"
                 data-testid={`plan-card-${plan.id}`}
               >
