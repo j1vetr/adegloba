@@ -65,12 +65,20 @@ export default function Giris() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Invalidate user auth cache and redirect to user dashboard
+        // Invalidate user auth cache
         await queryClient.invalidateQueries({ queryKey: ["/api/user/me"] });
-        // Force a brief delay for cache invalidation to take effect
-        setTimeout(() => {
-          setLocation("/panel");
-        }, 100);
+        
+        // PCI DSS: Check if password reset is required
+        if (data.requiresPasswordReset) {
+          setTimeout(() => {
+            setLocation("/sifre-guncelle");
+          }, 100);
+        } else {
+          // Force a brief delay for cache invalidation to take effect
+          setTimeout(() => {
+            setLocation("/panel");
+          }, 100);
+        }
       } else {
         setError(data.message || t.auth.loginFailed);
       }

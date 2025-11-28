@@ -101,6 +101,10 @@ app.use((req, res, next) => {
   const { setupUserAuth } = await import('./userAuth');
   setupUserAuth(app);
   
+  // PCI DSS: Setup 15-minute inactivity middleware for user sessions
+  const { setupActivityMiddleware } = await import('./pciCompliance');
+  setupActivityMiddleware(app);
+  
   // Seed default admin user and initial ships
   await seedDefaultAdmin();
   

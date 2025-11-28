@@ -23,6 +23,7 @@ import TicketDetail from "@/pages/TicketDetail";
 import Profil from "@/pages/Profil";
 import KullanimKilavuzu from "@/pages/KullanimKilavuzu";
 import ForgotPassword from "@/pages/ForgotPassword";
+import SifreGuncelle from "@/pages/SifreGuncelle";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
@@ -72,6 +73,7 @@ function Router() {
       <Route path="/kayit" component={Kayit} />
       <Route path="/giris" component={Giris} />
       <Route path="/sifremi-unuttum" component={ForgotPassword} />
+      <Route path="/sifre-guncelle" component={SifreGuncelle} />
       
       {/* Admin Routes - protected with lazy loading */}
       <Route path="/admin">
