@@ -840,6 +840,62 @@ export class EmailService {
           <p>İyi denizler! ⚓</p>
         `);
 
+      case 'password_changed':
+        return baseTemplate.replace('{{content}}', `
+          <h2>🔐 Şifreniz Güncellendi</h2>
+          <p>Merhaba <span class="highlight">{{userName}}</span>,</p>
+          <p>AdeGloba Starlink hesabınızın şifresi başarıyla güncellendi.</p>
+          
+          <div class="order-details">
+            <h3 class="maritime-accent">📋 İşlem Detayları</h3>
+            <div class="order-item"><strong>Tarih:</strong> <span class="highlight">{{changeDate}}</span></div>
+            <div class="order-item"><strong>IP Adresi:</strong> <span class="highlight">{{ipAddress}}</span></div>
+          </div>
+          
+          <div class="status-badge">✅ Şifre Başarıyla Değiştirildi</div>
+          
+          <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #92400e; margin: 0; font-weight: 600;">⚠️ Bu işlemi siz yapmadıysanız</p>
+            <p style="color: #92400e; margin: 5px 0 0 0; font-size: 14px;">
+              Hesabınızın güvenliği için lütfen derhal bizimle iletişime geçin: starlink@adegloba.space
+            </p>
+          </div>
+          
+          <p>İyi denizler! ⚓</p>
+        `);
+
+      case 'password_reset_required':
+        return baseTemplate.replace('{{content}}', `
+          <h2>🔒 Şifre Güncelleme Gerekli</h2>
+          <p>Merhaba <span class="highlight">{{userName}}</span>,</p>
+          <p>AdeGloba Starlink sistemi PCI DSS güvenlik standartlarına uyum kapsamında güncellenmiştir.</p>
+          
+          <div class="order-details">
+            <h3 class="maritime-accent">🛡️ Güvenlik Güncellemesi</h3>
+            <p style="color: #475569;">Yeni güvenlik standartlarını karşılamak için bir sonraki girişinizde şifrenizi güncellemeniz gerekmektedir.</p>
+          </div>
+          
+          <div style="background: #dbeafe; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #1e40af; margin: 0; font-weight: 600;">📝 Yeni Şifre Gereksinimleri</p>
+            <ul style="color: #1e40af; margin: 10px 0 0 0; padding-left: 20px; font-size: 14px;">
+              <li>En az 12 karakter uzunluğunda</li>
+              <li>En az bir harf (a-z veya A-Z)</li>
+              <li>En az bir rakam (0-9)</li>
+            </ul>
+          </div>
+          
+          <p>Sisteme giriş yapmak ve şifrenizi güncellemek için:</p>
+          <div style="text-align: center;">
+            <a href="{{loginUrl}}" class="button">🚀 Giriş Yap ve Şifre Güncelle</a>
+          </div>
+          
+          <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
+            Bu güncelleme hesap güvenliğiniz için zorunludur. Şifrenizi güncellemeden sisteme tam erişim sağlayamazsınız.
+          </p>
+          
+          <p>İyi denizler! ⚓</p>
+        `);
+
       default:
         return baseTemplate.replace('{{content}}', '<p>Email content not found.</p>');
     }

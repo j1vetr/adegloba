@@ -9,6 +9,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth, seedDefaultAdmin } from "./auth";
 import { logCleanupService } from "./services/logCleanupService";
 import { OrderCancelService } from "./services/orderCancelService";
+import { pciComplianceService } from "./services/pciComplianceService";
 import { storage } from "./storage";
 import { initializeDefaultEmailTemplates } from "./emailTemplates";
 
@@ -120,6 +121,9 @@ app.use((req, res, next) => {
   // Start order auto-cancel service
   const orderCancelService = new OrderCancelService(storage);
   orderCancelService.start();
+  
+  // Start PCI DSS compliance service (90-day inactive account check)
+  pciComplianceService.startScheduler();
   
   // Start email scheduler for monthly reports
   startEmailScheduler();

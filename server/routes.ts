@@ -1724,6 +1724,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PCI DSS: Mark all users for mandatory password reset and send notification emails
+  app.post("/api/admin/pci-dss/enforce-password-reset", isAdminAuthenticated, async (req, res) => {
+    try {
+      // Get all users before marking
+      const allUsers = await storage.getAllUsers();
+      
+      // Mark all users for password reset
+      const markedCount = await storage.markAllUsersResetRequired();
+      
+      // Get base URL for email links
+      const baseUrlSetting = await storage.getSetting('base_url');
+      const baseUrl = baseUrlSetting?.value || 'https://adegloba.toov.com.tr';
+      
+      // Send notification emails to all users
+      let emailsSent = 0;
+      let emailsFailed = 0;
+      
+      for (const user of allUsers) {
+        try {
+          await emailService.sendEmail(
+            user.email,
+            'Şifre Güncelleme Gerekli - AdeGloba Starlink System',
+            'password_reset_required',
+            {
+              userName: user.full_name || user.username,
+              loginUrl: baseUrl + '/giris'
+            }
+          );
+          emailsSent++;
+        } catch (emailError) {
+          console.error(`Failed to send PCI DSS notification to ${user.email}:`, emailError);
+          emailsFailed++;
+        }
+      }
+      
+      // Create system log
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'pci_dss_enforce_password_reset',
+        adminId: req.session.adminUser.id,
+        entityType: 'system',
+        entityId: 'pci_dss',
+        details: {
+          usersMarked: markedCount,
+          emailsSent,
+          emailsFailed
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+      
+      res.json({ 
+        success: true,
+        message: `${markedCount} kullanıcı şifre sıfırlama için işaretlendi`,
+        usersMarked: markedCount,
+        emailsSent,
+        emailsFailed
+      });
+    } catch (error: any) {
+      console.error("Error enforcing PCI DSS password reset:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Cron job endpoint for expiry processing
   app.post('/api/cron/process-expired-orders', async (req, res) => {
     try {
