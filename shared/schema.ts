@@ -776,3 +776,36 @@ export type InsertErrorLog = z.infer<typeof insertErrorLogSchema>;
 export type ErrorLog = typeof errorLogs.$inferSelect;
 export type InsertSystemMetric = z.infer<typeof insertSystemMetricSchema>;
 export type SystemMetric = typeof systemMetrics.$inferSelect;
+
+// Favorite Plans table - for users to save their favorite packages
+export const favoritePlans = pgTable("favorite_plans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  planId: varchar("plan_id").notNull().references(() => plans.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  unique().on(table.userId, table.planId),
+  index("idx_favorite_plans_user").on(table.userId)
+]);
+
+// Relations
+export const favoritePlansRelations = relations(favoritePlans, ({ one }) => ({
+  user: one(users, {
+    fields: [favoritePlans.userId],
+    references: [users.id],
+  }),
+  plan: one(plans, {
+    fields: [favoritePlans.planId],
+    references: [plans.id],
+  }),
+}));
+
+// Insert schema
+export const insertFavoritePlanSchema = createInsertSchema(favoritePlans).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types
+export type InsertFavoritePlan = z.infer<typeof insertFavoritePlanSchema>;
+export type FavoritePlan = typeof favoritePlans.$inferSelect;
