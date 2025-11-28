@@ -3,12 +3,19 @@ import { Express, Request, Response } from "express";
 import { storage } from "./storage";
 import { registerSchema, loginSchema } from "@shared/schema";
 import { emailService } from "./emailService";
+import { 
+  validatePCIPassword, 
+  PCI_CONSTANTS, 
+  isAccountLocked, 
+  getLockoutEndTime 
+} from "./pciCompliance";
 
 // Extend the session type to include our custom fields
 declare module "express-session" {
   interface SessionData {
     userId?: string;
     isAuthenticated?: boolean;
+    resetRequired?: boolean;
   }
 }
 
@@ -16,6 +23,16 @@ export function setupUserAuth(app: Express) {
   // User Registration
   app.post("/api/user/register", async (req: Request, res: Response) => {
     try {
+      // PCI DSS Password Validation - BEFORE other validations
+      const passwordValidation = validatePCIPassword(req.body.password || '');
+      if (!passwordValidation.isValid) {
+        return res.status(400).json({ 
+          success: false, 
+          message: passwordValidation.errors.join('. '),
+          errors: passwordValidation.errors
+        });
+      }
+
       // Map password to password_hash for validation
       const validatedData = registerSchema.parse({
         full_name: req.body.full_name,
@@ -136,6 +153,7 @@ export function setupUserAuth(app: Express) {
   });
 
   // User Login (separate from admin login) - supports both username and email
+  // PCI DSS Compliant: Account lockout, failed attempts tracking, password reset check
   app.post("/api/user/login", async (req: Request, res: Response) => {
     try {
       const { username, password } = loginSchema.parse(req.body);
@@ -155,17 +173,68 @@ export function setupUserAuth(app: Express) {
         });
       }
 
-      const validPassword = await bcrypt.compare(password, user.password_hash);
-      if (!validPassword) {
-        return res.status(401).json({ 
+      // PCI DSS: Check if account is deactivated (90-day inactivity)
+      if (!user.is_active) {
+        return res.status(403).json({ 
           success: false, 
-          message: "Geçersiz kullanıcı adı/e-posta veya şifre" 
+          message: "Hesabınız uzun süredir kullanılmadığı için devre dışı bırakıldı. Lütfen destek ile iletişime geçin.",
+          code: "ACCOUNT_DEACTIVATED"
         });
       }
+
+      // PCI DSS: Check if account is locked
+      if (isAccountLocked(user.locked_until)) {
+        const remainingMinutes = Math.ceil(
+          (new Date(user.locked_until!).getTime() - Date.now()) / (1000 * 60)
+        );
+        return res.status(403).json({ 
+          success: false, 
+          message: `Hesabınız çok fazla başarısız giriş denemesi nedeniyle kilitlendi. ${remainingMinutes} dakika sonra tekrar deneyin.`,
+          code: "ACCOUNT_LOCKED",
+          remainingMinutes
+        });
+      }
+
+      const validPassword = await bcrypt.compare(password, user.password_hash);
+      if (!validPassword) {
+        // PCI DSS: Increment failed login attempts
+        const failedAttempts = await storage.incrementFailedLoginAttempts(user.id);
+        
+        if (failedAttempts >= PCI_CONSTANTS.MAX_FAILED_ATTEMPTS) {
+          // Lock the account for 30 minutes
+          const lockoutEnd = getLockoutEndTime();
+          await storage.lockUserAccount(user.id, lockoutEnd);
+          
+          return res.status(403).json({ 
+            success: false, 
+            message: `Çok fazla başarısız giriş denemesi. Hesabınız ${PCI_CONSTANTS.LOCKOUT_DURATION_MINUTES} dakika kilitlendi.`,
+            code: "ACCOUNT_LOCKED"
+          });
+        }
+
+        const remainingAttempts = PCI_CONSTANTS.MAX_FAILED_ATTEMPTS - failedAttempts;
+        return res.status(401).json({ 
+          success: false, 
+          message: `Geçersiz kullanıcı adı/e-posta veya şifre. Kalan deneme: ${remainingAttempts}`,
+          remainingAttempts
+        });
+      }
+
+      // PCI DSS: Reset failed attempts on successful login
+      await storage.resetFailedLoginAttempts(user.id);
+      
+      // PCI DSS: Update last login timestamp
+      await storage.updateLastLogin(user.id);
 
       // Set session  
       req.session.userId = user.id;
       req.session.isAuthenticated = true;
+
+      // PCI DSS: Check if password reset is required
+      const requiresPasswordReset = user.reset_required || !user.first_login_completed;
+      if (requiresPasswordReset) {
+        req.session.resetRequired = true;
+      }
 
       res.json({ 
         success: true, 
@@ -173,7 +242,11 @@ export function setupUserAuth(app: Express) {
           id: user.id,
           username: user.username,
           email: user.email
-        }
+        },
+        requiresPasswordReset,
+        message: requiresPasswordReset 
+          ? "Güvenlik standartlarını karşılamak için şifrenizi güncellemeniz gerekmektedir." 
+          : undefined
       });
     } catch (error: any) {
       console.error("Login error:", error);
@@ -203,6 +276,110 @@ export function setupUserAuth(app: Express) {
       }
       res.json({ success: true, message: "Başarıyla çıkış yapıldı" });
     });
+  });
+
+  // PCI DSS: Mandatory Password Update Endpoint
+  app.post("/api/user/update-password", async (req: Request, res: Response) => {
+    if (!req.session.userId || !req.session.isAuthenticated) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      // Validate new password with PCI DSS rules
+      const passwordValidation = validatePCIPassword(newPassword || '');
+      if (!passwordValidation.isValid) {
+        return res.status(400).json({ 
+          success: false, 
+          message: passwordValidation.errors.join('. '),
+          errors: passwordValidation.errors
+        });
+      }
+
+      // Get current user
+      const currentUser = await storage.getUserById(req.session.userId);
+      if (!currentUser) {
+        return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı" });
+      }
+
+      // Verify current password
+      const validCurrentPassword = await bcrypt.compare(currentPassword, currentUser.password_hash);
+      if (!validCurrentPassword) {
+        return res.status(400).json({ success: false, message: "Mevcut şifre hatalı" });
+      }
+
+      // Check if new password is same as old password
+      const isSamePassword = await bcrypt.compare(newPassword, currentUser.password_hash);
+      if (isSamePassword) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Yeni şifre mevcut şifre ile aynı olamaz" 
+        });
+      }
+
+      // Hash and save new password
+      const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+      await storage.updateUser(req.session.userId, { password_hash: hashedNewPassword });
+
+      // Mark password reset as complete
+      await storage.setPasswordResetRequired(req.session.userId, false);
+      await storage.setFirstLoginCompleted(req.session.userId);
+
+      // Clear session reset flag
+      req.session.resetRequired = false;
+
+      // Send password change notification email
+      try {
+        await emailService.sendEmail(
+          currentUser.email,
+          'Şifreniz Güncellendi - AdeGloba Starlink System',
+          'password_changed',
+          {
+            userName: currentUser.full_name || currentUser.username,
+            changeDate: new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
+            ipAddress: req.ip || 'Bilinmiyor'
+          }
+        );
+        console.log(`📧 Password change notification sent to: ${currentUser.email}`);
+      } catch (emailError) {
+        console.error('📧 Failed to send password change email:', emailError);
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Şifreniz başarıyla güncellendi. Artık tüm özelliklere erişebilirsiniz." 
+      });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      res.status(500).json({ success: false, message: "Şifre güncellenirken bir hata oluştu" });
+    }
+  });
+
+  // PCI DSS: Check if password reset is required
+  app.get("/api/user/check-reset-required", async (req: Request, res: Response) => {
+    if (!req.session.userId || !req.session.isAuthenticated) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    try {
+      const user = await storage.getUserById(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı" });
+      }
+
+      const resetRequired = user.reset_required || !user.first_login_completed;
+      res.json({ 
+        success: true, 
+        resetRequired,
+        message: resetRequired 
+          ? "Güvenlik standartlarını karşılamak için şifrenizi güncellemeniz gerekmektedir." 
+          : undefined
+      });
+    } catch (error) {
+      console.error("Error checking reset required:", error);
+      res.status(500).json({ success: false, message: "Kontrol sırasında bir hata oluştu" });
+    }
   });
 
   // Get Current User with Ship Information
