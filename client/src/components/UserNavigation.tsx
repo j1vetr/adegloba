@@ -9,7 +9,8 @@ import {
   Menu,
   X,
   ShoppingCart,
-  BookOpen
+  BookOpen,
+  Heart
 } from "lucide-react";
 import { useState } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
@@ -211,6 +212,56 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Fixed Mobile Bottom Navigation Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-xl border-t border-cyan-500/30 safe-area-inset-bottom">
+        <div className="flex justify-around items-center h-16 px-2">
+          {/* Paketler */}
+          <Link href="/paketler">
+            <button
+              className={`flex flex-col items-center justify-center w-full py-2 px-4 rounded-xl transition-all duration-300 ${
+                location === "/paketler"
+                  ? "bg-cyan-500/20 text-cyan-400"
+                  : "text-slate-400 hover:text-cyan-300"
+              }`}
+              data-testid="mobile-bottom-packages"
+            >
+              <Package className={`h-5 w-5 mb-1 ${location === "/paketler" ? "drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" : ""}`} />
+              <span className="text-xs font-medium">{t.dashboard.navigation.packages}</span>
+            </button>
+          </Link>
+
+          {/* Favoriler */}
+          <Link href="/panel?tab=favorites">
+            <button
+              className={`flex flex-col items-center justify-center w-full py-2 px-4 rounded-xl transition-all duration-300 ${
+                location === "/panel" && typeof window !== "undefined" && window.location.search.includes("tab=favorites")
+                  ? "bg-pink-500/20 text-pink-400"
+                  : "text-slate-400 hover:text-pink-300"
+              }`}
+              data-testid="mobile-bottom-favorites"
+            >
+              <Heart className={`h-5 w-5 mb-1 ${location === "/panel" && typeof window !== "undefined" && window.location.search.includes("tab=favorites") ? "fill-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]" : ""}`} />
+              <span className="text-xs font-medium">{t.dashboard.sections.favoritesShort}</span>
+            </button>
+          </Link>
+
+          {/* Profil */}
+          <Link href="/profil">
+            <button
+              className={`flex flex-col items-center justify-center w-full py-2 px-4 rounded-xl transition-all duration-300 ${
+                location === "/profil"
+                  ? "bg-amber-500/20 text-amber-400"
+                  : "text-slate-400 hover:text-amber-300"
+              }`}
+              data-testid="mobile-bottom-profile"
+            >
+              <User className={`h-5 w-5 mb-1 ${location === "/profil" ? "drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" : ""}`} />
+              <span className="text-xs font-medium">{t.dashboard.navigation.profile}</span>
+            </button>
+          </Link>
+        </div>
       </div>
     </nav>
   );
