@@ -152,6 +152,45 @@ export function LoyaltyProgress() {
         <p className="text-xs text-gray-300">{getProgressMessage()}</p>
       </div>
 
+      {/* Discount Tiers Table */}
+      <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50">
+        <h4 className="text-xs font-semibold text-cyan-400 mb-2 flex items-center gap-1.5">
+          <Gift className="w-3.5 h-3.5" />
+          {language === 'tr' && 'İndirim Seviyeleri'}
+          {language === 'en' && 'Discount Tiers'}
+          {language === 'ru' && 'Уровни Скидок'}
+        </h4>
+        <div className="space-y-1.5">
+          {sortedTiers.map((tier) => {
+            const isAchieved = currentGb >= tier.minGb;
+            const isCurrentTier = currentDiscount === tier.discountPercent;
+            return (
+              <div 
+                key={tier.minGb}
+                className={`flex items-center justify-between p-2 rounded-lg text-xs transition-all ${
+                  isCurrentTier 
+                    ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/40' 
+                    : isAchieved 
+                      ? 'bg-white/5 border border-white/10' 
+                      : 'bg-white/[0.02] border border-white/5'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isAchieved ? 'bg-green-400' : 'bg-gray-600'}`} />
+                  <span className={isAchieved ? 'text-white' : 'text-gray-500'}>
+                    {tier.minGb}+ GB {language === 'tr' ? 'al' : language === 'ru' ? 'купить' : 'buy'}
+                  </span>
+                </div>
+                <div className={`font-bold ${isCurrentTier ? 'text-green-400' : isAchieved ? 'text-cyan-400' : 'text-gray-500'}`}>
+                  %{tier.discountPercent} {language === 'tr' ? 'indirim' : language === 'ru' ? 'скидка' : 'off'}
+                  {isCurrentTier && ' ✓'}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="mt-3 text-[10px] text-gray-500 text-center">
         {language === 'tr' && '* İndirimler her ayın 1\'inde sıfırlanır'}
         {language === 'en' && '* Discounts reset on the 1st of each month'}

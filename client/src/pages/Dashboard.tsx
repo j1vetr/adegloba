@@ -10,6 +10,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
+import { LoyaltyProgress } from "@/components/LoyaltyProgress";
 import type { User, Order } from "@shared/schema";
 
 // Utility function to translate order status
@@ -162,6 +163,11 @@ export default function Dashboard() {
                     </button>
                   </nav>
                 </Card>
+                
+                {/* Loyalty Progress */}
+                <div className="mt-4">
+                  <LoyaltyProgress />
+                </div>
               </div>
 
               {/* Main Dashboard Content */}
