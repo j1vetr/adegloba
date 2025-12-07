@@ -26,9 +26,18 @@ export function LoyaltyProgress() {
     );
   }
 
-  if (!loyalty) return null;
+  // Default loyalty tiers
+  const defaultTiers = [
+    { minGb: 25, discountPercent: 5 },
+    { minGb: 50, discountPercent: 10 },
+    { minGb: 100, discountPercent: 15 }
+  ];
 
-  const { currentGb, currentDiscount, nextTier, daysRemaining, tiers } = loyalty;
+  const currentGb = loyalty?.currentGb || 0;
+  const currentDiscount = loyalty?.currentDiscount || 0;
+  const nextTier = loyalty?.nextTier || { neededGb: 25, nextDiscount: 5 };
+  const daysRemaining = loyalty?.daysRemaining || Math.ceil((new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  const tiers = loyalty?.tiers || defaultTiers;
   
   const sortedTiers = [...tiers].sort((a, b) => a.minGb - b.minGb).filter(t => t.minGb > 0);
   const maxGb = sortedTiers[sortedTiers.length - 1]?.minGb || 100;
