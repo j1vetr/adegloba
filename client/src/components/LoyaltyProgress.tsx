@@ -103,80 +103,62 @@ export function LoyaltyProgress() {
   };
 
   return (
-    <div className="glass-card p-4 rounded-xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 to-purple-500/5" data-testid="loyalty-progress">
-      <div className="flex items-center justify-between mb-3">
+    <div className="glass-card p-3 sm:p-4 rounded-xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 to-purple-500/5 overflow-hidden" data-testid="loyalty-progress">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-yellow-500/20 to-orange-500/20">
-            <Star className="w-5 h-5 text-yellow-400" />
+          <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex-shrink-0">
+            <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
           </div>
-          <div>
-            <h3 className="text-sm font-medium text-white">{getMonthlyBonusText()}</h3>
-            <p className="text-xs text-gray-400">{getDaysRemainingText()}</p>
+          <div className="min-w-0">
+            <h3 className="text-xs sm:text-sm font-medium text-white truncate">{getMonthlyBonusText()}</h3>
+            <p className="text-[10px] sm:text-xs text-gray-400">{getDaysRemainingText()}</p>
           </div>
         </div>
         
         {currentDiscount > 0 && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
-            <Gift className="w-4 h-4 text-green-400" />
-            <span className="text-sm font-bold text-green-400">%{currentDiscount}</span>
+          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 self-start sm:self-auto">
+            <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+            <span className="text-xs sm:text-sm font-bold text-green-400">%{currentDiscount}</span>
           </div>
         )}
       </div>
 
+      {/* Stats Row */}
+      <div className="flex flex-wrap justify-between text-[10px] sm:text-xs text-gray-400 mb-2 gap-1">
+        <span className="whitespace-nowrap">{getThisMonthText()}: {currentGb} GB</span>
+        <span className="whitespace-nowrap">{getCurrentDiscountText()}: %{currentDiscount}</span>
+      </div>
+      
+      {/* Progress Bar - simple version without overflow markers */}
       <div className="mb-3">
-        <div className="flex justify-between text-xs text-gray-400 mb-1.5">
-          <span>{getThisMonthText()}: {currentGb} GB</span>
-          <span>{getCurrentDiscountText()}: %{currentDiscount}</span>
-        </div>
-        
-        <div className="relative">
-          <Progress value={progressPercent} className="h-2 bg-gray-700/50" />
-          
-          <div className="absolute top-4 left-0 right-0 flex justify-between">
-            {sortedTiers.map((tier, index) => (
-              <div 
-                key={tier.minGb}
-                className="flex flex-col items-center"
-                style={{ 
-                  position: 'absolute', 
-                  left: `${(tier.minGb / maxGb) * 100}%`,
-                  transform: 'translateX(-50%)'
-                }}
-              >
-                <div className={`w-1.5 h-1.5 rounded-full ${currentGb >= tier.minGb ? 'bg-cyan-400' : 'bg-gray-600'}`} />
-                <span className={`text-[10px] mt-1 ${currentGb >= tier.minGb ? 'text-cyan-400' : 'text-gray-500'}`}>
-                  {tier.minGb}GB
-                </span>
-                <span className={`text-[10px] ${currentGb >= tier.minGb ? 'text-green-400' : 'text-gray-500'}`}>
-                  %{tier.discountPercent}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <Progress value={progressPercent} className="h-2 bg-gray-700/50" />
       </div>
 
-      <div className="mt-8 flex items-center gap-2 p-2.5 rounded-lg bg-white/5 border border-white/10">
-        <TrendingUp className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-        <p className="text-xs text-gray-300">{getProgressMessage()}</p>
+      {/* Next Tier Message */}
+      <div className="flex items-start gap-2 p-2 rounded-lg bg-white/5 border border-white/10 mb-3">
+        <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+        <p className="text-[10px] sm:text-xs text-gray-300 leading-tight">{getProgressMessage()}</p>
       </div>
 
       {/* Discount Tiers Table */}
-      <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50">
-        <h4 className="text-xs font-semibold text-cyan-400 mb-2 flex items-center gap-1.5">
-          <Gift className="w-3.5 h-3.5" />
-          {language === 'tr' && 'İndirim Seviyeleri'}
-          {language === 'en' && 'Discount Tiers'}
-          {language === 'ru' && 'Уровни Скидок'}
+      <div className="p-2 sm:p-3 rounded-lg bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50">
+        <h4 className="text-[10px] sm:text-xs font-semibold text-cyan-400 mb-2 flex items-center gap-1">
+          <Gift className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+          <span className="truncate">
+            {language === 'tr' && 'İndirim Seviyeleri'}
+            {language === 'en' && 'Discount Tiers'}
+            {language === 'ru' && 'Уровни Скидок'}
+          </span>
         </h4>
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {sortedTiers.map((tier) => {
             const isAchieved = currentGb >= tier.minGb;
             const isCurrentTier = currentDiscount === tier.discountPercent;
             return (
               <div 
                 key={tier.minGb}
-                className={`flex items-center justify-between p-2 rounded-lg text-xs transition-all ${
+                className={`flex items-center justify-between p-1.5 sm:p-2 rounded-lg text-[10px] sm:text-xs transition-all ${
                   isCurrentTier 
                     ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/40' 
                     : isAchieved 
@@ -184,14 +166,14 @@ export function LoyaltyProgress() {
                       : 'bg-white/[0.02] border border-white/5'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${isAchieved ? 'bg-green-400' : 'bg-gray-600'}`} />
-                  <span className={isAchieved ? 'text-white' : 'text-gray-500'}>
-                    {tier.minGb}+ GB {language === 'tr' ? 'al' : language === 'ru' ? 'купить' : 'buy'}
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ${isAchieved ? 'bg-green-400' : 'bg-gray-600'}`} />
+                  <span className={`whitespace-nowrap ${isAchieved ? 'text-white' : 'text-gray-500'}`}>
+                    {tier.minGb}+ GB
                   </span>
                 </div>
-                <div className={`font-bold ${isCurrentTier ? 'text-green-400' : isAchieved ? 'text-cyan-400' : 'text-gray-500'}`}>
-                  %{tier.discountPercent} {language === 'tr' ? 'indirim' : language === 'ru' ? 'скидка' : 'off'}
+                <div className={`font-bold whitespace-nowrap ${isCurrentTier ? 'text-green-400' : isAchieved ? 'text-cyan-400' : 'text-gray-500'}`}>
+                  %{tier.discountPercent}
                   {isCurrentTier && ' ✓'}
                 </div>
               </div>
@@ -200,7 +182,7 @@ export function LoyaltyProgress() {
         </div>
       </div>
 
-      <div className="mt-3 text-[10px] text-gray-500 text-center">
+      <div className="mt-2 text-[9px] sm:text-[10px] text-gray-500 text-center">
         {language === 'tr' && '* İndirimler her ayın 1\'inde sıfırlanır'}
         {language === 'en' && '* Discounts reset on the 1st of each month'}
         {language === 'ru' && '* Скидки сбрасываются 1-го числа каждого месяца'}
