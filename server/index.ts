@@ -11,6 +11,7 @@ import { setupAuth, seedDefaultAdmin } from "./auth";
 import { logCleanupService } from "./services/logCleanupService";
 import { OrderCancelService } from "./services/orderCancelService";
 import { pciComplianceService } from "./services/pciComplianceService";
+import { loyaltyResetService } from "./services/loyaltyResetService";
 import { storage } from "./storage";
 import { initializeDefaultEmailTemplates } from "./emailTemplates";
 
@@ -198,6 +199,9 @@ app.use((req, res, next) => {
   
   // Start PCI DSS compliance service (90-day inactive account check)
   pciComplianceService.startScheduler();
+  
+  // Start monthly loyalty reset service (resets on 1st of each month)
+  loyaltyResetService.start();
   
   // Start email scheduler for monthly reports
   startEmailScheduler();

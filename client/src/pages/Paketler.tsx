@@ -8,6 +8,7 @@ import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRig
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
+import { LoyaltyProgress } from "@/components/LoyaltyProgress";
 import { useRef } from "react";
 import type { Plan, FavoritePlan } from "@shared/schema";
 
@@ -133,6 +134,11 @@ export default function Paketler() {
               {t.packages.dataPackages}
             </span>
           </div>
+        </div>
+
+        {/* Monthly Loyalty Progress */}
+        <div className="mb-8 max-w-xl mx-auto">
+          <LoyaltyProgress />
         </div>
 
         {/* Quick Access GB Buttons */}

@@ -4,12 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ShoppingCart, Package, Trash2, Plus, Minus, DollarSign, Tag } from "lucide-react";
+import { Loader2, ShoppingCart, Package, Trash2, Plus, Minus, DollarSign, Tag, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState } from "react";
+
+interface LoyaltyStatus {
+  currentGb: number;
+  currentDiscount: number;
+  nextTier: { neededGb: number; nextDiscount: number } | null;
+  daysRemaining: number;
+}
 
 interface CartItem {
   id: string;
@@ -42,6 +49,14 @@ export default function Sepet() {
     queryKey: ["/api/cart"],
     enabled: !!user
   });
+
+  const { data: loyalty } = useQuery<LoyaltyStatus>({
+    queryKey: ["/api/user/loyalty"],
+    enabled: !!user
+  });
+
+  const loyaltyDiscount = loyalty?.currentDiscount || 0;
+  const subtotalAfterLoyalty = cartData?.subtotal ? cartData.subtotal * (1 - loyaltyDiscount / 100) : 0;
 
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ planId, quantity }: { planId: string; quantity: number }) => {
@@ -322,9 +337,24 @@ export default function Sepet() {
                       <span className="text-white font-semibold">{formatPrice(cartData.subtotal)}</span>
                     </div>
                     
+                    {/* Loyalty Discount */}
+                    {loyaltyDiscount > 0 && (
+                      <div className="flex justify-between items-center bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-2 rounded-lg border border-yellow-500/20">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-yellow-400" />
+                          <span className="text-yellow-400 text-sm font-medium">
+                            {t.cart?.loyaltyDiscount || 'Sadakat İndirimi'} (%{loyaltyDiscount})
+                          </span>
+                        </div>
+                        <span className="text-green-400 font-semibold">
+                          -{formatPrice(cartData.subtotal * loyaltyDiscount / 100)}
+                        </span>
+                      </div>
+                    )}
+                    
                     <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-600">
                       <span className="text-white">{t.checkout.total}</span>
-                      <span className="text-cyan-400">{formatPrice(cartData.subtotal || 0)}</span>
+                      <span className="text-cyan-400">{formatPrice(loyaltyDiscount > 0 ? subtotalAfterLoyalty : cartData.subtotal || 0)}</span>
                     </div>
                     
                     <div className="text-center text-sm text-slate-400 bg-slate-800/30 p-3 rounded-lg">

@@ -8,6 +8,7 @@ import { OrdersController } from "@paypal/paypal-server-sdk";
 import { OrderService } from "./services/orderService";
 import { CouponService } from "./services/couponService";
 import { ExpiryService } from "./services/expiryService";
+import { LoyaltyService } from "./services/loyaltyService";
 import { emailService, EmailService } from "./emailService";
 import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema } from "@shared/schema";
 import { z } from "zod";
@@ -62,6 +63,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User endpoint for session auth - REMOVED DUPLICATE (kept the better one below)
+
+  // =====================================================
+  // LOYALTY SYSTEM ENDPOINTS
+  // =====================================================
+
+  // Get user loyalty status
+  app.get('/api/user/loyalty', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const loyaltyStatus = await LoyaltyService.getUserLoyaltyStatus(userId);
+      res.json(loyaltyStatus);
+    } catch (error) {
+      console.error('Error fetching loyalty status:', error);
+      res.status(500).json({ message: 'Failed to fetch loyalty status' });
+    }
+  });
+
+  // Calculate loyalty discount for checkout preview
+  app.post('/api/user/loyalty/calculate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const { amount } = req.body;
+      if (typeof amount !== 'number' || amount <= 0) {
+        return res.status(400).json({ message: 'Invalid amount' });
+      }
+
+      const loyaltyStatus = await LoyaltyService.getUserLoyaltyStatus(userId);
+      const discountInfo = LoyaltyService.applyLoyaltyDiscount(amount, loyaltyStatus.currentDiscount);
+      
+      res.json({
+        ...discountInfo,
+        currentGb: loyaltyStatus.currentGb,
+        nextTier: loyaltyStatus.nextTier,
+        daysRemaining: loyaltyStatus.daysRemaining,
+      });
+    } catch (error) {
+      console.error('Error calculating loyalty discount:', error);
+      res.status(500).json({ message: 'Failed to calculate discount' });
+    }
+  });
 
   // PayPal routes
   app.get("/api/paypal/setup", async (req, res) => {
@@ -426,6 +475,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await orderService.processPaymentCompletion(orderId, paypalOrderId);
       
       if (result.success) {
+        // Update user's monthly loyalty data based on purchased GB
+        try {
+          const userId = req.session.userId;
+          const order = result.order;
+          
+          // Calculate total GB from order items
+          let totalGb = 0;
+          if (order && order.items) {
+            for (const item of order.items) {
+              if (item.plan && item.plan.dataLimitGb) {
+                totalGb += item.plan.dataLimitGb * (item.quantity || 1);
+              }
+            }
+          }
+          
+          if (totalGb > 0 && userId) {
+            const loyaltyResult = await LoyaltyService.updateUserLoyalty(userId, totalGb);
+            console.log(`Loyalty updated for user ${userId}: +${totalGb}GB, new total: ${loyaltyResult.newTotalGb}GB, discount: ${loyaltyResult.newDiscount}%`);
+          }
+        } catch (loyaltyError) {
+          console.error('Error updating loyalty:', loyaltyError);
+          // Don't fail the order if loyalty update fails
+        }
+        
         res.json({ 
           order: result.order,
           assignedCredentials: result.assignedCredentials,

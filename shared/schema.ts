@@ -44,6 +44,10 @@ export const users = pgTable("users", {
   last_activity_at: timestamp("last_activity_at"), // Son aktivite (15 dk oturum kontrolü)
   is_active: boolean("is_active").notNull().default(true), // Hesap aktifliği (90 gün inaktif = false)
   first_login_completed: boolean("first_login_completed").notNull().default(false), // İlk giriş tamamlandı mı
+  // Monthly Loyalty System fields
+  monthly_data_gb: integer("monthly_data_gb").notNull().default(0), // Bu ay toplam alınan GB
+  loyalty_discount_percent: integer("loyalty_discount_percent").notNull().default(0), // Mevcut indirim yüzdesi (0, 5, 10, 15)
+  loyalty_month_start: timestamp("loyalty_month_start"), // Sadakat ayı başlangıcı (her ay 1'inde sıfırlanır)
 });
 
 // Admin users table for admin panel access

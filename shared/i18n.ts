@@ -255,6 +255,7 @@ export interface Translation {
     monthEndExpiry: string;
     couponHint: string;
     couponDescription: string;
+    loyaltyDiscount: string;
   };
 
   // Checkout & Payment
@@ -664,7 +665,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       securityNotice: "Güvenli 256-bit SSL şifreleme",
       monthEndExpiry: "Ay sonu bitiş",
       couponHint: "Kupon kodu var mı?",
-      couponDescription: "Ödeme sayfasında kupon kodunuzu girebilirsiniz"
+      couponDescription: "Ödeme sayfasında kupon kodunuzu girebilirsiniz",
+      loyaltyDiscount: "Sadakat İndirimi"
     },
     
     checkout: {
@@ -1160,7 +1162,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       securityNotice: "Secure 256-bit SSL encryption",
       monthEndExpiry: "Month-end expiry",
       couponHint: "Have a coupon code?",
-      couponDescription: "You can enter your coupon code on the checkout page"
+      couponDescription: "You can enter your coupon code on the checkout page",
+      loyaltyDiscount: "Loyalty Discount"
     },
     
     checkout: {
@@ -1653,7 +1656,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       validUntil: "Действительно до",
       monthEndExpiry: "Срок действия до конца месяца",
       couponHint: "У вас есть код скидки?",
-      couponDescription: "Введите код купона для получения скидки на ваш заказ"
+      couponDescription: "Введите код купона для получения скидки на ваш заказ",
+      loyaltyDiscount: "Скидка Лояльности"
     },
 
     checkout: {

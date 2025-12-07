@@ -110,6 +110,11 @@ export interface IStorage {
   markAllUsersResetRequired(): Promise<number>;
   deactivateInactiveUsers(daysThreshold: number): Promise<number>;
   
+  // Loyalty System operations
+  getUser(userId: string): Promise<User | null>;
+  updateUserLoyalty(userId: string, data: { monthly_data_gb: number; loyalty_discount_percent: number; loyalty_month_start: Date | null }): Promise<void>;
+  resetAllMonthlyLoyalty(): Promise<number>;
+  
   // Admin User operations
   getAdminUser(id: string): Promise<AdminUser | undefined>;
   getAdminUserByUsername(username: string): Promise<AdminUser | undefined>;
@@ -744,6 +749,34 @@ export class DatabaseStorage implements IStorage {
       )
       .returning({ id: users.id });
     
+    return result.length;
+  }
+
+  // Loyalty System operations
+  async updateUserLoyalty(userId: string, data: { 
+    monthly_data_gb: number; 
+    loyalty_discount_percent: number; 
+    loyalty_month_start: Date | null 
+  }): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        monthly_data_gb: data.monthly_data_gb,
+        loyalty_discount_percent: data.loyalty_discount_percent,
+        loyalty_month_start: data.loyalty_month_start,
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async resetAllMonthlyLoyalty(): Promise<number> {
+    const result = await db
+      .update(users)
+      .set({
+        monthly_data_gb: 0,
+        loyalty_discount_percent: 0,
+        loyalty_month_start: new Date(),
+      })
+      .returning({ id: users.id });
     return result.length;
   }
 
