@@ -15,6 +15,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Order, User, Ship, FavoritePlan, Plan } from "@shared/schema";
 import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
+import { LoyaltyProgress } from "@/components/LoyaltyProgress";
 
 export default function Panel() {
   const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }, isLoading: boolean };
@@ -212,6 +213,11 @@ export default function Panel() {
               {t.dashboard.purchase.buyDataPackage}
             </Button>
           </Link>
+        </div>
+
+        {/* Loyalty Discount Banner */}
+        <div className="mb-6">
+          <LoyaltyProgress />
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
