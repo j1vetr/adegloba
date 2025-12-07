@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import path from "path";
+import helmet from "helmet";
 import { pool } from "./db";
 import { registerRoutes } from "./routes";
 import { startEmailScheduler } from "./emailScheduler";
@@ -14,6 +15,77 @@ import { storage } from "./storage";
 import { initializeDefaultEmailTemplates } from "./emailTemplates";
 
 const app = express();
+
+// =====================================================
+// SECURITY HEADERS - PCI DSS & PayPal Compliance
+// =====================================================
+
+// Remove X-Powered-By header (hide Express signature)
+app.disable('x-powered-by');
+
+// Helmet security headers
+app.use(helmet({
+  // Content Security Policy
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.paypal.com", "https://www.sandbox.paypal.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'", "https://www.paypal.com", "https://www.sandbox.paypal.com", "https://api.paypal.com", "https://api.sandbox.paypal.com"],
+      frameSrc: ["'self'", "https://www.paypal.com", "https://www.sandbox.paypal.com"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  // X-Frame-Options - Clickjacking protection
+  frameguard: { action: 'sameorigin' },
+  // X-Content-Type-Options - Prevent MIME sniffing
+  noSniff: true,
+  // X-XSS-Protection
+  xssFilter: true,
+  // Strict-Transport-Security (HSTS)
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
+  },
+  // Referrer-Policy
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  // X-DNS-Prefetch-Control
+  dnsPrefetchControl: { allow: false },
+  // X-Download-Options (IE specific)
+  ieNoOpen: true,
+  // X-Permitted-Cross-Domain-Policies
+  permittedCrossDomainPolicies: { permittedPolicies: 'none' }
+}));
+
+// HTTPS enforcement middleware (for production)
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Check if behind a proxy (Replit, nginx, etc.)
+  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  
+  // In production, redirect HTTP to HTTPS
+  if (process.env.NODE_ENV === 'production' && !isSecure) {
+    return res.redirect(301, `https://${req.headers.host}${req.url}`);
+  }
+  next();
+});
+
+// Cache control for sensitive pages
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const sensitiveRoutes = ['/giris', '/sifremi-unuttum', '/kayit', '/sifre-guncelle', '/admin/login', '/profil'];
+  
+  if (sensitiveRoutes.some(route => req.path.startsWith(route)) || req.path.includes('password') || req.path.includes('login')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
