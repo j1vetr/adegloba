@@ -43,7 +43,10 @@ export async function setupAuth(app: Express) {
 }
 
 export function isAuthenticated(req: any, res: any, next: any) {
-  // For now, allow all requests - you can implement your own auth logic
-  req.user = { claims: { sub: 'standalone-user' } };
-  next();
+  // Check if user is authenticated via session
+  if (req.session?.userId && req.session?.isAuthenticated) {
+    req.user = { id: req.session.userId };
+    return next();
+  }
+  return res.status(401).json({ message: 'Unauthorized' });
 }
