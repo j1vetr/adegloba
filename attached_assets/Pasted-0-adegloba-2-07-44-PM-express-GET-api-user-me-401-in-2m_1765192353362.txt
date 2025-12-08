@@ -1,0 +1,85 @@
+0|adegloba | 2:07:44 PM [express] GET /api/user/me 401 in 2ms :: {"message":"Unauthorized"}
+0|adegloba | 2:07:44 PM [express] GET /api/admin/me 401 in 0ms :: {"message":"Unauthorized"}
+0|adegloba | 2:07:44 PM [express] GET /api/admin/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba | 2:07:46 PM [express] GET /api/admin/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba | 2:07:46 PM [express] GET /api/user/me 401 in 0ms :: {"message":"Unauthorized"}
+0|adegloba | 2:07:46 PM [express] GET /api/admin/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba | 2:07:48 PM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba | 2:07:48 PM [express] GET /api/admin/me 401 in 0ms :: {"message":"Unauthorized"}
+0|adegloba | 2:07:52 PM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba | 2:07:52 PM [express] GET /api/auth/user 200 in 2ms
+0|adegloba | 2:08:17 PM [express] POST /api/user/forgot-password 500 in 11ms :: {"success":false,"message":"Şifre…
+0|adegloba | 2:08:24 PM [express] POST /api/user/forgot-password 500 in 10ms :: {"success":false,"message":"Şifre…
+0|adegloba | 2:08:26 PM [express] POST /api/user/forgot-password 500 in 8ms :: {"success":false,"message":"Şifre …
+0|adegloba | 2:08:31 PM [express] POST /api/user/forgot-password 500 in 10ms :: {"success":false,"message":"Şifre…
+0|adegloba | 2:08:34 PM [express] POST /api/user/forgot-password 500 in 8ms :: {"success":false,"message":"Şifre …
+
+/root/.pm2/logs/adegloba-error.log last 15 lines:
+0|adegloba |   detail: undefined,
+0|adegloba |   hint: undefined,
+0|adegloba |   position: '244',
+0|adegloba |   internalPosition: undefined,
+0|adegloba |   internalQuery: undefined,
+0|adegloba |   where: undefined,
+0|adegloba |   schema: undefined,
+0|adegloba |   table: undefined,
+0|adegloba |   column: undefined,
+0|adegloba |   dataType: undefined,
+0|adegloba |   constraint: undefined,
+0|adegloba |   file: 'parse_relation.c',
+0|adegloba |   line: '3647',
+0|adegloba |   routine: 'errorMissingColumn'
+0|adegloba | }
+
+        0|adegloba  | 2:11:53 PM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba  | Forgot password error: error: column "monthly_data_gb" does not exist
+0|adegloba  |     at /var/www/adegloba/node_modules/pg-pool/index.js:45:11
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|adegloba  |     at async file:///var/www/adegloba/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|adegloba  |     at async DatabaseStorage.getUserByEmail (file:///var/www/adegloba/dist/index.js:874:24)
+0|adegloba  |     at async file:///var/www/adegloba/dist/index.js:4529:20 {
+0|adegloba  |   length: 116,
+0|adegloba  |   severity: 'ERROR',
+0|adegloba  |   code: '42703',
+0|adegloba  |   detail: undefined,
+0|adegloba  |   hint: undefined,
+0|adegloba  |   position: '244',
+0|adegloba  |   internalPosition: undefined,
+0|adegloba  |   internalQuery: undefined,
+0|adegloba  |   where: undefined,
+0|adegloba  |   schema: undefined,
+0|adegloba  |   table: undefined,
+0|adegloba  |   column: undefined,
+0|adegloba  |   dataType: undefined,
+0|adegloba  |   constraint: undefined,
+0|adegloba  |   file: 'parse_relation.c',
+0|adegloba  |   line: '3647',
+0|adegloba  |   routine: 'errorMissingColumn'
+0|adegloba  | }
+0|adegloba  | 2:11:58 PM [express] POST /api/user/forgot-password 500 in 10ms :: {"success":false,"message":"Şifre…
+0|adegloba  | Forgot password error: error: column "monthly_data_gb" does not exist
+0|adegloba  |     at /var/www/adegloba/node_modules/pg-pool/index.js:45:11
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|adegloba  |     at async file:///var/www/adegloba/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|adegloba  |     at async DatabaseStorage.getUserByEmail (file:///var/www/adegloba/dist/index.js:874:24)
+0|adegloba  |     at async file:///var/www/adegloba/dist/index.js:4529:20 {
+0|adegloba  |   length: 116,
+0|adegloba  |   severity: 'ERROR',
+0|adegloba  |   code: '42703',
+0|adegloba  |   detail: undefined,
+0|adegloba  |   hint: undefined,
+0|adegloba  |   position: '244',
+0|adegloba  |   internalPosition: undefined,
+0|adegloba  |   internalQuery: undefined,
+0|adegloba  |   where: undefined,
+0|adegloba  |   schema: undefined,
+0|adegloba  |   table: undefined,
+0|adegloba  |   column: undefined,
+0|adegloba  |   dataType: undefined,
+0|adegloba  |   constraint: undefined,
+0|adegloba  |   file: 'parse_relation.c',
+0|adegloba  |   line: '3647',
+0|adegloba  |   routine: 'errorMissingColumn'
+0|adegloba  | }
+0|adegloba  | 2:12:02 PM [express] POST /api/user/forgot-password 500 in 10ms :: {"success":false,"message":"Şifre…
+0|adegloba  | ❌ Order auto-cancel: Cancelled 1 expired pending orders
