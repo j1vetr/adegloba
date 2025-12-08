@@ -1754,6 +1754,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         adminId: req.session.adminUser.id
       });
 
+      // Update user's loyalty data
+      try {
+        const purchasedGb = plan.dataLimitGb || 0;
+        if (purchasedGb > 0) {
+          await LoyaltyService.updateUserLoyalty(userId, purchasedGb);
+          console.log(`Loyalty updated for user ${userId}: +${purchasedGb}GB (manual assignment)`);
+        }
+      } catch (loyaltyError) {
+        console.error('Failed to update loyalty for manual assignment:', loyaltyError);
+      }
+
       // Create system log
       await storage.createSystemLog({
         category: 'admin_action',
