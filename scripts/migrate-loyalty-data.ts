@@ -62,7 +62,6 @@ async function migrateLoyaltyData() {
       WHERE o.status = 'paid'
         AND o.paid_at >= $1
         AND o.paid_at <= $2
-        AND u.role = 'user'
       GROUP BY o.user_id, u.username, u.email
       ORDER BY total_gb DESC
     `;
