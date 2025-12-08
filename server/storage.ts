@@ -397,7 +397,8 @@ export class DatabaseStorage implements IStorage {
         full_name: userData.full_name,
         phone: userData.phone,
         ship_id: userData.ship_id,
-        address: userData.address
+        address: userData.address,
+        first_login_completed: true // PCI uyumlu şifre ile kayıt olduğu için true
       })
       .returning();
     console.log('✅ User created successfully:', {

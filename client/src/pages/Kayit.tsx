@@ -303,10 +303,25 @@ export default function Kayit() {
     );
   }
 
+  // Password validation (PCI DSS compliance)
+  const passwordValidation = {
+    minLength: formData.password.length >= 12,
+    hasLetter: /[a-zA-Z]/.test(formData.password),
+    hasNumber: /[0-9]/.test(formData.password),
+    isValid: formData.password.length >= 12 && /[a-zA-Z]/.test(formData.password) && /[0-9]/.test(formData.password)
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
+    // Frontend validation for PCI compliance
+    if (!passwordValidation.isValid) {
+      setError("Şifre en az 12 karakter olmalı ve hem harf hem rakam içermelidir");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/user/register", {
@@ -467,9 +482,22 @@ export default function Kayit() {
                   onChange={handleChange}
                   required
                   className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm"
-                  placeholder={t.auth.passwordPlaceholder}
+                  placeholder="En az 12 karakter, harf ve rakam içermeli"
                   data-testid="input-password"
                 />
+                {formData.password.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2 text-xs">
+                    <span className={`px-2 py-1 rounded ${passwordValidation.minLength ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                      {passwordValidation.minLength ? '✓' : '✗'} 12+ karakter
+                    </span>
+                    <span className={`px-2 py-1 rounded ${passwordValidation.hasLetter ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                      {passwordValidation.hasLetter ? '✓' : '✗'} Harf
+                    </span>
+                    <span className={`px-2 py-1 rounded ${passwordValidation.hasNumber ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                      {passwordValidation.hasNumber ? '✓' : '✗'} Rakam
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
