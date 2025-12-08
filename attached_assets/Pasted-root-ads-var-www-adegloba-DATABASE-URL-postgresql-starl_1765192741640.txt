@@ -1,0 +1,72 @@
+root@ads:/var/www/adegloba# DATABASE_URL="postgresql://starlink_user:password123@localhost:5432/starlink_db" npx tsx scripts/migrate-loyalty-data.ts
+🚀 Sadakat verisi aktarımı başlatılıyor...
+
+📅 Tarih aralığı: 2025-11-30T21:00:00.000Z - 2025-12-31T20:59:59.999Z
+
+❌ Hata oluştu: ErrorEvent {
+  [Symbol(kTarget)]: WebSocket {
+    _events: [Object: null prototype] {
+      error: [Function],
+      message: [Function],
+      close: [Function],
+      open: [Function]
+    },
+    _eventsCount: 4,
+    _maxListeners: undefined,
+    _binaryType: 'arraybuffer',
+    _closeCode: 1006,
+    _closeFrameReceived: false,
+    _closeFrameSent: false,
+    _closeMessage: <Buffer >,
+    _closeTimer: null,
+    _errorEmitted: true,
+    _extensions: {},
+    _paused: false,
+    _protocol: '',
+    _readyState: 3,
+    _receiver: null,
+    _sender: null,
+    _socket: null,
+    _bufferedAmount: 0,
+    _isServer: false,
+    _redirects: 0,
+    _autoPong: true,
+    _url: 'wss://localhost/v2',
+    _req: null,
+    [Symbol(shapeMode)]: false,
+    [Symbol(kCapture)]: false
+  },
+  [Symbol(kType)]: 'error',
+  [Symbol(kError)]: Error [ERR_TLS_CERT_ALTNAME_INVALID]: Hostname/IP does not match certificate's altnames: Host: localhost. is not in the cert's altnames: DNS:ads.adegloba.space
+      at Object.checkServerIdentity (node:tls:316:12)
+      at TLSSocket.onConnectSecure (node:_tls_wrap:1687:27)
+      at TLSSocket.emit (node:events:524:28)
+      at TLSSocket._finishInit (node:_tls_wrap:1076:8)
+      at ssl.onhandshakedone (node:_tls_wrap:862:12) {
+    code: 'ERR_TLS_CERT_ALTNAME_INVALID',
+    reason: "Host: localhost. is not in the cert's altnames: DNS:ads.adegloba.space",
+    host: 'localhost',
+    cert: {
+      subject: [Object: null prototype],
+      issuer: [Object: null prototype],
+      subjectaltname: 'DNS:ads.adegloba.space',
+      infoAccess: [Object: null prototype],
+      ca: false,
+      modulus: 'B6E4F56C36A978EC2250429B16749F3565DEF17CDA28F1CB4A9857F1977FA42743D8F6F743B20A76978EB06DCE65C967EFA1A0727A8A135E0D6D06D4D9BF346A9AA3685162B1E64EB9F7B54D87631DC3A1B91CD888B866D559E5019151A24FCF4657D5CEFFDB775D13ACBA66A4DC8F5048484B52FC5AAA9CA165F29B0F1AAC0A28B3A7F2BC1193FBA4E1DEAF2F1224E1334D43B20F6BD077F9DB84E46871C9D9FD15038E8EE05B2D41B2F2CD492495D657B29EDEF503D47C3DDF030E0CEEC615C382C451629966535E48F6B9CDA25DECD3FEAAA3BFA213BD0025B1456548B4CF039387D9453436AA48D285886F593D441B32E3B6A5A7013030AFEB2550D5D71F',
+      bits: 2048,
+      exponent: '0x10001',
+      pubkey: <Buffer 30 82 01 22 30 0d 06 09 2a 86 48 86 f7 0d 01 01 01 05 00 03 82 01 0f 00 30 82 01 0a 02 82 01 01 00 b6 e4 f5 6c 36 a9 78 ec 22 50 42 9b 16 74 9f 35 65 ... 244 more bytes>,
+      valid_from: 'Nov  1 17:51:11 2025 GMT',
+      valid_to: 'Jan 30 17:51:10 2026 GMT',
+      fingerprint: '96:9F:24:F2:7C:D0:2A:E9:38:DA:4F:B9:1F:F1:CF:D0:9F:39:77:3C',
+      fingerprint256: 'DA:8A:FC:97:87:32:05:69:86:2A:C0:51:06:C4:D7:3C:14:ED:D2:57:90:E4:74:C8:47:64:CE:10:50:F7:76:58',
+      fingerprint512: '44:71:03:B1:81:67:41:72:80:39:A4:A7:74:4F:34:7E:DC:B4:B3:3C:43:4E:6F:7E:E9:D4:94:3A:6B:CC:F2:06:52:12:1D:20:5E:93:0E:BA:22:ED:56:E5:18:25:21:E6:CD:FE:57:11:10:30:20:BE:26:27:27:26:B7:BB:0C:89',
+      ext_key_usage: [Array],
+      serialNumber: '0545B2E951304DACC7562921B0D70EA52533',
+      raw: <Buffer 30 82 05 00 30 82 03 e8 a0 03 02 01 02 02 12 05 45 b2 e9 51 30 4d ac c7 56 29 21 b0 d7 0e a5 25 33 30 0d 06 09 2a 86 48 86 f7 0d 01 01 0b 05 00 30 33 ... 1234 more bytes>,
+      issuerCertificate: [Object]
+    }
+  },
+  [Symbol(kMessage)]: "Hostname/IP does not match certificate's altnames: Host: localhost. is not in the cert's altnames: DNS:ads.adegloba.space"
+}
+root@ads:/var/www/adegloba#

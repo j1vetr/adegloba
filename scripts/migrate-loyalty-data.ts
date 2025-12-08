@@ -5,17 +5,11 @@
  * ve loyalty_discount_percent alanını günceller.
  * 
  * KULLANIM:
- * 1. Production veritabanına bağlı olduğunuzdan emin olun
- * 2. Terminalde şu komutu çalıştırın:
- *    npx tsx scripts/migrate-loyalty-data.ts
- * 
- * NOT: Bu script sadece BU AY içindeki siparişleri hesaplar.
+ * DATABASE_URL="postgresql://user:pass@localhost:5432/db" npx tsx scripts/migrate-loyalty-data.ts
  */
 
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
-
-neonConfig.webSocketConstructor = ws;
+import pg from 'pg';
+const { Pool } = pg;
 
 const LOYALTY_TIERS = [
   { minGb: 100, discountPercent: 15 },
@@ -46,7 +40,7 @@ async function migrateLoyaltyData() {
   try {
     console.log('🚀 Sadakat verisi aktarımı başlatılıyor...\n');
     
-    // Bu ayın başlangıç ve bitiş tarihleri (Istanbul timezone)
+    // Bu ayın başlangıç ve bitiş tarihleri
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
