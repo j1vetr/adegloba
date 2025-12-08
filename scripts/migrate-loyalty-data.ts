@@ -48,14 +48,16 @@ async function migrateLoyaltyData() {
     console.log(`📅 Tarih aralığı: ${startOfMonth.toISOString()} - ${endOfMonth.toISOString()}\n`);
     
     // Bu ay içinde tamamlanmış siparişleri kullanıcı bazında grupla
+    // order_items tablosunda qty ve planId var, plans tablosundan data_limit_gb alınıyor
     const query = `
       SELECT 
         o.user_id,
         u.username,
         u.email,
-        SUM(oi.data_limit_gb * oi.quantity) as total_gb
+        SUM(p.data_limit_gb * oi.qty) as total_gb
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
+      JOIN plans p ON oi.plan_id = p.id
       JOIN users u ON o.user_id = u.id
       WHERE o.status = 'paid'
         AND o.paid_at >= $1
