@@ -16,6 +16,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Order, User, Ship, FavoritePlan, Plan } from "@shared/schema";
 import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
 import { LoyaltyProgress } from "@/components/LoyaltyProgress";
+import { SnowEffect } from "@/components/SnowEffect";
 
 export default function Panel() {
   const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }, isLoading: boolean };
@@ -184,7 +185,9 @@ export default function Panel() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+      {/* New Year Snow Effect */}
+      <SnowEffect />
       <UserNavigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
