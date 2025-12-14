@@ -1872,6 +1872,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Toggle user active status (activate/deactivate)
+  app.post("/api/admin/users/:id/toggle-status", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const newStatus = !user.is_active;
+      await storage.updateUser(id, { is_active: newStatus });
+      
+      // Create system log
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: newStatus ? 'activate_user' : 'deactivate_user',
+        adminId: req.session.adminUser.id,
+        entityType: 'user',
+        entityId: id,
+        details: {
+          username: user.username,
+          email: user.email,
+          newStatus: newStatus ? 'active' : 'inactive'
+        },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+      
+      res.json({ 
+        message: newStatus ? "Hesap aktif edildi" : "Hesap deaktif edildi",
+        is_active: newStatus
+      });
+    } catch (error: any) {
+      console.error("Error toggling user status:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // PCI DSS: Mark all users for mandatory password reset and send notification emails
   app.post("/api/admin/pci-dss/enforce-password-reset", isAdminAuthenticated, async (req, res) => {
     try {

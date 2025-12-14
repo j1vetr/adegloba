@@ -39,6 +39,99 @@ interface OrderWithDetails extends Order {
   totalAmount: number;
 }
 
+// User Status Toggle Button Component
+interface UserStatusToggleButtonProps {
+  userId: string;
+  username: string;
+  isActive: boolean;
+}
+
+function UserStatusToggleButton({ userId, username, isActive }: UserStatusToggleButtonProps) {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const { toast } = useToast();
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/admin/users/${userId}/toggle-status`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users-with-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users', userId] });
+      toast({
+        title: data.is_active ? "Hesap Aktif Edildi" : "Hesap Deaktif Edildi",
+        description: `${username} kullanıcısının hesap durumu güncellendi.`,
+      });
+      setIsConfirmOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Hata",
+        description: error.message || "Hesap durumu güncellenemedi",
+        variant: "destructive",
+      });
+    }
+  });
+
+  return (
+    <>
+      <Button
+        onClick={() => setIsConfirmOpen(true)}
+        size="sm"
+        variant="outline"
+        className={isActive 
+          ? "border-red-500 text-red-400 hover:bg-red-500/20" 
+          : "border-green-500 text-green-400 hover:bg-green-500/20"
+        }
+        data-testid="button-toggle-user-status"
+      >
+        {isActive ? (
+          <>
+            <UserX className="h-4 w-4 mr-1" />
+            Deaktif Et
+          </>
+        ) : (
+          <>
+            <UserCheck className="h-4 w-4 mr-1" />
+            Aktif Et
+          </>
+        )}
+      </Button>
+      
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogContent className="bg-slate-800 border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">
+              {isActive ? 'Hesabı Deaktif Et' : 'Hesabı Aktif Et'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              {isActive 
+                ? `${username} kullanıcısının hesabını deaktif etmek istediğinize emin misiniz? Kullanıcı sisteme giriş yapamayacak.`
+                : `${username} kullanıcısının hesabını aktif etmek istediğinize emin misiniz? Kullanıcı sisteme giriş yapabilecek.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-700 text-white hover:bg-slate-600 border-slate-600">
+              İptal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => toggleStatusMutation.mutate()}
+              disabled={toggleStatusMutation.isPending}
+              className={isActive 
+                ? "bg-red-600 hover:bg-red-700 text-white" 
+                : "bg-green-600 hover:bg-green-700 text-white"
+              }
+            >
+              {toggleStatusMutation.isPending ? "İşleniyor..." : (isActive ? "Deaktif Et" : "Aktif Et")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
 // Password Reset Button Component
 interface PasswordResetButtonProps {
   userId: string;
@@ -360,6 +453,15 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
                   <p className="text-white font-medium">{user.address}</p>
                 </div>
               )}
+              <div>
+                <Label className="text-gray-300 text-sm">Hesap Durumu</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  <Badge className={user.is_active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}>
+                    {user.is_active ? 'Aktif' : 'Pasif'}
+                  </Badge>
+                  <UserStatusToggleButton userId={user.id} username={user.username} isActive={user.is_active} />
+                </div>
+              </div>
               <div className="pt-2">
                 <ManualPackageAssignmentButton userId={user.id} username={user.username} />
               </div>
