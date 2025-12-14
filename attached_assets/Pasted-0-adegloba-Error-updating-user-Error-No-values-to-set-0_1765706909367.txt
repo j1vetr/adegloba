@@ -1,0 +1,97 @@
+0|adegloba  | Error updating user: Error: No values to set
+0|adegloba  |     at mapUpdateSet (file:///var/www/adegloba/node_modules/drizzle-orm/utils.js:90:11)
+0|adegloba  |     at PgUpdateBuilder.set (file:///var/www/adegloba/node_modules/drizzle-orm/pg-core/query-builders/update.js:30:7)
+0|adegloba  |     at DatabaseStorage.updateUser (file:///var/www/adegloba/dist/index.js:1025:56)
+0|adegloba  |     at file:///var/www/adegloba/dist/index.js:7252:21
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|adegloba  | 1:08:12 PM [express] POST /api/admin/users/a75b8bd6-da7a-465b-98ef-5f3b2a255ed8/toggle-status 200 in…
+0|adegloba  | 1:08:12 PM [express] GET /api/admin/users/a75b8bd6-da7a-465b-98ef-5f3b2a255ed8/orders 304 in 14ms ::…
+0|adegloba  | User Caner - Orders: 0, Total Amount: 0
+0|adegloba  | User standalone - Orders: 0, Total Amount: 0
+0|adegloba  | User BDuzgit - Orders: 0, Total Amount: 0
+0|adegloba  | User emir1 - Orders: 7, Total Amount: 290.75
+0|adegloba  | User ApoBJk - Orders: 0, Total Amount: 0
+0|adegloba  | User crew17 - Orders: 4, Total Amount: 86
+0|adegloba  | User egekkaratasli - Orders: 0, Total Amount: 0
+0|adegloba  | User EdiLee - Orders: 7, Total Amount: 120.5
+0|adegloba  | User barKokhba - Orders: 4, Total Amount: 73
+0|adegloba  | User ferdax - Orders: 1, Total Amount: 28
+0|adegloba  | User bedrisarihan@gmail.com - Orders: 3, Total Amount: 71
+0|adegloba  | User +905323803948 - Orders: 15, Total Amount: 277
+0|adegloba  | User POLTYA - Orders: 0, Total Amount: 0
+0|adegloba  | User Turan - Orders: 1, Total Amount: 15
+0|adegloba  | User Mourinho59 - Orders: 4, Total Amount: 86
+0|adegloba  | User Kaptan - Orders: 4, Total Amount: 112
+0|adegloba  | User Captain - Orders: 8, Total Amount: 392.5
+0|adegloba  | User Gocha - Orders: 95, Total Amount: 868.75
+0|adegloba  | User Chf off - Orders: 0, Total Amount: 0
+0|adegloba  | User Crew7 - Orders: 8, Total Amount: 86
+0|adegloba  | User Raul - Orders: 37, Total Amount: 143.75
+0|adegloba  | User Crew11 - Orders: 1, Total Amount: 15
+0|adegloba  | User Gedik - Orders: 0, Total Amount: 0
+0|adegloba  | User Todik41 - Orders: 0, Total Amount: 0
+0|adegloba  | User crew18 - Orders: 0, Total Amount: 0
+0|adegloba  | User crew5 - Orders: 0, Total Amount: 0
+0|adegloba  | User Prabach.off - Orders: 5, Total Amount: 114
+0|adegloba  | User emirtest - Orders: 0, Total Amount: 0
+0|adegloba  | User Omarab - Orders: 7, Total Amount: 184
+0|adegloba  | User crew7 - Orders: 20, Total Amount: 68.25
+0|adegloba  | User yigit007 - Orders: 0, Total Amount: 0
+0|adegloba  | User crew9  - Orders: 0, Total Amount: 0
+0|adegloba  | User Samir - Orders: 3, Total Amount: 84
+0|adegloba  | User Jesu - Orders: 7, Total Amount: 58
+0|adegloba  | User crew21 - Orders: 3, Total Amount: 84
+0|adegloba  | User crew10 - Orders: 0, Total Amount: 0
+0|adegloba  | User teststststs - Orders: 0, Total Amount: 0
+0|adegloba  | User dasdasdas - Orders: 0, Total Amount: 0
+0|adegloba  | User emr1453 - Orders: 0, Total Amount: 0
+0|adegloba  | User Tylnzgrzr - Orders: 13, Total Amount: 353
+0|adegloba  | User ugurtepe53 - Orders: 2, Total Amount: 30
+0|adegloba  | User Murat - Orders: 1, Total Amount: 3.25
+0|adegloba  | User Yalcincaliskan - Orders: 6, Total Amount: 168
+0|adegloba  | User Isachinrajput - Orders: 6, Total Amount: 22.75
+0|adegloba  | User ZalaHAN - Orders: 0, Total Amount: 0
+0|adegloba  | User +90 - Orders: 0, Total Amount: 0
+0|adegloba  | User crew160 - Orders: 0, Total Amount: 0
+0|adegloba  | User Alper - Orders: 24, Total Amount: 403.5
+0|adegloba  | User isachinrajput - Orders: 6, Total Amount: 43
+0|adegloba  | User 1lker - Orders: 22, Total Amount: 155
+0|adegloba  | User Yiğit59 - Orders: 6, Total Amount: 116
+0|adegloba  | User ertanx - Orders: 0, Total Amount: 0
+0|adegloba  | User Roma - Orders: 26, Total Amount: 232.5
+0|adegloba  | User Canbaz - Orders: 5, Total Amount: 77.5
+0|adegloba  | User Ajith  - Orders: 0, Total Amount: 0
+0|adegloba  | User G3rd - Orders: 1, Total Amount: 15
+0|adegloba  | User Ertanx - Orders: 9, Total Amount: 163.5
+0|adegloba  | User Bosun53 - Orders: 0, Total Amount: 0
+0|adegloba  | User Rhodes  - Orders: 0, Total Amount: 0
+0|adegloba  | User Jenith jeni  - Orders: 0, Total Amount: 0
+0|adegloba  | User bargalisundar@gmail.com - Orders: 1, Total Amount: 15
+0|adegloba  | User Sincer Bıra - Orders: 2, Total Amount: 56
+0|adegloba  | User osman - Orders: 1, Total Amount: 15
+0|adegloba  | User Singh - Orders: 6, Total Amount: 31.25
+0|adegloba  | User Kaptan Celal - Orders: 2, Total Amount: 18.25
+0|adegloba  | User Furkandeneme - Orders: 0, Total Amount: 0
+0|adegloba  | User Tunaaylin - Orders: 1, Total Amount: 68
+0|adegloba  | User Cagdas - Orders: 0, Total Amount: 0
+0|adegloba  | User ssaltuk - Orders: 3, Total Amount: 164
+0|adegloba  | User alibaskaya - Orders: 0, Total Amount: 0
+0|adegloba  | User cagri125 - Orders: 2, Total Amount: 83
+0|adegloba  | User Sabri  - Orders: 1, Total Amount: 3.25
+0|adegloba  | User Nermin Karabekir - Orders: 0, Total Amount: 0
+0|adegloba  | User frktpcu - Orders: 0, Total Amount: 0
+0|adegloba  | User mustafaseckin5555@gmail.com - Orders: 0, Total Amount: 0
+0|adegloba  | User utguntufan5 - Orders: 1, Total Amount: 130
+0|adegloba  | User Hujet - Orders: 0, Total Amount: 0
+0|adegloba  | User Onur - Orders: 6, Total Amount: 130.25
+0|adegloba  | User Mct - Orders: 1, Total Amount: 28
+0|adegloba  | User crew40 - Orders: 0, Total Amount: 0
+0|adegloba  | User Musa - Orders: 2, Total Amount: 56
+0|adegloba  | User kafka59 - Orders: 0, Total Amount: 0
+0|adegloba  | User mmmdovniyaz3@gmail.com - Orders: 0, Total Amount: 0
+0|adegloba  | User Bozlak - Orders: 0, Total Amount: 0
+0|adegloba  | User Natig - Orders: 1, Total Amount: 28
+0|adegloba  | User Subin Son - Orders: 0, Total Amount: 0
+0|adegloba  | User Pars2017 - Orders: 1, Total Amount: 3.25
+0|adegloba  | 1:08:12 PM [express] GET /api/admin/users-with-stats 304 in 14ms :: [{"id":"09948442-1c83-49a8-b546-…
+0|adegloba  | 1:08:12 PM [express] GET /api/admin/users/a75b8bd6-da7a-465b-98ef-5f3b2a255ed8/credentials 304 in 12…

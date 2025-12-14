@@ -586,6 +586,7 @@ export class DatabaseStorage implements IStorage {
       if (data.ship_id !== undefined) updateObject.ship_id = data.ship_id;
       if (data.address !== undefined) updateObject.address = data.address;
       if (data.password_hash !== undefined) updateObject.password_hash = data.password_hash;
+      if (data.is_active !== undefined) updateObject.is_active = data.is_active;
       
       const [updatedUser] = await db
         .update(users)
