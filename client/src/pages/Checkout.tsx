@@ -42,21 +42,6 @@ export default function Checkout() {
     enabled: !!orderId && !!user
   });
 
-  // Fetch loyalty status for discount
-  interface LoyaltyStatus {
-    currentTier: string;
-    currentDiscount: number;
-    monthlyPurchased: number;
-    nextTier: string | null;
-    gbToNextTier: number | null;
-  }
-  
-  const { data: loyalty } = useQuery<LoyaltyStatus>({
-    queryKey: ["/api/user/loyalty"],
-    enabled: !!user
-  });
-
-  const loyaltyDiscount = loyalty?.currentDiscount || 0;
 
   // Initialize coupon state from order data when order loads
   useEffect(() => {
@@ -228,13 +213,10 @@ export default function Checkout() {
     return [];
   };
 
-  // Real-time total calculation with loyalty discount
+  // Real-time total calculation
   const currentSubtotal = getCurrentSubtotal();
-  const currentCouponDiscount = appliedCoupon ? discount : 0;
-  const loyaltyDiscountAmount = currentSubtotal * (loyaltyDiscount / 100);
-  const totalDiscountAmount = currentCouponDiscount + loyaltyDiscountAmount;
-  const currentDiscount = currentCouponDiscount; // For backward compatibility
-  const currentTotal = Math.max(0, currentSubtotal - totalDiscountAmount);
+  const currentDiscount = appliedCoupon ? discount : 0;
+  const currentTotal = Math.max(0, currentSubtotal - currentDiscount);
 
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
@@ -501,18 +483,6 @@ export default function Checkout() {
                       </span>
                       <span className="font-semibold text-green-400 price-highlight" data-testid="checkout-discount">
                         -{formatPrice(currentDiscount)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {loyaltyDiscount > 0 && (
-                    <div className="flex justify-between items-center text-yellow-400 animate-slide-in-right bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-2 rounded-lg border border-yellow-500/20" data-testid="checkout-loyalty-discount">
-                      <span className="flex items-center">
-                        <span className="mr-1">⭐</span>
-                        {t.cart?.loyaltyDiscount || 'Sadakat İndirimi'} (%{loyaltyDiscount})
-                      </span>
-                      <span className="font-semibold text-green-400">
-                        -{formatPrice(loyaltyDiscountAmount)}
                       </span>
                     </div>
                   )}
