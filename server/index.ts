@@ -30,13 +30,15 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.paypal.com", "https://www.sandbox.paypal.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'strict-dynamic'", "https://www.paypal.com", "https://www.sandbox.paypal.com", "https://*.paypal.com", "https://*.paypalobjects.com"],
+      styleSrc: ["'self'", "https://fonts.googleapis.com", "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "https://www.paypal.com", "https://www.sandbox.paypal.com", "https://api.paypal.com", "https://api.sandbox.paypal.com"],
-      frameSrc: ["'self'", "https://www.paypal.com", "https://www.sandbox.paypal.com"],
+      connectSrc: ["'self'", "https://www.paypal.com", "https://www.sandbox.paypal.com", "https://api.paypal.com", "https://api.sandbox.paypal.com", "https://*.paypal.com"],
+      frameSrc: ["'self'", "https://www.paypal.com", "https://www.sandbox.paypal.com", "https://*.paypal.com"],
       objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
       upgradeInsecureRequests: [],
     },
   },
@@ -135,7 +137,9 @@ app.use(session({
   rolling: true, // PCI DSS: Reset cookie expiry on each request (activity-based)
   cookie: {
     maxAge: PCI_SESSION_TIMEOUT_MS, // 15 minutes for PCI DSS compliance
-    secure: process.env.NODE_ENV === 'production'
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'strict'
   }
 }));
 
