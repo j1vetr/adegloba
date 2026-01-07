@@ -30,9 +30,9 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'strict-dynamic'", "https://www.paypal.com", "https://www.sandbox.paypal.com", "https://*.paypal.com", "https://*.paypalobjects.com"],
-      styleSrc: ["'self'", "https://fonts.googleapis.com", "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.paypal.com", "https://www.sandbox.paypal.com", "https://*.paypal.com", "https://*.paypalobjects.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "data:"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: ["'self'", "https://www.paypal.com", "https://www.sandbox.paypal.com", "https://api.paypal.com", "https://api.sandbox.paypal.com", "https://*.paypal.com"],
       frameSrc: ["'self'", "https://www.paypal.com", "https://www.sandbox.paypal.com", "https://*.paypal.com"],
