@@ -39,10 +39,11 @@ Preferred communication style: Simple, everyday language.
 - **Role System**: Admin and user roles with route protection.
 
 ## Payment Integration
-- **Provider**: PayPal Server SDK.
-- **Flow**: Order creation, PayPal checkout, payment capture, order fulfillment.
+- **Provider**: PayPal Server SDK (backend) + PayPal JS SDK v6 (frontend).
+- **Frontend SDK**: PayPal JS SDK v6 with `createInstance()`, payment sessions, and eligibility checks.
+- **Flow**: Client token → SDK init → Create order → PayPal checkout → Capture → Complete payment.
 - **Currency**: USD.
-- **Validation**: Server-side order validation.
+- **Validation**: Server-side order validation with strict capture status verification.
 
 # External Dependencies
 

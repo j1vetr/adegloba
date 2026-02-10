@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, CreditCard, Shield, CheckCircle2 } from "lucide-react";
+import { Loader2, Shield, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PayPalButtonProps {
@@ -12,6 +12,12 @@ interface PayPalButtonProps {
   onError?: (error: any) => void;
 }
 
+declare global {
+  interface Window {
+    paypal: any;
+  }
+}
+
 export default function PayPalButton({
   amount,
   currency,
@@ -21,130 +27,343 @@ export default function PayPalButton({
   onError
 }: PayPalButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [paypalLoaded, setPaypalLoaded] = useState(false);
+  const [sdkReady, setSdkReady] = useState(false);
   const [settings, setSettings] = useState<any>(null);
+  const [clientToken, setClientToken] = useState<string | null>(null);
+  const sdkInstanceRef = useRef<any>(null);
+  const paymentSessionRef = useRef<any>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Load PayPal settings from backend
   useEffect(() => {
     const loadSettings = async () => {
       try {
         const response = await fetch('/api/settings/payment');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-          const textResponse = await response.text();
-          console.error('Expected JSON response but got:', textResponse);
-          throw new Error('Invalid response format: expected JSON');
+          throw new Error('Invalid response format');
         }
-        
         const data = await response.json();
-        console.log('PayPal settings loaded:', data);
         setSettings(data);
       } catch (error) {
         console.error('Failed to load PayPal settings:', error);
-        // Set empty settings to show configuration message
         setSettings({});
       }
     };
     loadSettings();
   }, []);
 
-  // Load PayPal SDK
   useEffect(() => {
-    if (!settings?.paypal_client_id || settings.paypal_client_id.trim() === '') {
-      console.log('PayPal client ID not available, skipping SDK load');
-      return;
-    }
+    if (!settings?.paypal_client_id || settings.paypal_client_id.trim() === '') return;
 
-    const loadPayPalSDK = () => {
-      return new Promise<void>((resolve, reject) => {
-        // Check if PayPal SDK is already loaded
-        if ((window as any).paypal) {
-          console.log('PayPal SDK already loaded');
-          setPaypalLoaded(true);
-          resolve();
+    const fetchClientToken = async () => {
+      try {
+        const response = await fetch('/api/paypal/setup');
+        if (!response.ok) throw new Error('Failed to get client token');
+        const data = await response.json();
+        if (data.clientToken) {
+          setClientToken(data.clientToken);
+        }
+      } catch (error) {
+        console.error('Failed to fetch client token:', error);
+        toast({
+          title: "PayPal Yapılandırma Hatası",
+          description: "PayPal client token alınamadı. Lütfen ayarları kontrol edin.",
+          variant: "destructive",
+        });
+      }
+    };
+    fetchClientToken();
+  }, [settings?.paypal_client_id, toast]);
+
+  useEffect(() => {
+    if (!clientToken || !settings?.paypal_client_id) return;
+
+    const environment = settings.paypal_environment || 'sandbox';
+    const isProduction = environment === 'live' || environment === 'production';
+    const sdkBaseUrl = isProduction
+      ? 'https://www.paypal.com/web-sdk/v6/core'
+      : 'https://www.sandbox.paypal.com/web-sdk/v6/core';
+
+    const loadV6SDK = async () => {
+      if (window.paypal?.createInstance) {
+        await initializeV6();
+        return;
+      }
+
+      const existingScripts = document.querySelectorAll('script[src*="paypal.com"]');
+      existingScripts.forEach(script => script.remove());
+      delete window.paypal;
+
+      const script = document.createElement('script');
+      script.src = sdkBaseUrl;
+      script.async = true;
+
+      script.onload = async () => {
+        console.log('PayPal v6 SDK loaded');
+        await initializeV6();
+      };
+
+      script.onerror = (error) => {
+        console.error('PayPal v6 SDK load failed:', error);
+        toast({
+          title: "PayPal SDK Hatası",
+          description: "PayPal v6 SDK yüklenemedi.",
+          variant: "destructive",
+        });
+      };
+
+      document.head.appendChild(script);
+    };
+
+    const initializeV6 = async () => {
+      try {
+        if (!window.paypal?.createInstance) {
+          console.error('PayPal v6 createInstance not available');
           return;
         }
 
-        // Remove any existing PayPal scripts to avoid conflicts
-        const existingScripts = document.querySelectorAll('script[src*="paypal.com/sdk"]');
-        existingScripts.forEach(script => script.remove());
+        const sdkInstance = await window.paypal.createInstance({
+          clientToken: clientToken,
+          components: ["paypal-payments"],
+          pageType: "checkout",
+          clientMetadataId: crypto.randomUUID(),
+        });
 
-        const script = document.createElement('script');
-        const clientId = settings.paypal_client_id;
-        const environment = settings.paypal_environment || 'sandbox';
-        
-        // Build PayPal SDK URL with proper parameters
-        const sdkUrl = new URL('https://www.paypal.com/sdk/js');
-        sdkUrl.searchParams.set('client-id', clientId);
-        sdkUrl.searchParams.set('currency', currency);
-        sdkUrl.searchParams.set('intent', intent);
-        sdkUrl.searchParams.set('components', 'buttons,funding-eligibility');
-        
-        // Add environment-specific parameters
-        if (environment === 'sandbox') {
-          sdkUrl.searchParams.set('disable-funding', 'venmo,paylater');
-          sdkUrl.searchParams.set('enable-funding', 'card');
-        } else if (environment === 'production' || environment === 'live') {
-          // Production mode parameters for maximum compatibility
-          sdkUrl.searchParams.set('enable-funding', 'venmo,card,bancontact,eps,giropay,ideal,mybank,p24,sepa,sofort');
-          sdkUrl.searchParams.set('disable-funding', 'paylater,blik');
-          sdkUrl.searchParams.set('locale', 'tr_TR'); // Turkish locale for Turkey
-          sdkUrl.searchParams.set('buyer-country', 'TR'); // Turkey buyer country
-          sdkUrl.searchParams.set('commit', 'true'); // Immediate payment commit
-          sdkUrl.searchParams.set('vault', 'false'); // Don't save payment methods
+        sdkInstanceRef.current = sdkInstance;
+        console.log('PayPal v6 SDK instance created');
+
+        const eligibleMethods = await sdkInstance.findEligibleMethods({
+          currencyCode: currency,
+        });
+
+        if (eligibleMethods.isEligible("paypal")) {
+          setupPaymentSession(sdkInstance);
+          setSdkReady(true);
+        } else {
+          console.warn('PayPal payment method not eligible');
+          toast({
+            title: "PayPal Kullanılamıyor",
+            description: "PayPal şu an bu para birimi için kullanılamıyor.",
+            variant: "destructive",
+          });
         }
-        
-        script.src = sdkUrl.toString();
-        script.async = true;
-        script.defer = true;
-        
-        console.log('Loading PayPal SDK from:', script.src);
-        
-        script.onload = () => {
-          console.log('PayPal SDK loaded successfully');
-          // Wait a moment for PayPal to initialize
-          setTimeout(() => {
-            if ((window as any).paypal) {
-              setPaypalLoaded(true);
-              resolve();
-            } else {
-              reject(new Error('PayPal object not available after SDK load'));
-            }
-          }, 100);
-        };
-        
-        script.onerror = (error) => {
-          console.error('PayPal SDK script failed to load:', error);
-          // Check if it's a CORS or client-id validation error
-          reject(new Error(`PayPal SDK load failed. Please check client-id: ${clientId.substring(0, 20)}...`));
-        };
-        
-        document.head.appendChild(script);
-      });
-    };
-
-    const timeoutId = setTimeout(() => {
-      loadPayPalSDK().catch((error) => {
-        console.error('PayPal SDK load error:', error);
+      } catch (error) {
+        console.error('PayPal v6 initialization error:', error);
         toast({
-          title: "PayPal Yapılandırma Hatası",
-          description: "PayPal Client ID geçersiz veya hatalı. Lütfen admin panelinden doğru sandbox Client ID girin.",
+          title: "PayPal Başlatma Hatası",
+          description: "PayPal v6 SDK başlatılamadı. Lütfen sayfayı yenileyin.",
           variant: "destructive",
         });
-      });
-    }, 100); // Small delay to ensure settings are properly loaded
+      }
+    };
 
-    return () => clearTimeout(timeoutId);
-  }, [settings?.paypal_client_id, settings?.paypal_environment, currency, intent, toast]);
+    loadV6SDK();
+
+    return () => {
+      paymentSessionRef.current = null;
+      sdkInstanceRef.current = null;
+    };
+  }, [clientToken, settings?.paypal_client_id, settings?.paypal_environment, currency, toast]);
+
+  const setupPaymentSession = useCallback((sdkInstance: any) => {
+    const session = sdkInstance.createPayPalOneTimePaymentSession({
+      createOrder: async () => {
+        try {
+          const createResponse = await fetch('/api/paypal/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: parseFloat(amount).toString(),
+              currency: currency,
+              intent: intent.toUpperCase() || 'CAPTURE',
+            }),
+          });
+
+          if (!createResponse.ok) {
+            const contentType = createResponse.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              const errorData = await createResponse.json();
+              throw new Error(errorData.message || 'Order creation failed');
+            } else {
+              const errorText = await createResponse.text();
+              throw new Error(`Order creation failed: ${errorText}`);
+            }
+          }
+
+          const createData = await createResponse.json();
+          console.log('PayPal v6 order created:', createData.id);
+          return createData.id;
+        } catch (error) {
+          console.error('Error creating PayPal order:', error);
+          toast({
+            title: "Sipariş Oluşturma Hatası",
+            description: error instanceof Error ? error.message : "Bilinmeyen hata",
+            variant: "destructive",
+          });
+          throw error;
+        }
+      },
+
+      onApprove: async (data: any) => {
+        try {
+          console.log('PayPal v6 payment approved:', data.orderID);
+
+          const captureResponse = await fetch('/api/paypal/capture-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: data.orderID }),
+          });
+
+          if (!captureResponse.ok) {
+            const contentType = captureResponse.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              const errorData = await captureResponse.json();
+              throw new Error(errorData.message || 'Payment capture failed');
+            } else {
+              const errorText = await captureResponse.text();
+              throw new Error(`Payment capture failed: ${errorText}`);
+            }
+          }
+
+          const captureData = await captureResponse.json();
+          console.log('PayPal v6 payment captured:', captureData);
+
+          const orderStatus = captureData.status;
+          const captureDetails = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+          const captureStatus = captureDetails?.status;
+
+          console.log('PayPal v6 strict validation:', {
+            orderStatus,
+            captureStatus,
+            captureId: captureDetails?.id,
+            processorResponse: captureDetails?.processor_response
+          });
+
+          if (captureStatus === 'DECLINED') {
+            throw new Error('Ödeme reddedildi - kart bilgilerini kontrol edin');
+          }
+
+          if (orderStatus === 'COMPLETED' && (!captureDetails || captureStatus === 'COMPLETED')) {
+            toast({
+              title: "Ödeme Kontrol Ediliyor",
+              description: "PayPal ödemesi doğrulandı, işleminiz tamamlanıyor...",
+            });
+
+            try {
+              const completeResponse = await fetch('/api/cart/complete-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  paypalOrderId: data.orderID,
+                  couponCode: couponCode || ''
+                }),
+              });
+
+              if (!completeResponse.ok) {
+                const errorData = await completeResponse.json();
+                throw new Error(errorData.message || 'Ödeme tamamlanırken hata oluştu');
+              }
+
+              const completeData = await completeResponse.json();
+              console.log('PayPal v6 order completed:', completeData);
+
+              toast({
+                title: "Ödeme Başarılı!",
+                description: "PayPal ödemesi tamamlandı ve paketler etkinleştirildi. Yönlendiriliyorsunuz...",
+              });
+
+              setTimeout(() => {
+                window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureDetails?.id || captureData.id}`;
+              }, 1500);
+
+            } catch (backendError: any) {
+              console.error('PayPal v6 backend complete-payment failed:', backendError);
+              throw new Error(`PayPal ödeme işlemi tamamlanamadı: ${backendError.message}`);
+            }
+          } else {
+            const errorMsg = captureStatus
+              ? `Ödeme tamamlanamadı (${captureStatus})`
+              : 'PayPal ödemesi tamamlanmadı';
+            throw new Error(errorMsg);
+          }
+        } catch (error) {
+          console.error('Payment capture error:', error);
+          toast({
+            title: "Ödeme Hatası",
+            description: error instanceof Error ? error.message : "Ödeme tamamlanamadı",
+            variant: "destructive",
+          });
+
+          const environment = settings?.paypal_environment || 'sandbox';
+          setTimeout(() => {
+            window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(error instanceof Error ? error.message : 'Payment processing failed')}`;
+          }, 2000);
+
+          onError?.(error);
+        }
+      },
+
+      onError: (err: any) => {
+        console.error('PayPal v6 error:', err);
+        setIsLoading(false);
+
+        let errorMessage = "Ödeme işlemi sırasında bir hata oluştu.";
+        let errorReason = 'PayPal processing error';
+        const environment = settings?.paypal_environment || 'sandbox';
+
+        if (err && typeof err === 'object') {
+          if (err.name === 'VALIDATION_ERROR') {
+            errorMessage = "Kart bilgileri geçersiz. Lütfen doğru bilgilerle tekrar deneyin.";
+            errorReason = 'Invalid card details';
+          } else if (err.name === 'INSTRUMENT_DECLINED') {
+            errorMessage = "Kartınız reddedildi. Farklı bir kart deneyin veya bankanızla iletişime geçin.";
+            errorReason = 'Card declined';
+          } else if (err.name === 'UNPROCESSABLE_ENTITY') {
+            errorMessage = "Ödeme işlenemiyor. Kart bilgilerinizi kontrol edin.";
+            errorReason = 'Unprocessable payment';
+          }
+        }
+
+        toast({
+          title: "PayPal Hatası",
+          description: errorMessage,
+          variant: "destructive",
+        });
+
+        setTimeout(() => {
+          window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(errorReason)}&env=${environment}`;
+        }, 3000);
+
+        onError?.(err);
+      },
+
+      onCancel: () => {
+        setIsLoading(false);
+        toast({
+          title: "Ödeme İptal Edildi",
+          description: "PayPal ödemesi iptal edildi.",
+          variant: "default",
+        });
+
+        setTimeout(() => {
+          window.location.href = `/checkout/cancel?status=cancelled&amount=${amount}&reason=User cancelled payment`;
+        }, 2000);
+      }
+    });
+
+    paymentSessionRef.current = session;
+  }, [amount, currency, couponCode, toast, onSuccess, onError, settings?.paypal_environment]);
+
+  useEffect(() => {
+    if (sdkReady && sdkInstanceRef.current) {
+      setupPaymentSession(sdkInstanceRef.current);
+    }
+  }, [amount, currency, couponCode, sdkReady, setupPaymentSession]);
 
   const handlePayPalClick = async () => {
-    if (!paypalLoaded || !(window as any).paypal) {
+    if (!sdkReady || !paymentSessionRef.current) {
       toast({
         title: "PayPal Hazır Değil",
         description: "PayPal henüz yüklenemedi. Lütfen bekleyin veya sayfayı yenileyin.",
@@ -156,287 +375,19 @@ export default function PayPalButton({
     setIsLoading(true);
 
     try {
-      // Clear any existing PayPal button container
-      const container = document.getElementById('paypal-button-container');
-      if (container) {
-        container.innerHTML = '';
-        container.style.display = 'block';
-      }
-
-      // Initialize PayPal checkout directly
-      const paypal = (window as any).paypal;
-      
-      paypal.Buttons({
-        style: {
-          layout: 'vertical',
-          color: 'blue',
-          shape: 'rect',
-          label: 'pay',
-          height: 45,
-          tagline: false,
-          fundingicons: true
-        },
-        // Force production validation and behavior
-        fundingSource: environment === 'production' || environment === 'live' ? undefined : 'paypal',
-        createOrder: async () => {
-          try {
-            // Create PayPal order
-            const createResponse = await fetch('/api/paypal/create-order', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                amount: parseFloat(amount).toString(),
-                currency: currency,
-                intent: 'CAPTURE',
-              }),
-            });
-
-            if (!createResponse.ok) {
-              const contentType = createResponse.headers.get('content-type');
-              if (contentType && contentType.includes('application/json')) {
-                const errorData = await createResponse.json();
-                throw new Error(errorData.message || 'Order creation failed');
-              } else {
-                const errorText = await createResponse.text();
-                throw new Error(`Order creation failed: ${errorText}`);
-              }
-            }
-
-            const createData = await createResponse.json();
-            console.log('PayPal order created:', createData.id);
-            return createData.id;
-          } catch (error) {
-            console.error('Error creating PayPal order:', error);
-            toast({
-              title: "Sipariş Oluşturma Hatası",
-              description: error instanceof Error ? error.message : "Bilinmeyen hata",
-              variant: "destructive",
-            });
-            throw error;
-          }
-        },
-        onApprove: async (data: any) => {
-          try {
-            console.log('PayPal payment approved:', data.orderID);
-            
-            // Capture the payment
-            const captureResponse = await fetch('/api/paypal/capture-order', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                orderId: data.orderID,
-              }),
-            });
-
-            if (!captureResponse.ok) {
-              const contentType = captureResponse.headers.get('content-type');
-              if (contentType && contentType.includes('application/json')) {
-                const errorData = await captureResponse.json();
-                throw new Error(errorData.message || 'Payment capture failed');
-              } else {
-                const errorText = await captureResponse.text();
-                throw new Error(`Payment capture failed: ${errorText}`);
-              }
-            }
-
-            const captureData = await captureResponse.json();
-            console.log('PayPal payment captured:', captureData);
-            
-            if (captureData.status === 'COMPLETED') {
-              // Ödeme kontrol ediliyor bildirimi
-              toast({
-                title: "Ödeme Kontrol Ediliyor",
-                description: "PayPal ödemesi doğrulandı, işleminiz tamamlanıyor...",
-              });
-              
-              // Complete the order in our backend and assign credentials
-              try {
-                const completeResponse = await fetch('/api/cart/complete-payment', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    paypalOrderId: data.orderID,
-                    couponCode: couponCode || ''
-                  }),
-                });
-
-                if (!completeResponse.ok) {
-                  const errorData = await completeResponse.json();
-                  throw new Error(errorData.message || 'Ödeme tamamlanırken hata oluştu');
-                }
-
-                const completeData = await completeResponse.json();
-                console.log('✅ PayPal order completed with credentials assigned:', completeData);
-                
-                // Sadece backend başarılıysa success bildirimi ve yönlendirme
-                toast({
-                  title: "Ödeme Başarılı!",
-                  description: "PayPal ödemesi tamamlandı ve paketler etkinleştirildi. Yönlendiriliyorsunuz...",
-                });
-                
-                // Redirect to success page after 1.5 seconds
-                setTimeout(() => {
-                  window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureData.id}`;
-                }, 1500);
-                
-              } catch (backendError) {
-                console.error('❌ PayPal backend complete-payment failed:', backendError);
-                throw new Error(`PayPal ödeme işlemi tamamlanamadı: ${backendError.message}`);
-              }
-            } else {
-              throw new Error('PayPal ödemesi tamamlanmadı');
-            }
-          } catch (error) {
-            console.error('Payment capture error:', error);
-            toast({
-              title: "Ödeme Hatası",
-              description: error instanceof Error ? error.message : "Ödeme tamamlanamadı",
-              variant: "destructive",
-            });
-            
-            // Redirect to cancel page on error
-            setTimeout(() => {
-              window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(error instanceof Error ? error.message : 'Payment processing failed')}`;
-            }, 2000);
-            
-            onError?.(error);
-          }
-        },
-        onError: (err: any) => {
-          console.error('PayPal error (Production Mode):', err);
-          
-          // Enhanced error handling for production
-          let errorMessage = "Ödeme işlemi sırasında bir hata oluştu.";
-          let errorReason = 'PayPal processing error';
-          
-          if (err && typeof err === 'object') {
-            if (err.name === 'VALIDATION_ERROR') {
-              errorMessage = "Kart bilgileri geçersiz. Lütfen doğru bilgilerle tekrar deneyin.";
-              errorReason = 'Invalid card details';
-            } else if (err.name === 'INSTRUMENT_DECLINED') {
-              errorMessage = "Kartınız reddedildi. Farklı bir kart deneyin veya bankanızla iletişime geçin.";
-              errorReason = 'Card declined';
-            } else if (err.name === 'UNPROCESSABLE_ENTITY') {
-              errorMessage = "Ödeme işlenemiyor. Kart bilgilerinizi kontrol edin.";
-              errorReason = 'Unprocessable payment';
-            } else if (environment === 'production' || environment === 'live') {
-              errorMessage = "Canlı ödeme hatası. Gerçek kart bilgileri kullanın.";
-              errorReason = 'Production mode validation error';
-            }
-          }
-          
-          toast({
-            title: "PayPal Hatası",
-            description: errorMessage,
-            variant: "destructive",
-          });
-          
-          // Redirect to cancel page with detailed error info
-          setTimeout(() => {
-            window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(errorReason)}&env=${environment}`;
-          }, 3000);
-          
-          onError?.(err);
-        },
-        onCancel: () => {
-          toast({
-            title: "Ödeme İptal Edildi",
-            description: "PayPal ödemesi iptal edildi.",
-            variant: "default",
-          });
-          
-          // Redirect to cancel page after a short delay
-          setTimeout(() => {
-            window.location.href = `/checkout/cancel?status=cancelled&amount=${amount}&reason=User cancelled payment`;
-          }, 2000);
-        }
-      }).render('#paypal-button-container').then(() => {
-        setIsLoading(false);
-        console.log('PayPal buttons rendered successfully');
-      }).catch((error: any) => {
-        console.error('PayPal render error:', error);
-        setIsLoading(false);
-        toast({
-          title: "PayPal Render Hatası",
-          description: "PayPal butonları yüklenemedi.",
-          variant: "destructive",
-        });
-      });
-
+      await paymentSessionRef.current.start();
     } catch (error) {
-      console.error('PayPal initialization error:', error);
+      console.error('PayPal v6 session start error:', error);
       setIsLoading(false);
       toast({
         title: "PayPal Başlatma Hatası",
-        description: error instanceof Error ? error.message : "PayPal başlatılamadı",
+        description: error instanceof Error ? error.message : "PayPal ödeme penceresi açılamadı",
         variant: "destructive",
       });
       onError?.(error);
     }
   };
 
-  // Custom styled PayPal/Credit Card button
-  const renderCustomButton = () => (
-    <div className="space-y-3">
-      {/* PayPal Payment Button */}
-      <Button
-        onClick={handlePayPalClick}
-        disabled={isLoading || !paypalLoaded || !settings?.paypal_client_id}
-        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-xl text-sm transition-all duration-200 shadow-lg hover:shadow-xl relative overflow-hidden"
-        data-testid="paypal-payment-button"
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            Ödeme İşleniyor...
-          </div>
-        ) : (
-          <div className="flex items-center justify-center">
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a9.159 9.159 0 0 1-.354 1.888c-1.171 5.04-4.484 6.930-8.854 6.930H9.577a.5.5 0 0 0-.496.58l-.466 2.956-.132.84a.318.318 0 0 0 .314.37h2.4a.5.5 0 0 0 .496-.42l.020-.124.382-2.42.025-.134a.5.5 0 0 1 .496-.42h.312c3.634 0 6.479-1.476 7.314-5.738.348-1.781.167-3.27-.784-4.32z"/>
-            </svg>
-            <span className="font-semibold">PayPal ile Ödeme</span>
-          </div>
-        )}
-        {/* Animated background effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 animate-pulse"></div>
-      </Button>
-
-
-      {/* Payment Methods Info */}
-      <div className="flex items-center justify-center space-x-4 text-xs text-slate-400">
-        <div className="flex items-center space-x-1">
-          <Shield className="h-3 w-3" />
-          <span>Güvenli Ödeme</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <CheckCircle2 className="h-3 w-3" />
-          <span>256-bit SSL</span>
-        </div>
-      </div>
-
-      {/* PayPal Container - Visible when PayPal buttons are rendered */}
-      <div id="paypal-button-container" className="mt-2"></div>
-
-      {/* Secure Payment Info */}
-      <div className="text-center">
-        <p className="text-xs text-slate-500">Tüm ödemeler 256-bit SSL ile şifrelenir</p>
-      </div>
-    </div>
-  );
-
-  const formatPrice = (price: string) => {
-    const numPrice = parseFloat(price);
-    return `$${numPrice.toFixed(2)}`;
-  };
-
-  // Show loading state while PayPal is initializing
   if (!settings) {
     return (
       <div className="w-full py-4 flex items-center justify-center text-slate-400">
@@ -446,7 +397,6 @@ export default function PayPalButton({
     );
   }
 
-  // Show error if PayPal is not configured
   if (!settings.paypal_client_id || settings.paypal_client_id.trim() === '') {
     return (
       <div className="w-full p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center">
@@ -467,5 +417,51 @@ export default function PayPalButton({
     );
   }
 
-  return renderCustomButton();
+  return (
+    <div className="space-y-3">
+      <Button
+        onClick={handlePayPalClick}
+        disabled={isLoading || !sdkReady}
+        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-xl text-sm transition-all duration-200 shadow-lg hover:shadow-xl relative overflow-hidden"
+        data-testid="paypal-payment-button"
+      >
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            Ödeme İşleniyor...
+          </div>
+        ) : !sdkReady ? (
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            PayPal Yükleniyor...
+          </div>
+        ) : (
+          <div className="flex items-center justify-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a9.159 9.159 0 0 1-.354 1.888c-1.171 5.04-4.484 6.930-8.854 6.930H9.577a.5.5 0 0 0-.496.58l-.466 2.956-.132.84a.318.318 0 0 0 .314.37h2.4a.5.5 0 0 0 .496-.42l.020-.124.382-2.42.025-.134a.5.5 0 0 1 .496-.42h.312c3.634 0 6.479-1.476 7.314-5.738.348-1.781.167-3.27-.784-4.32z"/>
+            </svg>
+            <span className="font-semibold">PayPal ile Ödeme</span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 animate-pulse"></div>
+      </Button>
+
+      <div className="flex items-center justify-center space-x-4 text-xs text-slate-400">
+        <div className="flex items-center space-x-1">
+          <Shield className="h-3 w-3" />
+          <span>Güvenli Ödeme</span>
+        </div>
+        <div className="flex items-center space-x-1">
+          <CheckCircle2 className="h-3 w-3" />
+          <span>256-bit SSL</span>
+        </div>
+      </div>
+
+      <div ref={buttonRef}></div>
+
+      <div className="text-center">
+        <p className="text-xs text-slate-500">Tüm ödemeler 256-bit SSL ile şifrelenir</p>
+      </div>
+    </div>
+  );
 }
