@@ -1,0 +1,87 @@
+App	ADS System	Manage App
+Date and time	
+10/02/2026, 10:46
+Request path	/v2/checkout/orders
+Status	
+422
+Debug ID	e0773b8e2074f
+Issue	PAYER_CANNOT_PAY
+Description	The requested action could not be performed, semantically incorrect, or failed business validation.
+Resource ID	N/A
+Request
+Response
+{
+  "additional_properties": {},
+  "body": {
+    "intent": "CAPTURE",
+    "purchase_units": [
+      {
+        "amount": {
+          "currency_code": "USD",
+          "value": "28"
+        }
+      }
+    ],
+    "payment_source": {
+      "card": {
+        "name": "xxxxxx",
+        "number": "xxxxxx",
+        "expiry": "2030-09",
+        "security_code": "xxxxxx",
+        "billing_address": {
+          "address_line_1": "xxxxxx",
+          "address_line_2": "",
+          "admin_area_2": "Istanbul",
+          "admin_area_1": "TR",
+          "postal_code": "34000",
+          "country_code": "TR"
+        },
+        "attributes": {
+          "verification": {
+            "method": "SCA_WHEN_REQUIRED"
+          }
+        }
+      }
+    }
+  },
+  "header": {
+    "accept": "application/json",
+    "accept-encoding": "gzip",
+    "ak-client-info": "xxxxxx",
+    "akamai-x-forwarded-for-7": "xxxxxx",
+    "authorization": "xxxxx",
+    "client-auth": "xxxxx",
+    "client_info": "xxxxxx",
+    "content-length": "435",
+    "content-type": "application/json",
+    "correlation-id": "e0773b8e2074f",
+    "host": "api-m.paypal.com",
+    "paypal-request-id": "order-1770749199642-6vwz9y0e3o5",
+    "paypal-routing-metadata": "xxxxxx",
+    "pp_geo_loc": "DE",
+    "pp_remote_addr": "136.243.231.234",
+    "pp_vip": "173.0.87.53",
+    "prefer": "return=minimal",
+    "sg-proc-cnt": "xxxxxx",
+    "true-client-ip": "xxxxxx",
+    "user-agent": "PayPal REST API TypeScript SDK, Version: 1.1.0, on OS linux",
+    "x-akamai-edgescape": "xxxxxx",
+    "x-b3-spanid": "xxxxxx",
+    "x-edge-security-info": "xxxxxx",
+    "x-forwarded-for": "136.243.231.234, 10.210.243.99",
+    "x-forwarded-host": "xxxxxx",
+    "x-forwarded-server": "xxxxxx",
+    "x-paypal-correlation-id": "e0773b8e2074f",
+    "x-pp-corrid": "e0773b8e2074f",
+    "x-pp-idempotencyid": "e0773b8e2074f_1770749200",
+    "x-pp-slingshot-targetapp": "apiplatformproxyserv",
+    "x-sigsci-client-geo-city": "xxxxxx",
+    "x-sigsci-client-geo-country-code": "xxxxxx",
+    "x-sigsci-edgemodule": "xxxxxx",
+    "x-sigsci-requestid": "xxxxxx",
+    "x-sigsci-serviceid-prod": "xxxxxx",
+    "x-sigsci-tags": "xxxxxx",
+    "x-slr-orig-script_uri": "https://api-m.paypal.com/v2/checkout/orders"
+  },
+  "method": "POST"
+}
