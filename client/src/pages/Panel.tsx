@@ -196,11 +196,6 @@ export default function Panel() {
                 <p className="text-white font-bold text-base leading-none">Kontrol Paneli</p>
                 <p className="text-white/40 text-xs mt-0.5">Starlink Maritime</p>
               </div>
-              {/* live indicator */}
-              <div className="ml-auto flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-emerald-400 text-xs font-medium">Çevrimiçi</span>
-              </div>
             </div>
 
             {/* user info */}

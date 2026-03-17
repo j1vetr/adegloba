@@ -232,18 +232,18 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
             </button>
           </Link>
 
-          {/* Favoriler */}
-          <Link href="/panel?tab=favorites">
+          {/* Ana Sayfa */}
+          <Link href="/panel">
             <button
               className={`flex flex-col items-center justify-center w-full py-2 px-4 rounded-xl transition-all duration-300 ${
-                location === "/panel" && typeof window !== "undefined" && window.location.search.includes("tab=favorites")
-                  ? "bg-pink-500/20 text-pink-400"
-                  : "text-slate-400 hover:text-pink-300"
+                location === "/panel"
+                  ? "bg-blue-500/20 text-blue-400"
+                  : "text-slate-400 hover:text-blue-300"
               }`}
-              data-testid="mobile-bottom-favorites"
+              data-testid="mobile-bottom-home"
             >
-              <Heart className={`h-5 w-5 mb-1 ${location === "/panel" && typeof window !== "undefined" && window.location.search.includes("tab=favorites") ? "fill-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]" : ""}`} />
-              <span className="text-xs font-medium">{t.dashboard.sections.favorites}</span>
+              <Home className={`h-5 w-5 mb-1 ${location === "/panel" ? "drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]" : ""}`} />
+              <span className="text-xs font-medium">Ana Sayfa</span>
             </button>
           </Link>
 
