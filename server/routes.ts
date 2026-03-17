@@ -3661,31 +3661,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle multiple webhook event types for robust payment processing
       if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
         const payment = event.resource;
-        const orderId = payment.supplementary_data?.related_ids?.order_id || payment.custom_id;
+        const paypalOrderId = payment.supplementary_data?.related_ids?.order_id || payment.custom_id;
         
-        console.log(`💰 [SUCCESS] Processing payment completion for order: ${orderId}`);
+        console.log(`💰 [SUCCESS] Processing payment completion for PayPal order: ${paypalOrderId}`);
         console.log(`💳 Payment ID: ${payment.id}`);
         console.log(`💵 Amount: ${payment.amount?.currency_code} ${payment.amount?.value}`);
         
         try {
-          // Use atomic payment processing method for consistency
+          // PayPal Order ID'den DB order ID'yi bul
+          const dbOrders = await storage.getOrdersByPaypalOrderId(paypalOrderId);
+          if (!dbOrders || dbOrders.length === 0) {
+            console.warn(`⚠️ [WEBHOOK] No DB order found for PayPal Order ID: ${paypalOrderId} — skipping (may have been processed via direct flow)`);
+            return res.status(200).json({ status: 'skipped', reason: 'order_not_found_in_db', paypalOrderId });
+          }
+          const dbOrder = dbOrders[0];
+          
+          // Zaten paid ise yeniden işleme — idempotent yanıt ver
+          if (dbOrder.status === 'paid' || dbOrder.status === 'completed') {
+            console.log(`✅ [WEBHOOK] Order ${dbOrder.id} already paid — skipping duplicate webhook`);
+            return res.status(200).json({ status: 'already_processed', orderId: dbOrder.id });
+          }
+
           const result = await orderService.processPaymentCompletion(
-            orderId, 
-            payment.id, 
+            dbOrder.id,
+            paypalOrderId,
             payment
           );
           
           if (result.success) {
-            console.log(`✅ Payment processed successfully for order ${orderId}: ${result.assignedCredentials.length} credentials assigned`);
+            console.log(`✅ Payment processed successfully for order ${dbOrder.id}: ${result.assignedCredentials.length} credentials assigned`);
             
             // Create system log for successful payment processing
             await storage.createSystemLog({
               category: 'payment',
               action: 'webhook_payment_completed',
               entityType: 'order',
-              entityId: orderId,
+              entityId: dbOrder.id,
               details: {
                 paymentId: payment.id,
+                paypalOrderId,
                 amount: `${payment.amount?.currency_code} ${payment.amount?.value}`,
                 credentialsAssigned: result.assignedCredentials.length,
                 webhookEventType: event.event_type,
@@ -3698,23 +3712,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Send success response to PayPal
             res.status(200).json({ 
               status: 'success',
-              orderId,
+              orderId: dbOrder.id,
+              paypalOrderId,
               paymentId: payment.id,
               credentialsAssigned: result.assignedCredentials.length,
               environment: environment,
               timestamp: new Date().toISOString()
             });
           } else {
-            console.error(`❌ Payment processing failed for order ${orderId}`);
+            console.error(`❌ Payment processing failed for order ${dbOrder.id}`);
             
             // Log failed payment processing
             await storage.createSystemLog({
               category: 'payment_error',
               action: 'webhook_payment_failed',
               entityType: 'order',
-              entityId: orderId,
+              entityId: dbOrder.id,
               details: {
                 paymentId: payment.id,
+                paypalOrderId,
                 error: 'Payment processing failed',
                 webhookEventType: event.event_type,
                 environment: environment
@@ -3726,7 +3742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             res.status(500).json({ error: 'Payment processing failed' });
           }
         } catch (processingError) {
-          console.error(`💥 Payment processing error for order ${orderId}:`, processingError);
+          console.error(`💥 Payment processing error for order ${dbOrder?.id || paypalOrderId}:`, processingError);
           
           // Still send success to PayPal to avoid retries, but log the error
           res.status(200).json({ 

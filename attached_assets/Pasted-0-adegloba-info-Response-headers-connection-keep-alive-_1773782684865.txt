@@ -1,0 +1,58 @@
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-length":"483","server-timing":"**Redacted**","set-cookie":"**Redacted**","paypal-debug-id":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","access-control-expose-headers":"**Redacted**","content-type":"application/json","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Tue, 17 Mar 2026 21:24:03 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding"}
+0|adegloba  | [3DS] create-card-order error: CustomError
+0|adegloba  |     at CustomError.ApiError [as constructor] (/var/www/adegloba/node_modules/@apimatic/core/lib/errors/apiError.js:17:28)
+0|adegloba  |     at new CustomError (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/errors/customError.js:14:42)
+0|adegloba  |     at DefaultRequestBuilder.<anonymous> (/var/www/adegloba/node_modules/@apimatic/core/lib/http/requestBuilder.js:686:33)
+0|adegloba  |     at step (/var/www/adegloba/node_modules/tslib/tslib.js:196:27)
+0|adegloba  |     at Object.next (/var/www/adegloba/node_modules/tslib/tslib.js:177:57)
+0|adegloba  |     at fulfilled (/var/www/adegloba/node_modules/tslib/tslib.js:167:62)
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+0|adegloba  |   request: {
+0|adegloba  |     method: 'POST',
+0|adegloba  |     url: 'https://api-m.paypal.com/v2/checkout/orders',
+0|adegloba  |     headers: {
+0|adegloba  |       'Content-Type': 'application/json',
+0|adegloba  |       'PayPal-Request-Id': 'card-3ds-1773782642409-5vqkcgsdvpa',
+0|adegloba  |       Prefer: 'return=minimal',
+0|adegloba  |       authorization: 'Bearer A21AAM8fRTwjhNr3I5oh-5dtfEKqscrABRtdsJ0E-tWnS1P6IQcJj_EfL5NsiB_rmfdZpYambV3adVXIO9n2sbcAnWawfmU-A',
+0|adegloba  |       'user-agent': 'PayPal REST API TypeScript SDK, Version: 1.1.0, on OS linux',
+0|adegloba  |       accept: 'application/json'
+0|adegloba  |     },
+0|adegloba  |     body: {
+0|adegloba  |       type: 'text',
+0|adegloba  |       content: '{"intent":"CAPTURE","purchase_units":[{"amount":{"currency_code":"USD","value":"3.25"}}],"payment_source":{"card":{"name":"emir simsek","number":"5168404405747065","expiry":"2030-11","security_code":"484","billing_address":{"address_line_1":"Molla Mehmet Sokak No:7 anadolu kavagi istanbul","address_line_2":"","admin_area_2":"İstanbul","admin_area_1":"TR","postal_code":"34000","country_code":"TR"},"attributes":{"verification":{"method":"SCA_WHEN_REQUIRED"}},"experience_context":{"return_url":"https://ads.adegloba.space/3ds-return","cancel_url":"https://ads.adegloba.space/sepet"}}}}'
+0|adegloba  |     }
+0|adegloba  |   },
+0|adegloba  |   statusCode: 422,
+0|adegloba  |   headers: {
+0|adegloba  |     connection: 'keep-alive',
+0|adegloba  |     'content-length': '483',
+0|adegloba  |     'server-timing': 'traceparent;desc="00-00000000000000000000264c71eaf0f0-4eb58e2f589b37bb-01"',
+0|adegloba  |     'set-cookie': 'l7_az=ccg14.slc; Path=/; Domain=paypal.com; Expires=Tue, 17 Mar 2026 21:54:03 GMT; HttpOnly; Secure',
+0|adegloba  |     'paypal-debug-id': '0264c71eaf0f0',
+0|adegloba  |     'cache-control': 'max-age=0, no-cache, no-store, must-revalidate',
+0|adegloba  |     'access-control-expose-headers': 'Server-Timing',
+0|adegloba  |     'content-type': 'application/json',
+0|adegloba  |     'edge-control': 'max-age=0',
+0|adegloba  |     'accept-ranges': 'bytes',
+0|adegloba  |     date: 'Tue, 17 Mar 2026 21:24:03 GMT',
+0|adegloba  |     via: '1.1 varnish',
+0|adegloba  |     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
+0|adegloba  |     'x-served-by': 'cache-fra-etou8220176-FRA, cache-fra-etou8220176-FRA',
+0|adegloba  |     'x-cache': 'MISS, MISS',
+0|adegloba  |     'x-cache-hits': '0, 0',
+0|adegloba  |     'x-timer': 'S1773782643.687024,VS0,VE732',
+0|adegloba  |     vary: 'Accept-Encoding'
+0|adegloba  |   },
+0|adegloba  |   body: '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"PAYER_CANNOT_PAY","description":"Payer cannot pay for this transaction. Please contact the payer to find other ways to pay for this transaction."}],"message":"The requested action could not be performed, semantically incorrect, or failed business validation.","debug_id":"0264c71eaf0f0","links":[{"href":"https://developer.paypal.com/api/rest/reference/orders/v2/errors/#PAYER_CANNOT_PAY","rel":"information_link","method":"GET"}]}',
+0|adegloba  |   result: [Object: null prototype] {
+0|adegloba  |     name: 'UNPROCESSABLE_ENTITY',
+0|adegloba  |     details: [ [Object: null prototype] ],
+0|adegloba  |     message: 'The requested action could not be performed, semantically incorrect, or failed business validation.',
+0|adegloba  |     debug_id: '0264c71eaf0f0',
+0|adegloba  |     links: [ [Object: null prototype] ]
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | 12:24:03 AM [express] POST /api/paypal/create-card-order 500 in 1015ms :: {"message":"The requested a…
+0|adegloba  | 12:24:07 AM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"04073e31-161d-4d00-8465-1349189c9d…
+^C
