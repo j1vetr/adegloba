@@ -188,6 +188,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       process.env.PAYPAL_CLIENT_ID = paypalClientId;
       process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
 
+      // Capture DECLINED tespiti için res.json'u spy ile sarmala
+      let sentStatusCode = 200;
+      const origStatus = res.status.bind(res);
+      (res as any).status = function(code: number) {
+        sentStatusCode = code;
+        return origStatus(code);
+      };
+      const origJson = res.json.bind(res);
+      (res as any).json = async function(data: any) {
+        (res as any).json = origJson; // restore
+        // Capture DECLINED ise pending siparişi failed yap
+        if (sentStatusCode === 400 && data?.status === 'DECLINED' && orderId) {
+          try {
+            const declinedOrders = await storage.getOrdersByPaypalOrderId(orderId);
+            if (declinedOrders.length > 0) {
+              await storage.updateOrder(declinedOrders[0].id, { status: 'failed' });
+              console.log(`🔴 [CAPTURE-DECLINED] Order ${declinedOrders[0].id} marked as FAILED`);
+            }
+          } catch (e) {
+            console.error('[CAPTURE-DECLINED] DB update error:', e);
+          }
+        }
+        return origJson(data);
+      };
+
       try {
         // Set orderID in params for PayPal function  
         req.params = { ...req.params, orderID: orderId };
@@ -775,6 +800,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserById(userId);
       if (!user || !user.ship_id) {
         return res.status(400).json({ message: 'User ship not found' });
+      }
+
+      // Eski pending siparişleri iptal et (yeni ödeme denemesine temiz başlangıç)
+      const existingOrders = await storage.getUserOrders(userId);
+      const stalePending = existingOrders.filter((o: any) => o.status === 'pending');
+      for (const stale of stalePending) {
+        await storage.updateOrder(stale.id, { status: 'cancelled' });
+        console.log(`🧹 [CHECKOUT] Cancelled stale pending order ${stale.id}`);
       }
 
       // Get cart items
