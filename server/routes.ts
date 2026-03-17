@@ -2338,6 +2338,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/admin/plans/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const plan = await storage.updatePlan(id, req.body);
+      res.json(plan);
+    } catch (error) {
+      console.error('Error patching plan:', error);
+      res.status(500).json({ message: 'Failed to update plan' });
+    }
+  });
+
   app.delete('/api/admin/plans/:id', isAdminAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;

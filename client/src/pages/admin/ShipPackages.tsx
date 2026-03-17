@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Package, Ship as ShipIcon, ArrowUpDown } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, Ship as ShipIcon, ArrowUpDown, Power } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Ship, Plan } from '@shared/schema';
 
@@ -71,6 +71,23 @@ export default function ShipPackages() {
     },
     onError: () => {
       toast({ title: "Hata", description: "Paket silinirken bir hata oluştu.", variant: "destructive" });
+    }
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      apiRequest('PATCH', `/api/admin/plans/${id}`, { isActive }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/ship-plans'] });
+      toast({
+        title: variables.isActive ? "Paket Aktif Edildi" : "Paket Pasif Edildi",
+        description: variables.isActive
+          ? "Paket artık kullanıcılara görünür."
+          : "Paket kullanıcılardan gizlendi.",
+      });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Durum değiştirilirken bir hata oluştu.", variant: "destructive" });
     }
   });
 
@@ -325,6 +342,19 @@ export default function ShipPackages() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleStatusMutation.mutate({ id: plan.id, isActive: !plan.isActive })}
+                        disabled={toggleStatusMutation.isPending}
+                        title={plan.isActive ? 'Pasif yap' : 'Aktif yap'}
+                        className={plan.isActive
+                          ? 'border-green-600 text-green-400 hover:bg-green-600/20'
+                          : 'border-gray-600 text-gray-400 hover:bg-gray-600/20'}
+                        data-testid={`button-toggle-plan-${plan.id}`}
+                      >
+                        <Power className="h-4 w-4" />
+                      </Button>
                       <Dialog open={editingPlan?.id === plan.id} onOpenChange={(open) => !open && setEditingPlan(null)}>
                         <DialogTrigger asChild>
                           <Button
