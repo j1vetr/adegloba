@@ -203,9 +203,13 @@ export default function CreditCardDrawer({
           return;
         }
 
+        let messageReceived = false;
+
         // Popup'tan gelen mesajı dinle
         const handleMessage = (event: MessageEvent) => {
           if (event.data?.type !== '3ds_complete') return;
+          messageReceived = true;
+          clearInterval(pollClosed);
           window.removeEventListener('message', handleMessage);
           setIs3DSPending(false);
 
@@ -220,15 +224,17 @@ export default function CreditCardDrawer({
         };
         window.addEventListener('message', handleMessage);
 
-        // Popup kapatılırsa mesaj gelmeden
+        // Popup kullanıcı tarafından kapatılırsa — sadece mesaj gelmemişse tetikle
         const pollClosed = setInterval(() => {
-          if (popup.closed) {
+          let closed = false;
+          try { closed = popup.closed; } catch { closed = false; }
+          if (closed && !messageReceived) {
             clearInterval(pollClosed);
             window.removeEventListener('message', handleMessage);
             setIs3DSPending(false);
             toast({ title: "Ödeme İptal Edildi", description: "3D Secure doğrulama penceresi kapatıldı.", variant: "destructive" });
           }
-        }, 800);
+        }, 1500);
 
         return;
       }

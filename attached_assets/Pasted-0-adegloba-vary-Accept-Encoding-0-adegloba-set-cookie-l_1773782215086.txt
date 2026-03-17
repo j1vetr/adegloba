@@ -1,0 +1,39 @@
+0|adegloba |     vary: 'Accept-Encoding',
+0|adegloba |     'set-cookie': 'l7_az=ccg01.phx; Path=/; Domain=paypal.com; Expires=Tue, 17 Mar 2026 21:44:11 GMT; HttpOnly; Secure,__cf_bm=uai1YGjKfteqqGOyRJFKbtZNCztQtUlDNR2IReWMVIA-1773782050.666845-1.0.1.1-Zq6dAfD8IT1d5xriIU8AQL1Wzj93cAG.bw985uZ_Xm9bdhFLXH9GHcGV.yErbj9C.59MTJPPZmPMTBd9si8sRXa6hSitOHCDnqihmDlxm14ZeAO1vufLScbD_plK.buV; HttpOnly; Secure; Path=/; Domain=api-m.paypal.com; Expires=Tue, 17 Mar 2026 21:44:11 GMT',
+0|adegloba |     'cf-cache-status': 'DYNAMIC',
+0|adegloba |     server: 'cloudflare',
+0|adegloba |     'cf-ray': '9ddf0178ad7e914a-FRA'
+0|adegloba |   },
+0|adegloba |   body: '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"PAYER_CANNOT_PAY","description":"Payer cannot pay for this transaction. Please contact the payer to find other ways to pay for this transaction."}],"message":"The requested action could not be performed, semantically incorrect, or failed business validation.","debug_id":"56f4c33dd7d3a","links":[{"href":"https://developer.paypal.com/api/rest/reference/orders/v2/errors/#PAYER_CANNOT_PAY","rel":"information_link","method":"GET"}]}',
+0|adegloba |   result: [Object: null prototype] {
+0|adegloba |     name: 'UNPROCESSABLE_ENTITY',
+0|adegloba |     details: [ [Object: null prototype] ],
+0|adegloba |     message: 'The requested action could not be performed, semantically incorrect, or failed business validation.',
+0|adegloba |     debug_id: '56f4c33dd7d3a',
+0|adegloba |     links: [ [Object: null prototype] ]
+0|adegloba |   }
+0|adegloba | }
+
+/root/.pm2/logs/adegloba-out.log last 15 lines:
+0|adegloba | info: Response 200  application/json
+0|adegloba | info: Response headers {"date":"Tue, 17 Mar 2026 21:15:47 GMT","content-type":"application/json","transfer-encoding":"chunked","connection":"keep-alive","access-control-expose-headers":"**Redacted**","border-ip":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","paypal-debug-id":"**Redacted**","pragma":"no-cache","processing-ip":"**Redacted**","server-timing":"**Redacted**","strict-transport-security":"**Redacted**","vary":"Accept-Encoding","x-paypal-token-service":"**Redacted**","set-cookie":"**Redacted**","cf-cache-status":"**Redacted**","server":"cloudflare","cf-ray":"**Redacted**"}
+0|adegloba | info: Request POST https://api-m.paypal.com/v2/checkout/orders application/json
+0|adegloba | info: Request body {"type":"text","content":"{\"intent\":\"CAPTURE\",\"purchase_units\":[{\"amount\":{\"currency_code\":\"USD\",\"value\":\"3.25\"}}],\"payment_source\":{\"card\":{\"name\":\"emir simsek\",\"number\":\"5351776675427727\",\"expiry\":\"2029-12\",\"security_code\":\"690\",\"billing_address\":{\"address_line_1\":\"Molla Mehmet Sokak No:7 anadolu kavagi istanbul\",\"address_line_2\":\"\",\"admin_area_2\":\"İstanbul\",\"admin_area_1\":\"TR\",\"postal_code\":\"34000\",\"country_code\":\"TR\"},\"attributes\":{\"verification\":{\"method\":\"SCA_ALWAYS\"}},\"experience_context\":{\"return_url\":\"https://ads.adegloba.space/3ds-return\",\"cancel_url\":\"https://ads.adegloba.space/sepet\"}}}}"}
+0|adegloba | info: Response 201 359 application/json
+0|adegloba | info: Response headers {"date":"Tue, 17 Mar 2026 21:15:48 GMT","content-type":"application/json","content-length":"359","connection":"keep-alive","access-control-expose-headers":"**Redacted**","application_id":"**Redacted**","border-ip":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","caller_acct_num":"**Redacted**","paypal-debug-id":"**Redacted**","processing-ip":"**Redacted**","server-timing":"**Redacted**","strict-transport-security":"**Redacted**","vary":"Accept-Encoding","set-cookie":"**Redacted**","cf-cache-status":"**Redacted**","server":"cloudflare","cf-ray":"**Redacted**"}
+0|adegloba | 📥 [3DS] PayPal response status: PAYER_ACTION_REQUIRED
+0|adegloba | 🔗 [3DS] PayPal Order 3KF34833ML9684609 linked to DB order 39291dcc-f2d1-47a2-a93b-c163befe49c1
+0|adegloba | 12:15:48 AM [express] POST /api/paypal/create-card-order 200 in 922ms :: {"orderId":"3KF34833ML968460…
+0|adegloba | 12:15:50 AM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"365af9e9-2afa-498f-b1ce-a8750c7dba…
+0|adegloba | 12:15:55 AM [express] GET /api/cart 200 in 7ms :: {"items":[{"id":"365af9e9-2afa-498f-b1ce-a8750c7dba…
+0|adegloba | 12:16:01 AM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"365af9e9-2afa-498f-b1ce-a8750c7dba…
+0|adegloba | 12:16:06 AM [express] GET /api/cart 200 in 3ms :: {"items":[{"id":"365af9e9-2afa-498f-b1ce-a8750c7dba…
+0|adegloba | 12:16:11 AM [express] GET /api/cart 200 in 3ms :: {"items":[{"id":"365af9e9-2afa-498f-b1ce-a8750c7dba…
+0|adegloba | 12:16:15 AM [express] GET /api/user/me 200 in 2ms :: {"id":"9bd86dd4-3e6d-4c7e-9ffe-3f23352098a7","us…
+
+0|adegloba  | 12:16:16 AM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"365af9e9-2afa-498f-b1ce-a8750c7dba…
+0|adegloba  | 12:16:21 AM [express] GET /api/cart 200 in 3ms :: {"items":[{"id":"365af9e9-2afa-498f-b1ce-a8750c7dba…
+0|adegloba  | 12:16:23 AM [express] GET /api/user/me 200 in 3ms :: {"id":"9bd86dd4-3e6d-4c7e-9ffe-3f23352098a7","us…
+0|adegloba  | 12:16:23 AM [express] GET /api/cart 200 in 3ms :: {"items":[{"id":"365af9e9-2afa-498f-b1ce-a8750c7dba…
+0|adegloba  | 12:16:26 AM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"365af9e9-2afa-498f-b1ce-a8750c7dba…
+^C

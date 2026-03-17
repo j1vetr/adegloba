@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useSearch } from "wouter";
 import { Loader2, CheckCircle, XCircle, ShieldCheck } from "lucide-react";
 
 type Phase = "verifying" | "capturing" | "completing" | "success" | "error";
@@ -13,13 +12,13 @@ const isPopup = () => {
 };
 
 export default function ThreeDSReturn() {
-  const searchString = useSearch();
   const [phase, setPhase] = useState<Phase>("verifying");
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    const params = new URLSearchParams(searchString);
-    const orderId = params.get("token");
+    // Wouter yerine doğrudan window.location kullan — popup bağlamında daha güvenilir
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("token") || params.get("orderId") || params.get("order_id");
 
     if (!orderId) {
       const msg = "Sipariş bilgisi bulunamadı (token eksik).";
