@@ -241,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
             attributes: {
               verification: {
-                method: 'SCA_ALWAYS',
+                method: 'SCA_WHEN_REQUIRED',
               },
             },
             experienceContext: {
