@@ -204,9 +204,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create card order with SCA_ALWAYS (mandatory 3DS)
-  app.post('/api/paypal/create-card-order', async (req, res) => {
+  // Create card order with SCA_WHEN_REQUIRED (3DS if needed)
+  app.post('/api/paypal/create-card-order', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
     try {
+      const userId = req.session.userId;
       const { amount, currency, cardDetails } = req.body;
 
       if (!amount || !currency || !cardDetails) {
@@ -262,6 +266,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const jsonResponse = JSON.parse(String(body));
       console.log('📥 [3DS] PayPal response status:', jsonResponse.status);
+
+      // PayPal Order ID'yi hemen pending siparişe kaydet (reddedilme/webhook durumunda bulunabilsin)
+      if (jsonResponse.id) {
+        const userOrders = await storage.getUserOrders(userId);
+        const pendingOrder = userOrders.find((o: any) => o.status === 'pending');
+        if (pendingOrder) {
+          await storage.updateOrder(pendingOrder.id, { paypalOrderId: jsonResponse.id });
+          console.log(`🔗 [3DS] PayPal Order ${jsonResponse.id} linked to DB order ${pendingOrder.id}`);
+        }
+      }
 
       if (jsonResponse.status === 'PAYER_ACTION_REQUIRED') {
         const actionLink = jsonResponse.links?.find((l: any) => l.rel === 'payer-action');
