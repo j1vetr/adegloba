@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import { useSearch } from "wouter";
 import { Loader2, CheckCircle, XCircle, ShieldCheck } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 
 type Phase = "verifying" | "capturing" | "completing" | "success" | "error";
 
+const isPopup = () => {
+  try {
+    return !!window.opener && window.opener !== window;
+  } catch {
+    return false;
+  }
+};
+
 export default function ThreeDSReturn() {
   const searchString = useSearch();
-  const { toast } = useToast();
   const [phase, setPhase] = useState<Phase>("verifying");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -16,14 +22,19 @@ export default function ThreeDSReturn() {
     const orderId = params.get("token");
 
     if (!orderId) {
-      setErrorMsg("Sipariş bilgisi bulunamadı.");
+      const msg = "Sipariş bilgisi bulunamadı (token eksik).";
+      setErrorMsg(msg);
       setPhase("error");
+      if (isPopup()) {
+        window.opener?.postMessage({ type: "3ds_complete", success: false, error: msg }, "*");
+        setTimeout(() => window.close(), 2000);
+      }
       return;
     }
 
     const run = async () => {
       try {
-        // Step 1: Capture
+        // Adım 1: Capture
         setPhase("capturing");
         const captureRes = await fetch("/api/paypal/capture-order", {
           method: "POST",
@@ -33,18 +44,19 @@ export default function ThreeDSReturn() {
 
         if (!captureRes.ok) {
           const err = await captureRes.json();
-          throw new Error(err.message || "3D Secure doğrulaması sonrası ödeme yakalanamadı");
+          throw new Error(err.message || "3D Secure sonrası ödeme yakalanamadı");
         }
 
         const captureData = await captureRes.json();
-        const captureStatus = captureData.purchase_units?.[0]?.payments?.captures?.[0]?.status;
-        const captureId = captureData.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+        const captureDetails = captureData.purchase_units?.[0]?.payments?.captures?.[0];
 
-        if (captureData.status !== "COMPLETED" || captureStatus !== "COMPLETED") {
-          throw new Error(`Ödeme tamamlanamadı (${captureStatus || captureData.status})`);
+        if (captureData.status !== "COMPLETED" || captureDetails?.status !== "COMPLETED") {
+          throw new Error(`Ödeme tamamlanamadı (${captureDetails?.status || captureData.status})`);
         }
 
-        // Step 2: Complete payment in our system
+        const captureId = captureDetails.id;
+
+        // Adım 2: Complete payment in our system
         setPhase("completing");
         const completeRes = await fetch("/api/cart/complete-payment", {
           method: "POST",
@@ -60,14 +72,32 @@ export default function ThreeDSReturn() {
         const completeData = await completeRes.json();
         setPhase("success");
 
-        setTimeout(() => {
-          window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureId}`;
-        }, 2000);
+        if (isPopup()) {
+          // Popup modunda: parent'a mesaj gönder ve kapat
+          window.opener?.postMessage({
+            type: "3ds_complete",
+            success: true,
+            orderId: completeData.orderId,
+            amount: completeData.totalUsd,
+            paymentId: captureId,
+          }, "*");
+          setTimeout(() => window.close(), 1500);
+        } else {
+          // Tam sayfa modunda: direkt yönlendir
+          setTimeout(() => {
+            window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureId}`;
+          }, 2000);
+        }
       } catch (err: any) {
         console.error("[3DS Return] Error:", err);
-        setErrorMsg(err.message || "Ödeme işlemi sırasında bir hata oluştu.");
+        const msg = err.message || "Ödeme işlemi sırasında bir hata oluştu.";
+        setErrorMsg(msg);
         setPhase("error");
-        toast({ title: "Ödeme Hatası", description: err.message, variant: "destructive" });
+
+        if (isPopup()) {
+          window.opener?.postMessage({ type: "3ds_complete", success: false, error: msg }, "*");
+          setTimeout(() => window.close(), 3000);
+        }
       }
     };
 
@@ -85,7 +115,6 @@ export default function ThreeDSReturn() {
   return (
     <div className="min-h-screen bg-[#080c18] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        {/* Card */}
         <div className="relative rounded-2xl overflow-hidden border border-white/[0.07] bg-white/[0.03] p-8">
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
 
@@ -97,7 +126,11 @@ export default function ThreeDSReturn() {
                 </div>
               </div>
               <h2 className="text-white font-bold text-lg text-center mb-2">3D Secure İşlemi</h2>
-              <p className="text-white/40 text-sm text-center mb-8">Bankanızla ödemeniz doğrulanıyor, lütfen bekleyin.</p>
+              <p className="text-white/40 text-sm text-center mb-8">
+                {isPopup()
+                  ? "Bankanızla ödemeniz doğrulanıyor..."
+                  : "Lütfen bekleyin, ödemeniz işleniyor..."}
+              </p>
 
               <div className="space-y-4">
                 {steps.map((step, idx) => {
@@ -136,7 +169,9 @@ export default function ThreeDSReturn() {
                 <CheckCircle className="w-8 h-8 text-emerald-400" />
               </div>
               <h2 className="text-white font-bold text-lg mb-2">Ödeme Başarılı!</h2>
-              <p className="text-white/40 text-sm">3D Secure doğrulaması tamamlandı. Yönlendiriliyorsunuz...</p>
+              <p className="text-white/40 text-sm">
+                {isPopup() ? "Bu pencere kapanıyor..." : "Yönlendiriliyorsunuz..."}
+              </p>
             </div>
           )}
 
@@ -147,12 +182,16 @@ export default function ThreeDSReturn() {
               </div>
               <h2 className="text-white font-bold text-lg mb-2">Ödeme Başarısız</h2>
               <p className="text-white/35 text-sm mb-6">{errorMsg}</p>
-              <button
-                onClick={() => window.location.href = "/sepet"}
-                className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors"
-              >
-                Sepete Geri Dön
-              </button>
+              {isPopup() ? (
+                <p className="text-white/25 text-xs">Bu pencere otomatik kapanacak...</p>
+              ) : (
+                <button
+                  onClick={() => window.location.href = "/sepet"}
+                  className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors"
+                >
+                  Sepete Geri Dön
+                </button>
+              )}
             </div>
           )}
         </div>
