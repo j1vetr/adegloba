@@ -2,12 +2,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useSearch } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Package, History, Calendar, Clock, Info, ChevronLeft, ChevronRight, Archive, Zap, Copy, Heart, ShoppingCart } from "lucide-react";
+import {
+  Loader2, Package, History, Clock, Archive,
+  Heart, ShoppingCart, Copy, ChevronLeft, ChevronRight,
+  Wifi, Satellite, RotateCcw
+} from "lucide-react";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useToast } from "@/hooks/use-toast";
@@ -15,693 +15,566 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Order, User, Ship, FavoritePlan, Plan } from "@shared/schema";
 import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
+
+/* ─── helpers ─────────────────────────────────────────────── */
+const fmtDate = (d: string) =>
+  new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+const fmtPrice = (p: string | number) => `$${Number(p).toFixed(2)}`;
+
+function calcExpiry(paidAt: string, expiresAt: string) {
+  if (!expiresAt) {
+    const pd = new Date(paidAt);
+    expiresAt = new Date(pd.getFullYear(), pd.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
+  }
+  const exp = new Date(expiresAt);
+  const now = new Date();
+  const diffMs = exp.getTime() - now.getTime();
+  const daysLeft = Math.max(0, Math.ceil(diffMs / 86400000));
+  const pd = new Date(paidAt);
+  const start = new Date(pd.getFullYear(), pd.getMonth(), 1);
+  const total = exp.getTime() - start.getTime();
+  const elapsed = now.getTime() - start.getTime();
+  const pct = total > 0 ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 0;
+  return { daysLeft, exp, pct };
+}
+
+/* ─── sub-components ──────────────────────────────────────── */
+
+function CopyButton({ value, label, testId }: { value: string; label: string; testId?: string }) {
+  const { toast } = useToast();
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast({ title: `${label} kopyalandı`, variant: "default" });
+    } catch {
+      toast({ title: "Kopyalama başarısız", variant: "destructive" });
+    }
+  };
+  return (
+    <button
+      onClick={copy}
+      data-testid={testId}
+      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+    >
+      <Copy className="w-3.5 h-3.5 text-white/40 hover:text-white/70" />
+    </button>
+  );
+}
+
+function EmptyState({ icon: Icon, title, desc, action }: { icon: any; title: string; desc: string; action?: { label: string; href: string } }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+      <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center mb-5">
+        <Icon className="w-7 h-7 text-white/25" />
+      </div>
+      <p className="text-white/70 font-semibold text-base mb-1">{title}</p>
+      <p className="text-white/35 text-sm mb-6 max-w-xs">{desc}</p>
+      {action && (
+        <Link href={action.href}>
+          <button className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+            {action.label}
+          </button>
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/* ─── main component ──────────────────────────────────────── */
+const TABS = [
+  { key: 'packages', icon: Package,  labelKey: 'packagesShort' },
+  { key: 'favorites', icon: Heart,    labelKey: 'favoritesShort' },
+  { key: 'history',  icon: History,  labelKey: 'historyShort' },
+  { key: 'expired',  icon: Archive,  labelKey: 'expiredShort' },
+] as const;
+
 export default function Panel() {
-  const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }, isLoading: boolean };
+  const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }; isLoading: boolean };
   const { toast } = useToast();
   const { t } = useLanguage();
   const [expiredPage, setExpiredPage] = useState(1);
   const expiredPageSize = 6;
   const searchString = useSearch();
-  
-  // URL'den tab parametresini oku
+
   const getInitialTab = () => {
-    const params = new URLSearchParams(searchString);
-    const tab = params.get('tab');
-    if (tab && ['packages', 'favorites', 'history', 'expired'].includes(tab)) {
-      return tab;
-    }
-    return 'packages';
+    const p = new URLSearchParams(searchString).get('tab');
+    return (p && ['packages','favorites','history','expired'].includes(p)) ? p : 'packages';
   };
-  
   const [activeTab, setActiveTab] = useState(getInitialTab);
-  
-  // URL değiştiğinde tab'ı güncelle
+
   useEffect(() => {
-    const params = new URLSearchParams(searchString);
-    const tab = params.get('tab');
-    if (tab && ['packages', 'favorites', 'history', 'expired'].includes(tab)) {
-      setActiveTab(tab);
-    }
+    const p = new URLSearchParams(searchString).get('tab');
+    if (p && ['packages','favorites','history','expired'].includes(p)) setActiveTab(p);
   }, [searchString]);
 
-  const copyToClipboard = async (text: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: t.common.copied,
-        description: `${type} ${t.common.copiedDescription}`,
-        variant: "default"
-      });
-    } catch (err) {
-      toast({
-        title: t.common.error,
-        description: "Kopyalama işlemi başarısız",
-        variant: "destructive"
-      });
-    }
-  };
-
   const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
-    queryKey: ["/api/user/orders"],
-    enabled: !!user
+    queryKey: ["/api/user/orders"], enabled: !!user
   });
-
   const { data: activePackages, isLoading: packagesLoading } = useQuery({
-    queryKey: ["/api/user/active-packages"],
-    enabled: !!user
+    queryKey: ["/api/user/active-packages"], enabled: !!user
   });
-
   const { data: expiredPackagesData, isLoading: expiredLoading } = useQuery({
     queryKey: ["/api/user/expired-packages", expiredPage],
     queryFn: async () => {
-      const response = await fetch(`/api/user/expired-packages?page=${expiredPage}&pageSize=${expiredPageSize}`);
-      if (!response.ok) throw new Error('Failed to fetch expired packages');
-      return response.json();
+      const r = await fetch(`/api/user/expired-packages?page=${expiredPage}&pageSize=${expiredPageSize}`);
+      if (!r.ok) throw new Error('Failed');
+      return r.json();
     },
     enabled: !!user
   });
-
   const { data: favorites, isLoading: favoritesLoading } = useQuery<(FavoritePlan & { plan: Plan })[]>({
-    queryKey: ["/api/favorites"],
-    enabled: !!user
+    queryKey: ["/api/favorites"], enabled: !!user
   });
 
   const addToCartMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const response = await apiRequest('POST', '/api/cart', {
-        planId: planId,
-        quantity: 1
-      });
-      return response.json();
+      const r = await apiRequest('POST', '/api/cart', { planId, quantity: 1 });
+      return r.json();
     },
     onSuccess: () => {
-      toast({
-        title: t.packages.addedToCart,
-        description: t.packages.addedToCartDesc,
-      });
+      toast({ title: t.packages.addedToCart, description: t.packages.addedToCartDesc });
       window.location.href = '/sepet';
     },
-    onError: () => {
-      toast({
-        title: t.common.error,
-        description: "Sepete eklenemedi",
-        variant: "destructive",
-      });
-    },
+    onError: () => toast({ title: t.common.error, description: "Sepete eklenemedi", variant: "destructive" }),
   });
 
   const removeFavoriteMutation = useMutation({
-    mutationFn: async (planId: string) => {
-      await apiRequest('DELETE', `/api/favorites/${planId}`);
-    },
+    mutationFn: async (planId: string) => { await apiRequest('DELETE', `/api/favorites/${planId}`); },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
-      toast({
-        title: t.packages.removedFromFavorites,
-        variant: "default",
-      });
+      toast({ title: t.packages.removedFromFavorites });
     },
-    onError: () => {
-      toast({
-        title: t.packages.favoriteError,
-        variant: "destructive",
-      });
-    },
+    onError: () => toast({ title: t.packages.favoriteError, variant: "destructive" }),
   });
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-        <UserNavigation />
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
-        </div>
-      </div>
-    );
-  }
+  if (authLoading) return (
+    <div className="min-h-screen bg-[#080c18] flex items-center justify-center">
+      <Loader2 className="h-7 w-7 animate-spin text-cyan-400" />
+    </div>
+  );
 
-  if (!user) {
-    window.location.href = '/giris';
-    return null;
-  }
+  if (!user) { window.location.href = '/giris'; return null; }
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  const pkgs = activePackages as any[] | undefined;
+  const tabLabel: Record<string, string> = {
+    packagesShort: t.dashboard.sections.packagesShort ?? 'Paketler',
+    favoritesShort: t.dashboard.sections.favoritesShort ?? 'Fav',
+    historyShort: t.dashboard.sections.historyShort ?? 'Geçmiş',
+    expiredShort: t.dashboard.sections.expiredShort ?? 'Bitmiş',
   };
-
-  const formatPrice = (price: string | number) => {
-    return `$${Number(price).toFixed(2)}`;
-  };
-
-  const calculateExpiryInfo = (paidAt: string, expiresAt: string) => {
-    if (!expiresAt) {
-      // Fallback for old orders without expiresAt
-      const paidDate = new Date(paidAt);
-      const endOfMonth = new Date(paidDate.getFullYear(), paidDate.getMonth() + 1, 0, 23, 59, 59, 999);
-      expiresAt = endOfMonth.toISOString();
-    }
-    
-    const expirationDate = new Date(expiresAt);
-    const now = new Date();
-    const diffTime = expirationDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Calculate progress from start of month to end of month
-    const paidDate = new Date(paidAt);
-    const startOfMonth = new Date(paidDate.getFullYear(), paidDate.getMonth(), 1);
-    const totalMonthDuration = expirationDate.getTime() - startOfMonth.getTime();
-    const elapsed = now.getTime() - startOfMonth.getTime();
-    const progressPercentage = totalMonthDuration > 0 ? Math.max(0, Math.min(100, ((totalMonthDuration - Math.max(0, diffTime)) / totalMonthDuration) * 100)) : 0;
-    
-    return { daysRemaining: Math.max(0, diffDays), expirationDate, progressPercentage };
-  };
-
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+    <div className="min-h-screen bg-[#080c18]">
+      {/* ── ambient glows ── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 -left-20 w-96 h-96 rounded-full bg-blue-700/8 blur-[100px]" />
+        <div className="absolute top-1/3 -right-20 w-72 h-72 rounded-full bg-cyan-700/6 blur-[90px]" />
+      </div>
+
       <UserNavigation />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-4 mb-3">
-              <img 
-                src={adeGlobaLogo} 
-                alt="AdeGloba Limited" 
-                className="h-8 sm:h-10 lg:h-12 object-contain filter drop-shadow-lg"
-              />
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                {t.dashboard.title.replace(' - ', '').replace('AdeGloba Starlink System', '')}
-              </h1>
+
+      <div className="relative max-w-2xl mx-auto px-4 pt-5 pb-28">
+
+        {/* ══════════════════════════════════════════
+            HERO CARD — user identity + quick action
+            ══════════════════════════════════════ */}
+        <div className="relative rounded-2xl overflow-hidden mb-5">
+          {/* background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a2a4a] via-[#111827] to-[#0d1929]" />
+          {/* decorative circles */}
+          <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-blue-500/10 blur-2xl" />
+          <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-cyan-500/8 blur-2xl" />
+          {/* top accent line */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-400/50 to-transparent" />
+
+          <div className="relative p-5">
+            {/* logo + title row */}
+            <div className="flex items-center gap-3 mb-5">
+              <img src={adeGlobaLogo} alt="AdeGloba" className="h-9 object-contain drop-shadow-lg" />
+              <div>
+                <p className="text-white font-bold text-base leading-none">Kontrol Paneli</p>
+                <p className="text-white/40 text-xs mt-0.5">Starlink Maritime</p>
+              </div>
+              {/* live indicator */}
+              <div className="ml-auto flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-emerald-400 text-xs font-medium">Çevrimiçi</span>
+              </div>
             </div>
-            <p className="text-slate-400 text-sm lg:text-base">
-              {t.dashboard.welcome}, <span className="text-white font-medium">{user.username}</span>
-              {user.ship && (
-                <> • <span className="text-amber-400 font-medium">{t.dashboard.texts.ship} {user.ship.name}</span></>
-              )}
-            </p>
+
+            {/* user info */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-lg uppercase">
+                  {user.username?.[0] ?? 'U'}
+                </span>
+              </div>
+              <div>
+                <p className="text-white font-semibold text-base leading-tight">
+                  {t.dashboard.welcome}, <span className="text-cyan-300">{user.username}</span>
+                </p>
+                {user.ship && (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Satellite className="w-3 h-3 text-amber-400" />
+                    <span className="text-amber-400 text-xs font-medium">{user.ship.name}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* stats row */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              {[
+                { label: 'Aktif Paket', value: pkgs?.length ?? 0, color: 'text-emerald-400' },
+                { label: 'Sipariş', value: userOrders?.length ?? 0, color: 'text-blue-400' },
+                { label: 'Favori', value: favorites?.length ?? 0, color: 'text-pink-400' },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="bg-white/5 rounded-xl p-3 text-center">
+                  <p className={`text-xl font-bold ${color}`}>{value}</p>
+                  <p className="text-white/35 text-xs mt-0.5">{label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <Link href="/paketler">
+              <button
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold text-sm hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-blue-500/20"
+                data-testid="button-buy-packages"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                {t.dashboard.purchase.buyDataPackage}
+              </button>
+            </Link>
           </div>
-          <Link href="/paketler">
-            <Button className="w-full lg:w-auto bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg" data-testid="button-buy-packages">
-              <Package className="mr-2 h-4 w-4" />
-              {t.dashboard.purchase.buyDataPackage}
-            </Button>
-          </Link>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 border-slate-700/50 rounded-lg p-1">
-            <TabsTrigger 
-              value="packages" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
-              data-testid="tab-packages"
+        {/* ══════════════════════════════════════════
+            TAB BAR
+            ══════════════════════════════════════ */}
+        <div className="flex gap-2 mb-5 bg-white/[0.04] border border-white/[0.07] rounded-2xl p-1.5">
+          {TABS.map(({ key, icon: Icon, labelKey }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              data-testid={`tab-${key}`}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                activeTab === key
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-blue-500/20'
+                  : 'text-white/40 hover:text-white/60'
+              }`}
             >
-              <Package className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">{t.dashboard.sections.activePackages}</span>
-              <span className="sm:hidden">{t.dashboard.sections.packagesShort}</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="favorites" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
-              data-testid="tab-favorites"
-            >
-              <Heart className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">{t.dashboard.sections.favorites || 'Favorilerim'}</span>
-              <span className="sm:hidden">{t.dashboard.sections.favoritesShort || 'Fav'}</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
-              data-testid="tab-history"
-            >
-              <History className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">{t.dashboard.sections.purchaseHistory}</span>
-              <span className="sm:hidden">{t.dashboard.sections.historyShort}</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="expired" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-slate-300 transition-all duration-300 rounded-md"
-              data-testid="tab-expired"
-            >
-              <Archive className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">{t.dashboard.texts.expiredPackagesTitle}</span>
-              <span className="sm:hidden">{t.dashboard.sections.expiredShort}</span>
-            </TabsTrigger>
-          </TabsList>
+              <Icon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{tabLabel[labelKey]}</span>
+              <span className="sm:hidden">{tabLabel[labelKey]}</span>
+            </button>
+          ))}
+        </div>
 
-          {/* Active Packages */}
-          <TabsContent value="packages" className="space-y-4">
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2 text-lg">
-                  <Package className="h-5 w-5 text-blue-400" />
-                  {t.dashboard.sections.activePackages} {(activePackages as any)?.length ? `(${(activePackages as any).length})` : ''}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {packagesLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
-                    <span className="ml-3 text-slate-300">{t.dashboard.texts.loadingPackages}</span>
-                  </div>
-                ) : (activePackages as any)?.length ? (
-                  <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                    {(activePackages as any[]).map((pkg: any) => {
-                      const { daysRemaining, expirationDate, progressPercentage } = calculateExpiryInfo(pkg.paidAt || pkg.assignedAt, pkg.expiresAt);
-                      
-                      return (
-                        <Card key={pkg.credentialId} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10" data-testid={`package-card-${pkg.credentialId}`}>
-                          <CardContent className="p-6">
-                            <div className="text-center mb-6">
-                              <h3 className="font-bold text-white text-xl mb-3">{pkg.planName}</h3>
-                              
-                              {/* GB Display - Prominent */}
-                              <div className="bg-gradient-to-r from-blue-600/30 to-cyan-600/30 rounded-xl p-4 mb-4 border border-blue-500/50">
-                                <div className="flex items-baseline justify-center gap-1">
-                                  <span className="text-4xl font-bold text-white">{pkg.dataLimitGb}</span>
-                                  <span className="text-2xl text-blue-400 font-semibold">GB</span>
-                                </div>
-                                <p className="text-blue-300 text-sm mt-1 font-medium">Starlink Data Paketi</p>
-                              </div>
-                              
-                              <Badge className={`text-white border-0 px-4 py-1 text-sm font-semibold ${
-                                daysRemaining > 7 
-                                  ? 'bg-gradient-to-r from-green-600 to-emerald-600' 
-                                  : daysRemaining > 3 
-                                  ? 'bg-gradient-to-r from-yellow-600 to-orange-600' 
-                                  : 'bg-gradient-to-r from-red-600 to-red-700'
-                              }`}>
-                                {daysRemaining > 0 ? t.dashboard.status.active : t.dashboard.status.expired}
-                              </Badge>
-                            </div>
-                            
-                            <div className="space-y-4">
-                              
-                              <div className="space-y-3">
-                                {/* Package Features */}
-                                <div className="grid grid-cols-1 gap-3">
-                                  <div className="bg-slate-700/30 rounded-lg p-3">
-                                    <div className="flex items-center gap-2 text-sm text-white mb-1">
-                                      <Zap className="h-4 w-4 text-yellow-400" />
-                                      <span className="font-medium">Yüksek Hızlı İnternet</span>
-                                    </div>
-                                    <div className="text-xs text-slate-400">
-                                      Starlink uydu teknolojisi ile düşük gecikme
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="bg-slate-700/30 rounded-lg p-3">
-                                    <div className="flex items-center gap-2 text-sm text-white mb-1">
-                                      <Info className="h-4 w-4 text-cyan-400" />
-                                      <span className="font-medium">Ay Sonu Bitiş Sistemi</span>
-                                    </div>
-                                    <div className="text-xs text-slate-400">
-                                      Bu paket {formatDate(expirationDate.toISOString())} tarihinde sona erecek
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-cyan-400" />
-                                    <span className="text-slate-300">Kalan Süre</span>
-                                  </div>
-                                  <span className={`font-semibold ${
-                                    daysRemaining > 7 ? 'text-green-400' 
-                                    : daysRemaining > 3 ? 'text-yellow-400' 
-                                    : 'text-red-400'
-                                  }`}>
-                                    {daysRemaining} gün
-                                  </span>
-                                </div>
-                                <Progress 
-                                  value={progressPercentage} 
-                                  className="h-2 bg-slate-700" 
-                                  style={{
-                                    '--progress-background': daysRemaining > 7 
-                                      ? 'linear-gradient(to right, #059669, #10b981)'
-                                      : daysRemaining > 3 
-                                      ? 'linear-gradient(to right, #d97706, #f59e0b)'
-                                      : 'linear-gradient(to right, #dc2626, #ef4444)'
-                                  } as React.CSSProperties}
-                                />
-                                <div className="flex items-center gap-2 text-xs text-slate-400">
-                                  <Calendar className="h-3 w-3" />
-                                  <span>Ay sonu bitiş: {formatDate(expirationDate.toISOString())}</span>
-                                </div>
-                              </div>
-                              
-                              {/* Credentials Section */}
-                              <div className="bg-gradient-to-r from-slate-700/40 to-slate-600/40 rounded-lg p-4 border border-slate-600/50">
-                                <div className="flex items-center gap-2 text-sm text-cyan-400 mb-3">
-                                  <Package className="h-4 w-4" />
-                                  <span className="font-medium">Bağlantı Bilgileri</span>
-                                </div>
-                                <div className="space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-slate-400 text-sm font-medium">Kullanıcı Adı:</span>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-white font-mono text-sm bg-slate-800/50 px-2 py-1 rounded">{pkg.username}</span>
-                                      <button
-                                        onClick={() => copyToClipboard(pkg.username, "Kullanıcı adı")}
-                                        className="p-1 text-slate-400 hover:text-cyan-400 transition-colors duration-200 hover:bg-slate-700/50 rounded"
-                                        data-testid={`copy-username-${pkg.credentialId}`}
-                                      >
-                                        <Copy className="h-4 w-4" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-slate-400 text-sm font-medium">Şifre:</span>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-white font-mono text-sm bg-slate-800/50 px-2 py-1 rounded">{pkg.password}</span>
-                                      <button
-                                        onClick={() => copyToClipboard(pkg.password, "Şifre")}
-                                        className="p-1 text-slate-400 hover:text-cyan-400 transition-colors duration-200 hover:bg-slate-700/50 rounded"
-                                        data-testid={`copy-password-${pkg.credentialId}`}
-                                      >
-                                        <Copy className="h-4 w-4" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="relative mb-6">
-                      <Package className="h-16 w-16 text-slate-400 mx-auto" />
-                      <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-3">{t.dashboard.texts.noActivePackages}</h3>
-                    <p className="text-slate-400 mb-6 max-w-md mx-auto">
-                      {t.dashboard.texts.noActivePackagesDesc}
-                    </p>
-                    <Link href="/paketler">
-                      <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-blue-500/25 transition-all duration-300">
-                        {t.dashboard.texts.buyFirstPackage}
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {/* ══════════════════════════════════════════
+            ACTIVE PACKAGES
+            ══════════════════════════════════════ */}
+        {activeTab === 'packages' && (
+          <div className="space-y-4">
+            {packagesLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
+              </div>
+            ) : pkgs?.length ? (
+              pkgs.map((pkg: any) => {
+                const { daysLeft, exp, pct } = calcExpiry(pkg.paidAt || pkg.assignedAt, pkg.expiresAt);
+                const urgency = daysLeft > 7 ? 'green' : daysLeft > 3 ? 'amber' : 'red';
+                const progressColor = { green: 'from-emerald-500 to-teal-400', amber: 'from-amber-500 to-orange-400', red: 'from-red-500 to-rose-400' }[urgency];
+                const dayTextColor = { green: 'text-emerald-400', amber: 'text-amber-400', red: 'text-red-400' }[urgency];
 
-          {/* Favorite Packages */}
-          <TabsContent value="favorites" className="space-y-4">
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2 text-lg">
-                  <Heart className="h-5 w-5 text-red-400" />
-                  {t.dashboard.sections.favorites || 'Favori Paketlerim'} {favorites?.length ? `(${favorites.length})` : ''}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {favoritesLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-red-400" />
-                    <span className="ml-3 text-slate-300">Favoriler yükleniyor...</span>
-                  </div>
-                ) : favorites?.length ? (
-                  <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                    {favorites.map((fav) => (
-                      <Card key={fav.id} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-red-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10" data-testid={`favorite-card-${fav.id}`}>
-                        <CardContent className="p-6">
-                          <div className="text-center mb-4">
-                            <h3 className="font-bold text-white text-xl mb-3">{fav.plan.name}</h3>
-                            
-                            {/* GB Display */}
-                            <div className="bg-gradient-to-r from-red-600/20 to-pink-600/20 rounded-xl p-4 mb-4 border border-red-500/30">
-                              <div className="flex items-baseline justify-center gap-1">
-                                <span className="text-4xl font-bold text-white">{fav.plan.dataLimitGb}</span>
-                                <span className="text-2xl text-red-400 font-semibold">GB</span>
-                              </div>
-                              <p className="text-red-300 text-sm mt-1 font-medium">Starlink Data Paketi</p>
-                            </div>
+                return (
+                  <div
+                    key={pkg.credentialId}
+                    className="rounded-2xl overflow-hidden border border-white/[0.07] bg-white/[0.03]"
+                    data-testid={`package-card-${pkg.credentialId}`}
+                  >
+                    {/* card header */}
+                    <div className="relative bg-gradient-to-r from-[#0f1e38] to-[#091220] px-5 pt-5 pb-4">
+                      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
 
-                            {/* Price */}
-                            <div className="mb-4">
-                              <span className="text-2xl font-bold text-white">${Number(fav.plan.priceUsd).toFixed(2)}</span>
-                            </div>
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <p className="text-white/40 text-xs uppercase tracking-wider mb-1">{pkg.planName}</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-5xl font-black text-white leading-none">{pkg.dataLimitGb}</span>
+                            <span className="text-xl font-bold text-white/50 ml-1">GB</span>
                           </div>
-                          
-                          <div className="space-y-3">
-                            {/* Add to Cart Button */}
-                            <Button
-                              onClick={() => addToCartMutation.mutate(fav.plan.id)}
-                              disabled={addToCartMutation.isPending}
-                              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-2"
-                              data-testid={`button-add-cart-${fav.id}`}
-                            >
-                              {addToCartMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <ShoppingCart className="mr-2 h-4 w-4" />
-                                  {t.packages.addToCart}
-                                </>
-                              )}
-                            </Button>
-                            
-                            {/* Remove from Favorites Button */}
-                            <Button
-                              onClick={() => removeFavoriteMutation.mutate(fav.plan.id)}
-                              disabled={removeFavoriteMutation.isPending}
-                              variant="outline"
-                              className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
-                              data-testid={`button-remove-favorite-${fav.id}`}
-                            >
-                              {removeFavoriteMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <Heart className="mr-2 h-4 w-4 fill-current" />
-                                  {t.packages.removeFromFavorites}
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="relative mb-6">
-                      <Heart className="h-16 w-16 text-slate-400 mx-auto" />
-                      <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-3">{t.dashboard.sections.noFavorites || 'Henüz Favori Paket Yok'}</h3>
-                    <p className="text-slate-400 mb-6 max-w-md mx-auto">
-                      {t.dashboard.sections.noFavoritesDesc || 'Beğendiğiniz paketleri favorilere ekleyerek hızlıca satın alabilirsiniz.'}
-                    </p>
-                    <Link href="/paketler">
-                      <Button className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-red-500/25 transition-all duration-300">
-                        {t.dashboard.sections.browsePackages || 'Paketleri Keşfet'}
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Purchase History */}
-          <TabsContent value="history" className="space-y-4">
-            <Card className="bg-slate-900/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <History className="h-5 w-5" />
-                  {t.dashboard.sections.purchaseHistory}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {ordersLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
-                  </div>
-                ) : userOrders?.length ? (
-                  <div className="space-y-4">
-                    {userOrders.map((order: any) => (
-                      <Card key={order.id} className="bg-slate-800/50 border-slate-600" data-testid={`order-card-${order.id}`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <p className="font-semibold text-white">Sipariş #{order.id.slice(-8)}</p>
-                              <p className="text-sm text-slate-400">{formatDate(order.createdAt)}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-semibold text-white">{formatPrice(order.totalUsd)}</p>
-                              <Badge 
-                                className={
-                                  order.status === 'cancelled' 
-                                    ? "bg-red-600 text-white" 
-                                    : order.paidAt 
-                                      ? "bg-green-600 text-white" 
-                                      : "bg-yellow-600 text-white"
-                                }
-                              >
-                                {order.status === 'cancelled' 
-                                  ? "İptal Edildi" 
-                                  : order.paidAt 
-                                    ? "Ödendi" 
-                                    : "Beklemede"}
-                              </Badge>
-                            </div>
-                          </div>
-                          {order.orderItems?.map((item: any) => (
-                            <div key={item.id} className="flex items-center justify-between text-sm text-slate-300">
-                              <div className="flex items-center gap-2">
-                                <Package className="h-4 w-4" />
-                                <span>{item.plan?.name} ({item.plan?.dataLimitGb} GB)</span>
-                              </div>
-                              <span>{formatPrice(item.unitPriceUsd)}</span>
-                            </div>
-                          ))}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <History className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <p className="text-slate-400">{t.dashboard.texts.noPurchaseHistory}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Expired Packages */}
-          <TabsContent value="expired" className="space-y-4">
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2 text-lg">
-                  <Archive className="h-5 w-5 text-red-400" />
-                  {t.dashboard.texts.expiredPackagesTitle}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {expiredLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-red-400" />
-                    <span className="ml-3 text-slate-300">{t.dashboard.texts.loadingExpiredPackages}</span>
-                  </div>
-                ) : expiredPackagesData?.packages?.length ? (
-                  <div className="space-y-6">
-                    <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                      {expiredPackagesData.packages.map((pkg: any) => (
-                        <Card key={pkg.credentialId} className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 hover:border-red-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10" data-testid={`expired-package-card-${pkg.credentialId}`}>
-                          <CardContent className="p-6">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="font-semibold text-white text-lg">{pkg.planName}</h3>
-                              <Badge className="bg-gradient-to-r from-red-600 to-red-700 text-white border-0">
-                                {t.dashboard.status.expired}
-                              </Badge>
-                            </div>
-                            
-                            <div className="space-y-4">
-                              <div className="flex items-center gap-3 text-slate-300">
-                                <Package className="h-4 w-4 text-red-400" />
-                                <span className="font-medium">{pkg.dataLimitGb} GB Data Paketi</span>
-                              </div>
-                              
-                              <div className="space-y-3">
-                                <div className="bg-slate-700/30 rounded-lg p-3 space-y-2">
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-400 font-medium">Satın Alma:</span>
-                                    <span className="text-slate-300">{formatDate(pkg.purchaseDate)}</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-400 font-medium">Bitiş:</span>
-                                    <span className="text-red-400 font-medium">{formatDate(pkg.expiredDate)}</span>
-                                  </div>
-                                </div>
-                                
-                                <div className="bg-slate-700/30 rounded-lg p-3 space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-slate-400 text-xs font-medium">Kullanıcı Adı:</span>
-                                    <span className="text-white font-mono text-sm">{pkg.username}</span>
-                                  </div>
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-slate-400 text-xs font-medium">Şifre:</span>
-                                    <span className="text-white font-mono text-sm">{pkg.maskedPassword}</span>
-                                  </div>
-                                  <div className="text-xs text-slate-500 mt-2">
-                                    Bu bilgiler artık kullanılamaz
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                    
-                    {/* Pagination */}
-                    {expiredPackagesData.pagination && expiredPackagesData.pagination.totalPages > 1 && (
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-slate-400">
-                          {t.dashboard.texts.paginationText
-                            .replace('{total}', expiredPackagesData.pagination.totalCount)
-                            .replace('{current}', expiredPackagesData.pagination.currentPage)
-                            .replace('{totalPages}', expiredPackagesData.pagination.totalPages)
-                          }
+                          <p className="text-cyan-400/70 text-xs mt-1">Starlink Data Paketi</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setExpiredPage(prev => Math.max(1, prev - 1))}
-                            disabled={expiredPackagesData.pagination.currentPage === 1}
-                            className="bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700/50"
-                            data-testid="pagination-prev"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                            Önceki
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setExpiredPage(prev => Math.min(expiredPackagesData.pagination.totalPages, prev + 1))}
-                            disabled={expiredPackagesData.pagination.currentPage === expiredPackagesData.pagination.totalPages}
-                            className="bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700/50"
-                            data-testid="pagination-next"
-                          >
-                            Sonraki
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
+
+                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${
+                          daysLeft > 0
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                            : 'bg-red-500/10 border-red-500/20 text-red-400'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${daysLeft > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
+                          {daysLeft > 0 ? 'Aktif' : 'Süresi Doldu'}
                         </div>
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="relative mb-6">
-                      <Archive className="h-16 w-16 text-slate-400 mx-auto" />
-                      <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl" />
+
+                      {/* progress */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-1.5 text-white/40">
+                            <Clock className="w-3 h-3" />
+                            <span>Kalan süre</span>
+                          </div>
+                          <span className={`font-bold ${dayTextColor}`}>{daysLeft} gün</span>
+                        </div>
+
+                        {/* custom gradient progress bar */}
+                        <div className="h-2 rounded-full bg-white/8 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full bg-gradient-to-r ${progressColor} transition-all duration-500`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+
+                        <p className="text-white/25 text-xs">Bitiş: {fmtDate(exp.toISOString())}</p>
+                      </div>
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-3">{t.dashboard.texts.noExpiredPackages}</h3>
-                    <p className="text-slate-400 mb-6 max-w-md mx-auto">
-                      {t.dashboard.texts.noExpiredPackagesDesc}
-                    </p>
+
+                    {/* credentials */}
+                    <div className="px-5 py-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Wifi className="w-3.5 h-3.5 text-cyan-400/60" />
+                        <span className="text-white/40 text-xs font-semibold uppercase tracking-wider">Bağlantı Bilgileri</span>
+                      </div>
+                      <div className="space-y-2">
+                        {[
+                          { label: 'Kullanıcı Adı', val: pkg.username, testId: `copy-username-${pkg.credentialId}` },
+                          { label: 'Şifre', val: pkg.password, testId: `copy-password-${pkg.credentialId}` },
+                        ].map(({ label, val, testId }) => (
+                          <div key={label} className="flex items-center justify-between bg-white/[0.04] rounded-xl px-4 py-3 border border-white/[0.05]">
+                            <div>
+                              <p className="text-white/35 text-xs mb-0.5">{label}</p>
+                              <p className="text-white font-mono text-sm font-medium">{val}</p>
+                            </div>
+                            <CopyButton value={val} label={label} testId={testId} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <EmptyState
+                icon={Package}
+                title={t.dashboard.texts.noActivePackages}
+                desc={t.dashboard.texts.noActivePackagesDesc}
+                action={{ label: t.dashboard.texts.buyFirstPackage, href: '/paketler' }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            FAVORITES
+            ══════════════════════════════════════ */}
+        {activeTab === 'favorites' && (
+          <div className="space-y-3">
+            {favoritesLoading ? (
+              <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-pink-400" /></div>
+            ) : favorites?.length ? (
+              favorites.map((fav) => (
+                <div
+                  key={fav.id}
+                  className="flex items-center gap-4 bg-white/[0.03] border border-white/[0.07] rounded-2xl p-4"
+                  data-testid={`favorite-card-${fav.id}`}
+                >
+                  {/* GB badge */}
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-pink-600/20 to-rose-600/10 border border-pink-500/20 flex flex-col items-center justify-center flex-shrink-0">
+                    <span className="text-2xl font-black text-white leading-none">{fav.plan.dataLimitGb}</span>
+                    <span className="text-xs text-pink-400 font-semibold">GB</span>
+                  </div>
+
+                  {/* info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold text-sm truncate">{fav.plan.name}</p>
+                    <p className="text-white/40 text-xs">{fav.plan.dataLimitGb} GB · Starlink</p>
+                    <p className="text-white font-bold text-base mt-1">{fmtPrice(fav.plan.priceUsd)}</p>
+                  </div>
+
+                  {/* actions */}
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => addToCartMutation.mutate(fav.plan.id)}
+                      disabled={addToCartMutation.isPending}
+                      className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+                      data-testid={`button-add-cart-${fav.id}`}
+                    >
+                      {addToCartMutation.isPending
+                        ? <Loader2 className="w-4 h-4 text-white animate-spin" />
+                        : <ShoppingCart className="w-4 h-4 text-white" />}
+                    </button>
+                    <button
+                      onClick={() => removeFavoriteMutation.mutate(fav.plan.id)}
+                      disabled={removeFavoriteMutation.isPending}
+                      className="w-10 h-10 rounded-xl bg-white/5 border border-white/8 flex items-center justify-center hover:bg-red-500/10 hover:border-red-500/20 transition-colors"
+                      data-testid={`button-remove-favorite-${fav.id}`}
+                    >
+                      {removeFavoriteMutation.isPending
+                        ? <Loader2 className="w-3.5 h-3.5 text-white/40 animate-spin" />
+                        : <Heart className="w-3.5 h-3.5 fill-red-400 text-red-400" />}
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <EmptyState
+                icon={Heart}
+                title={t.dashboard.sections.noFavorites ?? 'Henüz Favori Paket Yok'}
+                desc={t.dashboard.sections.noFavoritesDesc ?? 'Beğendiğiniz paketleri favorilere ekleyerek hızlıca satın alabilirsiniz.'}
+                action={{ label: t.dashboard.sections.browsePackages ?? 'Paketleri Keşfet', href: '/paketler' }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            PURCHASE HISTORY
+            ══════════════════════════════════════ */}
+        {activeTab === 'history' && (
+          <div className="space-y-3">
+            {ordersLoading ? (
+              <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-blue-400" /></div>
+            ) : userOrders?.length ? (
+              (userOrders as any[]).map((order: any) => {
+                const isPaid = !!order.paidAt;
+                const isCancelled = order.status === 'cancelled';
+                return (
+                  <div
+                    key={order.id}
+                    className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-4"
+                    data-testid={`order-card-${order.id}`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-white font-semibold text-sm">Sipariş #{order.id.slice(-8)}</p>
+                        <p className="text-white/35 text-xs">{fmtDate(order.createdAt)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-bold text-sm">{fmtPrice(order.totalUsd)}</span>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          isCancelled ? 'bg-red-500/15 text-red-400 border border-red-500/20'
+                          : isPaid ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+                        }`}>
+                          {isCancelled ? 'İptal' : isPaid ? 'Ödendi' : 'Beklemede'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {order.orderItems?.map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between bg-white/[0.03] rounded-xl px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
+                            <span className="text-blue-400 text-xs font-bold">{item.plan?.dataLimitGb}</span>
+                          </div>
+                          <span className="text-white/60 text-xs">{item.plan?.name}</span>
+                        </div>
+                        <span className="text-white/60 text-xs font-medium">{fmtPrice(item.unitPriceUsd)}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })
+            ) : (
+              <EmptyState
+                icon={History}
+                title="Sipariş Geçmişi Yok"
+                desc={t.dashboard.texts.noPurchaseHistory}
+              />
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            EXPIRED PACKAGES
+            ══════════════════════════════════════ */}
+        {activeTab === 'expired' && (
+          <div className="space-y-3">
+            {expiredLoading ? (
+              <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-red-400" /></div>
+            ) : expiredPackagesData?.packages?.length ? (
+              <>
+                {expiredPackagesData.packages.map((pkg: any) => (
+                  <div
+                    key={pkg.credentialId}
+                    className="bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden"
+                    data-testid={`expired-package-card-${pkg.credentialId}`}
+                  >
+                    <div className="flex items-center gap-4 p-4">
+                      {/* GB */}
+                      <div className="w-14 h-14 rounded-xl bg-red-500/8 border border-red-500/15 flex flex-col items-center justify-center flex-shrink-0">
+                        <span className="text-xl font-black text-white/50 leading-none">{pkg.dataLimitGb}</span>
+                        <span className="text-xs text-red-400/60 font-semibold">GB</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-white/60 font-semibold text-sm">{pkg.planName}</p>
+                          <span className="px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/15 text-red-400 text-xs font-semibold">Bitti</span>
+                        </div>
+                        <p className="text-white/25 text-xs">Satın alma: {fmtDate(pkg.purchaseDate)}</p>
+                        <p className="text-red-400/50 text-xs">Bitiş: {fmtDate(pkg.expiredDate)}</p>
+                      </div>
+                    </div>
+                    {/* credentials (masked) */}
+                    <div className="border-t border-white/5 px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs text-white/25">
+                        <span className="font-mono">{pkg.username}</span>
+                        <span>·</span>
+                        <span className="font-mono">{pkg.maskedPassword}</span>
+                      </div>
+                      <span className="text-white/20 text-xs">Kullanılamaz</span>
+                    </div>
+                  </div>
+                ))}
+
+                {/* pagination */}
+                {expiredPackagesData.pagination?.totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-white/30 text-xs">
+                      {expiredPackagesData.pagination.currentPage} / {expiredPackagesData.pagination.totalPages} sayfa
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setExpiredPage(p => Math.max(1, p - 1))}
+                        disabled={expiredPackagesData.pagination.currentPage === 1}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/5 border border-white/8 text-white/50 text-xs disabled:opacity-30 hover:bg-white/10 transition-colors"
+                        data-testid="pagination-prev"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" /> Önceki
+                      </button>
+                      <button
+                        onClick={() => setExpiredPage(p => Math.min(expiredPackagesData.pagination.totalPages, p + 1))}
+                        disabled={expiredPackagesData.pagination.currentPage === expiredPackagesData.pagination.totalPages}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/5 border border-white/8 text-white/50 text-xs disabled:opacity-30 hover:bg-white/10 transition-colors"
+                        data-testid="pagination-next"
+                      >
+                        Sonraki <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </>
+            ) : (
+              <EmptyState
+                icon={Archive}
+                title={t.dashboard.texts.noExpiredPackages}
+                desc={t.dashboard.texts.noExpiredPackagesDesc}
+              />
+            )}
+          </div>
+        )}
 
-          {/* Notifications */}
-        </Tabs>
       </div>
     </div>
   );
