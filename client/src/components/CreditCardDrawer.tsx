@@ -135,11 +135,10 @@ export default function CreditCardDrawer({
     }
     setIsProcessing(true);
     try {
+      // ── Yeni 3DS zorunlu akış ──────────────────────────────────
       const cardPayload = {
         amount: parseFloat(amount).toString(),
         currency,
-        intent: 'CAPTURE',
-        paymentMethod: 'CARD',
         cardDetails: {
           number: formData.cardNumber.replace(/\s/g, ''),
           expiryMonth: formData.expiryDate.split('/')[0].padStart(2, '0'),
@@ -152,68 +151,79 @@ export default function CreditCardDrawer({
             city: formData.city.trim() || 'Istanbul',
             state: formData.region.trim() || 'TR',
             postalCode: formData.postalCode.trim() || '34000',
-            countryCode: 'TR'
-          }
-        }
+            countryCode: 'TR',
+          },
+        },
       };
 
-      const createResponse = await fetch('/api/paypal/create-order', {
+      toast({ title: "Güvenli Ödeme", description: "Kart bilgileri 3D Secure ile doğrulanıyor..." });
+
+      const createResponse = await fetch('/api/paypal/create-card-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cardPayload),
       });
+
       if (!createResponse.ok) {
-        const errorData = await createResponse.json();
-        throw new Error(errorData.message || 'Order creation failed');
+        const errData = await createResponse.json();
+        throw new Error(errData.message || 'Sipariş oluşturulamadı');
       }
+
       const createData = await createResponse.json();
 
-      toast({ title: "Kart İşleniyor", description: "Kredi kartı bilgileri doğrulanıyor..." });
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // ── 3DS yönlendirmesi gerekiyor ───────────────────────────
+      if (createData.requiresAction && createData.actionUrl) {
+        toast({
+          title: "3D Secure Doğrulaması",
+          description: "Bankanızın doğrulama sayfasına yönlendiriliyorsunuz...",
+        });
+        // Kart bilgilerini locale kaydet ki dönüşte sepet bilgisi kaybolmasın
+        sessionStorage.setItem('pending_3ds_order', createData.orderId);
+        // Tam sayfa yönlendirme — banka 3DS sayfası
+        window.location.href = createData.actionUrl;
+        return; // setIsProcessing(false) çalışmasın, sayfa değişecek
+      }
 
+      // ── 3DS gerekmedi, direkt yakalanabilir ───────────────────
       const captureResponse = await fetch('/api/paypal/capture-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: createData.id }),
+        body: JSON.stringify({ orderId: createData.orderId }),
       });
+
       if (!captureResponse.ok) {
-        const errorData = await captureResponse.json();
-        throw new Error(errorData.message || 'Ödeme başarısız oldu. Kart bilgilerini kontrol edin.');
+        const errData = await captureResponse.json();
+        throw new Error(errData.message || 'Ödeme yakalanamadı');
       }
+
       const captureData = await captureResponse.json();
-
-      const orderStatus = captureData.status;
       const captureDetails = captureData.purchase_units?.[0]?.payments?.captures?.[0];
-      const captureStatus = captureDetails?.status;
 
-      if (orderStatus === 'COMPLETED' && captureStatus === 'COMPLETED') {
-        toast({ title: "Ödeme Kontrol Ediliyor", description: "Ödeme doğrulandı, işleminiz tamamlanıyor..." });
+      if (captureData.status === 'COMPLETED' && captureDetails?.status === 'COMPLETED') {
         const completeResponse = await fetch('/api/cart/complete-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paypalOrderId: createData.id, couponCode: '' }),
+          body: JSON.stringify({ paypalOrderId: createData.orderId, couponCode: '' }),
         });
         if (!completeResponse.ok) {
-          const errorData = await completeResponse.json();
-          throw new Error(errorData.message || 'Ödeme tamamlanırken hata oluştu');
+          const errData = await completeResponse.json();
+          throw new Error(errData.message || 'Ödeme kaydedilemedi');
         }
         const completeData = await completeResponse.json();
-        toast({ title: "Ödeme Başarılı!", description: "Kredi kartı ödemesi tamamlandı ve paketler etkinleştirildi." });
+        toast({ title: "Ödeme Başarılı!", description: "Kartınızdan ödeme alındı, paketler etkinleştirildi." });
         setTimeout(() => {
           window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureDetails.id}`;
         }, 1500);
       } else {
-        const errorMessage = captureStatus === 'DECLINED'
-          ? 'Ödeme reddedildi - kart bilgilerini kontrol edin'
-          : `Ödeme tamamlanamadı (${captureStatus || orderStatus})`;
-        throw new Error(errorMessage);
+        const st = captureDetails?.status || captureData.status;
+        throw new Error(st === 'DECLINED' ? 'Ödeme reddedildi — kart bilgilerini kontrol edin' : `Ödeme tamamlanamadı (${st})`);
       }
     } catch (error) {
       console.error('Credit card payment error:', error);
       toast({
         title: "Ödeme Hatası",
         description: error instanceof Error ? error.message : "Kart ödemesi işlenirken bir hata oluştu",
-        variant: "destructive"
+        variant: "destructive",
       });
       onError?.(error);
     } finally {

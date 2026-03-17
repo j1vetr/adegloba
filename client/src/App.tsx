@@ -16,6 +16,7 @@ import Panel from "@/pages/Panel";
 import Paketler from "@/pages/Paketler";
 import Sepet from "@/pages/Sepet";
 import OrderSuccess from "@/pages/OrderSuccess";
+import ThreeDSReturn from "@/pages/ThreeDSReturn";
 import OrderCancel from "@/pages/OrderCancel";
 import Checkout from "@/pages/Checkout";
 import UserTickets from "@/pages/UserTickets";
@@ -258,6 +259,7 @@ function Router() {
       </Route>
       
       <Route path="/order-success" component={OrderSuccess} />
+      <Route path="/3ds-return" component={ThreeDSReturn} />
       <Route path="/checkout/success" component={OrderSuccess} />
       <Route path="/checkout/cancel" component={OrderCancel} />
       

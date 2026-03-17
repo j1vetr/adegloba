@@ -204,6 +204,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create card order with SCA_ALWAYS (mandatory 3DS)
+  app.post('/api/paypal/create-card-order', async (req, res) => {
+    try {
+      const { amount, currency, cardDetails } = req.body;
+
+      if (!amount || !currency || !cardDetails) {
+        return res.status(400).json({ message: 'amount, currency and cardDetails are required' });
+      }
+
+      const client = await createPayPalClient();
+      const ordersController = new OrdersController(client);
+
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:5000';
+      const baseUrl = `${protocol}://${host}`;
+
+      const orderBody: any = {
+        intent: 'CAPTURE',
+        purchaseUnits: [{
+          amount: { currencyCode: currency, value: amount },
+        }],
+        paymentSource: {
+          card: {
+            number: cardDetails.number,
+            securityCode: cardDetails.securityCode,
+            expiry: `${cardDetails.expiryYear}-${cardDetails.expiryMonth.padStart(2, '0')}`,
+            name: cardDetails.name,
+            billingAddress: {
+              addressLine1: cardDetails.billingAddress?.addressLine1 || 'N/A',
+              addressLine2: cardDetails.billingAddress?.addressLine2 || '',
+              adminArea2: cardDetails.billingAddress?.city || 'Istanbul',
+              adminArea1: cardDetails.billingAddress?.state || 'TR',
+              postalCode: cardDetails.billingAddress?.postalCode || '34000',
+              countryCode: cardDetails.billingAddress?.countryCode || 'TR',
+            },
+            attributes: {
+              verification: {
+                method: 'SCA_ALWAYS',
+              },
+            },
+            experienceContext: {
+              returnUrl: `${baseUrl}/3ds-return`,
+              cancelUrl: `${baseUrl}/sepet`,
+            },
+          },
+        },
+      };
+
+      console.log('📤 [3DS] Creating card order with SCA_ALWAYS');
+
+      const { body, ...httpResponse } = await ordersController.createOrder({
+        body: orderBody,
+        prefer: 'return=minimal',
+        paypalRequestId: `card-3ds-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+      });
+
+      const jsonResponse = JSON.parse(String(body));
+      console.log('📥 [3DS] PayPal response status:', jsonResponse.status);
+
+      if (jsonResponse.status === 'PAYER_ACTION_REQUIRED') {
+        const actionLink = jsonResponse.links?.find((l: any) => l.rel === 'payer-action');
+        if (!actionLink) {
+          return res.status(502).json({ message: 'PAYER_ACTION_REQUIRED but no payer-action link returned by PayPal' });
+        }
+        return res.json({
+          orderId: jsonResponse.id,
+          requiresAction: true,
+          actionUrl: actionLink.href,
+          status: 'PAYER_ACTION_REQUIRED',
+        });
+      }
+
+      return res.status(httpResponse.statusCode).json({
+        orderId: jsonResponse.id,
+        requiresAction: false,
+        status: jsonResponse.status,
+        raw: jsonResponse,
+      });
+    } catch (error: any) {
+      console.error('[3DS] create-card-order error:', error);
+      const paypalError = error?.body ? JSON.parse(error.body) : null;
+      res.status(500).json({
+        message: paypalError?.message || error?.message || 'Kart siparişi oluşturulamadı',
+        details: paypalError,
+      });
+    }
+  });
+
   // Get payment settings (must be before other settings routes)
   app.get('/api/settings/payment', async (req, res) => {
     console.log('Payment settings route hit');
