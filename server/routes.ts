@@ -188,31 +188,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       process.env.PAYPAL_CLIENT_ID = paypalClientId;
       process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
 
-      // Capture DECLINED tespiti için res.json'u spy ile sarmala
-      let sentStatusCode = 200;
-      const origStatus = res.status.bind(res);
-      (res as any).status = function(code: number) {
-        sentStatusCode = code;
-        return origStatus(code);
-      };
-      const origJson = res.json.bind(res);
-      (res as any).json = async function(data: any) {
-        (res as any).json = origJson; // restore
-        // Capture DECLINED ise pending siparişi failed yap
-        if (sentStatusCode === 400 && data?.status === 'DECLINED' && orderId) {
-          try {
-            const declinedOrders = await storage.getOrdersByPaypalOrderId(orderId);
-            if (declinedOrders.length > 0) {
-              await storage.updateOrder(declinedOrders[0].id, { status: 'failed' });
-              console.log(`🔴 [CAPTURE-DECLINED] Order ${declinedOrders[0].id} marked as FAILED`);
-            }
-          } catch (e) {
-            console.error('[CAPTURE-DECLINED] DB update error:', e);
-          }
-        }
-        return origJson(data);
-      };
-
       try {
         // Set orderID in params for PayPal function  
         req.params = { ...req.params, orderID: orderId };
@@ -226,108 +201,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("PayPal capture error:", error);
       res.status(500).json({ message: "Failed to capture PayPal payment" });
-    }
-  });
-
-  // Create card order with SCA_WHEN_REQUIRED (3DS if needed)
-  app.post('/api/paypal/create-card-order', async (req: any, res) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-    try {
-      const userId = req.session.userId;
-      const { amount, currency, cardDetails } = req.body;
-
-      if (!amount || !currency || !cardDetails) {
-        return res.status(400).json({ message: 'amount, currency and cardDetails are required' });
-      }
-
-      const client = await createPayPalClient();
-      const ordersController = new OrdersController(client);
-
-      const protocol = req.headers['x-forwarded-proto'] || 'https';
-      const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:5000';
-      const baseUrl = `${protocol}://${host}`;
-
-      const orderBody: any = {
-        intent: 'CAPTURE',
-        purchaseUnits: [{
-          amount: { currencyCode: currency, value: amount },
-        }],
-        paymentSource: {
-          card: {
-            number: cardDetails.number,
-            securityCode: cardDetails.securityCode,
-            expiry: `${cardDetails.expiryYear}-${cardDetails.expiryMonth.padStart(2, '0')}`,
-            name: cardDetails.name,
-            billingAddress: {
-              addressLine1: cardDetails.billingAddress?.addressLine1 || 'N/A',
-              addressLine2: cardDetails.billingAddress?.addressLine2 || '',
-              adminArea2: cardDetails.billingAddress?.city || 'Istanbul',
-              adminArea1: cardDetails.billingAddress?.state || 'TR',
-              postalCode: cardDetails.billingAddress?.postalCode || '34000',
-              countryCode: cardDetails.billingAddress?.countryCode || 'TR',
-            },
-            attributes: {
-              verification: {
-                method: 'SCA_WHEN_REQUIRED',
-              },
-            },
-            experienceContext: {
-              returnUrl: `${baseUrl}/3ds-return`,
-              cancelUrl: `${baseUrl}/sepet`,
-            },
-          },
-        },
-      };
-
-      console.log('📤 [3DS] Creating card order with SCA_ALWAYS');
-
-      const { body, ...httpResponse } = await ordersController.createOrder({
-        body: orderBody,
-        prefer: 'return=minimal',
-        paypalRequestId: `card-3ds-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-      });
-
-      const jsonResponse = JSON.parse(String(body));
-      console.log('📥 [3DS] PayPal response status:', jsonResponse.status);
-
-      // PayPal Order ID'yi hemen pending siparişe kaydet (reddedilme/webhook durumunda bulunabilsin)
-      if (jsonResponse.id) {
-        const userOrders = await storage.getUserOrders(userId);
-        const pendingOrder = userOrders.find((o: any) => o.status === 'pending');
-        if (pendingOrder) {
-          await storage.updateOrder(pendingOrder.id, { paypalOrderId: jsonResponse.id });
-          console.log(`🔗 [3DS] PayPal Order ${jsonResponse.id} linked to DB order ${pendingOrder.id}`);
-        }
-      }
-
-      if (jsonResponse.status === 'PAYER_ACTION_REQUIRED') {
-        const actionLink = jsonResponse.links?.find((l: any) => l.rel === 'payer-action');
-        if (!actionLink) {
-          return res.status(502).json({ message: 'PAYER_ACTION_REQUIRED but no payer-action link returned by PayPal' });
-        }
-        return res.json({
-          orderId: jsonResponse.id,
-          requiresAction: true,
-          actionUrl: actionLink.href,
-          status: 'PAYER_ACTION_REQUIRED',
-        });
-      }
-
-      return res.status(httpResponse.statusCode).json({
-        orderId: jsonResponse.id,
-        requiresAction: false,
-        status: jsonResponse.status,
-        raw: jsonResponse,
-      });
-    } catch (error: any) {
-      console.error('[3DS] create-card-order error:', error);
-      const paypalError = error?.body ? JSON.parse(error.body) : null;
-      res.status(500).json({
-        message: paypalError?.message || error?.message || 'Kart siparişi oluşturulamadı',
-        details: paypalError,
-      });
     }
   });
 
@@ -800,14 +673,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserById(userId);
       if (!user || !user.ship_id) {
         return res.status(400).json({ message: 'User ship not found' });
-      }
-
-      // Eski pending siparişleri iptal et (yeni ödeme denemesine temiz başlangıç)
-      const existingOrders = await storage.getUserOrders(userId);
-      const stalePending = existingOrders.filter((o: any) => o.status === 'pending');
-      for (const stale of stalePending) {
-        await storage.updateOrder(stale.id, { status: 'cancelled' });
-        console.log(`🧹 [CHECKOUT] Cancelled stale pending order ${stale.id}`);
       }
 
       // Get cart items
@@ -3661,45 +3526,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle multiple webhook event types for robust payment processing
       if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
         const payment = event.resource;
-        const paypalOrderId = payment.supplementary_data?.related_ids?.order_id || payment.custom_id;
+        const orderId = payment.supplementary_data?.related_ids?.order_id || payment.custom_id;
         
-        console.log(`💰 [SUCCESS] Processing payment completion for PayPal order: ${paypalOrderId}`);
+        console.log(`💰 [SUCCESS] Processing payment completion for order: ${orderId}`);
         console.log(`💳 Payment ID: ${payment.id}`);
         console.log(`💵 Amount: ${payment.amount?.currency_code} ${payment.amount?.value}`);
         
         try {
-          // PayPal Order ID'den DB order ID'yi bul
-          const dbOrders = await storage.getOrdersByPaypalOrderId(paypalOrderId);
-          if (!dbOrders || dbOrders.length === 0) {
-            console.warn(`⚠️ [WEBHOOK] No DB order found for PayPal Order ID: ${paypalOrderId} — skipping (may have been processed via direct flow)`);
-            return res.status(200).json({ status: 'skipped', reason: 'order_not_found_in_db', paypalOrderId });
-          }
-          const dbOrder = dbOrders[0];
-          
-          // Zaten paid ise yeniden işleme — idempotent yanıt ver
-          if (dbOrder.status === 'paid' || dbOrder.status === 'completed') {
-            console.log(`✅ [WEBHOOK] Order ${dbOrder.id} already paid — skipping duplicate webhook`);
-            return res.status(200).json({ status: 'already_processed', orderId: dbOrder.id });
-          }
-
+          // Use atomic payment processing method for consistency
           const result = await orderService.processPaymentCompletion(
-            dbOrder.id,
-            paypalOrderId,
+            orderId, 
+            payment.id, 
             payment
           );
           
           if (result.success) {
-            console.log(`✅ Payment processed successfully for order ${dbOrder.id}: ${result.assignedCredentials.length} credentials assigned`);
+            console.log(`✅ Payment processed successfully for order ${orderId}: ${result.assignedCredentials.length} credentials assigned`);
             
             // Create system log for successful payment processing
             await storage.createSystemLog({
               category: 'payment',
               action: 'webhook_payment_completed',
               entityType: 'order',
-              entityId: dbOrder.id,
+              entityId: orderId,
               details: {
                 paymentId: payment.id,
-                paypalOrderId,
                 amount: `${payment.amount?.currency_code} ${payment.amount?.value}`,
                 credentialsAssigned: result.assignedCredentials.length,
                 webhookEventType: event.event_type,
@@ -3712,25 +3563,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Send success response to PayPal
             res.status(200).json({ 
               status: 'success',
-              orderId: dbOrder.id,
-              paypalOrderId,
+              orderId,
               paymentId: payment.id,
               credentialsAssigned: result.assignedCredentials.length,
               environment: environment,
               timestamp: new Date().toISOString()
             });
           } else {
-            console.error(`❌ Payment processing failed for order ${dbOrder.id}`);
+            console.error(`❌ Payment processing failed for order ${orderId}`);
             
             // Log failed payment processing
             await storage.createSystemLog({
               category: 'payment_error',
               action: 'webhook_payment_failed',
               entityType: 'order',
-              entityId: dbOrder.id,
+              entityId: orderId,
               details: {
                 paymentId: payment.id,
-                paypalOrderId,
                 error: 'Payment processing failed',
                 webhookEventType: event.event_type,
                 environment: environment
@@ -3742,7 +3591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             res.status(500).json({ error: 'Payment processing failed' });
           }
         } catch (processingError) {
-          console.error(`💥 Payment processing error for order ${dbOrder?.id || paypalOrderId}:`, processingError);
+          console.error(`💥 Payment processing error for order ${orderId}:`, processingError);
           
           // Still send success to PayPal to avoid retries, but log the error
           res.status(200).json({ 

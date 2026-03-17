@@ -44,7 +44,6 @@ export default function CreditCardDrawer({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const [is3DSPending, setIs3DSPending] = useState(false);
   const [cardBrand, setCardBrand] = useState('');
   const [isFlipped, setIsFlipped] = useState(false);
   const [focusedField, setFocusedField] = useState('');
@@ -136,21 +135,11 @@ export default function CreditCardDrawer({
     }
     setIsProcessing(true);
     try {
-      // ── Adım 1: DB'de pending sipariş oluştur ─────────────────
-      const checkoutResponse = await fetch('/api/cart/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ couponCode: '' }),
-      });
-      if (!checkoutResponse.ok) {
-        const errData = await checkoutResponse.json();
-        throw new Error(errData.message || 'Sipariş hazırlanamadı');
-      }
-
-      // ── Adım 2: PayPal kart siparişi (SCA_ALWAYS / 3DS zorunlu) ──
       const cardPayload = {
         amount: parseFloat(amount).toString(),
         currency,
+        intent: 'CAPTURE',
+        paymentMethod: 'CARD',
         cardDetails: {
           number: formData.cardNumber.replace(/\s/g, ''),
           expiryMonth: formData.expiryDate.split('/')[0].padStart(2, '0'),
@@ -163,120 +152,68 @@ export default function CreditCardDrawer({
             city: formData.city.trim() || 'Istanbul',
             state: formData.region.trim() || 'TR',
             postalCode: formData.postalCode.trim() || '34000',
-            countryCode: 'TR',
-          },
-        },
+            countryCode: 'TR'
+          }
+        }
       };
 
-      toast({ title: "Güvenli Ödeme", description: "Kart bilgileri 3D Secure ile doğrulanıyor..." });
-
-      const createResponse = await fetch('/api/paypal/create-card-order', {
+      const createResponse = await fetch('/api/paypal/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cardPayload),
       });
-
       if (!createResponse.ok) {
-        const errData = await createResponse.json();
-        throw new Error(errData.message || 'Sipariş oluşturulamadı');
+        const errorData = await createResponse.json();
+        throw new Error(errorData.message || 'Order creation failed');
       }
-
       const createData = await createResponse.json();
 
-      // ── Adım 3: 3DS popup aç ve sonucu bekle ──────────────────
-      if (createData.requiresAction && createData.actionUrl) {
-        setIs3DSPending(true);
-        setIsProcessing(false);
+      toast({ title: "Kart İşleniyor", description: "Kredi kartı bilgileri doğrulanıyor..." });
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-        const popup = window.open(
-          createData.actionUrl,
-          '3dsecure',
-          'width=540,height=680,resizable=yes,scrollbars=yes,left=' +
-            Math.round(window.screenX + (window.outerWidth - 540) / 2) +
-            ',top=' +
-            Math.round(window.screenY + (window.outerHeight - 680) / 2),
-        );
-
-        if (!popup) {
-          // Popup engellendi → tam sayfa yönlendirme
-          window.location.href = createData.actionUrl;
-          return;
-        }
-
-        let messageReceived = false;
-
-        // Popup'tan gelen mesajı dinle
-        const handleMessage = (event: MessageEvent) => {
-          if (event.data?.type !== '3ds_complete') return;
-          messageReceived = true;
-          clearInterval(pollClosed);
-          window.removeEventListener('message', handleMessage);
-          setIs3DSPending(false);
-
-          if (event.data.success) {
-            toast({ title: "Ödeme Başarılı!", description: "3D Secure doğrulandı, paketler etkinleştirildi." });
-            setTimeout(() => {
-              window.location.href = `/order-success?orderId=${event.data.orderId}&amount=${event.data.amount}&paymentId=${event.data.paymentId}`;
-            }, 500);
-          } else {
-            toast({ title: "Ödeme Hatası", description: event.data.error || "3D Secure doğrulaması başarısız.", variant: "destructive" });
-          }
-        };
-        window.addEventListener('message', handleMessage);
-
-        // Popup kullanıcı tarafından kapatılırsa — sadece mesaj gelmemişse tetikle
-        const pollClosed = setInterval(() => {
-          let closed = false;
-          try { closed = popup.closed; } catch { closed = false; }
-          if (closed && !messageReceived) {
-            clearInterval(pollClosed);
-            window.removeEventListener('message', handleMessage);
-            setIs3DSPending(false);
-            toast({ title: "Ödeme İptal Edildi", description: "3D Secure doğrulama penceresi kapatıldı.", variant: "destructive" });
-          }
-        }, 1500);
-
-        return;
-      }
-
-      // ── 3DS gerekmedi, direkt yakala ──────────────────────────
       const captureResponse = await fetch('/api/paypal/capture-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: createData.orderId }),
+        body: JSON.stringify({ orderId: createData.id }),
       });
       if (!captureResponse.ok) {
-        const errData = await captureResponse.json();
-        throw new Error(errData.message || 'Ödeme yakalanamadı');
+        const errorData = await captureResponse.json();
+        throw new Error(errorData.message || 'Ödeme başarısız oldu. Kart bilgilerini kontrol edin.');
       }
       const captureData = await captureResponse.json();
-      const captureDetails = captureData.purchase_units?.[0]?.payments?.captures?.[0];
 
-      if (captureData.status === 'COMPLETED' && captureDetails?.status === 'COMPLETED') {
+      const orderStatus = captureData.status;
+      const captureDetails = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+      const captureStatus = captureDetails?.status;
+
+      if (orderStatus === 'COMPLETED' && captureStatus === 'COMPLETED') {
+        toast({ title: "Ödeme Kontrol Ediliyor", description: "Ödeme doğrulandı, işleminiz tamamlanıyor..." });
         const completeResponse = await fetch('/api/cart/complete-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paypalOrderId: createData.orderId, couponCode: '' }),
+          body: JSON.stringify({ paypalOrderId: createData.id, couponCode: '' }),
         });
         if (!completeResponse.ok) {
-          const errData = await completeResponse.json();
-          throw new Error(errData.message || 'Ödeme kaydedilemedi');
+          const errorData = await completeResponse.json();
+          throw new Error(errorData.message || 'Ödeme tamamlanırken hata oluştu');
         }
         const completeData = await completeResponse.json();
-        toast({ title: "Ödeme Başarılı!", description: "Kartınızdan ödeme alındı, paketler etkinleştirildi." });
+        toast({ title: "Ödeme Başarılı!", description: "Kredi kartı ödemesi tamamlandı ve paketler etkinleştirildi." });
         setTimeout(() => {
           window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureDetails.id}`;
         }, 1500);
       } else {
-        const st = captureDetails?.status || captureData.status;
-        throw new Error(st === 'DECLINED' ? 'Ödeme reddedildi — kart bilgilerini kontrol edin' : `Ödeme tamamlanamadı (${st})`);
+        const errorMessage = captureStatus === 'DECLINED'
+          ? 'Ödeme reddedildi - kart bilgilerini kontrol edin'
+          : `Ödeme tamamlanamadı (${captureStatus || orderStatus})`;
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Credit card payment error:', error);
       toast({
         title: "Ödeme Hatası",
         description: error instanceof Error ? error.message : "Kart ödemesi işlenirken bir hata oluştu",
-        variant: "destructive",
+        variant: "destructive"
       });
       onError?.(error);
     } finally {
@@ -313,30 +250,10 @@ export default function CreditCardDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      {/* ── 3DS Popup Bekleme Overlay ── */}
-      {is3DSPending && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md rounded-t-3xl sm:rounded-3xl">
-          <div className="text-center px-6">
-            <div className="w-16 h-16 rounded-2xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center mx-auto mb-5">
-              <ShieldCheck className="w-8 h-8 text-blue-400" />
-            </div>
-            <h3 className="text-white font-bold text-lg mb-2">3D Secure Doğrulaması</h3>
-            <p className="text-white/50 text-sm mb-6 leading-relaxed">
-              Bankanızın doğrulama penceresi açıldı.<br />
-              İşlemi tamamladıktan sonra bu ekran otomatik güncellenecek.
-            </p>
-            <div className="flex items-center justify-center gap-2 text-white/30 text-xs">
-              <Lock className="w-3.5 h-3.5" />
-              <span>Pencereyi kapatmayın</span>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-md"
-        onClick={!is3DSPending ? onClose : undefined}
+        onClick={onClose}
       />
 
       {/* Sheet / Modal */}
