@@ -1,0 +1,195 @@
+
+0|adegloba  | 11:56:35 PM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | 11:56:40 PM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | 11:56:45 PM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | 11:56:50 PM [express] GET /api/cart 200 in 3ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | 11:56:55 PM [express] GET /api/cart 200 in 3ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | 11:57:00 PM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | 11:57:05 PM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | 11:57:10 PM [express] GET /api/cart 200 in 3ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | 11:57:15 PM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | 11:57:21 PM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | 11:57:24 PM [express] POST /api/cart/checkout 200 in 8ms :: {"id":"e80bb2e6-ec55-4d1c-a316-0f3f051048…
+0|adegloba  | 📤 [3DS] Creating card order with SCA_ALWAYS
+0|adegloba  | info: Request POST https://api-m.paypal.com/v1/oauth2/token
+0|adegloba  | info: Request body {"type":"form","content":[{"key":"grant_type","value":"client_credentials"}]}
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","cache-control":"max-age=0, no-cache, no-store, must-revalidate","paypal-debug-id":"**Redacted**","x-paypal-token-service":"**Redacted**","server-timing":"**Redacted**","content-type":"application/json","access-control-expose-headers":"**Redacted**","pragma":"no-cache","set-cookie":"**Redacted**","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Tue, 17 Mar 2026 20:57:24 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | info: Request POST https://api-m.paypal.com/v2/checkout/orders application/json
+0|adegloba  | info: Request body {"type":"text","content":"{\"intent\":\"CAPTURE\",\"purchase_units\":[{\"amount\":{\"currency_code\":\"USD\",\"value\":\"3.25\"}}],\"payment_source\":{\"card\":{\"name\":\"emir simsek\",\"number\":\"5168404405747065\",\"expiry\":\"2030-11\",\"security_code\":\"484\",\"billing_address\":{\"address_line_1\":\"Molla Mehmet Sokak No:7 anadolu kavagi istanbul\",\"address_line_2\":\"\",\"admin_area_2\":\"İstanbul\",\"admin_area_1\":\"TR\",\"postal_code\":\"34000\",\"country_code\":\"TR\"},\"attributes\":{\"verification\":{\"method\":\"SCA_WHEN_REQUIRED\"}},\"experience_context\":{\"return_url\":\"https://ads.adegloba.space/3ds-return\",\"cancel_url\":\"https://ads.adegloba.space/sepet\"}}}}"}
+0|adegloba  | 11:57:26 PM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"5c4b7dd7-bf23-41c6-a038-852954852c…
+0|adegloba  | info: Response 201 1356 application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-length":"1356","server-timing":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","paypal-debug-id":"**Redacted**","set-cookie":"**Redacted**","content-type":"application/json","access-control-expose-headers":"**Redacted**","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Tue, 17 Mar 2026 20:57:27 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding"}
+0|adegloba  | 📥 [3DS] PayPal response status: COMPLETED
+0|adegloba  | 🔗 [3DS] PayPal Order 59C90617A4467521U linked to DB order e80bb2e6-ec55-4d1c-a316-0f3f051048a1
+0|adegloba  | 11:57:27 PM [express] POST /api/paypal/create-card-order 201 in 2523ms :: {"orderId":"59C90617A446752…
+0|adegloba  | 🔍 Checking PayPal order status first: 59C90617A4467521U
+0|adegloba  | info: Request POST https://api-m.paypal.com/v1/oauth2/token
+0|adegloba  | info: Request body {"type":"form","content":[{"key":"grant_type","value":"client_credentials"}]}
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","set-cookie":"**Redacted**","pragma":"no-cache","access-control-expose-headers":"**Redacted**","paypal-debug-id":"**Redacted**","x-paypal-token-service":"**Redacted**","server-timing":"**Redacted**","content-type":"application/json","cache-control":"max-age=0, no-cache, no-store, must-revalidate","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Tue, 17 Mar 2026 20:57:27 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | info: Request GET https://api-m.paypal.com/v2/checkout/orders/59C90617A4467521U
+0|adegloba  | info: Request body undefined
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","access-control-expose-headers":"**Redacted**","paypal-debug-id":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","content-type":"application/json","set-cookie":"**Redacted**","server-timing":"**Redacted**","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Tue, 17 Mar 2026 20:57:27 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | 🔍 Current PayPal Order Status: CREATED
+0|adegloba  | 🔄 Order not captured yet - proceeding with capture
+0|adegloba  | info: Request POST https://api-m.paypal.com/v2/checkout/orders/59C90617A4467521U/capture application/json
+0|adegloba  | info: Request body undefined
+0|adegloba  | 🔔 [2026-03-17T20:57:28.943Z] PayPal webhook received: {
+0|adegloba  |   id: 'WH-9FK5245914545354D-56S20655BC5442100',
+0|adegloba  |   event_version: '1.0',
+0|adegloba  |   create_time: '2026-03-17T20:50:48.953Z',
+0|adegloba  |   resource_type: 'capture',
+0|adegloba  |   resource_version: '2.0',
+0|adegloba  |   event_type: 'PAYMENT.CAPTURE.DECLINED',
+0|adegloba  |   summary: 'A payment capture for $ 3.25 USD was declined.',
+0|adegloba  |   resource: {
+0|adegloba  |     id: '1EV66241P74348346',
+0|adegloba  |     amount: { currency_code: 'USD', value: '3.25' },
+0|adegloba  |     final_capture: true,
+0|adegloba  |     seller_protection: { status: 'NOT_ELIGIBLE' },
+0|adegloba  |     seller_receivable_breakdown: {
+0|adegloba  |       gross_amount: [Object],
+0|adegloba  |       paypal_fee: [Object],
+0|adegloba  |       net_amount: [Object]
+0|adegloba  |     },
+0|adegloba  |     status: 'DECLINED',
+0|adegloba  |     processor_response: {
+0|adegloba  |       avs_code: 'S',
+0|adegloba  |       cvv_code: 'M',
+0|adegloba  |       response_code: '9100',
+0|adegloba  |       payment_advice_code: '02'
+0|adegloba  |     },
+0|adegloba  |     supplementary_data: { related_ids: [Object] },
+0|adegloba  |     payee: {
+0|adegloba  |       email_address: 'starlink@adegloba.space',
+0|adegloba  |       merchant_id: 'U7YXXEN63ELEC'
+0|adegloba  |     },
+0|adegloba  |     create_time: '2026-03-17T20:50:44Z',
+0|adegloba  |     update_time: '2026-03-17T20:50:44Z',
+0|adegloba  |     links: [ [Object], [Object] ],
+0|adegloba  |     network_transaction_reference: { id: 'MDSXCIFQC', date: '0317', network: 'MASTERCARD' }
+0|adegloba  |   },
+0|adegloba  |   links: [
+0|adegloba  |     {
+0|adegloba  |       href: 'https://api.paypal.com/v1/notifications/webhooks-events/WH-9FK5245914545354D-56S20655BC5442100',
+0|adegloba  |       rel: 'self',
+0|adegloba  |       method: 'GET'
+0|adegloba  |     },
+0|adegloba  |     {
+0|adegloba  |       href: 'https://api.paypal.com/v1/notifications/webhooks-events/WH-9FK5245914545354D-56S20655BC5442100/resend',
+0|adegloba  |       rel: 'resend',
+0|adegloba  |       method: 'POST'
+0|adegloba  |     }
+0|adegloba  |   ]
+0|adegloba  | }
+0|adegloba  | 🌍 PayPal Environment: PRODUCTION
+0|adegloba  | 🔗 Webhook URL from DB: https://ads.adegloba.space/api/paypal/webhook
+0|adegloba  | 📧 Event Type: PAYMENT.CAPTURE.DECLINED
+0|adegloba  | ❌ [DECLINED] Processing payment decline for order: 9EU32463K39296616
+0|adegloba  | 💳 Payment ID: 1EV66241P74348346
+0|adegloba  | 💵 Amount: USD 3.25
+0|adegloba  | 🚫 Reason: Unknown
+0|adegloba  | ❌ No order found for PayPal Order ID: 9EU32463K39296616
+0|adegloba  | 11:57:28 PM [express] POST /api/paypal/webhook 404 in 3ms :: {"error":"Order not found"}
+0|adegloba  | info: Response 201 1356 application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-length":"1356","access-control-expose-headers":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","paypal-debug-id":"**Redacted**","server-timing":"**Redacted**","content-type":"application/json","set-cookie":"**Redacted**","edge-control":"**Redacted**","accept-ranges":"**Redacted**","date":"Tue, 17 Mar 2026 20:57:29 GMT","via":"1.1 varnish","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding"}
+0|adegloba  | 🔍 PayPal Capture Response Debug: {
+0|adegloba  |   httpStatusCode: 201,
+0|adegloba  |   status: 'COMPLETED',
+0|adegloba  |   captureStatus: 'DECLINED',
+0|adegloba  |   captureId: '8GV67619X2836260K'
+0|adegloba  | }
+0|adegloba  | ❌ PayPal Capture DECLINED despite HTTP 201: {
+0|adegloba  |   id: '8GV67619X2836260K',
+0|adegloba  |   status: 'DECLINED',
+0|adegloba  |   amount: { currency_code: 'USD', value: '3.25' },
+0|adegloba  |   final_capture: true,
+0|adegloba  |   seller_protection: { status: 'NOT_ELIGIBLE' },
+0|adegloba  |   seller_receivable_breakdown: {
+0|adegloba  |     gross_amount: { currency_code: 'USD', value: '3.25' },
+0|adegloba  |     paypal_fee: { currency_code: 'USD', value: '0.40' },
+0|adegloba  |     net_amount: { currency_code: 'USD', value: '2.85' }
+0|adegloba  |   },
+0|adegloba  |   links: [
+0|adegloba  |     {
+0|adegloba  |       href: 'https://api.paypal.com/v2/payments/captures/8GV67619X2836260K',
+0|adegloba  |       rel: 'self',
+0|adegloba  |       method: 'GET'
+0|adegloba  |     },
+0|adegloba  |     {
+0|adegloba  |       href: 'https://api.paypal.com/v2/checkout/orders/59C90617A4467521U',
+0|adegloba  |       rel: 'up',
+0|adegloba  |       method: 'GET'
+0|adegloba  |     }
+0|adegloba  |   ],
+0|adegloba  |   create_time: '2026-03-17T20:57:29Z',
+0|adegloba  |   update_time: '2026-03-17T20:57:29Z',
+0|adegloba  |   network_transaction_reference: { id: 'MDSXP6PQC', date: '0317', network: 'MASTERCARD' },
+0|adegloba  |   processor_response: {
+0|adegloba  |     avs_code: 'S',
+0|adegloba  |     cvv_code: 'M',
+0|adegloba  |     response_code: '9100',
+0|adegloba  |     payment_advice_code: '02'
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | 11:57:29 PM [express] POST /api/paypal/capture-order 400 in 2242ms :: {"id":"59C90617A4467521U","stat…
+0|adegloba  | 🔔 [2026-03-17T20:57:37.853Z] PayPal webhook received: {
+0|adegloba  |   id: 'WH-4LA65929G1100433L-54529110UD965972R',
+0|adegloba  |   event_version: '1.0',
+0|adegloba  |   create_time: '2026-03-17T20:57:30.122Z',
+0|adegloba  |   resource_type: 'capture',
+0|adegloba  |   resource_version: '2.0',
+0|adegloba  |   event_type: 'PAYMENT.CAPTURE.DECLINED',
+0|adegloba  |   summary: 'A payment capture for $ 3.25 USD was declined.',
+0|adegloba  |   resource: {
+0|adegloba  |     id: '1DW57961H35619458',
+0|adegloba  |     amount: { currency_code: 'USD', value: '3.25' },
+0|adegloba  |     final_capture: true,
+0|adegloba  |     seller_protection: { status: 'NOT_ELIGIBLE' },
+0|adegloba  |     seller_receivable_breakdown: {
+0|adegloba  |       gross_amount: [Object],
+0|adegloba  |       paypal_fee: [Object],
+0|adegloba  |       net_amount: [Object]
+0|adegloba  |     },
+0|adegloba  |     status: 'DECLINED',
+0|adegloba  |     processor_response: {
+0|adegloba  |       avs_code: 'S',
+0|adegloba  |       cvv_code: 'M',
+0|adegloba  |       response_code: '9100',
+0|adegloba  |       payment_advice_code: '02'
+0|adegloba  |     },
+0|adegloba  |     supplementary_data: { related_ids: [Object] },
+0|adegloba  |     payee: {
+0|adegloba  |       email_address: 'starlink@adegloba.space',
+0|adegloba  |       merchant_id: 'U7YXXEN63ELEC'
+0|adegloba  |     },
+0|adegloba  |     create_time: '2026-03-17T20:57:25Z',
+0|adegloba  |     update_time: '2026-03-17T20:57:25Z',
+0|adegloba  |     links: [ [Object], [Object] ],
+0|adegloba  |     network_transaction_reference: { id: 'MDSXP3IQC', date: '0317', network: 'MASTERCARD' }
+0|adegloba  |   },
+0|adegloba  |   links: [
+0|adegloba  |     {
+0|adegloba  |       href: 'https://api.paypal.com/v1/notifications/webhooks-events/WH-4LA65929G1100433L-54529110UD965972R',
+0|adegloba  |       rel: 'self',
+0|adegloba  |       method: 'GET'
+0|adegloba  |     },
+0|adegloba  |     {
+0|adegloba  |       href: 'https://api.paypal.com/v1/notifications/webhooks-events/WH-4LA65929G1100433L-54529110UD965972R/resend',
+0|adegloba  |       rel: 'resend',
+0|adegloba  |       method: 'POST'
+0|adegloba  |     }
+0|adegloba  |   ]
+0|adegloba  | }
+0|adegloba  | 🌍 PayPal Environment: PRODUCTION
+0|adegloba  | 🔗 Webhook URL from DB: https://ads.adegloba.space/api/paypal/webhook
+0|adegloba  | 📧 Event Type: PAYMENT.CAPTURE.DECLINED
+0|adegloba  | ❌ [DECLINED] Processing payment decline for order: 59C90617A4467521U
+0|adegloba  | 💳 Payment ID: 1DW57961H35619458
+0|adegloba  | 💵 Amount: USD 3.25
+0|adegloba  | 🚫 Reason: Unknown
+0|adegloba  | 🔄 Order e80bb2e6-ec55-4d1c-a316-0f3f051048a1 marked as FAILED due to payment decline
+0|adegloba  | 11:57:37 PM [express] POST /api/paypal/webhook 200 in 6ms :: {"status":"declined_processed","orderId"…
+^C
