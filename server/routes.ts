@@ -270,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
             attributes: {
               verification: {
-                method: 'SCA_WHEN_REQUIRED',
+                method: 'SCA_ALWAYS',
               },
             },
             experienceContext: {
