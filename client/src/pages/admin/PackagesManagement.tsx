@@ -285,7 +285,7 @@ export default function PackagesManagement() {
   // Toggle plan status mutation
   const toggleStatusMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => 
-      apiRequest('PUT', `/api/admin/plans/${id}`, { isActive }),
+      apiRequest('PATCH', `/api/admin/plans/${id}`, { isActive }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/plans'] });
       toast({
@@ -875,6 +875,24 @@ export default function PackagesManagement() {
                                   >
                                     <Edit className="mr-2 h-4 w-4" />
                                     Paket Bilgilerini Düzenle
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => toggleStatusMutation.mutate({ id: plan.id, isActive: !plan.isActive })}
+                                    className={plan.isActive
+                                      ? "text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                                      : "text-green-400 hover:text-green-300 hover:bg-green-500/10"}
+                                  >
+                                    {plan.isActive ? (
+                                      <>
+                                        <XCircle className="mr-2 h-4 w-4" />
+                                        Pasife Al
+                                      </>
+                                    ) : (
+                                      <>
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        Aktife Al
+                                      </>
+                                    )}
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator className="bg-slate-600" />
                                   <DropdownMenuItem 
