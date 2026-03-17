@@ -1,21 +1,68 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Package, Zap, Calendar, DollarSign, Ship as ShipIcon, ArrowRight, X, Info, ChevronRight, Heart } from "lucide-react";
+import { Loader2, Zap, ShoppingCart, Heart, Wifi, Shield, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useRef } from "react";
 import type { Plan, FavoritePlan } from "@shared/schema";
 
-// Extended plan type with stock information
 type PlanWithStock = Plan & {
   availableStock: number;
   inStock: boolean;
 };
+
+const TIER_STYLES = [
+  {
+    gradient: 'from-blue-600/20 via-blue-500/10 to-transparent',
+    accent: 'from-blue-500 to-cyan-400',
+    glow: 'hover:shadow-blue-500/20',
+    border: 'hover:border-blue-500/40',
+    badge: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
+    dot: 'bg-blue-400',
+  },
+  {
+    gradient: 'from-cyan-600/20 via-cyan-500/10 to-transparent',
+    accent: 'from-cyan-500 to-teal-400',
+    glow: 'hover:shadow-cyan-500/20',
+    border: 'hover:border-cyan-500/40',
+    badge: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
+    dot: 'bg-cyan-400',
+  },
+  {
+    gradient: 'from-violet-600/20 via-violet-500/10 to-transparent',
+    accent: 'from-violet-500 to-purple-400',
+    glow: 'hover:shadow-violet-500/20',
+    border: 'hover:border-violet-500/40',
+    badge: 'bg-violet-500/10 text-violet-300 border-violet-500/20',
+    dot: 'bg-violet-400',
+  },
+  {
+    gradient: 'from-emerald-600/20 via-emerald-500/10 to-transparent',
+    accent: 'from-emerald-500 to-green-400',
+    glow: 'hover:shadow-emerald-500/20',
+    border: 'hover:border-emerald-500/40',
+    badge: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+    dot: 'bg-emerald-400',
+  },
+  {
+    gradient: 'from-orange-600/20 via-orange-500/10 to-transparent',
+    accent: 'from-orange-500 to-amber-400',
+    glow: 'hover:shadow-orange-500/20',
+    border: 'hover:border-orange-500/40',
+    badge: 'bg-orange-500/10 text-orange-300 border-orange-500/20',
+    dot: 'bg-orange-400',
+  },
+  {
+    gradient: 'from-pink-600/20 via-pink-500/10 to-transparent',
+    accent: 'from-pink-500 to-rose-400',
+    glow: 'hover:shadow-pink-500/20',
+    border: 'hover:border-pink-500/40',
+    badge: 'bg-pink-500/10 text-pink-300 border-pink-500/20',
+    dot: 'bg-pink-400',
+  },
+];
 
 export default function Paketler() {
   const { user, isLoading: authLoading } = useUserAuth();
@@ -47,56 +94,25 @@ export default function Paketler() {
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
     },
     onError: () => {
-      toast({
-        title: t.packages.error,
-        description: t.packages.favoriteError || "Favori işlemi başarısız",
-        variant: "destructive",
-      });
+      toast({ title: t.packages.error, description: t.packages.favoriteError || "Favori işlemi başarısız", variant: "destructive" });
     },
   });
-
-  const scrollToPackage = (planId: string) => {
-    const element = cardRefs.current[planId];
-    if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center'
-      });
-      element.classList.add('ring-2', 'ring-cyan-400', 'ring-offset-2', 'ring-offset-slate-900');
-      setTimeout(() => {
-        element.classList.remove('ring-2', 'ring-cyan-400', 'ring-offset-2', 'ring-offset-slate-900');
-      }, 2000);
-    }
-  };
-
-  const sortedPlans = userShipPlans?.slice().sort((a, b) => a.dataLimitGb - b.dataLimitGb);
 
   const addToCartMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const response = await apiRequest('POST', '/api/cart', {
-        planId: planId,
-        quantity: 1
-      });
+      const response = await apiRequest('POST', '/api/cart', { planId, quantity: 1 });
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: t.packages.addedToCart,
-        description: t.packages.addedToCartDesc,
-      });
+      toast({ title: t.packages.addedToCart, description: t.packages.addedToCartDesc });
       window.location.href = '/sepet';
     },
     onError: (error: any) => {
-      // Parse error response for stock-related errors
-      const errorMessage = error.message || "Sepete eklenemedi";
-      
-      toast({
-        title: t.packages.error,
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast({ title: t.packages.error, description: error.message || "Sepete eklenemedi", variant: "destructive" });
     },
   });
+
+  const sortedPlans = userShipPlans?.slice().sort((a, b) => a.dataLimitGb - b.dataLimitGb);
 
   if (authLoading) {
     return (
@@ -114,251 +130,180 @@ export default function Paketler() {
     return null;
   }
 
-  const formatPrice = (price: string | number) => {
-    return `$${Number(price).toFixed(2)}`;
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-[#080c14]">
+      {/* Ambient background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-600/5 blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-cyan-600/5 blur-[120px]" />
+      </div>
+
       <UserNavigation />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-2">
-            <div className="relative">
-              <Package className="h-8 w-8 text-blue-400" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-            </div>
-            <span className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              {t.packages.dataPackages}
-            </span>
+
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        {/* ── Header ── */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-4 py-1.5 mb-4">
+            <Wifi className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-cyan-400 text-xs font-medium tracking-wider uppercase">Starlink Maritime</span>
           </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+            {t.packages.dataPackages}
+          </h1>
+          <p className="text-slate-400 text-sm max-w-md mx-auto">
+            Geminize özel internet paketleri. Ay sonuna kadar geçerli, kesintisiz bağlantı.
+          </p>
         </div>
 
-        {/* Quick Access GB Buttons */}
-        {sortedPlans && sortedPlans.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Zap className="h-4 w-4 text-amber-400" />
-              <span className="text-sm text-slate-400 font-medium">Hızlı Erişim</span>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-              {sortedPlans.map((plan) => (
+        {/* ── Quick Access Pill Buttons ── */}
+        {sortedPlans && sortedPlans.length > 1 && (
+          <div className="flex flex-wrap justify-center gap-2 mb-10">
+            {sortedPlans.map((plan, i) => {
+              const style = TIER_STYLES[i % TIER_STYLES.length];
+              return (
                 <button
-                  key={`quick-${plan.id}`}
-                  onClick={() => scrollToPackage(plan.id)}
-                  className="group relative px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/20 hover:-translate-y-0.5"
+                  key={`q-${plan.id}`}
+                  onClick={() => {
+                    cardRefs.current[plan.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border bg-white/5 ${style.border} hover:bg-white/10 transition-all duration-200 text-sm font-medium text-white/80 hover:text-white`}
                   data-testid={`quick-access-${plan.dataLimitGb}gb`}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl sm:text-2xl font-bold text-white group-hover:text-cyan-300 transition-colors">
-                      {plan.dataLimitGb}
-                    </span>
-                    <span className="text-sm sm:text-base font-semibold text-cyan-400 group-hover:text-cyan-300 transition-colors">
-                      GB
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-500 group-hover:text-slate-400 mt-0.5">
-                    ${Number(plan.priceUsd).toFixed(0)}
-                  </div>
-                  <ChevronRight className="absolute right-1 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5" />
+                  <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                  {plan.dataLimitGb} GB
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
         )}
 
-        {/* Packages Grid */}
+        {/* ── Plans Grid ── */}
         {plansLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
-            <span className="ml-3 text-slate-300">{t.packages.loadingPackages}</span>
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-7 w-7 animate-spin text-cyan-400" />
+            <span className="ml-3 text-slate-400 text-sm">{t.packages.loadingPackages}</span>
           </div>
-        ) : userShipPlans?.length ? (
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {userShipPlans.map((plan) => (
-              <Card 
-                key={plan.id}
-                ref={(el) => { cardRefs.current[plan.id] = el; }}
-                className="group relative overflow-hidden bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50 hover:border-blue-500/50 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-2"
-                data-testid={`plan-card-${plan.id}`}
-              >
-                {/* Glowing Border Effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/0 via-blue-600/20 to-cyan-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                
-                {/* Background Animation */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                
-                <CardHeader className="relative z-10 text-center pb-4">
-                  {/* Favorite Button */}
+        ) : sortedPlans?.length ? (
+          <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {sortedPlans.map((plan, i) => {
+              const style = TIER_STYLES[i % TIER_STYLES.length];
+              const isFav = favoriteIds.has(plan.id);
+              const isLoading = addToCartMutation.isPending;
+
+              return (
+                <div
+                  key={plan.id}
+                  ref={(el) => { cardRefs.current[plan.id] = el; }}
+                  className={`group relative flex flex-col bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl ${style.glow} ${style.border} hover:-translate-y-1`}
+                  data-testid={`plan-card-${plan.id}`}
+                >
+                  {/* Gradient top glow */}
+                  <div className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r ${style.accent} opacity-60`} />
+                  <div className={`absolute top-0 inset-x-0 h-32 bg-gradient-to-b ${style.gradient} opacity-60`} />
+
+                  {/* Favorite button */}
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavoriteMutation.mutate({ 
-                        planId: plan.id, 
-                        isFavorite: favoriteIds.has(plan.id) 
-                      });
-                    }}
-                    className="absolute top-3 right-3 p-2 rounded-full transition-all duration-300 hover:scale-110 z-20"
+                    onClick={() => toggleFavoriteMutation.mutate({ planId: plan.id, isFavorite: isFav })}
+                    className="absolute top-3.5 right-3.5 z-10 p-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
                     data-testid={`button-favorite-${plan.id}`}
                   >
-                    <Heart 
-                      className={`h-5 w-5 transition-all duration-300 ${
-                        favoriteIds.has(plan.id)
-                          ? 'fill-red-500 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]' 
-                          : 'text-slate-400 hover:text-red-400'
-                      }`} 
-                    />
+                    <Heart className={`w-4 h-4 transition-all duration-300 ${isFav ? 'fill-red-500 text-red-500' : 'text-white/30 hover:text-red-400'}`} />
                   </button>
 
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="relative">
-                      <Package className="h-12 w-12 transition-colors duration-300 text-blue-400 group-hover:text-cyan-400" />
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-                  </div>
-                  <CardTitle className="text-xl font-bold mb-3 transition-colors duration-300 text-white group-hover:text-blue-300">
-                    {plan.name}
-                  </CardTitle>
-                  
-                  {/* GB Display - More Prominent */}
-                  <div className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl p-4 mb-4 border border-blue-500/30">
-                    <div className="text-center">
-                      <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-4xl font-bold text-white">{plan.dataLimitGb}</span>
-                        <span className="text-2xl text-blue-400 font-semibold">GB</span>
-                      </div>
-                      <p className="text-blue-300 text-sm mt-1 font-medium">{t.packages.highSpeedData}</p>
-                    </div>
-                  </div>
-                </CardHeader>
+                  <div className="relative z-10 p-5 flex flex-col flex-1">
+                    {/* Plan name */}
+                    <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">{plan.name}</p>
 
-                <CardContent className="relative z-10 space-y-4">
-                  {/* Availability Status - Always Available */}
-                  <div className="text-center mb-3">
-                    <div className="inline-flex items-center px-3 py-1 bg-green-600/20 rounded-full border border-green-500/30">
-                      <Package className="h-4 w-4 text-green-400 mr-2" />
-                      <span className="text-sm font-medium text-green-400">
-                        {t.packages.available}
+                    {/* GB hero number */}
+                    <div className="flex items-baseline gap-1 mb-1">
+                      <span className={`text-6xl font-black bg-gradient-to-r ${style.accent} bg-clip-text text-transparent leading-none`}>
+                        {plan.dataLimitGb}
                       </span>
+                      <span className="text-2xl font-bold text-white/60 ml-1">GB</span>
+                    </div>
+
+                    {/* Plan description or default */}
+                    <p className="text-xs text-white/35 mb-5 min-h-[16px]">
+                      {plan.description || t.packages.highSpeedData}
+                    </p>
+
+                    {/* Features mini-list */}
+                    <div className="space-y-2 mb-6">
+                      <div className="flex items-center gap-2 text-xs text-white/50">
+                        <Clock className="w-3.5 h-3.5 flex-shrink-0 text-white/30" />
+                        <span>{t.packages.monthEndValidity}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-white/50">
+                        <Zap className="w-3.5 h-3.5 flex-shrink-0 text-white/30" />
+                        <span>{t.packages.starlinkTech}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-white/50">
+                        <Shield className="w-3.5 h-3.5 flex-shrink-0 text-white/30" />
+                        <span>Anlık aktivasyon</span>
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-white/[0.06] mb-4" />
+
+                    {/* Price + CTA */}
+                    <div className="flex items-center justify-between mt-auto">
+                      <div>
+                        <span className="text-2xl font-bold text-white">
+                          ${Number(plan.priceUsd).toFixed(2)}
+                        </span>
+                        <span className="text-xs text-white/30 ml-1">USD</span>
+                      </div>
+
+                      <button
+                        onClick={() => addToCartMutation.mutate(plan.id)}
+                        disabled={isLoading}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 bg-gradient-to-r ${style.accent} hover:opacity-90 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95`}
+                        data-testid={`button-buy-${plan.id}`}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-4 h-4" />
+                            <span>{t.packages.addToCart}</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
-
-                  {/* Price */}
-                  <div className="text-center">
-                    <div className="inline-flex items-center px-4 py-2 rounded-full border bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border-blue-500/30">
-                      <DollarSign className="h-5 w-5 mr-1 text-blue-400" />
-                      <span className="text-2xl font-bold text-white">{formatPrice(plan.priceUsd)}</span>
-                    </div>
-                  </div>
-
-                  {/* Features - More Detailed */}
-                  <div className="space-y-3 text-sm">
-                    {/* Data Limit Feature */}
-                    <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
-                      <Package className="h-4 w-4 mr-2 flex-shrink-0 text-blue-400" />
-                      <div>
-                        <span className="font-medium text-white">{plan.dataLimitGb} GB {t.packages.internetData}</span>
-                        <p className="text-xs text-slate-400 mt-1">{t.packages.internetDataDesc}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Validity Feature */}
-                    <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
-                      <Calendar className="h-4 w-4 mr-2 flex-shrink-0 text-green-400" />
-                      <div>
-                        <span className="font-medium text-white">{t.packages.monthEndValidity}</span>
-                        <p className="text-xs text-slate-400 mt-1">{t.packages.monthEndValidityDesc}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Speed Feature */}
-                    <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
-                      <Zap className="h-4 w-4 mr-2 flex-shrink-0 text-yellow-400" />
-                      <div>
-                        <span className="font-medium text-white">{t.packages.starlinkTech}</span>
-                        <p className="text-xs text-slate-400 mt-1">{t.packages.starlinkTechDesc}</p>
-                      </div>
-                    </div>
-                    
-                    {plan.description && (
-                      <div className="flex items-center rounded-lg p-3 text-slate-300 bg-slate-800/50">
-                        <Info className="h-4 w-4 mr-2 flex-shrink-0 text-cyan-400" />
-                        <span>{plan.description}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Purchase Button */}
-                  <Button
-                    onClick={() => addToCartMutation.mutate(plan.id)}
-                    disabled={addToCartMutation.isPending}
-                    className="w-full font-semibold py-3 rounded-xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 group-hover:shadow-xl group-hover:shadow-blue-500/30"
-                    data-testid={`button-buy-${plan.id}`}
-                  >
-                    {addToCartMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {t.packages.adding}
-                      </>
-                    ) : (
-                      <>
-                        {t.packages.addToCart}
-                        <Package className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-                      </>
-                    )}
-                  </Button>
-
-                </CardContent>
-
-                {/* Hover Glow Effect */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent transform -skew-x-12 translate-x-full group-hover:-translate-x-full transition-transform duration-1000" />
                 </div>
-              </Card>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <Package className="h-16 w-16 text-slate-400 mx-auto mb-6" />
-            <h3 className="text-xl font-semibold text-white mb-4">
-              {t.packages.noPackagesTitle}
-            </h3>
-            <p className="text-slate-400 mb-6">
-              {t.packages.noPackagesDesc}
-            </p>
-            <p className="text-sm text-slate-500">
-              {t.packages.contactAdmin}
-            </p>
+          <div className="text-center py-20">
+            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-5">
+              <Wifi className="w-8 h-8 text-slate-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">{t.packages.noPackagesTitle}</h3>
+            <p className="text-slate-400 text-sm mb-1">{t.packages.noPackagesDesc}</p>
+            <p className="text-slate-500 text-xs">{t.packages.contactAdmin}</p>
           </div>
         )}
 
-        {/* Info Section */}
-        <div className="mt-16 grid gap-6 md:grid-cols-3">
-          <Card className="bg-slate-900/50 border-slate-700/50 text-center p-6">
-            <Zap className="h-8 w-8 text-yellow-400 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-white mb-2">{t.packages.highSpeedTitle}</h3>
-            <p className="text-slate-400 text-sm">
-              {t.packages.highSpeedDesc}
-            </p>
-          </Card>
-          
-          <Card className="bg-slate-900/50 border-slate-700/50 text-center p-6">
-            <Package className="h-8 w-8 text-blue-400 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-white mb-2">{t.packages.flexiblePackagesTitle}</h3>
-            <p className="text-slate-400 text-sm">
-              {t.packages.flexiblePackagesDesc}
-            </p>
-          </Card>
-          
-          <Card className="bg-slate-900/50 border-slate-700/50 text-center p-6">
-            <ShipIcon className="h-8 w-8 text-cyan-400 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-white mb-2">{t.packages.shipSpecificTitle}</h3>
-            <p className="text-slate-400 text-sm">
-              {t.packages.shipSpecificDesc}
-            </p>
-          </Card>
-        </div>
+        {/* ── Bottom Feature Strip ── */}
+        {sortedPlans && sortedPlans.length > 0 && (
+          <div className="mt-12 grid grid-cols-3 gap-3">
+            {[
+              { icon: Zap, label: t.packages.highSpeedTitle, sub: t.packages.highSpeedDesc },
+              { icon: Shield, label: t.packages.flexiblePackagesTitle, sub: t.packages.flexiblePackagesDesc },
+              { icon: Wifi, label: t.packages.shipSpecificTitle, sub: t.packages.shipSpecificDesc },
+            ].map(({ icon: Icon, label, sub }, i) => (
+              <div key={i} className="flex flex-col items-center text-center p-4 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                <Icon className="w-5 h-5 text-white/30 mb-2" />
+                <p className="text-white/60 text-xs font-medium mb-1">{label}</p>
+                <p className="text-white/25 text-xs leading-relaxed hidden sm:block">{sub}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
