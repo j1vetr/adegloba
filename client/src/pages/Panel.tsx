@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
+import { FeedbackModal, useFeedbackModal } from "@/components/FeedbackModal";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -97,6 +98,16 @@ export default function Panel() {
   const expiredPageSize = 6;
   const searchString = useSearch();
 
+  const shouldShowFeedback = useFeedbackModal(user?.id);
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  useEffect(() => {
+    if (user?.id && shouldShowFeedback) {
+      const t = setTimeout(() => setShowFeedback(true), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [user?.id, shouldShowFeedback]);
+
   const getInitialTab = () => {
     const p = new URLSearchParams(searchString).get('tab');
     return (p && ['packages','favorites','history','expired'].includes(p)) ? p : 'packages';
@@ -171,6 +182,10 @@ export default function Panel() {
         <div className="absolute -top-40 -left-20 w-96 h-96 rounded-full bg-blue-700/8 blur-[100px]" />
         <div className="absolute top-1/3 -right-20 w-72 h-72 rounded-full bg-cyan-700/6 blur-[90px]" />
       </div>
+
+      {showFeedback && user?.id && (
+        <FeedbackModal userId={user.id} onClose={() => setShowFeedback(false)} />
+      )}
 
       <UserNavigation />
 

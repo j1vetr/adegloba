@@ -896,6 +896,33 @@ export class EmailService {
           <p>İyi denizler! ⚓</p>
         `);
 
+      case 'user_feedback':
+        return baseTemplate.replace('{{content}}', `
+          <h2>💬 Yeni Kullanıcı Geri Bildirimi</h2>
+          <p>Kullanıcı <span class="highlight">{{userName}}</span> sistemi hakkında geri bildirim gönderdi.</p>
+
+          <div class="order-details">
+            <h3 style="color: #facc15; margin-bottom: 15px;">📋 Kullanıcı Bilgileri</h3>
+            <div class="order-item">
+              <span>Kullanıcı Adı</span>
+              <span class="price">{{userName}}</span>
+            </div>
+            <div class="order-item">
+              <span>Gemi</span>
+              <span class="price">{{shipName}}</span>
+            </div>
+          </div>
+
+          <div class="order-details" style="margin-top: 20px;">
+            <h3 style="color: #facc15; margin-bottom: 15px;">⭐ Anket Sonuçları</h3>
+            {{surveyRows}}
+          </div>
+
+          {{messageBlock}}
+
+          <p style="margin-top: 20px; color: #94a3b8; font-size: 13px;">Bu geri bildirim otomatik olarak sistem tarafından iletilmiştir.</p>
+        `);
+
       default:
         return baseTemplate.replace('{{content}}', '<p>Email content not found.</p>');
     }

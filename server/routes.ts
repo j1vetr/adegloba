@@ -112,6 +112,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Feedback
+  app.post('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+      const { message, survey } = req.body;
+      if (!survey || typeof survey !== 'object') {
+        return res.status(400).json({ message: 'Survey data required' });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      const adminEmailSetting = await storage.getSetting('admin_email');
+      const adminEmail = adminEmailSetting?.value;
+      if (!adminEmail) return res.status(500).json({ message: 'Admin email not configured' });
+
+      const starLabel = (n: number) => '⭐'.repeat(n) + '☆'.repeat(5 - n) + ` (${n}/5)`;
+
+      const surveyLabels: Record<string, string> = {
+        ease: 'Kullanım Kolaylığı',
+        design: 'Tasarım',
+        payment: 'Ödeme Süreci',
+        overall: 'Genel Memnuniyet',
+      };
+
+      const surveyRows = Object.entries(survey)
+        .map(([key, val]) => {
+          const label = surveyLabels[key] || key;
+          const stars = starLabel(Number(val));
+          return `<div class="order-item"><span>${label}</span><span class="price">${stars}</span></div>`;
+        })
+        .join('');
+
+      const messageBlock = message?.trim()
+        ? `<div class="order-details" style="margin-top: 20px;"><h3 style="color: #facc15; margin-bottom: 15px;">💡 Öneri / Mesaj</h3><p style="color: #e2e8f0; background: #1e293b; padding: 15px; border-radius: 8px; border-left: 3px solid #facc15;">${message.trim()}</p></div>`
+        : '';
+
+      const shipName = (user as any).ship?.name || '—';
+
+      await emailService.sendEmail(
+        adminEmail,
+        `💬 Kullanıcı Geri Bildirimi — ${user.username}`,
+        'user_feedback',
+        { userName: user.username, shipName, surveyRows, messageBlock }
+      );
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Feedback error:', error);
+      res.status(500).json({ message: 'Failed to send feedback' });
+    }
+  });
+
   // PayPal routes
   app.get("/api/paypal/setup", async (req, res) => {
     await loadPaypalDefault(req, res);
