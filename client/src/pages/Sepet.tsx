@@ -170,9 +170,9 @@ export default function Sepet() {
 
                 {/* Brand tag */}
                 <div className="flex items-center justify-between mb-6">
-                  <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    <span className="text-cyan-400 text-xs font-semibold tracking-wider uppercase">Starlink Maritime</span>
+                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500/15 to-blue-500/15 border border-cyan-400/30 rounded-lg px-3 py-1.5 shadow-sm shadow-cyan-500/10">
+                    <Wifi className="h-3 w-3 text-cyan-400" />
+                    <span className="text-cyan-300 text-xs font-black tracking-[0.15em]">STARLINK MARITIME</span>
                   </div>
 
                   {/* Remove button */}
