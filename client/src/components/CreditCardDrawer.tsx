@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Lock, CheckCircle2, ShieldCheck, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 
@@ -34,13 +33,6 @@ export default function CreditCardDrawer({
     expiryDate: '',
     cvv: '',
     fullName: '',
-    addressLine1: '',
-    addressLine2: '',
-    postalCode: '',
-    region: '',
-    city: '',
-    phone: '',
-    email: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
@@ -54,9 +46,6 @@ export default function CreditCardDrawer({
       setFormData(prev => ({
         ...prev,
         fullName: userData.full_name || '',
-        email: userData.email || '',
-        phone: userData.phone || '',
-        addressLine1: userData.address || '',
       }));
     }
   }, [isOpen, user]);
@@ -102,8 +91,6 @@ export default function CreditCardDrawer({
       formattedValue = formatExpiryDate(value);
     } else if (field === 'cvv') {
       formattedValue = value.replace(/\D/g, '').slice(0, 4);
-    } else if (field === 'phone') {
-      formattedValue = value.replace(/\D/g, '');
     }
     setFormData(prev => ({ ...prev, [field]: formattedValue }));
     if (errors[field]) {
@@ -121,8 +108,6 @@ export default function CreditCardDrawer({
       newErrors.cvv = 'Geçerli CVV girin';
     if (!formData.fullName.trim())
       newErrors.fullName = 'Ad ve soyadınızı girin';
-    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
-      newErrors.email = 'Geçerli bir e-posta adresi girin';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -147,11 +132,11 @@ export default function CreditCardDrawer({
           securityCode: formData.cvv,
           name: formData.fullName.trim(),
           billingAddress: {
-            addressLine1: formData.addressLine1.trim() || 'N/A',
-            addressLine2: formData.addressLine2.trim() || '',
-            city: formData.city.trim() || 'Istanbul',
-            state: formData.region.trim() || 'TR',
-            postalCode: formData.postalCode.trim() || '34000',
+            addressLine1: 'N/A',
+            addressLine2: '',
+            city: 'Istanbul',
+            state: 'TR',
+            postalCode: '34000',
             countryCode: 'TR'
           }
         }
@@ -368,6 +353,8 @@ export default function CreditCardDrawer({
               <div className="relative">
                 <input
                   type="text"
+                  name="ccnumber"
+                  autoComplete="cc-number"
                   inputMode="numeric"
                   placeholder="1234 5678 9012 3456"
                   value={formData.cardNumber}
@@ -399,6 +386,8 @@ export default function CreditCardDrawer({
                 <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Son Tarih</label>
                 <input
                   type="text"
+                  name="ccexp"
+                  autoComplete="cc-exp"
                   inputMode="numeric"
                   placeholder="MM/YY"
                   value={formData.expiryDate}
@@ -415,6 +404,8 @@ export default function CreditCardDrawer({
                 <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">CVV</label>
                 <input
                   type="text"
+                  name="cvc"
+                  autoComplete="cc-csc"
                   inputMode="numeric"
                   placeholder="•••"
                   value={formData.cvv}
@@ -434,6 +425,8 @@ export default function CreditCardDrawer({
               <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Kart Üzerindeki Ad</label>
               <input
                 type="text"
+                name="ccname"
+                autoComplete="cc-name"
                 placeholder="AD SOYAD"
                 value={formData.fullName}
                 onChange={(e) => handleInputChange('fullName', e.target.value.toUpperCase())}
@@ -443,54 +436,6 @@ export default function CreditCardDrawer({
                   ${errors.fullName ? 'border-red-500/70 bg-red-500/5' : focusedField === 'fullName' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/10 hover:border-white/20'}`}
               />
               {errors.fullName && <p className="text-red-400 text-xs">{errors.fullName}</p>}
-            </div>
-
-            {/* Email */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">E-posta</label>
-              <input
-                type="email"
-                placeholder="ornek@email.com"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                onFocus={() => setFocusedField('email')}
-                onBlur={() => setFocusedField('')}
-                className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-white placeholder-slate-600 text-sm outline-none transition-all duration-200
-                  ${errors.email ? 'border-red-500/70 bg-red-500/5' : focusedField === 'email' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/10 hover:border-white/20'}`}
-              />
-              {errors.email && <p className="text-red-400 text-xs">{errors.email}</p>}
-            </div>
-
-            {/* Address + Phone (collapsible look, optional) */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Telefon</label>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  placeholder="05xx xxx xx xx"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  onFocus={() => setFocusedField('phone')}
-                  onBlur={() => setFocusedField('')}
-                  className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-white placeholder-slate-600 text-sm outline-none transition-all duration-200
-                    ${errors.phone ? 'border-red-500/70 bg-red-500/5' : focusedField === 'phone' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/10 hover:border-white/20'}`}
-                />
-                {errors.phone && <p className="text-red-400 text-xs">{errors.phone}</p>}
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Şehir</label>
-                <input
-                  type="text"
-                  placeholder="İstanbul"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  onFocus={() => setFocusedField('city')}
-                  onBlur={() => setFocusedField('')}
-                  className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-white placeholder-slate-600 text-sm outline-none transition-all duration-200
-                    ${errors.city ? 'border-red-500/70 bg-red-500/5' : focusedField === 'city' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/10 hover:border-white/20'}`}
-                />
-              </div>
             </div>
 
           </div>
