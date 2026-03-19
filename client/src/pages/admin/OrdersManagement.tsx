@@ -21,7 +21,7 @@ import {
   CheckCircle, AlertCircle, TrendingUp, Users, Calendar, ChevronsUpDown
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { tr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import type { Ship, Plan, User as UserType, Order } from '@shared/schema';
@@ -352,7 +352,7 @@ export default function OrdersManagement() {
   };
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'dd MMM yyyy HH:mm', { locale: tr });
+    return formatInTimeZone(new Date(dateString), 'Europe/Istanbul', 'dd MMM yyyy HH:mm', { locale: tr });
   };
 
   return (
