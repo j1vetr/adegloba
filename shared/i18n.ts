@@ -256,6 +256,16 @@ export interface Translation {
     couponHint: string;
     couponDescription: string;
     loyaltyDiscount: string;
+    cartFullTitle?: string;
+    cartFullDesc?: string;
+    cartFullGoToCart?: string;
+    cartFullClearAndAdd?: string;
+    cartFullClearSuccess?: string;
+    removeItem?: string;
+    validUntilMonthEnd?: string;
+    instantActivation?: string;
+    unitPrice?: string;
+    freeShipping?: string;
   };
 
   // Checkout & Payment
@@ -666,7 +676,17 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       monthEndExpiry: "Ay sonu bitiş",
       couponHint: "Kupon kodu var mı?",
       couponDescription: "Ödeme sayfasında kupon kodunuzu girebilirsiniz",
-      loyaltyDiscount: "Sadakat İndirimi"
+      loyaltyDiscount: "Sadakat İndirimi",
+      cartFullTitle: "Sepetinizde Zaten Bir Paket Var",
+      cartFullDesc: "Yeni bir paket eklemek için önce mevcut paketi satın alın ya da sepetinizi temizleyin.",
+      cartFullGoToCart: "Sepete Git",
+      cartFullClearAndAdd: "Sepeti Temizle ve Ekle",
+      cartFullClearSuccess: "Sepet temizlendi, yeni paket ekleniyor...",
+      removeItem: "Paketi Kaldır",
+      validUntilMonthEnd: "Ay sonuna kadar geçerli",
+      instantActivation: "Anlık aktivasyon",
+      unitPrice: "Birim fiyat",
+      freeShipping: "Ücretsiz"
     },
     
     checkout: {
@@ -1163,7 +1183,17 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       monthEndExpiry: "Month-end expiry",
       couponHint: "Have a coupon code?",
       couponDescription: "You can enter your coupon code on the checkout page",
-      loyaltyDiscount: "Loyalty Discount"
+      loyaltyDiscount: "Loyalty Discount",
+      cartFullTitle: "You Already Have a Package in Your Cart",
+      cartFullDesc: "To add a new package, please complete your current purchase or clear your cart first.",
+      cartFullGoToCart: "Go to Cart",
+      cartFullClearAndAdd: "Clear Cart & Add",
+      cartFullClearSuccess: "Cart cleared, adding new package...",
+      removeItem: "Remove Package",
+      validUntilMonthEnd: "Valid until end of month",
+      instantActivation: "Instant activation",
+      unitPrice: "Unit price",
+      freeShipping: "Free"
     },
     
     checkout: {
@@ -1657,7 +1687,24 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       monthEndExpiry: "Срок действия до конца месяца",
       couponHint: "У вас есть код скидки?",
       couponDescription: "Введите код купона для получения скидки на ваш заказ",
-      loyaltyDiscount: "Скидка Лояльности"
+      loyaltyDiscount: "Скидка Лояльности",
+      cartFullTitle: "В вашей корзине уже есть пакет",
+      cartFullDesc: "Чтобы добавить новый пакет, сначала завершите текущую покупку или очистите корзину.",
+      cartFullGoToCart: "Перейти в корзину",
+      cartFullClearAndAdd: "Очистить корзину и добавить",
+      cartFullClearSuccess: "Корзина очищена, добавляем новый пакет...",
+      removeItem: "Удалить пакет",
+      validUntilMonthEnd: "Действительно до конца месяца",
+      instantActivation: "Мгновенная активация",
+      unitPrice: "Цена за единицу",
+      freeShipping: "Бесплатно",
+      browsePackages: "Просмотреть пакеты",
+      empty: "Ваша корзина пуста",
+      emptyDescription: "Добавьте пакеты данных в корзину для покупки.",
+      removeSuccess: "Пакет удалён из корзины",
+      clearSuccess: "Корзина очищена",
+      checkoutProcessing: "Подготовка к оплате...",
+      securityNotice: "Безопасное шифрование 256-bit SSL"
     },
 
     checkout: {

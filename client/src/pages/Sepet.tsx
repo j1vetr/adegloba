@@ -1,11 +1,16 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { Button } from "@/components/ui/button";
-import { Loader2, ShoppingCart, Trash2, ArrowRight, Shield, Wifi, Calendar, Zap, Tag } from "lucide-react";
+import {
+  Loader2, ShoppingCart, Trash2, ArrowRight,
+  Shield, Wifi, Calendar, Zap, Tag, Check,
+  ChevronRight, Package, CreditCard, Star
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Link } from "wouter";
 
 interface CartItem {
   id: string;
@@ -58,7 +63,6 @@ export default function Sepet() {
       return response.json();
     },
     onSuccess: (order) => {
-      toast({ title: t.common.created, description: t.common.redirecting });
       window.location.href = `/checkout?orderId=${order.id}`;
     },
     onError: (error: any) => {
@@ -68,7 +72,7 @@ export default function Sepet() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="min-h-screen bg-[#080c14]">
         <UserNavigation />
         <div className="flex items-center justify-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
@@ -87,163 +91,216 @@ export default function Sepet() {
   const item = cartData?.items?.[0];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <UserNavigation />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 pt-28">
+    <div className="min-h-screen bg-[#080c14]">
+      {/* Ambient glow */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-cyan-600/8 blur-[100px]" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-blue-700/5 blur-[80px]" />
+      </div>
 
-        {/* Page title */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-1">
-            <ShoppingCart className="h-6 w-6 text-cyan-400" />
-            <h1 className="text-2xl font-bold text-white">{t.cart.title}</h1>
-          </div>
-          <p className="text-slate-400 text-sm ml-9">{t.cart.description}</p>
+      <UserNavigation />
+
+      <div className="relative max-w-xl mx-auto px-4 sm:px-6 py-10 pt-28">
+
+        {/* ── Step Progress ── */}
+        <div className="flex items-center justify-center gap-0 mb-10">
+          {[
+            { label: "Sepet", step: 1, active: true, done: false },
+            { label: "Ödeme", step: 2, active: false, done: false },
+            { label: "Tamamlandı", step: 3, active: false, done: false },
+          ].map((s, i) => (
+            <div key={s.step} className="flex items-center">
+              <div className="flex flex-col items-center gap-1">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  s.done
+                    ? 'bg-green-500 text-white'
+                    : s.active
+                    ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/40'
+                    : 'bg-slate-800 border border-slate-700 text-slate-500'
+                }`}>
+                  {s.done ? <Check className="h-4 w-4" /> : s.step}
+                </div>
+                <span className={`text-xs font-medium ${s.active ? 'text-cyan-400' : 'text-slate-600'}`}>
+                  {s.label}
+                </span>
+              </div>
+              {i < 2 && (
+                <div className={`w-16 sm:w-24 h-px mx-2 mb-5 ${i === 0 && item ? 'bg-cyan-500/40' : 'bg-slate-800'}`} />
+              )}
+            </div>
+          ))}
         </div>
 
         {cartLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+          <div className="flex items-center justify-center py-32">
+            <div className="text-center">
+              <Loader2 className="h-9 w-9 animate-spin text-cyan-400 mx-auto mb-3" />
+              <p className="text-slate-500 text-sm">{t.cart.loading}</p>
+            </div>
           </div>
+
         ) : !item ? (
           /* ── Empty State ── */
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-20 h-20 rounded-full bg-slate-800/60 border border-slate-700 flex items-center justify-center mb-6">
-              <ShoppingCart className="h-9 w-9 text-slate-500" />
+          <div className="text-center py-20">
+            <div className="relative inline-flex mb-8">
+              <div className="w-24 h-24 rounded-3xl bg-slate-900 border border-slate-700/60 flex items-center justify-center">
+                <ShoppingCart className="h-10 w-10 text-slate-600" />
+              </div>
+              <div className="absolute inset-0 rounded-3xl bg-cyan-500/5 blur-xl" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-3">{t.cart.empty}</h3>
-            <p className="text-slate-400 mb-8 max-w-xs">{t.cart.emptyDescription}</p>
-            <Button
-              onClick={() => window.location.href = '/paketler'}
-              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-8 py-3 rounded-xl"
-            >
-              {t.cart.browsePackages}
-            </Button>
+            <h3 className="text-2xl font-bold text-white mb-3">{t.cart.empty}</h3>
+            <p className="text-slate-400 mb-10 max-w-xs mx-auto text-sm leading-relaxed">{t.cart.emptyDescription}</p>
+            <Link href="/paketler">
+              <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold px-8 py-3 rounded-xl shadow-lg shadow-cyan-900/30">
+                <Package className="h-4 w-4 mr-2" />
+                {t.cart.browsePackages}
+              </Button>
+            </Link>
           </div>
+
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <>
+            {/* ── Main Product Card ── */}
+            <div className="relative rounded-3xl overflow-hidden border border-white/8 bg-gradient-to-b from-slate-900/90 to-slate-950/90 shadow-2xl shadow-black/50 backdrop-blur-sm">
 
-            {/* ── Product Card (spans 3 cols) ── */}
-            <div className="lg:col-span-3 order-2 lg:order-1">
-              <div className="relative rounded-2xl overflow-hidden border border-cyan-500/20 bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl shadow-cyan-900/10">
+              {/* Gradient header section */}
+              <div className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 px-8 pt-8 pb-6 border-b border-white/5">
+                {/* Glow blob behind number */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
-                {/* Card top accent bar */}
-                <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500" />
-
-                {/* Header row */}
-                <div className="flex items-start justify-between p-6 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-                      <Wifi className="h-5 w-5 text-cyan-400" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Starlink Maritime</p>
-                      <h2 className="text-lg font-bold text-white leading-tight">{item.plan?.name || 'Veri Paketi'}</h2>
-                    </div>
+                {/* Brand tag */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                    <span className="text-cyan-400 text-xs font-semibold tracking-wider uppercase">Starlink Maritime</span>
                   </div>
 
                   {/* Remove button */}
                   <button
                     onClick={() => removeItemMutation.mutate(item.planId)}
                     disabled={removeItemMutation.isPending}
-                    className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 disabled:opacity-40"
-                    title="Kaldır"
+                    className="group flex items-center gap-1.5 text-slate-600 hover:text-red-400 transition-colors text-xs"
                   >
                     {removeItemMutation.isPending
-                      ? <Loader2 className="h-4 w-4 animate-spin" />
-                      : <Trash2 className="h-4 w-4" />
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      : <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
                     }
+                    <span>{t.cart.removeItem || "Kaldır"}</span>
                   </button>
                 </div>
 
-                {/* GB display */}
-                <div className="px-6 pb-5">
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className="text-6xl font-black text-white tracking-tight">{item.plan?.dataLimitGb}</span>
-                    <span className="text-2xl font-bold text-cyan-400 mb-1">GB</span>
+                {/* GB Hero Number */}
+                <div className="relative text-center py-4">
+                  <div className="inline-flex items-baseline gap-2">
+                    <span className="text-8xl sm:text-9xl font-black text-white tracking-tighter leading-none" style={{ textShadow: '0 0 80px rgba(6,182,212,0.3)' }}>
+                      {item.plan?.dataLimitGb}
+                    </span>
+                    <span className="text-3xl font-black text-cyan-400 mb-2 self-end">GB</span>
                   </div>
-                  <p className="text-slate-400 text-sm">
-                    {item.plan?.description || 'Yüksek Hızlı Deniz İnterneti'}
+                  <p className="text-slate-400 text-sm mt-2 font-medium">
+                    {item.plan?.name || 'Veri Paketi'}
                   </p>
-                </div>
-
-                {/* Feature pills */}
-                <div className="flex flex-wrap gap-2 px-6 pb-6">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-300">
-                    <Calendar className="h-3 w-3 text-cyan-400" />
-                    Ay sonuna kadar geçerli
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-300">
-                    <Zap className="h-3 w-3 text-yellow-400" />
-                    Anlık aktivasyon
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-300">
-                    <Shield className="h-3 w-3 text-green-400" />
-                    Güvenli ödeme
-                  </span>
-                </div>
-
-                {/* Price footer */}
-                <div className="flex items-center justify-between px-6 py-4 bg-slate-900/60 border-t border-slate-700/50">
-                  <span className="text-sm text-slate-400">Birim fiyat</span>
-                  <span className="text-2xl font-bold text-cyan-400">{formatPrice(item.plan?.priceUsd || 0)}</span>
+                  {item.plan?.description && (
+                    <p className="text-slate-600 text-xs mt-1">
+                      {item.plan.description}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Coupon hint */}
-              <div className="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800/40 border border-slate-700/40">
-                <Tag className="h-4 w-4 text-green-400 shrink-0" />
-                <p className="text-sm text-slate-400">
-                  <span className="text-green-400 font-medium">{t.cart.couponHint}</span>
-                  {' — '}{t.cart.couponDescription}
-                </p>
+              {/* Features section */}
+              <div className="px-8 py-5 border-b border-white/5">
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { icon: Calendar, label: t.cart.validUntilMonthEnd || "Ay sonuna kadar", color: "text-blue-400", bg: "bg-blue-500/10" },
+                    { icon: Zap, label: t.cart.instantActivation || "Anlık aktivasyon", color: "text-yellow-400", bg: "bg-yellow-500/10" },
+                    { icon: Shield, label: "SSL Güvenli", color: "text-green-400", bg: "bg-green-500/10" },
+                  ].map(({ icon: Icon, label, color, bg }) => (
+                    <div key={label} className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/3 border border-white/5 text-center">
+                      <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
+                        <Icon className={`h-4 w-4 ${color}`} />
+                      </div>
+                      <span className="text-slate-400 text-xs leading-tight">{label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* ── Order Summary (spans 2 cols) ── */}
-            <div className="lg:col-span-2 order-1 lg:order-2">
-              <div className="rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900 to-slate-800 p-6 sticky top-24">
-                <h3 className="text-base font-semibold text-white mb-5">{t.checkout.orderSummary}</h3>
-
-                {/* Summary rows */}
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">{t.checkout.subtotal}</span>
-                    <span className="text-white font-semibold">{formatPrice(cartData?.subtotal || 0)}</span>
+              {/* Price + CTA section */}
+              <div className="px-8 py-6">
+                {/* Price row */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">{t.cart.unitPrice || "Toplam tutar"}</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-white">{formatPrice(item.plan?.priceUsd || 0)}</span>
+                      <span className="text-slate-500 text-sm">USD</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm text-slate-500">
-                    <span>Kargo</span>
-                    <span className="text-green-400">Ücretsiz</span>
-                  </div>
-                  <div className="h-px bg-slate-700 my-1" />
-                  <div className="flex justify-between">
-                    <span className="text-white font-semibold">{t.checkout.total}</span>
-                    <span className="text-xl font-bold text-cyan-400">{formatPrice(cartData?.subtotal || 0)}</span>
+                  <div className="text-right">
+                    <div className="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1.5">
+                      <Check className="h-3.5 w-3.5 text-green-400" />
+                      <span className="text-green-400 text-xs font-semibold">Kargo {t.cart.freeShipping || "Ücretsiz"}</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* CTA */}
+                {/* CTA Button */}
                 <Button
                   onClick={() => checkoutMutation.mutate()}
                   disabled={checkoutMutation.isPending}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-4 rounded-xl text-base transition-all duration-200 shadow-lg shadow-cyan-900/30 hover:shadow-cyan-700/30 group"
+                  className="w-full h-14 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-base rounded-2xl shadow-xl shadow-cyan-900/40 hover:shadow-cyan-700/40 transition-all duration-200 group"
                 >
                   {checkoutMutation.isPending ? (
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      {t.cart.checkoutProcessing}
+                    </>
                   ) : (
-                    <ArrowRight className="h-5 w-5 mr-2 group-hover:translate-x-0.5 transition-transform" />
+                    <>
+                      <CreditCard className="h-5 w-5 mr-2" />
+                      {t.checkout?.proceedToPayment || "Ödemeye Geç"}
+                      <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-0.5 transition-transform" />
+                    </>
                   )}
-                  {checkoutMutation.isPending ? t.cart.checkoutProcessing : t.checkout.proceedToPayment}
                 </Button>
 
-                {/* Security */}
-                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
-                  <Shield className="h-3.5 w-3.5 text-green-500" />
-                  <span>{t.cart.securityNotice}</span>
+                {/* Security row */}
+                <div className="flex items-center justify-center gap-4 mt-4">
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <Shield className="h-3.5 w-3.5 text-green-600" />
+                    <span className="text-xs">{t.cart.securityNotice}</span>
+                  </div>
+                  <span className="text-slate-700">·</span>
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <Star className="h-3 w-3 text-yellow-600" />
+                    <span className="text-xs">PayPal korumalı</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-          </div>
+            {/* ── Coupon hint ── */}
+            <div className="mt-4 flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-white/3 border border-white/5">
+              <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+                <Tag className="h-4 w-4 text-green-400" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-green-400">{t.cart.couponHint}</p>
+                <p className="text-xs text-slate-500">{t.cart.couponDescription}</p>
+              </div>
+            </div>
+
+            {/* ── Bottom nav ── */}
+            <div className="mt-6 flex items-center justify-center">
+              <Link href="/paketler">
+                <button className="flex items-center gap-1.5 text-slate-600 hover:text-slate-400 text-sm transition-colors group">
+                  <ChevronRight className="h-4 w-4 rotate-180 group-hover:-translate-x-0.5 transition-transform" />
+                  Paketlere Dön
+                </button>
+              </Link>
+            </div>
+          </>
         )}
       </div>
     </div>

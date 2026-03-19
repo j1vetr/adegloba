@@ -1,11 +1,13 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Zap, CreditCard, Heart, Wifi, Shield, Clock } from "lucide-react";
+import { Loader2, Zap, CreditCard, Heart, Wifi, Shield, Clock, ShoppingCart, AlertTriangle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import type { Plan, FavoritePlan } from "@shared/schema";
 
 type PlanWithStock = Plan & {
@@ -69,6 +71,7 @@ export default function Paketler() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [cartFullDialog, setCartFullDialog] = useState<{ open: boolean; pendingPlanId: string | null }>({ open: false, pendingPlanId: null });
 
   const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
     queryKey: ["/api/user/ship-plans"],
@@ -98,6 +101,15 @@ export default function Paketler() {
     },
   });
 
+  const clearCartMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest('DELETE', '/api/cart');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    },
+  });
+
   const addToCartMutation = useMutation({
     mutationFn: async (planId: string) => {
       const response = await apiRequest('POST', '/api/cart', { planId, quantity: 1 });
@@ -107,10 +119,23 @@ export default function Paketler() {
       toast({ title: t.packages.addedToCart, description: t.packages.addedToCartDesc });
       window.location.href = '/sepet';
     },
-    onError: (error: any) => {
-      toast({ title: t.packages.error, description: error.message || "Sepete eklenemedi", variant: "destructive" });
+    onError: (error: any, planId: string) => {
+      const msg: string = error.message || "";
+      if (msg.toLowerCase().includes("sepet") || msg.toLowerCase().includes("cart") || msg.toLowerCase().includes("already") || msg.toLowerCase().includes("limit")) {
+        setCartFullDialog({ open: true, pendingPlanId: planId });
+      } else {
+        toast({ title: t.packages.error, description: msg || "Sepete eklenemedi", variant: "destructive" });
+      }
     },
   });
+
+  const handleClearAndAdd = async () => {
+    const planId = cartFullDialog.pendingPlanId;
+    if (!planId) return;
+    setCartFullDialog({ open: false, pendingPlanId: null });
+    await clearCartMutation.mutateAsync();
+    addToCartMutation.mutate(planId);
+  };
 
   const sortedPlans = userShipPlans?.slice().sort((a, b) => a.dataLimitGb - b.dataLimitGb);
 
@@ -131,6 +156,7 @@ export default function Paketler() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-[#080c14]">
       {/* Ambient background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -306,5 +332,76 @@ export default function Paketler() {
         )}
       </div>
     </div>
+
+    {/* ── Cart Full Dialog ── */}
+    {cartFullDialog.open && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          onClick={() => setCartFullDialog({ open: false, pendingPlanId: null })}
+        />
+
+        {/* Dialog card */}
+        <div className="relative w-full max-w-md rounded-3xl border border-amber-500/30 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl shadow-amber-900/20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          {/* Top accent */}
+          <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500" />
+
+          <div className="p-7">
+            {/* Icon */}
+            <div className="flex justify-center mb-5">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <ShoppingCart className="h-7 w-7 text-amber-400" />
+              </div>
+            </div>
+
+            {/* Text */}
+            <div className="text-center mb-7">
+              <h2 className="text-xl font-bold text-white mb-3">
+                {t.cart.cartFullTitle || "Sepetinizde Zaten Bir Paket Var"}
+              </h2>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                {t.cart.cartFullDesc || "Yeni bir paket eklemek için önce mevcut paketi satın alın ya da sepetinizi temizleyin."}
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="space-y-3">
+              <Link href="/sepet">
+                <Button
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold py-3 rounded-xl text-sm"
+                  onClick={() => setCartFullDialog({ open: false, pendingPlanId: null })}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  {t.cart.cartFullGoToCart || "Sepete Git"}
+                </Button>
+              </Link>
+
+              <Button
+                variant="outline"
+                className="w-full border-red-500/30 hover:border-red-500/60 bg-red-500/5 hover:bg-red-500/10 text-red-400 hover:text-red-300 font-semibold py-3 rounded-xl text-sm transition-all"
+                onClick={handleClearAndAdd}
+                disabled={clearCartMutation.isPending || addToCartMutation.isPending}
+              >
+                {(clearCartMutation.isPending || addToCartMutation.isPending) ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Trash2 className="h-4 w-4 mr-2" />
+                )}
+                {t.cart.cartFullClearAndAdd || "Sepeti Temizle ve Ekle"}
+              </Button>
+
+              <button
+                onClick={() => setCartFullDialog({ open: false, pendingPlanId: null })}
+                className="w-full text-center text-xs text-slate-500 hover:text-slate-400 py-2 transition-colors"
+              >
+                Vazgeç
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
