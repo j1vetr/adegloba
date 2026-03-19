@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Zap, ShoppingCart, Heart, Wifi, Shield, Clock } from "lucide-react";
+import { Loader2, Zap, CreditCard, Heart, Wifi, Shield, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserNavigation } from "@/components/UserNavigation";
@@ -266,7 +266,7 @@ export default function Paketler() {
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <>
-                            <ShoppingCart className="w-4 h-4" />
+                            <CreditCard className="w-4 h-4" />
                             <span>{t.packages.addToCart}</span>
                           </>
                         )}

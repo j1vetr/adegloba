@@ -648,7 +648,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Plan ID is required' });
       }
 
-      // Stock checking removed - packages always available for purchase
+      // Max 1 item in cart at a time
+      const existingItems = await storage.getCartItems(userId);
+      if (existingItems.length > 0) {
+        return res.status(400).json({ message: 'Sepette zaten bir ürün var. Lütfen önce mevcut ürünü kaldırın veya satın alın.' });
+      }
 
       const cartItem = await storage.addToCart(userId, planId, quantity);
       res.json(cartItem);
