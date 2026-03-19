@@ -17,8 +17,9 @@ import type { Order, User, Ship, FavoritePlan, Plan } from "@shared/schema";
 import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
 
 /* ─── helpers ─────────────────────────────────────────────── */
+const IST = 'Europe/Istanbul';
 const fmtDate = (d: string) =>
-  new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+  new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: IST });
 
 const fmtPrice = (p: string | number) => `$${Number(p).toFixed(2)}`;
 
@@ -122,13 +123,15 @@ export default function Panel() {
   const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/user/orders"],
     enabled: !!user,
-    staleTime: 30 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
     refetchInterval: 60 * 1000,
   });
   const { data: activePackages, isLoading: packagesLoading } = useQuery({
     queryKey: ["/api/user/active-packages"],
     enabled: !!user,
-    staleTime: 30 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
     refetchInterval: 60 * 1000,
   });
   const { data: expiredPackagesData, isLoading: expiredLoading } = useQuery({
@@ -300,13 +303,16 @@ export default function Panel() {
             ) : pkgs?.length ? (() => {
               /* ── unique purchase dates (newest first) ── */
               const dateKey = (pkg: any) =>
-                new Date(pkg.paidAt || pkg.assignedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+                new Date(pkg.paidAt || pkg.assignedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: IST });
               const rawKey = (pkg: any) =>
-                new Date(pkg.paidAt || pkg.assignedAt).toDateString();
+                new Date(pkg.paidAt || pkg.assignedAt).toLocaleDateString('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: IST });
 
               const uniqueDates = Array.from(
-                new Map(pkgs.map((p: any) => [rawKey(p), { raw: rawKey(p), label: dateKey(p) }])).values()
-              ).sort((a, b) => new Date(b.raw).getTime() - new Date(a.raw).getTime());
+                new Map(pkgs.map((p: any) => [
+                  rawKey(p),
+                  { raw: rawKey(p), label: dateKey(p), ts: new Date(p.paidAt || p.assignedAt).getTime() }
+                ])).values()
+              ).sort((a, b) => b.ts - a.ts);
 
               const filtered = selectedDate
                 ? pkgs.filter((p: any) => rawKey(p) === selectedDate)
