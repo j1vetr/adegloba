@@ -2,11 +2,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useSearch } from "wouter";
-import { Progress } from "@/components/ui/progress";
 import {
   Loader2, Package, History, Clock, Archive,
   Heart, ShoppingCart, Copy, ChevronLeft, ChevronRight,
-  Wifi, Satellite, RotateCcw
+  Wifi, Satellite, CalendarDays
 } from "lucide-react";
 import { Link } from "wouter";
 import { UserNavigation } from "@/components/UserNavigation";
@@ -94,6 +93,7 @@ export default function Panel() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [expiredPage, setExpiredPage] = useState(1);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const expiredPageSize = 6;
   const searchString = useSearch();
 
@@ -271,95 +271,159 @@ export default function Panel() {
             ACTIVE PACKAGES
             ══════════════════════════════════════ */}
         {activeTab === 'packages' && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {packagesLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
               </div>
-            ) : pkgs?.length ? (
-              pkgs.map((pkg: any) => {
-                const { daysLeft, exp, pct } = calcExpiry(pkg.paidAt || pkg.assignedAt, pkg.expiresAt);
-                const urgency = daysLeft > 7 ? 'green' : daysLeft > 3 ? 'amber' : 'red';
-                const progressColor = { green: 'from-emerald-500 to-teal-400', amber: 'from-amber-500 to-orange-400', red: 'from-red-500 to-rose-400' }[urgency];
-                const dayTextColor = { green: 'text-emerald-400', amber: 'text-amber-400', red: 'text-red-400' }[urgency];
+            ) : pkgs?.length ? (() => {
+              /* ── unique purchase dates (newest first) ── */
+              const dateKey = (pkg: any) =>
+                new Date(pkg.paidAt || pkg.assignedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+              const rawKey = (pkg: any) =>
+                new Date(pkg.paidAt || pkg.assignedAt).toDateString();
 
-                return (
-                  <div
-                    key={pkg.credentialId}
-                    className="rounded-2xl overflow-hidden border border-white/[0.07] bg-white/[0.03]"
-                    data-testid={`package-card-${pkg.credentialId}`}
-                  >
-                    {/* card header */}
-                    <div className="relative bg-gradient-to-r from-[#0f1e38] to-[#091220] px-5 pt-5 pb-4">
-                      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
+              const uniqueDates = Array.from(
+                new Map(pkgs.map((p: any) => [rawKey(p), { raw: rawKey(p), label: dateKey(p) }])).values()
+              ).sort((a, b) => new Date(b.raw).getTime() - new Date(a.raw).getTime());
 
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <p className="text-white/40 text-xs uppercase tracking-wider mb-1">{pkg.planName}</p>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-5xl font-black text-white leading-none">{pkg.dataLimitGb}</span>
-                            <span className="text-xl font-bold text-white/50 ml-1">GB</span>
-                          </div>
-                          <p className="text-cyan-400/70 text-xs mt-1">Starlink Data Paketi</p>
-                        </div>
+              const filtered = selectedDate
+                ? pkgs.filter((p: any) => rawKey(p) === selectedDate)
+                : pkgs;
 
-                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${
-                          daysLeft > 0
-                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                            : 'bg-red-500/10 border-red-500/20 text-red-400'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${daysLeft > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
-                          {daysLeft > 0 ? 'Aktif' : 'Süresi Doldu'}
-                        </div>
+              /* sort filtered: newest purchase first */
+              const sorted = [...filtered].sort(
+                (a: any, b: any) =>
+                  new Date(b.paidAt || b.assignedAt).getTime() -
+                  new Date(a.paidAt || a.assignedAt).getTime()
+              );
+
+              return (
+                <>
+                  {/* ── date filter pills ── */}
+                  {uniqueDates.length > 1 && (
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+                      <div className="flex items-center gap-1.5 flex-shrink-0 text-white/30">
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        <span className="text-xs">Tarih:</span>
                       </div>
-
-                      {/* progress */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1.5 text-white/40">
-                            <Clock className="w-3 h-3" />
-                            <span>Kalan süre</span>
-                          </div>
-                          <span className={`font-bold ${dayTextColor}`}>{daysLeft} gün</span>
-                        </div>
-
-                        {/* custom gradient progress bar */}
-                        <div className="h-2 rounded-full bg-white/8 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full bg-gradient-to-r ${progressColor} transition-all duration-500`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-
-                        <p className="text-white/25 text-xs">Bitiş: {fmtDate(exp.toISOString())}</p>
-                      </div>
+                      <button
+                        onClick={() => setSelectedDate(null)}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 ${
+                          !selectedDate
+                            ? 'bg-blue-500/20 border-blue-500/40 text-blue-300'
+                            : 'bg-white/[0.04] border-white/[0.08] text-white/40 hover:text-white/60'
+                        }`}
+                      >
+                        Tümü ({pkgs.length})
+                      </button>
+                      {uniqueDates.map(({ raw, label }) => {
+                        const count = pkgs.filter((p: any) => rawKey(p) === raw).length;
+                        return (
+                          <button
+                            key={raw}
+                            onClick={() => setSelectedDate(raw === selectedDate ? null : raw)}
+                            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 ${
+                              selectedDate === raw
+                                ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300'
+                                : 'bg-white/[0.04] border-white/[0.08] text-white/40 hover:text-white/60'
+                            }`}
+                          >
+                            {label} {count > 1 && `(${count})`}
+                          </button>
+                        );
+                      })}
                     </div>
+                  )}
 
-                    {/* credentials */}
-                    <div className="px-5 py-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Wifi className="w-3.5 h-3.5 text-cyan-400/60" />
-                        <span className="text-white/40 text-xs font-semibold uppercase tracking-wider">Bağlantı Bilgileri</span>
-                      </div>
-                      <div className="space-y-2">
-                        {[
-                          { label: 'Kullanıcı Adı', val: pkg.username, testId: `copy-username-${pkg.credentialId}` },
-                          { label: 'Şifre', val: pkg.password, testId: `copy-password-${pkg.credentialId}` },
-                        ].map(({ label, val, testId }) => (
-                          <div key={label} className="flex items-center justify-between bg-white/[0.04] rounded-xl px-4 py-3 border border-white/[0.05]">
-                            <div>
-                              <p className="text-white/35 text-xs mb-0.5">{label}</p>
-                              <p className="text-white font-mono text-sm font-medium">{val}</p>
+                  {/* ── package cards ── */}
+                  {sorted.map((pkg: any) => {
+                    const purchaseLabel = dateKey(pkg);
+                    const { daysLeft, exp, pct } = calcExpiry(pkg.paidAt || pkg.assignedAt, pkg.expiresAt);
+                    const urgency = daysLeft > 7 ? 'green' : daysLeft > 3 ? 'amber' : 'red';
+                    const progressColor = { green: 'from-emerald-500 to-teal-400', amber: 'from-amber-500 to-orange-400', red: 'from-red-500 to-rose-400' }[urgency];
+                    const dayTextColor = { green: 'text-emerald-400', amber: 'text-amber-400', red: 'text-red-400' }[urgency];
+
+                    return (
+                      <div
+                        key={pkg.credentialId}
+                        className="rounded-2xl overflow-hidden border border-white/[0.07] bg-white/[0.03]"
+                        data-testid={`package-card-${pkg.credentialId}`}
+                      >
+                        {/* card header */}
+                        <div className="relative bg-gradient-to-r from-[#0f1e38] to-[#091220] px-4 pt-4 pb-3">
+                          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
+
+                          <div className="flex items-center justify-between mb-3">
+                            {/* left: GB + plan name */}
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-4xl font-black text-white leading-none">{pkg.dataLimitGb}</span>
+                              <span className="text-base font-bold text-white/40">GB</span>
+                              <span className="text-white/30 text-xs ml-1">· {pkg.planName}</span>
                             </div>
-                            <CopyButton value={val} label={label} testId={testId} />
+
+                            {/* right: status badge */}
+                            <span className={`px-2.5 py-1 rounded-full border text-xs font-semibold ${
+                              daysLeft > 0
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                : 'bg-red-500/10 border-red-500/20 text-red-400'
+                            }`}>
+                              {daysLeft > 0 ? 'Aktif' : 'Bitti'}
+                            </span>
                           </div>
-                        ))}
+
+                          {/* purchase date row */}
+                          <div className="flex items-center gap-1.5 mb-3">
+                            <CalendarDays className="w-3 h-3 text-white/25" />
+                            <span className="text-white/30 text-xs">Satın alma: {purchaseLabel}</span>
+                          </div>
+
+                          {/* progress */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-1.5 text-white/35">
+                                <Clock className="w-3 h-3" />
+                                <span>Kalan süre</span>
+                              </div>
+                              <span className={`font-bold text-sm ${dayTextColor}`}>{daysLeft} gün</span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full bg-gradient-to-r ${progressColor} transition-all duration-500`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <p className="text-white/20 text-xs">Bitiş: {fmtDate(exp.toISOString())}</p>
+                          </div>
+                        </div>
+
+                        {/* credentials */}
+                        <div className="px-4 py-3">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <Wifi className="w-3 h-3 text-cyan-400/50" />
+                            <span className="text-white/35 text-xs font-semibold uppercase tracking-wider">Bağlantı Bilgileri</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              { label: 'Kullanıcı Adı', val: pkg.username, testId: `copy-username-${pkg.credentialId}` },
+                              { label: 'Şifre', val: pkg.password, testId: `copy-password-${pkg.credentialId}` },
+                            ].map(({ label, val, testId }) => (
+                              <div key={label} className="flex items-center justify-between bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.05]">
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-white/30 text-xs mb-0.5">{label}</p>
+                                  <p className="text-white font-mono text-xs font-medium truncate">{val}</p>
+                                </div>
+                                <CopyButton value={val} label={label} testId={testId} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
+                    );
+                  })}
+                </>
+              );
+            })() : (
               <EmptyState
                 icon={Package}
                 title={t.dashboard.texts.noActivePackages}
