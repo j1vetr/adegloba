@@ -120,10 +120,16 @@ export default function Panel() {
   }, [searchString]);
 
   const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
-    queryKey: ["/api/user/orders"], enabled: !!user
+    queryKey: ["/api/user/orders"],
+    enabled: !!user,
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
   });
   const { data: activePackages, isLoading: packagesLoading } = useQuery({
-    queryKey: ["/api/user/active-packages"], enabled: !!user
+    queryKey: ["/api/user/active-packages"],
+    enabled: !!user,
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
   });
   const { data: expiredPackagesData, isLoading: expiredLoading } = useQuery({
     queryKey: ["/api/user/expired-packages", expiredPage],
