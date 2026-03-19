@@ -237,12 +237,6 @@ export default function Sepet() {
                       <span className="text-slate-500 text-sm">USD</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1.5">
-                      <Check className="h-3.5 w-3.5 text-green-400" />
-                      <span className="text-green-400 text-xs font-semibold">Kargo {t.cart.freeShipping || "Ücretsiz"}</span>
-                    </div>
-                  </div>
                 </div>
 
                 {/* CTA Button */}
