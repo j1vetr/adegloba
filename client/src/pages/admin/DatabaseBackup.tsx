@@ -26,7 +26,8 @@ import {
   AlertCircle,
   HardDrive,
   Clock,
-  FileArchive
+  FileArchive,
+  Mail
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -97,6 +98,27 @@ export default function DatabaseBackup() {
     },
   });
 
+  // Send backup via email mutation
+  const sendBackupEmailMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/admin/database/backup/send-email', {});
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'E-posta Gönderildi',
+        description: data.message || 'Yedek e-posta ile iletildi.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Hata',
+        description: error.message || 'E-posta gönderilemedi. E-posta ayarlarını kontrol edin.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Delete backup mutation
   const deleteBackupMutation = useMutation({
     mutationFn: async (filename: string) => {
@@ -152,7 +174,7 @@ export default function DatabaseBackup() {
             </h1>
             <p className="text-slate-400">Veritabanı yedeklerini oluşturun ve geri yükleyin</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -163,6 +185,27 @@ export default function DatabaseBackup() {
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Yenile
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-cyan-700 text-cyan-400 hover:bg-cyan-950/40"
+              onClick={() => sendBackupEmailMutation.mutate()}
+              disabled={sendBackupEmailMutation.isPending}
+              data-testid="button-send-backup-email"
+              title="Şu an yedek alır ve admin e-postasına gönderir"
+            >
+              {sendBackupEmailMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Gönderiliyor...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  E-posta ile Yedekle
+                </>
+              )}
             </Button>
             <Button
               className="admin-button-primary"
@@ -360,7 +403,25 @@ export default function DatabaseBackup() {
           </CardContent>
         </Card>
 
-        {/* Info Card */}
+        {/* Auto Backup Info Card */}
+        <Card className="admin-card border-cyan-500/30 bg-cyan-500/5">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <Mail className="w-6 h-6 text-cyan-400 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="text-white font-semibold mb-2">🕐 Otomatik E-posta Yedekleme</h3>
+                <ul className="text-slate-300 text-sm space-y-1">
+                  <li>• Her gece <strong className="text-cyan-400">01:00</strong> (İstanbul saati) otomatik yedek alınır</li>
+                  <li>• Yedek, admin e-posta adresine SQL dosyası olarak gönderilir</li>
+                  <li>• <strong className="text-cyan-400">E-posta ile Yedekle</strong> butonu ile istediğiniz zaman manuel olarak tetikleyebilirsiniz</li>
+                  <li>• E-posta gönderimi için SMTP ayarlarının aktif olması gerekir</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tips Card */}
         <Card className="admin-card border-blue-500/30 bg-blue-500/5">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
@@ -368,10 +429,9 @@ export default function DatabaseBackup() {
               <div>
                 <h3 className="text-white font-semibold mb-2">💡 Yedekleme İpuçları</h3>
                 <ul className="text-slate-300 text-sm space-y-1">
-                  <li>• Düzenli yedekleme yapın (günlük veya haftalık)</li>
                   <li>• Önemli işlemlerden önce mutlaka yedek alın</li>
-                  <li>• Yedekleri farklı konumlarda (yerel + cloud) saklayın</li>
-                  <li>• Eski yedekleri manuel olarak silin veya arşivleyin</li>
+                  <li>• E-posta ile gelen yedekleri bilgisayarınıza veya cloud'a kaydedin</li>
+                  <li>• Eski sunucu yedeklerini manuel olarak silin veya arşivleyin</li>
                   <li>• Test amaçlı geri yüklemeleri staging ortamında yapın</li>
                 </ul>
               </div>

@@ -4293,6 +4293,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual backup trigger (admin only)
+  app.post('/api/admin/database/backup/send-email', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { runDatabaseBackupAndEmail } = await import('./backupScheduler');
+      const result = await runDatabaseBackupAndEmail();
+      if (result.success) {
+        res.json({ success: true, message: result.message });
+      } else {
+        res.status(500).json({ message: result.message });
+      }
+    } catch (error) {
+      console.error('Manual backup trigger error:', error);
+      res.status(500).json({ message: 'Yedekleme başlatılamadı: ' + (error as Error).message });
+    }
+  });
+
   // Financial Reports API Endpoints
   app.get('/api/admin/financial/summary', isAdminAuthenticated, async (req, res) => {
     try {

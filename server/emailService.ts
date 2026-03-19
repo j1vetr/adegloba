@@ -923,6 +923,33 @@ export class EmailService {
           <p style="margin-top: 20px; color: #94a3b8; font-size: 13px;">Bu geri bildirim otomatik olarak sistem tarafından iletilmiştir.</p>
         `);
 
+      case 'system_backup':
+        return baseTemplate.replace('{{content}}', `
+          <h2>💾 Otomatik Veritabanı Yedeği</h2>
+          <p>Günlük otomatik yedekleme başarıyla tamamlandı. Yedek dosyası bu e-postaya ek olarak gönderilmiştir.</p>
+
+          <div class="order-details">
+            <h3 class="maritime-accent">📋 Yedek Bilgileri</h3>
+            <div class="order-item"><strong>📅 Tarih & Saat:</strong> <span class="highlight">{{backupDate}}</span></div>
+            <div class="order-item"><strong>📁 Dosya Adı:</strong> <span class="highlight" style="font-family: monospace; font-size: 13px;">{{filename}}</span></div>
+            <div class="order-item"><strong>📦 Boyut:</strong> <span class="highlight">{{fileSize}}</span></div>
+            <div class="order-item"><strong>🗄️ Veritabanı:</strong> <span class="highlight">{{dbName}}</span></div>
+          </div>
+
+          <div class="status-badge">✅ Yedek Başarıyla Oluşturuldu</div>
+
+          <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #92400e; margin: 0; font-weight: 600;">⚠️ Önemli Hatırlatma</p>
+            <p style="color: #92400e; margin: 8px 0 0 0; font-size: 14px;">
+              Bu yedek dosyasını güvenli bir yere kaydedin. Geri yükleme işlemi için admin panelindeki Yedekleme bölümünü kullanabilirsiniz.
+            </p>
+          </div>
+
+          <p style="margin-top: 20px; color: #94a3b8; font-size: 13px;">
+            Bu e-posta her gece 01:00'de (İstanbul saatiyle) otomatik olarak gönderilmektedir.
+          </p>
+        `);
+
       default:
         return baseTemplate.replace('{{content}}', '<p>Email content not found.</p>');
     }

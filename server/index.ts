@@ -6,6 +6,7 @@ import helmet from "helmet";
 import { pool } from "./db";
 import { registerRoutes } from "./routes";
 import { startEmailScheduler } from "./emailScheduler";
+import { startBackupScheduler } from "./backupScheduler";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth, seedDefaultAdmin } from "./auth";
 import { logCleanupService } from "./services/logCleanupService";
@@ -209,6 +210,9 @@ app.use((req, res, next) => {
   
   // Start email scheduler for monthly reports
   startEmailScheduler();
+
+  // Start nightly database backup scheduler (01:00 Istanbul time)
+  startBackupScheduler();
   
   const server = await registerRoutes(app);
 
