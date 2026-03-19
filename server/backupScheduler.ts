@@ -11,16 +11,16 @@ const execAsync = promisify(exec);
 export function startBackupScheduler() {
   console.log('💾 Starting automatic backup scheduler...');
 
-  // Run every night at 01:00 Istanbul time
-  cron.schedule('0 1 * * *', async () => {
-    console.log('💾 Running scheduled nightly database backup...');
+  // Run every 4 days at 01:00 Istanbul time
+  cron.schedule('0 1 */4 * *', async () => {
+    console.log('💾 Running scheduled database backup (every 4 days)...');
     await runDatabaseBackupAndEmail();
   }, {
     scheduled: true,
     timezone: 'Europe/Istanbul'
   });
 
-  console.log('✅ Backup scheduler started - Nightly backups at 01:00 Istanbul time');
+  console.log('✅ Backup scheduler started - Backups every 4 days at 01:00 Istanbul time');
 }
 
 export async function runDatabaseBackupAndEmail(): Promise<{ success: boolean; message: string }> {

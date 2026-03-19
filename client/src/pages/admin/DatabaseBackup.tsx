@@ -411,7 +411,7 @@ export default function DatabaseBackup() {
               <div>
                 <h3 className="text-white font-semibold mb-2">🕐 Otomatik E-posta Yedekleme</h3>
                 <ul className="text-slate-300 text-sm space-y-1">
-                  <li>• Her gece <strong className="text-cyan-400">01:00</strong> (İstanbul saati) otomatik yedek alınır</li>
+                  <li>• Her <strong className="text-cyan-400">4 günde bir gece 01:00</strong> (İstanbul saati) otomatik yedek alınır</li>
                   <li>• Yedek, admin e-posta adresine SQL dosyası olarak gönderilir</li>
                   <li>• <strong className="text-cyan-400">E-posta ile Yedekle</strong> butonu ile istediğiniz zaman manuel olarak tetikleyebilirsiniz</li>
                   <li>• E-posta gönderimi için SMTP ayarlarının aktif olması gerekir</li>
