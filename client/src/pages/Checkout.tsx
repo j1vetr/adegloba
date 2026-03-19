@@ -1,13 +1,9 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Loader2, ShoppingCart, Package, CreditCard, Tag, Trash2, CheckCircle, Shield } from "lucide-react";
+import { Loader2, CreditCard, Tag, Trash2, CheckCircle, Shield, Package, ChevronDown, ChevronUp, Lock, Wifi, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -24,32 +20,27 @@ export default function Checkout() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [discount, setDiscount] = useState(0);
   const [couponValidating, setCouponValidating] = useState(false);
+  const [couponOpen, setCouponOpen] = useState(false);
   const [creditCardDrawerOpen, setCreditCardDrawerOpen] = useState(false);
 
-  // Get order ID from URL params (if coming from cart checkout)
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
   const orderId = urlParams.get('orderId');
 
-  // Fetch cart data
   const { data: cartData, isLoading: cartLoading } = useQuery({
     queryKey: ["/api/cart"],
     enabled: !!user && !orderId
   });
 
-  // Fetch specific order if orderId is provided
   const { data: orderData, isLoading: orderLoading } = useQuery({
     queryKey: [`/api/orders/${orderId}`],
     enabled: !!orderId && !!user
   });
 
-
-  // Initialize coupon state from order data when order loads
   useEffect(() => {
-    if (orderData && orderData.couponCode && !appliedCoupon) {
-      // If order has a coupon but we don't have it in state, fetch coupon details
-      validateCouponMutation.mutate(orderData.couponCode);
+    if (orderData && (orderData as any).couponCode && !appliedCoupon) {
+      validateCouponMutation.mutate((orderData as any).couponCode);
     }
-  }, [orderData, appliedCoupon]);
+  }, [orderData]);
 
   const validateCouponMutation = useMutation({
     mutationFn: async (code: string) => {
@@ -57,12 +48,8 @@ export default function Checkout() {
       const subtotal = getCurrentSubtotal();
       const items = getCurrentItems();
       const planIds = items.map((item: any) => item.planId || item.plan?.id).filter(Boolean);
-      
-      const response = await apiRequest('POST', '/api/coupons/validate', { 
-        code: code.trim().toUpperCase(), 
-        shipId: user?.ship_id,
-        subtotal,
-        planIds
+      const response = await apiRequest('POST', '/api/coupons/validate', {
+        code: code.trim().toUpperCase(), shipId: user?.ship_id, subtotal, planIds
       });
       return response.json();
     },
@@ -71,188 +58,104 @@ export default function Checkout() {
       if (result.valid && result.coupon) {
         setAppliedCoupon(result.coupon);
         setDiscount(result.discount_amount || 0);
-        
-        // Show detailed success message
         if (couponCode.trim()) {
-          const discountText = result.coupon.discountType === 'percentage' 
-            ? `%${result.coupon.discountValue} oranında` 
-            : `$${result.coupon.discountValue} tutarında`;
-          
-          toast({
-            title: t.checkout.couponApplied,
-            description: `"${result.coupon.code}" ${t.checkout.couponDiscount} ${discountText} ${t.checkout.totalDiscount}: $${result.discount_amount.toFixed(2)}`,
-          });
+          const discountText = result.coupon.discountType === 'percentage'
+            ? `%${result.coupon.discountValue} indirim`
+            : `$${result.coupon.discountValue} indirim`;
+          toast({ title: t.checkout.couponApplied, description: `"${result.coupon.code}" — ${discountText}` });
         }
       } else {
-        setAppliedCoupon(null);
-        setDiscount(0);
+        setAppliedCoupon(null); setDiscount(0);
         if (couponCode.trim()) {
-          const errorMessage = getDetailedErrorMessage(result.reason || result.message);
-          toast({
-            title: "❌ Kupon Uygulanamadı",
-            description: errorMessage,
-            variant: "destructive",
-          });
+          toast({ title: "Kupon Uygulanamadı", description: getDetailedErrorMessage(result.reason || result.message), variant: "destructive" });
         }
       }
     },
     onError: (error: any) => {
-      setCouponValidating(false);
-      setAppliedCoupon(null);
-      setDiscount(0);
+      setCouponValidating(false); setAppliedCoupon(null); setDiscount(0);
       if (couponCode.trim()) {
-        toast({
-          title: "❌ Kupon Hatası",
-          description: error.message || "Kupon doğrulanamadı. Lütfen tekrar deneyin.",
-          variant: "destructive",
-        });
+        toast({ title: "Kupon Hatası", description: error.message || "Kupon doğrulanamadı", variant: "destructive" });
       }
     },
   });
 
   const completeOrderMutation = useMutation({
     mutationFn: async (paypalOrderId: string) => {
-      const endpoint = orderId 
-        ? `/api/orders/${orderId}/complete`
-        : '/api/cart/complete-payment';
-        
-      const response = await apiRequest('POST', endpoint, {
-        paypalOrderId,
-        couponCode: appliedCoupon?.code
-      });
+      const endpoint = orderId ? `/api/orders/${orderId}/complete` : '/api/cart/complete-payment';
+      const response = await apiRequest('POST', endpoint, { paypalOrderId, couponCode: appliedCoupon?.code });
       return response.json();
     },
     onSuccess: (result) => {
-      toast({
-        title: "Ödeme Başarılı",
-        description: "Siparişiniz başarıyla tamamlandı!",
-      });
-      
-      // Clear cart after successful payment
-      if (!orderId) {
-        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-      }
-      
+      toast({ title: "Ödeme Başarılı", description: "Siparişiniz başarıyla tamamlandı!" });
+      if (!orderId) queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       window.location.href = `/order-success?orderId=${result.id || result.orderId}`;
     },
     onError: (error: any) => {
-      toast({
-        title: "Ödeme Başarısız",
-        description: error.message || "Ödeme işlemi başarısız oldu",
-        variant: "destructive",
-      });
+      toast({ title: "Ödeme Başarısız", description: error.message || "Ödeme işlemi başarısız oldu", variant: "destructive" });
     },
   });
 
   const getDetailedErrorMessage = (reason: string) => {
-    switch (reason) {
-      case 'not_found':
-        return "Bu kupon kodu geçerli değil. Lütfen kupon kodunuzu kontrol edin.";
-      case 'inactive':
-        return "Bu kupon şu anda aktif değil.";
-      case 'expired':
-        return "Bu kuponun geçerlilik süresi dolmuş.";
-      case 'not_started':
-        return "Bu kupon henüz geçerlilik tarihine ulaşmamış.";
-      case 'usage_limit_reached':
-        return "Bu kuponun kullanım limiti dolmuş.";
-      case 'single_use_already_used':
-        return "Bu kuponu daha önce kullandınız. Tek kullanımlık kuponlar sadece bir kez kullanılabilir.";
-      case 'minimum_order_not_met':
-        return "Bu kupon için minimum sipariş tutarı karşılanmıyor.";
-      case 'scope_ship_mismatch':
-        return "Bu kupon seçtiğiniz gemiye uygulanamaz.";
-      case 'scope_package_mismatch':
-        return "Bu kupon sepetinizdeki paketlere uygulanamaz.";
-      default:
-        return reason || "Kupon geçerli değil.";
-    }
-  };
-
-  const handleApplyCoupon = () => {
-    if (!couponCode.trim()) {
-      toast({
-        title: "⚠️ Eksik Bilgi",
-        description: "Lütfen kupon kodu girin",
-        variant: "destructive",
-      });
-      return;
-    }
-    validateCouponMutation.mutate(couponCode);
+    const map: Record<string, string> = {
+      not_found: "Bu kupon kodu geçerli değil.",
+      inactive: "Bu kupon şu anda aktif değil.",
+      expired: "Bu kuponun süresi dolmuş.",
+      not_started: "Bu kupon henüz geçerli değil.",
+      usage_limit_reached: "Bu kuponun kullanım limiti dolmuş.",
+      single_use_already_used: "Bu kuponu daha önce kullandınız.",
+      minimum_order_not_met: "Minimum sipariş tutarı karşılanmıyor.",
+      scope_ship_mismatch: "Bu kupon seçtiğiniz gemiye uygulanamaz.",
+      scope_package_mismatch: "Bu kupon sepetinizdeki paketlere uygulanamaz.",
+    };
+    return map[reason] || reason || "Kupon geçerli değil.";
   };
 
   const removeCoupon = () => {
-    setAppliedCoupon(null);
-    setDiscount(0);
-    setCouponCode("");
-    toast({
-      title: "🗑️ Kupon Kaldırıldı",
-      description: "Kupon sepetinizden kaldırıldı. İndirim iptal edildi.",
-    });
+    setAppliedCoupon(null); setDiscount(0); setCouponCode("");
+    toast({ title: "Kupon Kaldırıldı", description: "İndirim iptal edildi." });
   };
 
   const getCurrentSubtotal = () => {
     if (orderId && orderData) {
-      // For orders, use the subtotal before discount
-      const orderSubtotal = parseFloat((orderData as any)?.subtotalUsd || '0');
-      return orderSubtotal > 0 ? orderSubtotal : parseFloat((orderData as any)?.total || '0');
+      const s = parseFloat((orderData as any)?.subtotalUsd || '0');
+      return s > 0 ? s : parseFloat((orderData as any)?.total || '0');
     }
-    if (cartData) {
-      return parseFloat((cartData as any)?.subtotal || '0');
-    }
-    return 0;
+    return parseFloat((cartData as any)?.subtotal || '0');
   };
 
   const getCurrentItems = () => {
-    if (orderId && orderData) {
-      return (orderData as any)?.items || [];
-    }
-    if (cartData) {
-      return (cartData as any)?.items || [];
-    }
-    return [];
+    if (orderId && orderData) return (orderData as any)?.items || [];
+    return (cartData as any)?.items || [];
   };
 
-  // Real-time total calculation
   const currentSubtotal = getCurrentSubtotal();
   const currentDiscount = appliedCoupon ? discount : 0;
   const currentTotal = Math.max(0, currentSubtotal - currentDiscount);
 
+  const finalTotal = (orderId && orderData && (orderData as any).total && !appliedCoupon)
+    ? parseFloat((orderData as any).total)
+    : currentTotal;
+
   const formatPrice = (price: string | number) => {
-    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    return `$${numPrice.toFixed(2)}`;
+    const n = typeof price === 'string' ? parseFloat(price) : price;
+    return `$${n.toFixed(2)}`;
   };
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      toast({
-        title: "Giriş Gerekli",
-        description: "Ödeme yapmak için giriş yapmalısınız",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = '/giris';
-      }, 1500);
+      toast({ title: "Giriş Gerekli", description: "Ödeme yapmak için giriş yapmalısınız", variant: "destructive" });
+      setTimeout(() => { window.location.href = '/giris'; }, 1500);
     }
-  }, [user, authLoading, toast]);
+  }, [user, authLoading]);
 
-  // Redirect if no cart items and no order
   useEffect(() => {
     if (!authLoading && !cartLoading && !orderLoading && user) {
       const items = getCurrentItems();
       if (!orderId && (!cartData || items.length === 0)) {
-        toast({
-          title: "Sepet Boş",
-          description: "Ödeme yapmak için sepetinize ürün ekleyin",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = '/paketler';
-        }, 1500);
+        setTimeout(() => { window.location.href = '/paketler'; }, 1500);
       }
     }
-  }, [cartData, orderData, orderId, authLoading, cartLoading, orderLoading, user, toast]);
+  }, [cartData, orderData, orderId, authLoading, cartLoading, orderLoading, user]);
 
   if (authLoading || cartLoading || orderLoading) {
     return (
@@ -268,321 +171,247 @@ export default function Checkout() {
     );
   }
 
-  if (!user) {
-    return null; // Redirect handled in useEffect
-  }
+  if (!user) return null;
 
   const items = getCurrentItems();
-  const subtotal = getCurrentSubtotal();
-  const total = Math.max(0, subtotal - discount);
-  
-  // If we have order data with discount, use that total instead
-  const finalTotal = (orderId && orderData && orderData.total && !appliedCoupon) 
-    ? parseFloat(orderData.total) 
-    : total;
+  if (items.length === 0) return null;
 
-  if (items.length === 0) {
-    return null; // Redirect handled in useEffect
-  }
+  const item = items[0];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <UserNavigation />
-      
-      <div className="container mx-auto px-4 py-8 pt-24">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-6 space-x-2">
-            <div className="relative">
-              <CreditCard className="h-8 w-8 text-cyan-400" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-            </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 pt-28">
+
+        {/* Compact header */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+            <Lock className="h-4 w-4 text-cyan-400" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-4">
-            {t.checkout.title}
-          </h1>
-          <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-            {t.checkout.description}
-          </p>
+          <div>
+            <h1 className="text-xl font-bold text-white">{t.checkout.title}</h1>
+            <p className="text-sm text-slate-400">{t.checkout.description}</p>
+          </div>
+          <div className="ml-auto hidden sm:flex items-center gap-1.5 text-xs text-slate-500">
+            <Shield className="h-3.5 w-3.5 text-green-500" />
+            <span>SSL Güvenli</span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {/* Order Details */}
-          <div className="space-y-6">
-            <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-white flex items-center">
-                  <Package className="h-5 w-5 mr-2 text-cyan-400" />
-                  {t.checkout.orderDetails}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {items.map((item: any, index: number) => (
-                  <div 
-                    key={item.id} 
-                    className="flex items-center justify-between p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 card-hover cart-item-entrance"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                    data-testid={`checkout-item-${item.planId || item.id}`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="relative group">
-                        <Package className="h-10 w-10 text-cyan-400 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-                      </div>
-                      
-                      <div>
-                        <h3 className="font-semibold text-white mb-1">
-                          {item.plan?.name || item.plan?.title || 'Veri Paketi'}
-                        </h3>
-                        <div className="flex items-center space-x-2 text-sm text-slate-400">
-                          <span>{item.plan?.dataLimitGb || item.plan?.gbAmount}GB</span>
-                          <span>•</span>
-                          <span>Ay sonu bitiş</span>
-                          {item.quantity && item.quantity > 1 && (
-                            <>
-                              <span>•</span>
-                              <Badge variant="secondary" className="text-xs">
-                                {item.quantity}x
-                              </Badge>
-                            </>
-                          )}
-                        </div>
-                      </div>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+          {/* ── LEFT: Payment section (3 cols) ── */}
+          <div className="lg:col-span-3 space-y-4">
+
+            {/* Payment methods card */}
+            <div className="rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden">
+              {/* Top bar */}
+              <div className="h-0.5 w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500" />
+
+              <div className="p-6">
+                <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-5">
+                  {t.checkout.securePayment}
+                </h2>
+
+                {finalTotal > 0 ? (
+                  <div className="space-y-3">
+                    {/* Credit card button — main CTA */}
+                    <Button
+                      onClick={() => setCreditCardDrawerOpen(true)}
+                      className="w-full h-14 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold text-base rounded-xl shadow-lg shadow-blue-900/30 hover:shadow-blue-700/30 transition-all duration-200 flex items-center justify-center gap-3"
+                      data-testid="credit-card-button"
+                    >
+                      <CreditCard className="h-5 w-5" />
+                      <span>{t.checkout.cardPayment}</span>
+                      <span className="ml-auto text-blue-300 font-bold">{formatPrice(finalTotal)}</span>
+                    </Button>
+
+                    {/* 3D Secure badge */}
+                    <div className="flex items-center justify-center gap-2 py-2">
+                      <Shield className="h-3.5 w-3.5 text-green-400" />
+                      <span className="text-xs text-slate-500">{t.checkout.secure3D || '3D Secure korumalı ödeme'}</span>
                     </div>
 
-                    <div className="text-right">
-                      <div className="text-lg font-semibold text-cyan-400 price-highlight">
-                        {formatPrice(item.unitPriceUsd || item.plan?.priceUsd || 0)}
-                        {item.quantity && item.quantity > 1 && (
-                          <div className="text-xs text-slate-400">
-                            her biri
-                          </div>
-                        )}
-                      </div>
+                    {/* Card type icons */}
+                    <div className="flex items-center justify-center gap-3 pt-1">
+                      {['VISA', 'MC', 'AMEX'].map(brand => (
+                        <div key={brand} className="px-3 py-1.5 rounded bg-slate-800 border border-slate-700 text-xs text-slate-400 font-semibold tracking-wide">
+                          {brand}
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                ) : (
+                  /* Free order button */
+                  <Button
+                    onClick={() => completeOrderMutation.mutate('')}
+                    disabled={completeOrderMutation.isPending}
+                    className="w-full h-14 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-white font-bold text-base rounded-xl"
+                    data-testid="free-checkout-button"
+                  >
+                    {completeOrderMutation.isPending
+                      ? <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      : <CheckCircle className="h-5 w-5 mr-2" />
+                    }
+                    Ücretsiz Siparişi Tamamla
+                  </Button>
+                )}
+              </div>
+            </div>
 
-            {/* Coupon Section */}
-            <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-white flex items-center">
-                  <Tag className="h-5 w-5 mr-2 text-green-400" />
-                  {t.checkout.couponCode}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex space-x-2">
-                    <Input 
-                      type="text" 
+            {/* Coupon section — collapsible */}
+            <div className="rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden">
+              <button
+                onClick={() => setCouponOpen(!couponOpen)}
+                className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-slate-800/40 transition-colors duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-green-400" />
+                  <span className="text-sm font-medium text-slate-300">{t.checkout.couponCode}</span>
+                  {appliedCoupon && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">
+                      {appliedCoupon.code}
+                    </span>
+                  )}
+                </div>
+                {couponOpen ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
+              </button>
+
+              {couponOpen && (
+                <div className="px-6 pb-5 space-y-3 border-t border-slate-700/50">
+                  <div className="flex gap-2 pt-4">
+                    <Input
+                      type="text"
                       placeholder={t.checkout.couponPlaceholder}
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                       disabled={!!appliedCoupon}
-                      className="flex-1 bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-500 transition-all duration-300 focus:scale-105"
+                      onKeyDown={(e) => e.key === 'Enter' && !appliedCoupon && couponCode.trim() && validateCouponMutation.mutate(couponCode)}
+                      className="flex-1 bg-slate-800/50 border-slate-600 text-white placeholder-slate-500 focus:border-cyan-500 uppercase text-sm"
                       data-testid="checkout-coupon-input"
                     />
-                    <Button 
-                      onClick={appliedCoupon ? removeCoupon : handleApplyCoupon}
+                    <Button
+                      onClick={appliedCoupon ? removeCoupon : () => validateCouponMutation.mutate(couponCode)}
                       disabled={couponValidating || validateCouponMutation.isPending || (!appliedCoupon && !couponCode.trim())}
-                      className={`btn-interactive transition-all duration-300 ${
-                        appliedCoupon 
-                          ? "bg-red-500 hover:bg-red-600 text-white" 
-                          : "bg-green-500 hover:bg-green-600 text-white animate-pulse-glow"
-                      }`}
+                      className={`shrink-0 px-4 text-sm font-semibold ${appliedCoupon ? "bg-red-600 hover:bg-red-700 text-white" : "bg-green-600 hover:bg-green-700 text-white"}`}
                       data-testid={appliedCoupon ? "remove-coupon-button" : "apply-coupon-button"}
                     >
-                      {(couponValidating || validateCouponMutation.isPending) ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                          {appliedCoupon ? "Kaldırılıyor..." : "Kontrol ediliyor..."}
-                        </>
-                      ) : appliedCoupon ? (
-                        <>
-                          <Trash2 className="h-4 w-4 mr-1 transition-transform duration-200 hover:scale-110" />
-                          Kaldır
-                        </>
-                      ) : (
-                        <>
-                          <Tag className="h-4 w-4 mr-1 transition-transform duration-200 hover:scale-110" />
-                          {t.checkout.apply}
-                        </>
-                      )}
+                      {(couponValidating || validateCouponMutation.isPending)
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : appliedCoupon ? "Kaldır" : t.checkout.apply
+                      }
                     </Button>
                   </div>
-                  
+
                   {appliedCoupon && (
-                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg success-bounce">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-green-400 font-medium flex items-center">
-                          <CheckCircle className="h-4 w-4 mr-2 animate-pulse" />
-                          "{appliedCoupon.code}" uygulandı
-                        </span>
-                        <span className="text-green-400 font-bold text-lg">
-                          -{formatPrice(currentDiscount)}
-                        </span>
-                      </div>
-                      <div className="space-y-1 text-xs">
-                        <p className="text-green-300/90">
-                          {appliedCoupon.discountType === 'percentage' 
-                            ? `%${appliedCoupon.discountValue} oranında indirim` 
-                            : `$${appliedCoupon.discountValue} tutarında indirim`
-                          }
-                        </p>
-                        {appliedCoupon.singleUseOnly && (
-                          <p className="text-orange-300/80">
-                            ⚠️ Tek kullanımlık kupon
+                    <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/25 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-400 shrink-0" />
+                        <div>
+                          <p className="text-sm text-green-400 font-medium">"{appliedCoupon.code}" uygulandı</p>
+                          <p className="text-xs text-green-300/70">
+                            {appliedCoupon.discountType === 'percentage'
+                              ? `%${appliedCoupon.discountValue} indirim`
+                              : `$${appliedCoupon.discountValue} indirim`
+                            }
                           </p>
-                        )}
-                        {appliedCoupon.maxUses && (
-                          <p className="text-blue-300/80">
-                            📊 Kullanım: {appliedCoupon.usedCount || 0}/{appliedCoupon.maxUses}
-                          </p>
-                        )}
-                        {appliedCoupon.validUntil && (
-                          <p className="text-slate-300/80">
-                            📅 Geçerlilik: {new Date(appliedCoupon.validUntil).toLocaleDateString('tr-TR')} tarihine kadar
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Payment Summary */}
-          <div className="space-y-6">
-            <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50 sticky top-24">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-white flex items-center">
-                  <CreditCard className="h-5 w-5 mr-2 text-cyan-400" />
-                  {t.checkout.orderSummary}
-                </CardTitle>
-              </CardHeader>
-              
-              <CardContent className="space-y-6">
-                {/* Price Breakdown */}
-                <div className="space-y-3">
-                  <div className="flex justify-between text-slate-300">
-                    <span>{t.checkout.subtotal}</span>
-                    <span className="font-semibold price-highlight" data-testid="checkout-subtotal">
-                      {formatPrice(currentSubtotal)}
-                    </span>
-                  </div>
-                  
-                  {currentDiscount > 0 && (
-                    <div className="flex justify-between text-green-400 animate-slide-in-right">
-                      <span className="flex items-center">
-                        <Tag className="h-4 w-4 mr-1" />
-                        {t.checkout.couponDiscount}
-                      </span>
-                      <span className="font-semibold text-green-400 price-highlight" data-testid="checkout-discount">
-                        -{formatPrice(currentDiscount)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  <Separator className="bg-slate-600" />
-                  
-                  <div className="flex justify-between text-xl font-bold">
-                    <span className="text-white">{t.checkout.total}</span>
-                    <span className="text-cyan-400 price-highlight font-bold transition-all duration-500" data-testid="checkout-total">
-                      {formatPrice(currentTotal)}
-                    </span>
-                  </div>
-                  
-                  <div className="text-sm text-slate-400 text-center space-y-1">
-                    <div>Paketler satın alınan ayın sonunda otomatik olarak sona erer</div>
-                    <div className="text-xs text-slate-500">
-                      Örnek: 15 Ocak'ta alınan paket 31 Ocak 23:59'a kadar geçerli
-                    </div>
-                  </div>
-                </div>
-
-                {/* PayPal Payment */}
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-sm text-slate-400 mb-4">
-                      {t.checkout.securePayment}
-                    </div>
-                  </div>
-                  
-                  {currentTotal > 0 ? (
-                    <div className="space-y-4 animate-slide-in-up">
-                      {/* Credit Card & Debit Card Payment Button */}
-                      <Button
-                        onClick={() => setCreditCardDrawerOpen(true)}
-                        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 rounded-xl text-lg btn-interactive transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-blue-500/25"
-                        data-testid="credit-card-button"
-                      >
-                        <CreditCard className="h-6 w-6" />
-                        <span>{t.checkout.cardPayment}</span>
-                      </Button>
-                      
-                      <div className="text-center text-sm text-slate-400">
-                        <div className="flex items-center justify-center space-x-2">
-                          <Shield className="h-4 w-4 text-green-400" />
-                          <span>{t.checkout.secure3D || '3D Secure secure payment'}</span>
                         </div>
                       </div>
+                      <span className="text-green-400 font-bold text-sm">-{formatPrice(currentDiscount)}</span>
                     </div>
-                  ) : (
-                    <Button
-                      onClick={() => completeOrderMutation.mutate('')}
-                      disabled={completeOrderMutation.isPending}
-                      className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 rounded-xl text-lg btn-interactive animate-pulse-glow"
-                      data-testid="free-checkout-button"
-                    >
-                      {completeOrderMutation.isPending ? (
-                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                      ) : (
-                        <CheckCircle className="h-5 w-5 mr-2 animate-pulse" />
-                      )}
-                      🎉 Ücretsiz Siparişi Tamamla
-                    </Button>
                   )}
                 </div>
+              )}
+            </div>
+          </div>
 
-                {/* Security Notice */}
-                <div className="text-center text-xs text-slate-400 flex items-center justify-center bg-slate-800/30 p-3 rounded-lg hover:bg-slate-800/50 transition-all duration-300">
-                  <div className="mr-2 text-green-400 animate-pulse">🔒</div>
-                  <div>
-                    <div className="font-medium">{t.checkout.secureSsl}</div>
-                    <div>Kart bilgileriniz güvende</div>
+          {/* ── RIGHT: Order summary (2 cols, sticky) ── */}
+          <div className="lg:col-span-2">
+            <div className="rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900 to-slate-800 sticky top-24 overflow-hidden">
+              <div className="h-0.5 w-full bg-gradient-to-r from-slate-700 to-slate-600" />
+
+              <div className="p-5">
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">
+                  {t.checkout.orderDetails}
+                </h3>
+
+                {/* Product row */}
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/40 mb-4">
+                  <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
+                    <Wifi className="h-4 w-4 text-cyan-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-white truncate">{item?.plan?.name || item?.plan?.title || 'Veri Paketi'}</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-xs text-slate-400">{item?.plan?.dataLimitGb || item?.plan?.gbAmount}GB</span>
+                      <span className="text-slate-600">•</span>
+                      <div className="flex items-center gap-1 text-xs text-slate-400">
+                        <Calendar className="h-3 w-3" />
+                        <span>Ay sonu</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-cyan-400 shrink-0">
+                    {formatPrice(item?.unitPriceUsd || item?.plan?.priceUsd || 0)}
+                  </span>
+                </div>
+
+                {/* Price breakdown */}
+                <div className="space-y-2.5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">{t.checkout.subtotal}</span>
+                    <span className="text-white" data-testid="checkout-subtotal">{formatPrice(currentSubtotal)}</span>
+                  </div>
+
+                  {currentDiscount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-400 flex items-center gap-1">
+                        <Tag className="h-3 w-3" />
+                        {t.checkout.couponDiscount}
+                      </span>
+                      <span className="text-green-400 font-semibold" data-testid="checkout-discount">-{formatPrice(currentDiscount)}</span>
+                    </div>
+                  )}
+
+                  <div className="h-px bg-slate-700" />
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-white font-semibold">{t.checkout.total}</span>
+                    <span className="text-xl font-bold text-cyan-400" data-testid="checkout-total">{formatPrice(finalTotal)}</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Validity note */}
+                <div className="mt-4 p-3 rounded-lg bg-slate-800/40 border border-slate-700/30 text-xs text-slate-500 text-center leading-relaxed">
+                  Paketler satın alınan ayın sonuna kadar geçerlidir
+                </div>
+
+                {/* SSL badge */}
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-600">
+                  <Shield className="h-3 w-3 text-green-500" />
+                  <span>{t.checkout.secureSsl}</span>
+                </div>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
 
-      {/* Credit Card Payment Drawer */}
+      {/* Credit Card Drawer */}
       <CreditCardDrawer
         isOpen={creditCardDrawerOpen}
         onClose={() => setCreditCardDrawerOpen(false)}
-        amount={currentTotal.toFixed(2)}
+        amount={finalTotal.toFixed(2)}
         currency="USD"
         onSuccess={(paymentData) => {
           setCreditCardDrawerOpen(false);
-          toast({
-            title: "Ödeme Başarılı",
-            description: "Kredi kartı ödemesi başarıyla tamamlandı!",
-          });
-          // Call complete payment with PayPal Order ID
+          toast({ title: "Ödeme Başarılı", description: "Kredi kartı ödemesi başarıyla tamamlandı!" });
           completeOrderMutation.mutate(paymentData.paypalOrderId || paymentData.orderId || 'card_payment_' + Date.now());
         }}
         onError={(error) => {
-          toast({
-            title: "Ödeme Hatası",
-            description: "Kredi kartı ödemesi başarısız oldu. Lütfen tekrar deneyin.",
-            variant: "destructive",
-          });
+          toast({ title: "Ödeme Hatası", description: error?.message || "Kart ödemesi başarısız oldu", variant: "destructive" });
         }}
       />
     </div>
