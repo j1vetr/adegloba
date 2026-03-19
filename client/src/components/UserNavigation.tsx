@@ -151,7 +151,24 @@ export function UserNavigation({ className = "" }: UserNavigationProps) {
           </div>
 
           {/* Mobile menu button with language selector */}
-          <div className="md:hidden flex items-center space-x-3">
+          <div className="md:hidden flex items-center space-x-2">
+            {/* Cart icon - always visible on mobile */}
+            <Link href="/sepet">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative text-slate-300 hover:text-white"
+                data-testid="mobile-cart-button"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {(cartData as any)?.itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs font-bold w-4 h-4 flex items-center justify-center">
+                    {(cartData as any).itemCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+
             {/* Language Selector - Mobile */}
             <LanguageSelector className="scale-90" />
             

@@ -123,7 +123,7 @@ export default function Sepet() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
             {/* ── Product Card (spans 3 cols) ── */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 order-2 lg:order-1">
               <div className="relative rounded-2xl overflow-hidden border border-cyan-500/20 bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl shadow-cyan-900/10">
 
                 {/* Card top accent bar */}
@@ -200,7 +200,7 @@ export default function Sepet() {
             </div>
 
             {/* ── Order Summary (spans 2 cols) ── */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 order-1 lg:order-2">
               <div className="rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900 to-slate-800 p-6 sticky top-24">
                 <h3 className="text-base font-semibold text-white mb-5">{t.checkout.orderSummary}</h3>
 
