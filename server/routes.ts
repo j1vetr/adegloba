@@ -3581,17 +3581,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle multiple webhook event types for robust payment processing
       if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
         const payment = event.resource;
-        const orderId = payment.supplementary_data?.related_ids?.order_id || payment.custom_id;
+        const paypalOrderId = payment.supplementary_data?.related_ids?.order_id || payment.custom_id;
         
-        console.log(`💰 [SUCCESS] Processing payment completion for order: ${orderId}`);
+        console.log(`💰 [SUCCESS] Processing payment completion for PayPal Order: ${paypalOrderId}`);
         console.log(`💳 Payment ID: ${payment.id}`);
         console.log(`💵 Amount: ${payment.amount?.currency_code} ${payment.amount?.value}`);
         
         try {
+          // Look up DB order by PayPal order ID
+          const matchingOrders = await storage.getOrdersByPaypalOrderId(paypalOrderId);
+          
+          if (matchingOrders.length === 0) {
+            // Order not in DB yet — browser's complete-payment endpoint will handle it
+            // Return 200 so PayPal doesn't retry the webhook
+            console.log(`⏭️  Webhook arrived before complete-payment for PayPal Order ${paypalOrderId} — skipping, browser flow will process it`);
+            return res.status(200).json({ status: 'deferred', message: 'Order not yet registered, browser flow will complete payment', paypalOrderId });
+          }
+          
+          const dbOrder = matchingOrders[0];
+          const orderId = dbOrder.id;
+
           // Use atomic payment processing method for consistency
           const result = await orderService.processPaymentCompletion(
-            orderId, 
-            payment.id, 
+            orderId,
+            paypalOrderId,
             payment
           );
           
@@ -3701,8 +3714,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               timestamp: new Date().toISOString()
             });
           } else {
-            console.error(`❌ No order found for PayPal Order ID: ${orderId}`);
-            res.status(404).json({ error: 'Order not found' });
+            // Order not in DB — likely abandoned before our system stored it
+            // Return 200 so PayPal doesn't retry
+            console.log(`⏭️  No DB order for declined PayPal Order ${orderId} — ignoring (abandoned checkout)`);
+            res.status(200).json({ status: 'ignored', message: 'No matching order found for declined payment', paypalOrderId: orderId });
           }
         } catch (error) {
           console.error(`💥 Error processing payment decline for order ${orderId}:`, error);
