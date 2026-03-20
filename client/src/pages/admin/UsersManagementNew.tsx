@@ -465,7 +465,7 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
                 </div>
               </div>
               <div className="pt-2">
-                <ManualPackageAssignmentButton userId={user.id} username={user.username} phone={user.phone} />
+                <ManualPackageAssignmentButton userId={user.id} username={user.username} phone={user.phone} shipId={user.ship_id} />
               </div>
             </div>
           </div>
@@ -870,20 +870,27 @@ interface ManualPackageAssignmentButtonProps {
   userId: string;
   username: string;
   phone?: string | null;
+  shipId?: string | null;
 }
 
-function ManualPackageAssignmentButton({ userId, username, phone }: ManualPackageAssignmentButtonProps) {
+function ManualPackageAssignmentButton({ userId, username, phone, shipId }: ManualPackageAssignmentButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [note, setNote] = useState<string>("");
   const [sendWhatsApp, setSendWhatsApp] = useState<boolean>(!!phone);
   const { toast } = useToast();
 
-  // Tüm paketleri getir
+  // Tüm paketleri getir — diyalog her açıldığında taze veri çek
   const { data: allPlans = [], isLoading: plansLoading } = useQuery({
     queryKey: ["/api/plans"],
     enabled: isOpen,
+    staleTime: 0,
   });
+
+  // Kullanıcının gemisine ait paketleri filtrele
+  const shipPlans = (allPlans as Plan[]).filter(
+    (plan) => !shipId || plan.shipId === shipId
+  );
 
   // Manuel paket atama mutation
   const assignPackageMutation = useMutation({
@@ -959,23 +966,34 @@ function ManualPackageAssignmentButton({ userId, username, phone }: ManualPackag
           <div className="space-y-6 py-4">
             {/* Paket Seçimi */}
             <div className="space-y-2">
-              <Label className="text-gray-300">Paket Seçin</Label>
-              <Select 
-                value={selectedPlanId} 
-                onValueChange={setSelectedPlanId}
-                disabled={plansLoading || assignPackageMutation.isPending}
-              >
-                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                  <SelectValue placeholder="Bir paket seçin..." />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-700 border-slate-600">
-                  {(allPlans as Plan[]).map((plan: Plan) => (
-                    <SelectItem key={plan.id} value={plan.id} className="text-white hover:bg-slate-600">
-                      {plan.name} - ${plan.priceUsd}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-gray-300">
+                Paket Seçin
+                <span className="text-slate-500 font-normal text-xs ml-2">
+                  (Kullanıcının gemisine ait paketler)
+                </span>
+              </Label>
+              {!plansLoading && shipPlans.length === 0 ? (
+                <div className="rounded-md border border-amber-700/40 bg-amber-950/20 px-3 py-2 text-sm text-amber-400">
+                  Bu gemiye tanımlı paket bulunamadı.
+                </div>
+              ) : (
+                <Select
+                  value={selectedPlanId}
+                  onValueChange={setSelectedPlanId}
+                  disabled={plansLoading || assignPackageMutation.isPending}
+                >
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectValue placeholder={plansLoading ? "Yükleniyor..." : "Bir paket seçin..."} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-700 border-slate-600">
+                    {shipPlans.map((plan: Plan) => (
+                      <SelectItem key={plan.id} value={plan.id} className="text-white hover:bg-slate-600">
+                        {plan.name} - ${plan.priceUsd}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
 
