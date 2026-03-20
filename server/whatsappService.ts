@@ -25,13 +25,15 @@ export async function sendPackageAssignmentWhatsApp(
     }
 
     const lines: string[] = [
-      `🌊 Merhaba ${data.fullName},`,
+      `🛰️ *ADS.ADEGLOBA.SPACE Bilgilendirmesi*`,
       ``,
-      `Starlink Maritime sisteminize *${data.dataLimitGb} GB* veri paketi tanımlanmıştır.`,
+      `Sayın ${data.fullName},`,
       ``,
-      `📦 Paket: ${data.planName}`,
-      `👤 Kullanıcı Adı: ${data.username}`,
-      `📅 Geçerlilik: Ay sonuna kadar`,
+      `Hesabınıza *${data.dataLimitGb} GB* veri paketi (${data.planName}) başarıyla tanımlanmıştır.`,
+      ``,
+      `📅 Geçerlilik süresi: Ay sonuna kadar`,
+      ``,
+      `Kullanım detaylarınızı görmek için sisteme giriş sağlayınız → *${data.username}*`,
     ];
 
     if (data.adminNote?.trim()) {
@@ -40,8 +42,7 @@ export async function sendPackageAssignmentWhatsApp(
     }
 
     lines.push(``);
-    lines.push(`İyi denizler! ⚓`);
-    lines.push(`— AdeGloba Starlink`);
+    lines.push(`AdeGloba Starlink Destek ⚓`);
 
     const messageText = lines.join('\n');
 
