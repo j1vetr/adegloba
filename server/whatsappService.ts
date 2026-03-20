@@ -33,7 +33,7 @@ export async function sendPackageAssignmentWhatsApp(
       ``,
       `📅 Geçerlilik süresi: Ay sonuna kadar`,
       ``,
-      `Kullanım detaylarınızı görmek için sisteme giriş sağlayınız → *${data.username}*`,
+      `Kullanıcı bilgilerinizi görmek için sisteme giriş sağlayınız → *${data.username}*`,
     ];
 
     if (data.adminNote?.trim()) {
@@ -41,6 +41,8 @@ export async function sendPackageAssignmentWhatsApp(
       lines.push(`📝 ${data.adminNote.trim()}`);
     }
 
+    lines.push(``);
+    lines.push(`Herhangi bir sorununuz olması halinde bu sohbet üzerinden yanıt verebilir, sorularınızı iletebilirsiniz.`);
     lines.push(``);
     lines.push(`AdeGloba Starlink Destek ⚓`);
 
