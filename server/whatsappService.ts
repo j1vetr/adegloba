@@ -29,7 +29,7 @@ export async function sendPackageAssignmentWhatsApp(
       ``,
       `Sayın ${data.fullName},`,
       ``,
-      `*${data.dataLimitGb} GB* (${data.planName}) paketiniz kullanıcınıza tanımlanmıştır.`,
+      `*${data.dataLimitGb} GB* (${data.planName}) paketiniz gemi bağlantısına tanımlanmıştır.`,
       ``,
       `📅 Geçerlilik süresi: Ay sonuna kadar`,
       ``,
