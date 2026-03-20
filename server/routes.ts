@@ -2151,6 +2151,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: update user profile (no username / password change)
+  app.patch('/api/admin/users/:id/profile', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { full_name, email, phone, ship_id, address } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: "E-posta adresi zorunludur" });
+      }
+
+      // Unique e-posta kontrolü
+      const existingEmailUser = await storage.getUserByEmail(email);
+      if (existingEmailUser && existingEmailUser.id !== id) {
+        return res.status(400).json({ message: "Bu e-posta adresi başka bir kullanıcı tarafından kullanılıyor" });
+      }
+
+      const updatedUser = await storage.updateUser(id, {
+        full_name: full_name || null,
+        email,
+        phone: phone || null,
+        ship_id: ship_id || null,
+        address: address || null,
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Kullanıcı bulunamadı" });
+      }
+
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'user_profile_update',
+        adminId: req.session.adminUser.id,
+        entityType: 'user',
+        entityId: id,
+        details: { updatedFields: ['full_name', 'email', 'phone', 'ship_id', 'address'] },
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent'),
+      });
+
+      res.json(updatedUser);
+    } catch (error: any) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: error.message || "Profil güncellenirken hata oluştu" });
+    }
+  });
+
   // Update user
   app.put('/api/admin/users/:id', isAdminAuthenticated, async (req, res) => {
     try {

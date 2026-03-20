@@ -16,7 +16,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Separator } from '@/components/ui/separator';
 import { 
   Users, Search, MoreHorizontal, Edit, Trash2, Eye, 
-  UserCheck, UserX, Ship as ShipIcon, Mail, Calendar, DollarSign, Package, ShoppingCart, TrendingUp, History, ArrowLeft, Plus, Key, RotateCcw, Copy, CheckCircle, Phone
+  UserCheck, UserX, Ship as ShipIcon, Mail, Calendar, DollarSign, Package, ShoppingCart, TrendingUp, History, ArrowLeft, Plus, Key, RotateCcw, Copy, CheckCircle, Phone, X, Save
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -282,6 +282,18 @@ interface UserCredential {
 }
 
 function UserDetails({ user, onBack }: UserDetailsProps) {
+  const { toast } = useToast();
+
+  // Edit state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    full_name: user.full_name || '',
+    email: user.email || '',
+    phone: user.phone || '',
+    ship_id: user.ship_id || '',
+    address: user.address || '',
+  });
+
   const { data: userOrders, isLoading: ordersLoading } = useQuery({
     queryKey: ["/api/admin/users", user.id, "orders"],
   });
@@ -289,6 +301,38 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
   const { data: userCredentials, isLoading: credentialsLoading } = useQuery<UserCredential[]>({
     queryKey: ["/api/admin/users", user.id, "credentials"],
   });
+
+  const { data: ships = [] } = useQuery<any[]>({
+    queryKey: ["/api/ships"],
+    staleTime: 0,
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: typeof editData) =>
+      apiRequest('PATCH', `/api/admin/users/${user.id}/profile`, {
+        ...data,
+        ship_id: data.ship_id === 'none' ? '' : data.ship_id,
+      }),
+    onSuccess: () => {
+      toast({ title: "Başarılı", description: "Profil bilgileri güncellendi." });
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users-with-stats"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Hata", description: error.message || "Güncelleme sırasında hata oluştu.", variant: "destructive" });
+    },
+  });
+
+  const handleCancelEdit = () => {
+    setEditData({
+      full_name: user.full_name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      ship_id: user.ship_id || '',
+      address: user.address || '',
+    });
+    setIsEditing(false);
+  };
 
   const formatPrice = (price: string | number) => {
     return `$${parseFloat(price.toString()).toFixed(2)}`;
@@ -397,36 +441,109 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
       {/* User Profile Information */}
       <Card className="glass-card border-border/50">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-blue-400" />
-            Profil Bilgileri
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-blue-400" />
+              Profil Bilgileri
+            </CardTitle>
+            {!isEditing ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsEditing(true)}
+                className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Düzenle
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  disabled={updateProfileMutation.isPending}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  İptal
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => updateProfileMutation.mutate(editData)}
+                  disabled={updateProfileMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {updateProfileMutation.isPending
+                    ? <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-1" />
+                    : <Save className="h-4 w-4 mr-1" />}
+                  Kaydet
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
+              {/* Ad Soyad */}
               <div>
                 <Label className="text-gray-300 text-sm">Ad Soyad</Label>
-                <p className="text-white font-medium">{user.full_name || 'Belirtilmemiş'}</p>
+                {isEditing ? (
+                  <Input
+                    value={editData.full_name}
+                    onChange={(e) => setEditData(d => ({ ...d, full_name: e.target.value }))}
+                    className="mt-1 bg-slate-700 border-slate-600 text-white"
+                    placeholder="Ad Soyad"
+                  />
+                ) : (
+                  <p className="text-white font-medium">{user.full_name || <span className="text-slate-500 text-sm">Belirtilmemiş</span>}</p>
+                )}
               </div>
+              {/* Kullanıcı Adı — sadece görüntüleme */}
               <div>
                 <Label className="text-gray-300 text-sm">Kullanıcı Adı</Label>
-                <p className="text-white font-medium">{user.username}</p>
+                <p className="text-white font-medium flex items-center gap-2">
+                  {user.username}
+                  <span className="text-xs text-slate-500">(değiştirilemez)</span>
+                </p>
               </div>
+              {/* E-posta */}
               <div>
                 <Label className="text-gray-300 text-sm">E-posta</Label>
-                <p className="text-white font-medium flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  {user.email}
-                </p>
+                {isEditing ? (
+                  <Input
+                    type="email"
+                    value={editData.email}
+                    onChange={(e) => setEditData(d => ({ ...d, email: e.target.value }))}
+                    className="mt-1 bg-slate-700 border-slate-600 text-white"
+                    placeholder="ornek@eposta.com"
+                  />
+                ) : (
+                  <p className="text-white font-medium flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    {user.email}
+                  </p>
+                )}
               </div>
+              {/* Telefon */}
               <div>
                 <Label className="text-gray-300 text-sm">Telefon Numarası</Label>
-                <p className="text-white font-medium flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  {user.phone || <span className="text-slate-500 text-sm">Belirtilmemiş</span>}
-                </p>
+                {isEditing ? (
+                  <Input
+                    value={editData.phone}
+                    onChange={(e) => setEditData(d => ({ ...d, phone: e.target.value }))}
+                    className="mt-1 bg-slate-700 border-slate-600 text-white"
+                    placeholder="+90 5XX XXX XX XX"
+                  />
+                ) : (
+                  <p className="text-white font-medium flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    {user.phone || <span className="text-slate-500 text-sm">Belirtilmemiş</span>}
+                  </p>
+                )}
               </div>
+              {/* Şifre */}
               <div>
                 <Label className="text-gray-300 text-sm">Şifre</Label>
                 <div className="mt-1.5">
@@ -435,6 +552,7 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
               </div>
             </div>
             <div className="space-y-4">
+              {/* Kayıt Tarihi — sadece görüntüleme */}
               <div>
                 <Label className="text-gray-300 text-sm">Kayıt Tarihi</Label>
                 <p className="text-white font-medium flex items-center gap-2">
@@ -442,19 +560,51 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
                   {formatDate(user.created_at)}
                 </p>
               </div>
+              {/* Gemi */}
               <div>
                 <Label className="text-gray-300 text-sm">Atanmış Gemi</Label>
-                <p className="text-white font-medium flex items-center gap-2">
-                  <ShipIcon className="h-4 w-4 text-gray-400" />
-                  {user.ship?.name || 'Atanmamış'}
-                </p>
+                {isEditing ? (
+                  <Select
+                    value={editData.ship_id}
+                    onValueChange={(val) => setEditData(d => ({ ...d, ship_id: val }))}
+                  >
+                    <SelectTrigger className="mt-1 bg-slate-700 border-slate-600 text-white">
+                      <SelectValue placeholder="Gemi seçin..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-700 border-slate-600">
+                      <SelectItem value="none" className="text-slate-400 hover:bg-slate-600">Gemi atanmamış</SelectItem>
+                      {ships.map((ship: any) => (
+                        <SelectItem key={ship.id} value={ship.id} className="text-white hover:bg-slate-600">
+                          {ship.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-white font-medium flex items-center gap-2">
+                    <ShipIcon className="h-4 w-4 text-gray-400" />
+                    {user.ship?.name || 'Atanmamış'}
+                  </p>
+                )}
               </div>
-              {user.address && (
-                <div>
-                  <Label className="text-gray-300 text-sm">Adres</Label>
-                  <p className="text-white font-medium">{user.address}</p>
-                </div>
-              )}
+              {/* Adres */}
+              <div>
+                <Label className="text-gray-300 text-sm">Adres</Label>
+                {isEditing ? (
+                  <Textarea
+                    value={editData.address}
+                    onChange={(e) => setEditData(d => ({ ...d, address: e.target.value }))}
+                    className="mt-1 bg-slate-700 border-slate-600 text-white placeholder-gray-400 resize-none"
+                    placeholder="Adres bilgisi..."
+                    rows={2}
+                  />
+                ) : (
+                  <p className="text-white font-medium">
+                    {user.address || <span className="text-slate-500 text-sm">Belirtilmemiş</span>}
+                  </p>
+                )}
+              </div>
+              {/* Hesap Durumu */}
               <div>
                 <Label className="text-gray-300 text-sm">Hesap Durumu</Label>
                 <div className="flex items-center gap-3 mt-1">
