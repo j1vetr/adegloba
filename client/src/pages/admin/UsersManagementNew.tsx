@@ -465,7 +465,7 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
                 </div>
               </div>
               <div className="pt-2">
-                <ManualPackageAssignmentButton userId={user.id} username={user.username} />
+                <ManualPackageAssignmentButton userId={user.id} username={user.username} phone={user.phone} />
               </div>
             </div>
           </div>
@@ -869,12 +869,14 @@ export default function UsersManagementNew() {
 interface ManualPackageAssignmentButtonProps {
   userId: string;
   username: string;
+  phone?: string | null;
 }
 
-function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssignmentButtonProps) {
+function ManualPackageAssignmentButton({ userId, username, phone }: ManualPackageAssignmentButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [note, setNote] = useState<string>("");
+  const [sendWhatsApp, setSendWhatsApp] = useState<boolean>(!!phone);
   const { toast } = useToast();
 
   // Tüm paketleri getir
@@ -885,19 +887,25 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
 
   // Manuel paket atama mutation
   const assignPackageMutation = useMutation({
-    mutationFn: async (data: { planId: string; note?: string }) => {
+    mutationFn: async (data: { planId: string; note?: string; sendWhatsApp: boolean }) => {
       return apiRequest('POST', `/api/admin/users/${userId}/assign-package`, data);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      const waResult = data?.whatsapp;
+      let description = `${username} kullanıcısına paket başarıyla atandı.`;
+      if (waResult?.sent) {
+        description += ` 📱 WhatsApp mesajı gönderildi.`;
+      } else if (sendWhatsApp && waResult?.message) {
+        description += ` ⚠️ WhatsApp: ${waResult.message}`;
+      }
       toast({
         title: "Başarılı",
-        description: `${username} kullanıcısına paket başarıyla atandı.`,
+        description,
         variant: "default",
       });
       setIsOpen(false);
       setSelectedPlanId("");
       setNote("");
-      // Kullanıcı siparişlerini yenile
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users", userId, "orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users-with-stats"] });
     },
@@ -920,10 +928,10 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
       return;
     }
 
-    console.log('Assigning package:', { planId: selectedPlanId, note, userId });
     assignPackageMutation.mutate({
       planId: selectedPlanId,
-      note: note || undefined
+      note: note || undefined,
+      sendWhatsApp,
     });
   };
 
@@ -971,13 +979,51 @@ function ManualPackageAssignmentButton({ userId, username }: ManualPackageAssign
             </div>
 
 
-            {/* Not */}
+            {/* WhatsApp Toggle */}
+            <div className="rounded-lg border border-green-700/40 bg-green-950/20 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-green-400 text-lg">💬</span>
+                  <span className="text-green-300 text-sm font-medium">WhatsApp Bildirimi</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => phone && setSendWhatsApp(!sendWhatsApp)}
+                  disabled={!phone || assignPackageMutation.isPending}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                    sendWhatsApp && phone ? 'bg-green-500' : 'bg-slate-600'
+                  } ${!phone ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                      sendWhatsApp && phone ? 'translate-x-4' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              {phone ? (
+                <p className="text-xs text-slate-400">
+                  Paket bilgileri <span className="text-green-400 font-medium">{phone}</span> numarasına gönderilecek.
+                </p>
+              ) : (
+                <p className="text-xs text-amber-400">
+                  Kullanıcının telefon numarası kayıtlı değil, WhatsApp gönderilemez.
+                </p>
+              )}
+            </div>
+
+            {/* Mesaj / Not */}
             <div className="space-y-2">
-              <Label className="text-gray-300">Not (Opsiyonel)</Label>
+              <Label className="text-gray-300 flex items-center gap-2">
+                Mesaj / Not
+                {sendWhatsApp && phone && (
+                  <span className="text-xs text-green-400 font-normal">💬 WhatsApp'a da eklenecek</span>
+                )}
+              </Label>
               <Textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Bu atama hakkında not ekleyin..."
+                placeholder={sendWhatsApp && phone ? "Kullanıcıya ekstra mesaj ekleyin (opsiyonel)..." : "Bu atama hakkında not ekleyin..."}
                 className="bg-slate-700 border-slate-600 text-white placeholder-gray-400 resize-none"
                 rows={3}
                 disabled={assignPackageMutation.isPending}

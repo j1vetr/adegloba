@@ -1783,7 +1783,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/users/:id/assign-package", isAdminAuthenticated, async (req, res) => {
     try {
       const { id: userId } = req.params;
-      const { planId, note } = req.body;
+      const { planId, note, sendWhatsApp } = req.body;
       
       console.log('Manual package assignment request:', { userId, planId, note });
 
@@ -1841,9 +1841,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userAgent: req.get('User-Agent'),
       });
 
+      // Send WhatsApp notification if requested and user has phone
+      let whatsappResult: { sent: boolean; message: string } = { sent: false, message: '' };
+      if (sendWhatsApp && user.phone) {
+        try {
+          const { sendPackageAssignmentWhatsApp } = await import('./whatsappService');
+          const waResult = await sendPackageAssignmentWhatsApp(user.phone, {
+            fullName: user.full_name || user.username,
+            username: user.username,
+            dataLimitGb: plan.dataLimitGb,
+            planName: plan.name,
+            adminNote: note,
+          });
+          whatsappResult = { sent: waResult.success, message: waResult.message };
+          console.log(`📱 WhatsApp result for ${user.username}:`, waResult);
+        } catch (waError) {
+          console.error('WhatsApp send failed (non-critical):', waError);
+          whatsappResult = { sent: false, message: 'WhatsApp servisi başlatılamadı' };
+        }
+      } else if (sendWhatsApp && !user.phone) {
+        whatsappResult = { sent: false, message: 'Kullanıcının telefon numarası kayıtlı değil' };
+      }
+
       res.json({ 
         message: "Package assigned successfully",
-        assignment: result
+        assignment: result,
+        whatsapp: whatsappResult,
       });
 
     } catch (error: any) {
