@@ -25,15 +25,14 @@ export async function sendPackageAssignmentWhatsApp(
     }
 
     const lines: string[] = [
-      `🛰️ *ADS.ADEGLOBA.SPACE Bilgilendirmesi*`,
+      `🛰️ ADS.ADEGLOBA.SPACE Bilgilendirmesi`,
       ``,
       `Sayın ${data.fullName},`,
       ``,
-      `*${data.dataLimitGb} GB* (${data.planName}) paketiniz gemi bağlantısına tanımlanmıştır.`,
-      ``,
+      `${data.dataLimitGb} GB (${data.planName}) paketiniz kullanıcınıza tanımlanmıştır.`,
       `📅 Geçerlilik süresi: Ay sonuna kadar`,
       ``,
-      `Kullanıcı bilgilerinizi görmek için sisteme giriş sağlayınız → *${data.email}*`,
+      `Kullanıcı bilgilerinizi görmek için sisteme giriş sağlayınız → ${data.email}`,
     ];
 
     if (data.adminNote?.trim()) {
