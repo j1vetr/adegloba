@@ -3,7 +3,7 @@ const WPILETI_ENDPOINT = "https://my.wpileti.com/api/send-message";
 
 export interface PackageWhatsAppData {
   fullName: string;
-  username: string;
+  email: string;
   dataLimitGb: number;
   planName: string;
   adminNote?: string;
@@ -29,11 +29,11 @@ export async function sendPackageAssignmentWhatsApp(
       ``,
       `Sayın ${data.fullName},`,
       ``,
-      `Hesabınıza *${data.dataLimitGb} GB* veri paketi (${data.planName}) başarıyla tanımlanmıştır.`,
+      `*${data.dataLimitGb} GB* (${data.planName}) paketiniz kullanıcınıza tanımlanmıştır.`,
       ``,
       `📅 Geçerlilik süresi: Ay sonuna kadar`,
       ``,
-      `Kullanıcı bilgilerinizi görmek için sisteme giriş sağlayınız → *${data.username}*`,
+      `Kullanıcı bilgilerinizi görmek için sisteme giriş sağlayınız → *${data.email}*`,
     ];
 
     if (data.adminNote?.trim()) {
@@ -44,7 +44,8 @@ export async function sendPackageAssignmentWhatsApp(
     lines.push(``);
     lines.push(`Herhangi bir sorununuz olması halinde bu sohbet üzerinden yanıt verebilir, sorularınızı iletebilirsiniz.`);
     lines.push(``);
-    lines.push(`AdeGloba Starlink Destek ⚓`);
+    lines.push(`İyi seyirler! ⚓`);
+    lines.push(`AdeGloba Starlink Destek`);
 
     const messageText = lines.join('\n');
 
@@ -62,9 +63,9 @@ export async function sendPackageAssignmentWhatsApp(
     });
 
     const result = await response.json().catch(() => ({}));
-    
+
     if (response.ok) {
-      console.log(`✅ WhatsApp sent to ${formattedPhone} (${data.username}):`, result);
+      console.log(`✅ WhatsApp sent to ${formattedPhone} (${data.email}):`, result);
       return { success: true, message: `WhatsApp mesajı ${formattedPhone} numarasına gönderildi` };
     } else {
       console.error(`❌ WhatsApp API error for ${formattedPhone}:`, result);

@@ -1848,7 +1848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const { sendPackageAssignmentWhatsApp } = await import('./whatsappService');
           const waResult = await sendPackageAssignmentWhatsApp(user.phone, {
             fullName: user.full_name || user.username,
-            username: user.username,
+            email: user.email || user.username,
             dataLimitGb: plan.dataLimitGb,
             planName: plan.name,
             adminNote: note,
