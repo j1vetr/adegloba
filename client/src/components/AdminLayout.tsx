@@ -23,7 +23,6 @@ import {
   Bell,
   Send,
   PackageCheck,
-  DollarSign,
   Activity,
   UserCheck,
   AlertCircle,
@@ -73,7 +72,6 @@ const navigationCategories = [
   {
     name: 'Analitik',
     items: [
-      { name: 'Finansal Raporlar', href: '/admin/financial-reports', icon: DollarSign },
       { name: 'Gemi Analitik', href: '/admin/ship-analytics', icon: TrendingUp },
     ]
   },
