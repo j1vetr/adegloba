@@ -330,6 +330,25 @@ export class OrderService {
 
       console.log(`📧 Admin notification email: ${adminEmailSuccess ? 'sent' : 'failed'} to ${adminEmail}`);
 
+      // 3. Send WhatsApp notification to customer if phone is available
+      if (user.phone) {
+        try {
+          const { sendOrderConfirmationWhatsApp } = await import('../whatsappService');
+          const firstItem = orderItems[0];
+          const plan = plans.find(p => p.id === firstItem?.planId);
+          const waResult = await sendOrderConfirmationWhatsApp(user.phone, {
+            fullName: user.full_name || user.username,
+            email: user.email || user.username,
+            dataLimitGb: plan?.dataLimitGb || 0,
+            planName: plan?.name || 'Veri Paketi',
+            totalUsd: parseFloat(order.totalUsd || '0').toFixed(2),
+          });
+          console.log(`📱 WhatsApp order confirmation: ${waResult.success ? 'sent' : 'failed'} to ${user.phone}`);
+        } catch (waError) {
+          console.error('📱 WhatsApp order notification failed (non-critical):', waError);
+        }
+      }
+
     } catch (error) {
       console.error('📧 Error sending order notifications:', error);
     }
