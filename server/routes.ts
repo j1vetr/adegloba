@@ -10,7 +10,8 @@ import { CouponService } from "./services/couponService";
 import { ExpiryService } from "./services/expiryService";
 import { LoyaltyService } from "./services/loyaltyService";
 import { emailService, EmailService } from "./emailService";
-import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema } from "@shared/schema";
+import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema, orders, users } from "@shared/schema";
+import { eq, and, desc, gte, lte, sql as sqlExpr } from "drizzle-orm";
 import { z } from "zod";
 import * as XLSX from 'xlsx';
 import { createObjectCsvWriter } from 'csv-writer';
@@ -1243,6 +1244,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching reports:", error);
       res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
+  // Admin - Ships with no orders in a period
+  app.get('/api/admin/reports/inactive-ships', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { range, month, year } = req.query;
+      const now = new Date();
+      let startDate: Date;
+      let endDate: Date = now;
+
+      if (month && year) {
+        // Specific month selected
+        const m = parseInt(month as string) - 1; // 0-indexed
+        const y = parseInt(year as string);
+        startDate = new Date(y, m, 1);
+        endDate = new Date(y, m + 1, 0, 23, 59, 59);
+      } else {
+        switch (range) {
+          case 'last7days':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'thisMonth':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case 'lastMonth':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+            break;
+          case 'thisYear':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            break;
+          case 'lastYear':
+            startDate = new Date(now.getFullYear() - 1, 0, 1);
+            endDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+            break;
+          default:
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        }
+      }
+
+      // Get all ships
+      const allShips = await storage.getShips();
+
+      // Get paid orders in the period grouped by ship
+      const periodOrders = await db
+        .select({ shipId: orders.shipId })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.status, 'paid'),
+            gte(orders.paidAt, startDate),
+            lte(orders.paidAt, endDate)
+          )
+        );
+
+      const activeShipIds = new Set(periodOrders.map((o: any) => o.shipId).filter(Boolean));
+
+      // Ships with no orders in the period
+      const inactiveShips = allShips.filter(ship => !activeShipIds.has(ship.id));
+
+      // For each inactive ship: last order date + user count
+      const result = await Promise.all(
+        inactiveShips.map(async (ship) => {
+          // Last paid order for this ship (ever)
+          const [lastOrder] = await db
+            .select({ paidAt: orders.paidAt })
+            .from(orders)
+            .where(and(eq(orders.shipId, ship.id), eq(orders.status, 'paid')))
+            .orderBy(desc(orders.paidAt))
+            .limit(1);
+
+          // User count on this ship
+          const [userCount] = await db
+            .select({ count: sqlExpr<number>`count(*)::int` })
+            .from(users)
+            .where(eq(users.ship_id, ship.id));
+
+          const lastOrderDate = lastOrder?.paidAt || null;
+          const daysSinceLastOrder = lastOrderDate
+            ? Math.floor((now.getTime() - new Date(lastOrderDate).getTime()) / (1000 * 60 * 60 * 24))
+            : null;
+
+          return {
+            shipId: ship.id,
+            shipName: ship.name,
+            lastOrderDate,
+            daysSinceLastOrder,
+            userCount: userCount?.count || 0,
+          };
+        })
+      );
+
+      // Sort: ships that had orders before first (most recently active), then never-ordered
+      result.sort((a, b) => {
+        if (a.lastOrderDate && b.lastOrderDate) {
+          return new Date(b.lastOrderDate).getTime() - new Date(a.lastOrderDate).getTime();
+        }
+        if (a.lastOrderDate) return -1;
+        if (b.lastOrderDate) return 1;
+        return 0;
+      });
+
+      res.json({
+        ships: result,
+        periodStart: startDate,
+        periodEnd: endDate,
+        totalInactive: result.length,
+        totalShips: allShips.length,
+      });
+    } catch (error: any) {
+      console.error('Error fetching inactive ships:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch inactive ships' });
     }
   });
 

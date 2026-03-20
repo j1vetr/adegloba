@@ -6,10 +6,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import AdminLayout from "@/components/AdminLayout";
-import { BarChart3, TrendingUp, DollarSign, Package, Download, FileSpreadsheet, FileText } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Package, Download, FileSpreadsheet, FileText, Ship, AlertTriangle, Clock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Badge } from "@/components/ui/badge";
 
-type DateRange = 'last7days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear';
+type DateRange = 'last7days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'specificMonth';
+
+const TURKISH_MONTHS = [
+  { value: '1', label: 'Ocak' }, { value: '2', label: 'Şubat' }, { value: '3', label: 'Mart' },
+  { value: '4', label: 'Nisan' }, { value: '5', label: 'Mayıs' }, { value: '6', label: 'Haziran' },
+  { value: '7', label: 'Temmuz' }, { value: '8', label: 'Ağustos' }, { value: '9', label: 'Eylül' },
+  { value: '10', label: 'Ekim' }, { value: '11', label: 'Kasım' }, { value: '12', label: 'Aralık' },
+];
 
 interface ReportData {
   shipId: string;
@@ -24,6 +32,14 @@ export default function Reports() {
   const [selectedShip, setSelectedShip] = useState<string>('all');
   const [dateRange, setDateRange] = useState<DateRange>('thisMonth');
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+
+  // Inactive ships filter
+  const now = new Date();
+  const [inactiveRange, setInactiveRange] = useState<DateRange>('thisMonth');
+  const [inactiveMonth, setInactiveMonth] = useState<string>(String(now.getMonth() + 1));
+  const [inactiveYear, setInactiveYear] = useState<string>(String(now.getFullYear()));
+
+  const inactiveYears = Array.from({ length: 4 }, (_, i) => String(now.getFullYear() - i));
 
   // Export function
   const handleExport = (format: 'excel' | 'csv') => {
@@ -79,12 +95,31 @@ export default function Reports() {
     cacheTime: 0, // Don't cache the result
   });
 
-  const dateRangeOptions = {
+  // Inactive ships query
+  const inactiveParams = new URLSearchParams();
+  if (inactiveRange === 'specificMonth') {
+    inactiveParams.set('month', inactiveMonth);
+    inactiveParams.set('year', inactiveYear);
+  } else {
+    inactiveParams.set('range', inactiveRange);
+  }
+
+  const { data: inactiveData, isLoading: inactiveLoading } = useQuery({
+    queryKey: ["/api/admin/reports/inactive-ships", inactiveRange, inactiveMonth, inactiveYear],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/reports/inactive-ships?${inactiveParams.toString()}`, { cache: 'no-cache' });
+      return res.json();
+    },
+    staleTime: 0,
+  });
+
+  const dateRangeOptions: Record<DateRange, string> = {
     'last7days': 'Son 7 Gün',
     'thisMonth': 'Bu Ay',
-    'lastMonth': 'Geçen Ay', 
+    'lastMonth': 'Geçen Ay',
     'thisYear': 'Bu Yıl',
-    'lastYear': 'Geçen Yıl'
+    'lastYear': 'Geçen Yıl',
+    'specificMonth': 'Belirli Ay Seç',
   };
 
   const totalStats = reportData ? {
@@ -183,11 +218,13 @@ export default function Reports() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-600">
-                  {Object.entries(dateRangeOptions).map(([key, label]) => (
-                    <SelectItem key={key} value={key} className="text-white hover:bg-slate-700">
-                      {label}
-                    </SelectItem>
-                  ))}
+                  {Object.entries(dateRangeOptions)
+                    .filter(([key]) => key !== 'specificMonth')
+                    .map(([key, label]) => (
+                      <SelectItem key={key} value={key} className="text-white hover:bg-slate-700">
+                        {label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -351,6 +388,114 @@ export default function Reports() {
           ) : (
             <div className="text-center py-8">
               <div className="text-slate-400">Seçilen kriterlerde rapor bulunamadı.</div>
+            </div>
+          )}
+        </Card>
+
+        {/* Inactive Ships */}
+        <Card className="glassmorphism border-slate-700 p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <div className="flex items-center gap-2">
+              <Ship className="text-amber-400" size={20} />
+              <h2 className="text-xl font-bold text-white">Sipariş Geçilmemiş Gemiler</h2>
+              {inactiveData && (
+                <Badge variant="outline" className="border-amber-500 text-amber-400 ml-1">
+                  {inactiveData.totalInactive}/{inactiveData.totalShips}
+                </Badge>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={inactiveRange} onValueChange={(v) => setInactiveRange(v as DateRange)}>
+                <SelectTrigger className="w-44 bg-slate-800 border-slate-600 text-white text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-600">
+                  {(Object.entries(dateRangeOptions) as [DateRange, string][]).map(([val, label]) => (
+                    <SelectItem key={val} value={val} className="text-white text-xs">{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {inactiveRange === 'specificMonth' && (
+                <>
+                  <Select value={inactiveMonth} onValueChange={setInactiveMonth}>
+                    <SelectTrigger className="w-28 bg-slate-800 border-slate-600 text-white text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-600">
+                      {TURKISH_MONTHS.map(m => (
+                        <SelectItem key={m.value} value={m.value} className="text-white text-xs">{m.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={inactiveYear} onValueChange={setInactiveYear}>
+                    <SelectTrigger className="w-24 bg-slate-800 border-slate-600 text-white text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-600">
+                      {inactiveYears.map(y => (
+                        <SelectItem key={y} value={y} className="text-white text-xs">{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
+            </div>
+          </div>
+
+          {inactiveLoading ? (
+            <div className="text-center py-8 text-slate-400">Yükleniyor...</div>
+          ) : inactiveData?.ships?.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-600">
+                    <th className="text-left py-3 px-2 text-slate-300 font-medium">Gemi Adı</th>
+                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Kullanıcı Sayısı</th>
+                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Son Sipariş</th>
+                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Geçen Süre</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inactiveData.ships.map((ship: any, index: number) => (
+                    <tr key={ship.shipId} className={index % 2 === 0 ? 'bg-slate-800/50' : ''}>
+                      <td className="py-3 px-2 text-white font-medium flex items-center gap-2">
+                        <Ship size={14} className="text-slate-400 shrink-0" />
+                        {ship.shipName}
+                      </td>
+                      <td className="py-3 px-2 text-right">
+                        <Badge variant="outline" className="border-slate-500 text-slate-300 text-xs">
+                          {ship.userCount} kullanıcı
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-2 text-right text-slate-400 text-xs">
+                        {ship.lastOrderDate
+                          ? new Date(ship.lastOrderDate).toLocaleDateString('tr-TR')
+                          : <span className="text-red-400 text-xs">Hiç sipariş yok</span>}
+                      </td>
+                      <td className="py-3 px-2 text-right">
+                        {ship.daysSinceLastOrder !== null ? (
+                          <span className={`text-xs font-medium ${
+                            ship.daysSinceLastOrder > 60 ? 'text-red-400' :
+                            ship.daysSinceLastOrder > 30 ? 'text-amber-400' : 'text-yellow-300'
+                          }`}>
+                            <Clock size={11} className="inline mr-1" />
+                            {ship.daysSinceLastOrder} gün
+                          </span>
+                        ) : (
+                          <AlertTriangle size={14} className="text-red-400 inline" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Ship size={36} className="text-green-500 mx-auto mb-2" />
+              <p className="text-green-400 font-medium">Tüm gemiler bu dönemde sipariş vermiş!</p>
+              <p className="text-slate-500 text-sm mt-1">Seçilen dönemde aktif olmayan gemi bulunmuyor.</p>
             </div>
           )}
         </Card>
