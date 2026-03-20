@@ -16,7 +16,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Separator } from '@/components/ui/separator';
 import { 
   Users, Search, MoreHorizontal, Edit, Trash2, Eye, 
-  UserCheck, UserX, Ship as ShipIcon, Mail, Calendar, DollarSign, Package, ShoppingCart, TrendingUp, History, ArrowLeft, Plus, Key, RotateCcw, Copy, CheckCircle 
+  UserCheck, UserX, Ship as ShipIcon, Mail, Calendar, DollarSign, Package, ShoppingCart, TrendingUp, History, ArrowLeft, Plus, Key, RotateCcw, Copy, CheckCircle, Phone
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -421,16 +421,16 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
                 </p>
               </div>
               <div>
+                <Label className="text-gray-300 text-sm">Telefon Numarası</Label>
+                <p className="text-white font-medium flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-gray-400" />
+                  {user.phone || <span className="text-slate-500 text-sm">Belirtilmemiş</span>}
+                </p>
+              </div>
+              <div>
                 <Label className="text-gray-300 text-sm">Şifre</Label>
-                <div className="mt-1.5 p-3 rounded-lg bg-slate-800/60 border border-slate-700/50 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-slate-400">
-                    <Key className="h-4 w-4 flex-shrink-0" />
-                    <span>Şifreler şifrelenmiş (bcrypt) saklanır — eski şifre görüntülenemez.</span>
-                  </div>
-                  <p className="text-xs text-slate-500 pl-6">Şifreyi görmeniz gerekiyorsa, sıfırlayın — sistem yeni şifreyi ekranda gösterir.</p>
-                  <div className="pl-6">
-                    <PasswordResetButton userId={user.id} username={user.username} />
-                  </div>
+                <div className="mt-1.5">
+                  <PasswordResetButton userId={user.id} username={user.username} />
                 </div>
               </div>
             </div>
