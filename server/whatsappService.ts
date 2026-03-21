@@ -1,5 +1,5 @@
 const WPILETI_API_KEY = "db12af64a73ccb0c8589327ee51ba976a6258aee";
-const ADMIN_SUPPORT_PHONE = "447440225375";
+const ADMIN_SUPPORT_PHONE = "905308616785";
 const WPILETI_ENDPOINT = "https://my.wpileti.com/api/send-message";
 
 function formatPhone(phone: string): string {
