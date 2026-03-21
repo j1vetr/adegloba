@@ -3465,7 +3465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await storage.createTicketMessage(messageData);
       
       // Update ticket status to show admin replied
-      await storage.updateTicketStatus(ticketId, 'Açık');
+      await storage.updateTicketStatus(ticketId, 'Cevaplandı');
       
       res.status(201).json(message);
     } catch (error) {

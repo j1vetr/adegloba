@@ -56,7 +56,7 @@ interface Ticket {
   id: string;
   subject: string;
   priority: 'Düşük' | 'Orta' | 'Yüksek';
-  status: 'Açık' | 'Beklemede' | 'Kapalı';
+  status: 'Açık' | 'Beklemede' | 'Cevaplandı' | 'Kapalı';
   userName: string;
   userEmail: string;
   userFullName?: string;
@@ -91,6 +91,7 @@ const priorityColors = {
 const statusColors = {
   'Açık': 'bg-blue-600/20 text-blue-400 border-blue-500/30',
   'Beklemede': 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30',
+  'Cevaplandı': 'bg-green-600/20 text-green-400 border-green-500/30',
   'Kapalı': 'bg-gray-600/20 text-gray-400 border-gray-500/30'
 };
 
@@ -351,6 +352,9 @@ export default function TicketManagement() {
                         <SelectItem value="Beklemede">
                           <Badge className={statusColors['Beklemede']}>Beklemede</Badge>
                         </SelectItem>
+                        <SelectItem value="Cevaplandı">
+                          <Badge className={statusColors['Cevaplandı']}>Cevaplandı</Badge>
+                        </SelectItem>
                         <SelectItem value="Kapalı">
                           <Badge className={statusColors['Kapalı']}>Kapalı</Badge>
                         </SelectItem>
@@ -530,6 +534,7 @@ export default function TicketManagement() {
                       <SelectItem value="all">Tümü</SelectItem>
                       <SelectItem value="Açık">Açık</SelectItem>
                       <SelectItem value="Beklemede">Beklemede</SelectItem>
+                      <SelectItem value="Cevaplandı">Cevaplandı</SelectItem>
                       <SelectItem value="Kapalı">Kapalı</SelectItem>
                     </SelectContent>
                   </Select>

@@ -112,9 +112,9 @@ export async function sendNewTicketAdminWhatsApp(
   };
   const pEmoji = priorityEmoji[data.priority] || '⚡';
 
-  // Mesajı 200 karakterle sınırla (uzunsa kes)
-  const previewMsg = data.message.length > 200
-    ? data.message.substring(0, 200) + '...'
+  // Mesajı 40 karakterle sınırla (uzunsa kes)
+  const previewMsg = data.message.length > 40
+    ? data.message.substring(0, 40) + '...'
     : data.message;
 
   const lines: string[] = [
