@@ -23,6 +23,16 @@ async function sendWhatsApp(phone: string, messageText: string): Promise<{ succe
     return { success: false, message: 'Geçersiz telefon numarası formatı' };
   }
 
+  const payload = {
+    api_key: WPILETI_API_KEY,
+    receiver: formattedPhone,
+    data: { message: messageText },
+  };
+
+  console.log(`📤 WhatsApp isteği gönderiliyor → ${WPILETI_ENDPOINT}`);
+  console.log(`📤 Alıcı: ${formattedPhone} | Mesaj uzunluğu: ${messageText.length} karakter`);
+  console.log(`📤 Payload (api_key gizlendi):`, JSON.stringify({ ...payload, api_key: '***' }));
+
   try {
     const response = await fetch(WPILETI_ENDPOINT, {
       method: 'POST',
@@ -30,21 +40,20 @@ async function sendWhatsApp(phone: string, messageText: string): Promise<{ succe
         'Content-Type': 'application/json',
         'Accept': '*/*',
       },
-      body: JSON.stringify({
-        api_key: WPILETI_API_KEY,
-        receiver: formattedPhone,
-        data: { message: messageText },
-      }),
+      body: JSON.stringify(payload),
     });
 
-    const result = await response.json().catch(() => ({}));
+    const rawText = await response.text();
+    let result: any = {};
+    try { result = JSON.parse(rawText); } catch { result = { raw: rawText }; }
+
+    console.log(`📥 HTTP Status: ${response.status} | Yanıt:`, JSON.stringify(result));
 
     if (response.ok) {
-      console.log(`✅ WhatsApp sent to ${formattedPhone}:`, result);
       return { success: true, message: `WhatsApp mesajı ${formattedPhone} numarasına gönderildi` };
     } else {
-      console.error(`❌ WhatsApp API error for ${formattedPhone}:`, result);
-      return { success: false, message: `API hatası: ${JSON.stringify(result)}` };
+      console.error(`❌ WhatsApp API error for ${formattedPhone}: HTTP ${response.status}`, result);
+      return { success: false, message: `API hatası (HTTP ${response.status}): ${JSON.stringify(result)}` };
     }
   } catch (error) {
     const errMsg = (error as Error).message || 'Bilinmeyen hata';
