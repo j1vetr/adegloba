@@ -1,12 +1,10 @@
-import React, { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import { useRoute } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRoute, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Loader2,
   ArrowLeft,
@@ -15,9 +13,11 @@ import {
   CheckCircle,
   AlertCircle,
   MessageCircle,
-  Calendar,
+  XCircle,
   User,
-  Shield
+  Shield,
+  Satellite,
+  HeadphonesIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -27,7 +27,7 @@ interface TicketMessage {
   id: string;
   message: string;
   senderType: 'user' | 'admin';
-  senderId: string;
+  senderName: string;
   createdAt: string;
 }
 
@@ -43,302 +43,246 @@ interface TicketDetail {
   messages: TicketMessage[];
 }
 
+const statusConfig: Record<string, { color: string; bg: string; border: string; icon: any; label: string }> = {
+  'Açık':       { color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/40',   icon: AlertCircle,  label: 'Açık' },
+  'Beklemede':  { color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/40',  icon: Clock,        label: 'Beklemede' },
+  'Cevaplandı': { color: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/40',  icon: CheckCircle,  label: 'Cevaplandı' },
+  'Kapalı':     { color: 'text-slate-400',  bg: 'bg-slate-500/10',  border: 'border-slate-500/40',  icon: XCircle,      label: 'Kapalı' },
+};
+
+const priorityConfig: Record<string, { color: string; bg: string; border: string }> = {
+  'Düşük':  { color: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/30' },
+  'Orta':   { color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/30' },
+  'Yüksek': { color: 'text-red-400',    bg: 'bg-red-500/10',    border: 'border-red-500/30' },
+};
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('tr-TR', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function formatTime(dateStr: string) {
+  return new Date(dateStr).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+}
+
 export default function TicketDetail() {
   const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
   const [match, params] = useRoute("/destek/:ticketId");
   const [replyMessage, setReplyMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const ticketId = params?.ticketId;
 
-  // Fetch ticket details with messages
-  const { data: ticketData, isLoading: ticketLoading, error } = useQuery({
+  const { data: ticketData, isLoading: ticketLoading, error } = useQuery<TicketDetail>({
     queryKey: ['/api/tickets', ticketId],
-    enabled: !!user && !!ticketId
+    enabled: !!user && !!ticketId,
+    refetchInterval: 15000,
   });
 
-  // Send reply mutation
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [ticketData?.messages]);
+
   const replyMutation = useMutation({
     mutationFn: async (message: string) => {
-      if (!message.trim()) {
-        throw new Error("Mesaj boş olamaz");
-      }
-
-      const response = await apiRequest('POST', `/api/tickets/${ticketId}/messages`, {
-        message: message.trim()
-      });
+      if (!message.trim()) throw new Error("Mesaj boş olamaz");
+      const response = await apiRequest('POST', `/api/tickets/${ticketId}/messages`, { message: message.trim() });
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Başarılı",
-        description: "Yanıtınız gönderildi.",
-      });
       setReplyMessage("");
       queryClient.invalidateQueries({ queryKey: ['/api/tickets', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Hata",
-        description: error.message || "Yanıt gönderilirken bir hata oluştu.",
-        variant: "destructive",
-      });
+      toast({ title: "Hata", description: error.message, variant: "destructive" });
     },
   });
 
-  const handleSendReply = () => {
-    replyMutation.mutate(replyMessage);
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Açık':
-        return <AlertCircle className="h-4 w-4 text-green-400" />;
-      case 'Beklemede':
-        return <Clock className="h-4 w-4 text-yellow-400" />;
-      case 'Kapalı':
-        return <CheckCircle className="h-4 w-4 text-gray-400" />;
-      default:
-        return <MessageCircle className="h-4 w-4 text-cyan-400" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Açık':
-        return "bg-green-600/20 text-green-400 border-green-500/30";
-      case 'Beklemede':
-        return "bg-yellow-600/20 text-yellow-400 border-yellow-500/30";
-      case 'Kapalı':
-        return "bg-gray-600/20 text-gray-400 border-gray-500/30";
-      default:
-        return "bg-cyan-600/20 text-cyan-400 border-cyan-500/30";
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'Yüksek':
-        return "bg-red-600/20 text-red-400 border-red-500/30";
-      case 'Orta':
-        return "bg-orange-600/20 text-orange-400 border-orange-500/30";
-      case 'Düşük':
-        return "bg-green-600/20 text-green-400 border-green-500/30";
-      default:
-        return "bg-gray-600/20 text-gray-400 border-gray-500/30";
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      if (replyMessage.trim()) replyMutation.mutate(replyMessage);
     }
   };
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-black p-4 flex items-center justify-center">
-        <div className="flex items-center gap-2 text-cyan-400">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Yükleniyor...</span>
-        </div>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
       </div>
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-black p-4 flex items-center justify-center">
-        <div className="text-white text-center">
-          <h2 className="text-xl font-semibold mb-2">Kullanıcı bulunamadı</h2>
-          <p className="text-gray-400">Lütfen giriş yapın.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!match || !ticketId) {
-    return (
-      <div className="min-h-screen bg-black p-4 flex items-center justify-center">
-        <div className="text-white text-center">
-          <h2 className="text-xl font-semibold mb-2">Geçersiz Talep</h2>
-          <p className="text-gray-400">Talep bulunamadı.</p>
-        </div>
-      </div>
-    );
-  }
+  const ticket = ticketData?.ticket;
+  const messages = ticketData?.messages || [];
+  const sc = ticket ? (statusConfig[ticket.status] || statusConfig['Açık']) : statusConfig['Açık'];
+  const pc = ticket ? (priorityConfig[ticket.priority] || priorityConfig['Orta']) : priorityConfig['Orta'];
+  const StatusIcon = sc.icon;
+  const isClosed = ticket?.status === 'Kapalı';
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-slate-950 flex flex-col">
       <UserNavigation />
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
-            <Button
-              variant="ghost"
-              onClick={() => window.history.back()}
-              className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Geri Dön
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">
-                Destek Talebi Detayları
-              </h1>
-              <p className="text-gray-400">
-                Talep ID: #{ticketId?.slice(-8)}
-              </p>
-            </div>
+
+      {/* Header */}
+      <div className="relative border-b border-slate-800 shrink-0">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-950/30 via-slate-950 to-slate-950" />
+        <div className="relative container mx-auto px-4 py-5 max-w-4xl">
+          <div className="flex items-center gap-3 mb-4">
+            <Link href="/destek">
+              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg">
+                <ArrowLeft className="h-4 w-4 mr-1.5" />
+                Talepler
+              </Button>
+            </Link>
           </div>
 
           {ticketLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex items-center gap-2 text-cyan-400">
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span>Talep detayları yükleniyor...</span>
+            <div className="h-14 flex items-center gap-3">
+              <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
+              <span className="text-slate-400 text-sm">Yükleniyor...</span>
+            </div>
+          ) : ticket ? (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 shrink-0">
+                  <HeadphonesIcon className="h-5 w-5 text-cyan-400" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-semibold text-white leading-tight">{ticket.subject}</h1>
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    #{ticket.id.slice(-8)} · {formatDate(ticket.createdAt)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 pl-10 sm:pl-0">
+                <Badge className={`${pc.bg} ${pc.color} ${pc.border} border text-xs`}>{ticket.priority}</Badge>
+                <Badge className={`${sc.bg} ${sc.color} ${sc.border} border text-xs flex items-center gap-1`}>
+                  <StatusIcon className="h-3 w-3" />
+                  {sc.label}
+                </Badge>
               </div>
             </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 py-6 max-w-4xl">
+          {ticketLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
+            </div>
           ) : error || !ticketData ? (
-            <Card className="bg-gray-900/50 border-red-500/30">
-              <CardContent className="p-8 text-center">
-                <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-white mb-2">Talep Bulunamadı</h3>
-                <p className="text-gray-400">Bu talep bulunamadı veya erişim izniniz yok.</p>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <AlertCircle className="h-10 w-10 text-red-400" />
+              <p className="text-slate-400">Talep bulunamadı veya erişim izniniz yok.</p>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <MessageCircle className="h-10 w-10 text-slate-600" />
+              <p className="text-slate-500 text-sm">Henüz mesaj yok.</p>
+            </div>
           ) : (
-            <div className="space-y-6">
-              {/* Ticket Info */}
-              <Card className="bg-gray-900/50 border-cyan-500/30 backdrop-blur-sm">
-                <CardHeader>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex-1">
-                      <CardTitle className="text-white text-xl mb-2 flex items-center gap-2">
-                        {getStatusIcon(ticketData.ticket.status)}
-                        {ticketData.ticket.subject}
-                      </CardTitle>
-                      <div className="flex items-center gap-4 text-sm text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(ticketData.ticket.createdAt).toLocaleDateString('tr-TR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+            <div className="space-y-4">
+              {/* Ticket opened notice */}
+              <div className="flex justify-center">
+                <div className="text-xs text-slate-600 bg-slate-900 border border-slate-800 rounded-full px-4 py-1.5">
+                  Talep {formatDate(ticket!.createdAt)} tarihinde açıldı
+                </div>
+              </div>
+
+              {messages.map((message, index) => {
+                const isUser = message.senderType === 'user';
+                const prevMsg = index > 0 ? messages[index - 1] : null;
+                const sameDay = prevMsg && new Date(message.createdAt).toDateString() === new Date(prevMsg.createdAt).toDateString();
+
+                return (
+                  <div key={message.id}>
+                    {!sameDay && index > 0 && (
+                      <div className="flex justify-center my-4">
+                        <div className="text-xs text-slate-600 bg-slate-900 border border-slate-800 rounded-full px-4 py-1">
+                          {new Date(message.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Badge className={`${getPriorityColor(ticketData.ticket.priority)} px-3 py-1`}>
-                        {ticketData.ticket.priority}
-                      </Badge>
-                      <Badge className={`${getStatusColor(ticketData.ticket.status)} px-3 py-1`}>
-                        {ticketData.ticket.status}
-                      </Badge>
+                    )}
+
+                    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`flex items-end gap-2 max-w-[85%] sm:max-w-[75%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+                        {/* Avatar */}
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mb-0.5 ${
+                          isUser
+                            ? 'bg-cyan-600/20 border border-cyan-500/30'
+                            : 'bg-purple-600/20 border border-purple-500/30'
+                        }`}>
+                          {isUser
+                            ? <User className="h-3.5 w-3.5 text-cyan-400" />
+                            : <Shield className="h-3.5 w-3.5 text-purple-400" />
+                          }
+                        </div>
+
+                        {/* Bubble */}
+                        <div className={`rounded-2xl px-4 py-3 ${
+                          isUser
+                            ? 'bg-cyan-600/20 border border-cyan-500/25 rounded-br-md'
+                            : 'bg-slate-800/80 border border-slate-700/60 rounded-bl-md'
+                        }`}>
+                          <div className={`text-xs font-medium mb-1.5 ${isUser ? 'text-cyan-400' : 'text-purple-400'}`}>
+                            {isUser ? 'Siz' : '🛡 Destek Ekibi'}
+                          </div>
+                          <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">
+                            {message.message}
+                          </p>
+                          <div className={`text-xs mt-2 ${isUser ? 'text-cyan-700 text-right' : 'text-slate-600'}`}>
+                            {formatTime(message.createdAt)}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </CardHeader>
-              </Card>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+      </div>
 
-              {/* Messages */}
-              <Card className="bg-gray-900/50 border-cyan-500/30 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-cyan-400 text-lg flex items-center gap-2">
-                    <MessageCircle className="h-5 w-5" />
-                    Konuşma Geçmişi
-                  </CardTitle>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  {ticketData.messages.map((message, index) => (
-                    <div key={message.id} className="space-y-4">
-                      <div className={`flex ${message.senderType === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-3xl w-full ${
-                          message.senderType === 'user' 
-                            ? 'bg-cyan-600/20 border-cyan-500/30' 
-                            : 'bg-gray-800/50 border-gray-600/30'
-                        } border rounded-lg p-4`}>
-                          <div className="flex items-center gap-2 mb-2">
-                            {message.senderType === 'user' ? (
-                              <User className="h-4 w-4 text-cyan-400" />
-                            ) : (
-                              <Shield className="h-4 w-4 text-purple-400" />
-                            )}
-                            <span className={`text-sm font-medium ${
-                              message.senderType === 'user' ? 'text-cyan-400' : 'text-purple-400'
-                            }`}>
-                              {message.senderType === 'user' ? 'Siz' : 'Destek Ekibi'}
-                            </span>
-                            <span className="text-xs text-gray-400">
-                              {new Date(message.createdAt).toLocaleDateString('tr-TR', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                          </div>
-                          <p className="text-white whitespace-pre-wrap">{message.message}</p>
-                        </div>
-                      </div>
-                      {index < ticketData.messages.length - 1 && (
-                        <Separator className="bg-gray-700/50" />
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Reply Section - Only show if ticket is not closed */}
-              {ticketData.ticket.status !== 'Kapalı' && (
-                <Card className="bg-gray-900/50 border-cyan-500/30 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-cyan-400 text-lg flex items-center gap-2">
-                      <Send className="h-5 w-5" />
-                      Yanıt Gönder
-                    </CardTitle>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-4">
-                    <Textarea
-                      value={replyMessage}
-                      onChange={(e) => setReplyMessage(e.target.value)}
-                      placeholder="Yanıtınızı buraya yazın..."
-                      className="bg-gray-800/50 border-cyan-500/30 text-white resize-none"
-                      rows={6}
-                      data-testid="input-reply-message"
-                    />
-                    
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={handleSendReply}
-                        disabled={replyMutation.isPending || !replyMessage.trim()}
-                        className="bg-cyan-600 hover:bg-cyan-700 text-white"
-                        data-testid="button-send-reply"
-                      >
-                        {replyMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          <Send className="h-4 w-4 mr-2" />
-                        )}
-                        Yanıt Gönder
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {ticketData.ticket.status === 'Kapalı' && (
-                <Card className="bg-gray-800/50 border-gray-600/30">
-                  <CardContent className="p-6 text-center">
-                    <CheckCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-400">Bu talep kapatılmıştır. Yeni yanıt gönderilemez.</p>
-                  </CardContent>
-                </Card>
-              )}
+      {/* Reply Box */}
+      <div className="shrink-0 border-t border-slate-800 bg-slate-950">
+        <div className="container mx-auto px-4 py-4 max-w-4xl">
+          {isClosed ? (
+            <div className="flex items-center justify-center gap-2 py-3 text-sm text-slate-500">
+              <XCircle className="h-4 w-4" />
+              Bu talep kapatılmıştır. Yeni yanıt gönderilemez.
+            </div>
+          ) : (
+            <div className="flex items-end gap-3">
+              <div className="flex-1 relative">
+                <Textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Yanıtınızı yazın... (Ctrl+Enter ile gönder)"
+                  className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-600 resize-none focus:border-cyan-600 rounded-xl pr-4 min-h-[52px] max-h-36"
+                  rows={2}
+                />
+              </div>
+              <Button
+                onClick={() => replyMutation.mutate(replyMessage)}
+                disabled={replyMutation.isPending || !replyMessage.trim()}
+                className="bg-cyan-600 hover:bg-cyan-500 text-white h-[52px] w-[52px] rounded-xl p-0 shrink-0 shadow-lg shadow-cyan-950/40 disabled:opacity-40"
+              >
+                {replyMutation.isPending
+                  ? <Loader2 className="h-5 w-5 animate-spin" />
+                  : <Send className="h-5 w-5" />
+                }
+              </Button>
             </div>
           )}
         </div>
