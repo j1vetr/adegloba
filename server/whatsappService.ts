@@ -1,4 +1,5 @@
 const WPILETI_API_KEY = "db12af64a73ccb0c8589327ee51ba976a6258aee";
+const ADMIN_SUPPORT_PHONE = "447440225375";
 const WPILETI_ENDPOINT = "https://my.wpileti.com/api/send-message";
 
 function formatPhone(phone: string): string {
@@ -85,6 +86,61 @@ export async function sendPackageAssignmentWhatsApp(
   lines.push(...buildFooter());
 
   return sendWhatsApp(phone, lines.join('\n'));
+}
+
+// ─── Admin: Yeni Destek Talebi Bildirimi ─────────────────────────────────────
+
+export interface NewTicketAdminNotificationData {
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  shipName?: string | null;
+  subject: string;
+  message: string;
+  priority: string;
+}
+
+export async function sendNewTicketAdminWhatsApp(
+  data: NewTicketAdminNotificationData
+): Promise<{ success: boolean; message: string }> {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('tr-TR', { timeZone: 'Europe/Istanbul' });
+  const timeStr = now.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
+
+  const priorityEmoji: Record<string, string> = {
+    'Düşük': '🟢', 'Orta': '🟡', 'Yüksek': '🔴', 'Acil': '🚨',
+  };
+  const pEmoji = priorityEmoji[data.priority] || '⚡';
+
+  // Mesajı 200 karakterle sınırla (uzunsa kes)
+  const previewMsg = data.message.length > 200
+    ? data.message.substring(0, 200) + '...'
+    : data.message;
+
+  const lines: string[] = [
+    `🎫 *Yeni Destek Talebi*`,
+    ``,
+    `👤 Kişi: *${data.fullName}*`,
+  ];
+
+  if (data.shipName) lines.push(`🚢 Gemi: *${data.shipName}*`);
+  lines.push(`📧 E-posta: ${data.email}`);
+  if (data.phone?.trim()) lines.push(`📱 Telefon: ${data.phone}`);
+
+  lines.push(
+    ``,
+    `📌 Konu: ${data.subject}`,
+    `${pEmoji} Öncelik: *${data.priority}*`,
+    ``,
+    `💬 Mesaj:`,
+    previewMsg,
+    ``,
+    `🕐 ${dateStr} - ${timeStr}`,
+    ``,
+    `Admin panelinden görüntülemek için: ads.adegloba.space/admin/tickets`,
+  );
+
+  return sendWhatsApp(ADMIN_SUPPORT_PHONE, lines.join('\n'));
 }
 
 // ─── Sipariş Onayı Bildirimi ─────────────────────────────────────────────────

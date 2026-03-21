@@ -3313,6 +3313,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const ticket = await storage.createTicket(ticketData);
       res.status(201).json(ticket);
+
+      // Admin WhatsApp bildirimi — hata olursa ticket oluşturmayı etkilemez
+      (async () => {
+        try {
+          let shipName: string | null = null;
+          if (user?.ship_id) {
+            const ships = await storage.getShips();
+            const ship = ships.find(s => s.id === user.ship_id);
+            shipName = ship?.name || null;
+          }
+          const { sendNewTicketAdminWhatsApp } = await import('./whatsappService');
+          const result = await sendNewTicketAdminWhatsApp({
+            fullName: user?.full_name || user?.username || 'Bilinmeyen',
+            email: user?.email || '',
+            phone: user?.phone || null,
+            shipName,
+            subject: ticketData.subject,
+            message: ticketData.message,
+            priority: ticketData.priority,
+          });
+          console.log(`📨 Yeni ticket admin WhatsApp bildirimi: ${result.message}`);
+        } catch (waErr) {
+          console.error('Ticket admin WhatsApp bildirimi hatası:', waErr);
+        }
+      })();
     } catch (error) {
       console.error('Error creating ticket:', error);
       res.status(500).json({ message: 'Failed to create ticket' });
