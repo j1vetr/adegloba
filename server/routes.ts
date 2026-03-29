@@ -1207,27 +1207,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+      // Orders stats for this month — same pattern as getOrderStats but with date filter
       const [monthly] = await db
         .select({
-          orders:     sqlExpr<number>`COUNT(CASE WHEN ${orders.status} IN ('paid','completed') THEN 1 END)::int`,
-          revenue:    sqlExpr<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid','completed') THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
-          cancelled:  sqlExpr<number>`COUNT(CASE WHEN ${orders.status} = 'cancelled' THEN 1 END)::int`,
-          newUsers:   sqlExpr<number>`0::int`,
+          monthlyOrders:    sqlExpr<number>`COUNT(CASE WHEN ${orders.status} IN ('paid','completed') THEN 1 END)`,
+          monthlyRevenue:   sqlExpr<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid','completed') THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
+          monthlyCancelled: sqlExpr<number>`COUNT(CASE WHEN ${orders.status} = 'cancelled' THEN 1 END)`,
         })
         .from(orders)
         .where(gte(orders.createdAt, monthStart));
 
-      // New users this month separately
+      // New users registered this month — users table uses created_at (underscore)
       const [userCount] = await db
-        .select({ count: sqlExpr<number>`count(*)::int` })
+        .select({ monthlyNewUsers: sqlExpr<number>`count(*)` })
         .from(users)
-        .where(gte(users.createdAt, monthStart));
+        .where(gte(users.created_at, monthStart));
 
       res.json({
-        monthlyOrders:    Number(monthly?.orders)    || 0,
-        monthlyRevenue:   Number(monthly?.revenue)   || 0,
-        monthlyCancelled: Number(monthly?.cancelled) || 0,
-        monthlyNewUsers:  Number(userCount?.count)   || 0,
+        monthlyOrders:    Number(monthly?.monthlyOrders)    || 0,
+        monthlyRevenue:   Number(monthly?.monthlyRevenue)   || 0,
+        monthlyCancelled: Number(monthly?.monthlyCancelled) || 0,
+        monthlyNewUsers:  Number(userCount?.monthlyNewUsers) || 0,
       });
     } catch (error: any) {
       console.error("Error fetching monthly stats:", error);
