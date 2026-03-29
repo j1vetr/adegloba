@@ -1142,7 +1142,7 @@ export class DatabaseStorage implements IStorage {
         planId:            plans.id,
         planName:          plans.name,
         planDataLimitGb:   plans.dataLimitGb,
-        planDurationDays:  plans.durationDays,
+        planValidityDays:  plans.validityDays,
         planPriceUsd:      plans.priceUsd,
       })
       .from(orders)
@@ -1197,7 +1197,7 @@ export class DatabaseStorage implements IStorage {
             id: row.planId,
             name: row.planName,
             dataLimitGb: row.planDataLimitGb,
-            durationDays: row.planDurationDays,
+            validityDays: row.planValidityDays,
             priceUsd: row.planPriceUsd,
           } : null,
         };
