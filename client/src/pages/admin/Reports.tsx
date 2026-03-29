@@ -1,441 +1,496 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect, useRef } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import AdminLayout from "@/components/AdminLayout";
-import { BarChart3, TrendingUp, DollarSign, Package, Download, FileSpreadsheet, FileText, Ship, AlertTriangle, Clock } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Badge } from "@/components/ui/badge";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart,
+  RadialBar, Legend
+} from "recharts";
+import {
+  DollarSign, Package, TrendingUp, Database,
+  Download, FileSpreadsheet, FileText, Ship,
+  AlertTriangle, Clock, Trophy, ChevronRight,
+  ArrowUpRight, Filter, CalendarDays
+} from "lucide-react";
 
+/* ─── types ─────────────────────────────────────── */
 type DateRange = 'last7days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'specificMonth';
 
-const TURKISH_MONTHS = [
+interface ReportData {
+  shipId: string; shipName: string;
+  totalOrders: number; totalRevenue: number;
+  totalDataGB: number; packagesSold: number;
+}
+
+/* ─── constants ─────────────────────────────────── */
+const MONTHS = [
   { value: '1', label: 'Ocak' }, { value: '2', label: 'Şubat' }, { value: '3', label: 'Mart' },
   { value: '4', label: 'Nisan' }, { value: '5', label: 'Mayıs' }, { value: '6', label: 'Haziran' },
   { value: '7', label: 'Temmuz' }, { value: '8', label: 'Ağustos' }, { value: '9', label: 'Eylül' },
   { value: '10', label: 'Ekim' }, { value: '11', label: 'Kasım' }, { value: '12', label: 'Aralık' },
 ];
+const RANGE_LABELS: Record<DateRange, string> = {
+  last7days: 'Son 7 Gün', thisMonth: 'Bu Ay', lastMonth: 'Geçen Ay',
+  thisYear: 'Bu Yıl', lastYear: 'Geçen Yıl', specificMonth: 'Belirli Ay',
+};
+const CHART_COLORS = ['#06b6d4','#8b5cf6','#10b981','#f59e0b','#ef4444','#3b82f6','#ec4899','#14b8a6'];
 
-interface ReportData {
-  shipId: string;
-  shipName: string;
-  totalOrders: number;
-  totalRevenue: number;
-  totalDataGB: number;
-  packagesSold: number;
+/* ─── helpers ───────────────────────────────────── */
+const usd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const TOOLTIP_STYLE = {
+  contentStyle: { backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '10px', color: '#f1f5f9', fontSize: 12 },
+  itemStyle: { color: '#94a3b8' },
+  cursor: { fill: 'rgba(255,255,255,0.04)' },
+};
+
+/* ─── animated counter ──────────────────────────── */
+function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }: {
+  value: number; prefix?: string; suffix?: string; decimals?: number;
+}) {
+  const [display, setDisplay] = useState(0);
+  const prev = useRef(0);
+  useEffect(() => {
+    const start = prev.current;
+    const end = value;
+    prev.current = value;
+    if (start === end) return;
+    const duration = 800;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - startTime) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      setDisplay(start + (end - start) * ease);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value]);
+  const formatted = decimals > 0
+    ? display.toFixed(decimals)
+    : Math.round(display).toLocaleString('en-US');
+  return <>{prefix}{formatted}{suffix}</>;
 }
 
+/* ─── custom donut label ────────────────────────── */
+function DonutCenter({ cx, cy, total }: { cx?: number; cy?: number; total: number }) {
+  return (
+    <g>
+      <text x={cx} y={(cy ?? 0) - 6} textAnchor="middle" fill="#94a3b8" fontSize={11}>Toplam</text>
+      <text x={cx} y={(cy ?? 0) + 14} textAnchor="middle" fill="#f1f5f9" fontSize={20} fontWeight={700}>{total}</text>
+    </g>
+  );
+}
+
+/* ─── main component ────────────────────────────── */
 export default function Reports() {
+  const now = new Date();
   const [selectedShip, setSelectedShip] = useState<string>('all');
   const [dateRange, setDateRange] = useState<DateRange>('thisMonth');
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
-  // Inactive ships filter
-  const now = new Date();
   const [inactiveRange, setInactiveRange] = useState<DateRange>('thisMonth');
-  const [inactiveMonth, setInactiveMonth] = useState<string>(String(now.getMonth() + 1));
-  const [inactiveYear, setInactiveYear] = useState<string>(String(now.getFullYear()));
-
+  const [inactiveMonth, setInactiveMonth] = useState(String(now.getMonth() + 1));
+  const [inactiveYear, setInactiveYear] = useState(String(now.getFullYear()));
   const inactiveYears = Array.from({ length: 4 }, (_, i) => String(now.getFullYear() - i));
 
-  // Export function
-  const handleExport = (format: 'excel' | 'csv') => {
-    const params = new URLSearchParams({
-      ship: selectedShip,
-      range: dateRange,
-      format: format
-    });
-    
-    // Create a temporary link to trigger download
-    const url = `/api/admin/reports/export?${params.toString()}`;
-    const link = document.createElement('a');
-    link.href = url;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    setIsExportDialogOpen(false);
-  };
-
-  // Get ships for dropdown
-  const { data: ships } = useQuery({
+  /* queries */
+  const { data: ships = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/ships"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/ships", {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        }
-      });
-      return response.json();
-    },
-    staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache the result
+    queryFn: async () => (await fetch("/api/admin/ships")).json(),
+    staleTime: 0,
   });
 
-  // Get report data
-  const { data: reportData, isLoading } = useQuery({
+  const { data: reportData = [], isLoading } = useQuery<ReportData[]>({
     queryKey: ["/api/admin/reports", selectedShip, dateRange],
     queryFn: async () => {
-      const response = await fetch(`/api/admin/reports?ship=${selectedShip}&range=${dateRange}`, {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        }
-      });
-      return response.json();
-    },
-    staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache the result
-  });
-
-  // Inactive ships query
-  const inactiveParams = new URLSearchParams();
-  if (inactiveRange === 'specificMonth') {
-    inactiveParams.set('month', inactiveMonth);
-    inactiveParams.set('year', inactiveYear);
-  } else {
-    inactiveParams.set('range', inactiveRange);
-  }
-
-  const { data: inactiveData, isLoading: inactiveLoading } = useQuery({
-    queryKey: ["/api/admin/reports/inactive-ships", inactiveRange, inactiveMonth, inactiveYear],
-    queryFn: async () => {
-      const res = await fetch(`/api/admin/reports/inactive-ships?${inactiveParams.toString()}`, { cache: 'no-cache' });
+      const res = await fetch(`/api/admin/reports?ship=${selectedShip}&range=${dateRange}`, { cache: 'no-cache' });
       return res.json();
     },
     staleTime: 0,
   });
 
-  const dateRangeOptions: Record<DateRange, string> = {
-    'last7days': 'Son 7 Gün',
-    'thisMonth': 'Bu Ay',
-    'lastMonth': 'Geçen Ay',
-    'thisYear': 'Bu Yıl',
-    'lastYear': 'Geçen Yıl',
-    'specificMonth': 'Belirli Ay Seç',
+  const inactiveParams = new URLSearchParams(
+    inactiveRange === 'specificMonth'
+      ? { month: inactiveMonth, year: inactiveYear }
+      : { range: inactiveRange }
+  );
+  const { data: inactiveData, isLoading: inactiveLoading } = useQuery<any>({
+    queryKey: ["/api/admin/reports/inactive-ships", inactiveRange, inactiveMonth, inactiveYear],
+    queryFn: async () => (await fetch(`/api/admin/reports/inactive-ships?${inactiveParams}`)).json(),
+    staleTime: 0,
+  });
+
+  /* derived */
+  const active = reportData.filter(d => d.totalOrders > 0);
+  const totals = reportData.reduce((acc, d) => ({
+    orders: acc.orders + d.totalOrders,
+    revenue: acc.revenue + d.totalRevenue,
+    data: acc.data + d.totalDataGB,
+    packages: acc.packages + d.packagesSold,
+  }), { orders: 0, revenue: 0, data: 0, packages: 0 });
+
+  const sorted = [...reportData].sort((a, b) => b.totalRevenue - a.totalRevenue);
+  const maxRevenue = sorted[0]?.totalRevenue || 1;
+
+  /* export */
+  const handleExport = (format: 'excel' | 'csv') => {
+    const url = `/api/admin/reports/export?ship=${selectedShip}&range=${dateRange}&format=${format}`;
+    const a = document.createElement('a');
+    a.href = url; a.style.display = 'none';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setExportOpen(false);
   };
 
-  const totalStats = reportData ? {
-    totalOrders: reportData.reduce((sum: number, item: ReportData) => sum + item.totalOrders, 0),
-    totalRevenue: reportData.reduce((sum: number, item: ReportData) => sum + item.totalRevenue, 0),
-    totalDataGB: reportData.reduce((sum: number, item: ReportData) => sum + item.totalDataGB, 0),
-    packagesSold: reportData.reduce((sum: number, item: ReportData) => sum + item.packagesSold, 0),
-  } : null;
-
   return (
-    <AdminLayout title="Finans Raporlaması">
-      <div className="space-y-6">
-        
-        {/* Filters */}
-        <Card className="glassmorphism border-slate-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Raporlama Filtreleri
-            </h2>
-            
-            <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white">
-                  <Download className="w-4 h-4 mr-2" />
-                  Rapor İndir
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-slate-900 border-slate-700 text-white">
-                <DialogHeader>
-                  <DialogTitle className="text-white">Rapor Dışa Aktarım</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <p className="text-slate-300 text-sm">
-                    Mevcut filtrelere göre raporu istediğiniz formatta indirin:
-                  </p>
-                  
-                  <div className="grid gap-3">
-                    <Button
-                      onClick={() => handleExport('excel')}
-                      className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white p-4 h-auto justify-start"
-                    >
-                      <FileSpreadsheet className="w-5 h-5 mr-3" />
-                      <div className="text-left">
-                        <div className="font-medium">Excel Dosyası (.xlsx)</div>
-                        <div className="text-sm text-green-200">Gelişmiş analiz için önerilen format</div>
-                      </div>
-                    </Button>
-                    
-                    <Button
-                      onClick={() => handleExport('csv')}
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-4 h-auto justify-start"
-                    >
-                      <FileText className="w-5 h-5 mr-3" />
-                      <div className="text-left">
-                        <div className="font-medium">CSV Dosyası (.csv)</div>
-                        <div className="text-sm text-blue-200">Evrensel format, tüm uygulamalarda açılır</div>
-                      </div>
-                    </Button>
-                  </div>
-                  
-                  <div className="text-xs text-slate-400 mt-4 p-3 bg-slate-800/50 rounded-lg">
-                    <strong>Mevcut Filtreler:</strong><br/>
-                    Gemi: {selectedShip === 'all' ? 'Tüm Gemiler' : ships?.find((s: any) => s.id === selectedShip)?.name || 'Seçili Gemi'}<br/>
-                    Tarih: {dateRangeOptions[dateRange]}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+    <AdminLayout title="Raporlama">
+      <div className="space-y-5 pb-6">
+
+        {/* ═══ FILTER BAR ═══ */}
+        <div className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-800 bg-slate-900/80 p-4">
+          <div className="flex items-center gap-2 text-slate-400 shrink-0">
+            <Filter className="h-4 w-4" />
+            <span className="text-xs font-medium uppercase tracking-wider">Filtrele</span>
           </div>
-          
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label className="text-slate-300">Gemi Seçimi</Label>
+
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+              <p className="text-[11px] text-slate-500 mb-1">Gemi</p>
               <Select value={selectedShip} onValueChange={setSelectedShip}>
-                <SelectTrigger className="glassmorphism border-slate-600 text-white">
-                  <SelectValue placeholder="Gemi seçin" />
+                <SelectTrigger className="h-9 bg-slate-800 border-slate-700 text-white text-sm">
+                  <SelectValue placeholder="Tüm Gemiler" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="all" className="text-white hover:bg-slate-700">
-                    Tüm Gemiler
-                  </SelectItem>
-                  {ships?.map((ship: any) => (
-                    <SelectItem key={ship.id} value={ship.id} className="text-white hover:bg-slate-700">
-                      {ship.name}
-                    </SelectItem>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all" className="text-white">Tüm Gemiler</SelectItem>
+                  {ships.map((s: any) => (
+                    <SelectItem key={s.id} value={s.id} className="text-white">{s.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-slate-300">Tarih Aralığı</Label>
-              <Select value={dateRange} onValueChange={(value: DateRange) => setDateRange(value)}>
-                <SelectTrigger className="glassmorphism border-slate-600 text-white">
+            <div>
+              <p className="text-[11px] text-slate-500 mb-1">Dönem</p>
+              <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
+                <SelectTrigger className="h-9 bg-slate-800 border-slate-700 text-white text-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600">
-                  {Object.entries(dateRangeOptions)
-                    .filter(([key]) => key !== 'specificMonth')
-                    .map(([key, label]) => (
-                      <SelectItem key={key} value={key} className="text-white hover:bg-slate-700">
-                        {label}
-                      </SelectItem>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  {(Object.entries(RANGE_LABELS) as [DateRange, string][])
+                    .filter(([k]) => k !== 'specificMonth')
+                    .map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-white">{v}</SelectItem>
                     ))}
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="flex items-end">
+              <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+                <DialogTrigger asChild>
+                  <Button className="h-9 w-full bg-emerald-700/80 hover:bg-emerald-700 text-white text-sm border border-emerald-600/40">
+                    <Download className="h-4 w-4 mr-2" />
+                    Rapor İndir
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle className="text-white">Dışa Aktar</DialogTitle>
+                  </DialogHeader>
+                  <p className="text-slate-400 text-xs mb-1">
+                    <strong className="text-slate-300">{RANGE_LABELS[dateRange]}</strong> · {selectedShip === 'all' ? 'Tüm Gemiler' : ships.find((s: any) => s.id === selectedShip)?.name}
+                  </p>
+                  <div className="space-y-2 mt-2">
+                    <button onClick={() => handleExport('excel')}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-green-900/30 border border-green-700/40 hover:bg-green-900/50 transition-colors">
+                      <FileSpreadsheet className="h-5 w-5 text-green-400 shrink-0" />
+                      <div className="text-left">
+                        <p className="text-white text-sm font-medium">Excel (.xlsx)</p>
+                        <p className="text-green-400/70 text-xs">Gelişmiş analiz için önerilen</p>
+                      </div>
+                    </button>
+                    <button onClick={() => handleExport('csv')}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-blue-900/30 border border-blue-700/40 hover:bg-blue-900/50 transition-colors">
+                      <FileText className="h-5 w-5 text-blue-400 shrink-0" />
+                      <div className="text-left">
+                        <p className="text-white text-sm font-medium">CSV (.csv)</p>
+                        <p className="text-blue-400/70 text-xs">Evrensel format</p>
+                      </div>
+                    </button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Summary Stats */}
-        {totalStats && (
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card className="glassmorphism border-slate-700 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/20">
-                  <Package className="w-5 h-5 text-blue-400" />
+        {/* ═══ KPI CARDS ═══ */}
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          {[
+            { label: 'Net Gelir', value: totals.revenue, icon: DollarSign, color: 'border-l-emerald-500', accent: 'text-emerald-400', render: usd },
+            { label: 'Ödenen Sipariş', value: totals.orders, icon: Package, color: 'border-l-cyan-500', accent: 'text-cyan-400', render: (n: number) => n.toLocaleString() },
+            { label: 'Satılan Veri', value: totals.data, icon: Database, color: 'border-l-violet-500', accent: 'text-violet-400', render: (n: number) => `${n} GB` },
+            { label: 'Satılan Paket', value: totals.packages, icon: TrendingUp, color: 'border-l-amber-500', accent: 'text-amber-400', render: (n: number) => n.toLocaleString() },
+          ].map((c) => {
+            const Icon = c.icon;
+            return (
+              <div key={c.label} className={`rounded-xl border border-slate-800 border-l-2 ${c.color} bg-slate-900/80 p-4 flex items-center gap-4`}>
+                <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
+                  <Icon className={`h-4 w-4 ${c.accent}`} />
                 </div>
-                <div>
-                  <p className="text-sm text-slate-400">Ödenen Siparişler</p>
-                  <p className="text-2xl font-bold text-white">{totalStats.totalOrders}</p>
+                <div className="min-w-0">
+                  <p className="text-slate-500 text-[11px] uppercase tracking-wide">{c.label}</p>
+                  {isLoading
+                    ? <span className="block w-20 h-6 bg-slate-800 rounded animate-pulse mt-1" />
+                    : <p className={`text-xl font-bold leading-tight ${c.accent}`}>
+                        <AnimatedNumber
+                          value={c.value}
+                          prefix={c.label === 'Net Gelir' ? '$' : ''}
+                          suffix={c.label === 'Satılan Veri' ? ' GB' : ''}
+                          decimals={c.label === 'Net Gelir' ? 2 : 0}
+                        />
+                      </p>
+                  }
                 </div>
               </div>
-            </Card>
+            );
+          })}
+        </div>
 
-            <Card className="glassmorphism border-slate-700 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/20">
-                  <DollarSign className="w-5 h-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-400">Net Gelir</p>
-                  <p className="text-2xl font-bold text-white">${totalStats.totalRevenue.toFixed(2)}</p>
-                </div>
+        {/* ═══ CHARTS ═══ */}
+        {!isLoading && active.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+
+            {/* Horizontal Bar — Revenue */}
+            <div className="lg:col-span-3 rounded-xl border border-slate-800 bg-slate-900/80 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-white font-semibold text-sm">Gemi Bazlı Gelir</p>
+                <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                  <ArrowUpRight className="h-3 w-3" />{RANGE_LABELS[dateRange]}
+                </span>
               </div>
-            </Card>
-
-            <Card className="glassmorphism border-slate-700 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/20">
-                  <TrendingUp className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-400">Satılan Paketler</p>
-                  <p className="text-2xl font-bold text-white">{totalStats.packagesSold}</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="glassmorphism border-slate-700 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-yellow-500/20">
-                  <BarChart3 className="w-5 h-5 text-yellow-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-400">Satılan Veri (GB)</p>
-                  <p className="text-2xl font-bold text-white">{totalStats.totalDataGB}</p>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* Charts Section */}
-        {reportData && reportData.length > 0 && (
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Revenue Bar Chart */}
-            <Card className="glassmorphism border-slate-700 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Gemi Bazlı Gelir Dağılımı</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={reportData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="shipName" 
-                    stroke="#9CA3AF" 
-                    fontSize={12}
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
+              <ResponsiveContainer width="100%" height={Math.max(220, active.length * 42)}>
+                <BarChart data={active} layout="vertical" margin={{ left: 0, right: 24, top: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
+                  <XAxis
+                    type="number" dataKey="totalRevenue" stroke="#475569" fontSize={10}
+                    tickFormatter={(v) => `$${v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}`}
+                    axisLine={false} tickLine={false}
                   />
-                  <YAxis stroke="#9CA3AF" fontSize={12} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F9FAFB'
-                    }} 
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Gelir']}
+                  <YAxis
+                    type="category" dataKey="shipName" stroke="#64748b" fontSize={11}
+                    width={100} axisLine={false} tickLine={false}
+                    tick={{ fill: '#94a3b8' }}
                   />
-                  <Bar dataKey="totalRevenue" fill="#10B981" radius={[4, 4, 0, 0]} />
+                  <Tooltip
+                    {...TOOLTIP_STYLE}
+                    formatter={(v: number) => [usd(v), 'Gelir']}
+                  />
+                  <Bar dataKey="totalRevenue" radius={[0, 6, 6, 0]} maxBarSize={28}>
+                    {active.map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} fillOpacity={0.85} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </Card>
+            </div>
 
-            {/* Orders Pie Chart */}
-            <Card className="glassmorphism border-slate-700 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Gemi Bazlı Sipariş Dağılımı</h3>
-              <ResponsiveContainer width="100%" height={300}>
+            {/* Donut — Orders */}
+            <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900/80 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-white font-semibold text-sm">Sipariş Dağılımı</p>
+                <span className="text-[11px] text-slate-500">{totals.orders} toplam</span>
+              </div>
+              <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
-                    data={reportData.filter(item => item.totalOrders > 0)}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ shipName, totalOrders }) => `${shipName}: ${totalOrders}`}
-                    outerRadius={80}
-                    fill="#8884d8"
+                    data={active.filter(d => d.totalOrders > 0)}
+                    cx="50%" cy="50%"
+                    innerRadius={60} outerRadius={88}
+                    paddingAngle={3}
                     dataKey="totalOrders"
+                    nameKey="shipName"
+                    isAnimationActive
+                    animationBegin={100}
+                    animationDuration={900}
                   >
-                    {reportData.map((entry, index) => {
-                      const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316'];
-                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
-                    })}
+                    {active.map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="transparent" />
+                    ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F9FAFB'
-                    }}
+                  <DonutCenter total={totals.orders} />
+                  <Tooltip
+                    {...TOOLTIP_STYLE}
+                    formatter={(v: number, _: string, props: any) => [v, props.payload.shipName]}
                   />
                 </PieChart>
               </ResponsiveContainer>
-            </Card>
+              {/* Legend */}
+              <div className="mt-3 space-y-1.5 max-h-28 overflow-y-auto pr-1">
+                {active.filter(d => d.totalOrders > 0).slice(0, 8).map((d, i) => (
+                  <div key={d.shipId} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                      <span className="text-slate-400 truncate">{d.shipName}</span>
+                    </div>
+                    <span className="text-slate-300 font-medium ml-2 shrink-0">{d.totalOrders}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Detailed Report Table */}
-        <Card className="glassmorphism border-slate-700 p-6">
-          <h2 className="text-xl font-bold text-white mb-4">
-            Gemi Bazlı Detaylar - {dateRangeOptions[dateRange]}
-          </h2>
-          
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="text-slate-400">Raporlar yükleniyor...</div>
-            </div>
-          ) : reportData && reportData.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-600">
-                    <th className="text-left py-3 px-2 text-slate-300 font-medium">Gemi Adı</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Ödenen Siparişler</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Satılan Paketler</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Satılan Veri (GB)</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Net Gelir ($)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.map((item: ReportData, index: number) => (
-                    <tr key={item.shipId} className={index % 2 === 0 ? 'bg-slate-800/50' : ''}>
-                      <td className="py-3 px-2 text-white font-medium">{item.shipName}</td>
-                      <td className="py-3 px-2 text-right text-blue-400">{item.totalOrders}</td>
-                      <td className="py-3 px-2 text-right text-purple-400">{item.packagesSold}</td>
-                      <td className="py-3 px-2 text-right text-yellow-400">{item.totalDataGB}</td>
-                      <td className="py-3 px-2 text-right text-green-400">${item.totalRevenue.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="text-slate-400">Seçilen kriterlerde rapor bulunamadı.</div>
-            </div>
-          )}
-        </Card>
-
-        {/* Inactive Ships */}
-        <Card className="glassmorphism border-slate-700 p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+        {/* ═══ LEADERBOARD TABLE ═══ */}
+        <div className="rounded-xl border border-slate-800 bg-slate-900/80 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
             <div className="flex items-center gap-2">
-              <Ship className="text-amber-400" size={20} />
-              <h2 className="text-xl font-bold text-white">Sipariş Geçilmemiş Gemiler</h2>
-              {inactiveData && (
-                <Badge variant="outline" className="border-amber-500 text-amber-400 ml-1">
-                  {inactiveData.totalInactive}/{inactiveData.totalShips}
-                </Badge>
+              <Trophy className="h-4 w-4 text-amber-400" />
+              <p className="text-white font-semibold text-sm">Gemi Sıralaması</p>
+              <span className="text-slate-600 text-xs">— {RANGE_LABELS[dateRange]}</span>
+            </div>
+            {selectedShip !== 'all' && (
+              <span className="text-xs text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+                {ships.find((s: any) => s.id === selectedShip)?.name}
+              </span>
+            )}
+          </div>
+
+          {isLoading ? (
+            <div className="p-5 space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <span className="w-6 h-6 bg-slate-800 rounded animate-pulse shrink-0" />
+                  <span className="flex-1 h-10 bg-slate-800 rounded animate-pulse" />
+                  <span className="w-20 h-10 bg-slate-800 rounded animate-pulse shrink-0" />
+                </div>
+              ))}
+            </div>
+          ) : sorted.length === 0 ? (
+            <div className="py-16 text-center text-slate-600 text-sm">Seçilen dönemde veri bulunamadı</div>
+          ) : (
+            <div>
+              {/* Header row */}
+              <div className="grid grid-cols-12 px-5 py-2 text-[11px] text-slate-600 uppercase tracking-wider border-b border-slate-800/60">
+                <div className="col-span-1">#</div>
+                <div className="col-span-3">Gemi</div>
+                <div className="col-span-4">Gelir Oranı</div>
+                <div className="col-span-1 text-center">Sipariş</div>
+                <div className="col-span-1 text-center">Paket</div>
+                <div className="col-span-2 text-right">Gelir</div>
+              </div>
+              {sorted.map((item, i) => {
+                const pct = (item.totalRevenue / maxRevenue) * 100;
+                const color = CHART_COLORS[i % CHART_COLORS.length];
+                const medals = ['🥇', '🥈', '🥉'];
+                return (
+                  <div
+                    key={item.shipId}
+                    className="grid grid-cols-12 items-center px-5 py-3 border-b border-slate-800/40 last:border-0 hover:bg-slate-800/20 transition-colors"
+                  >
+                    <div className="col-span-1">
+                      <span className="text-sm">{i < 3 ? medals[i] : <span className="text-slate-600 text-xs font-mono">{i + 1}</span>}</span>
+                    </div>
+                    <div className="col-span-3 min-w-0 pr-2">
+                      <p className={`text-sm font-medium truncate ${item.totalOrders > 0 ? 'text-white' : 'text-slate-500'}`}>
+                        {item.shipName}
+                      </p>
+                      {item.totalDataGB > 0 && (
+                        <p className="text-[10px] text-slate-600">{item.totalDataGB} GB</p>
+                      )}
+                    </div>
+                    <div className="col-span-4 pr-4">
+                      <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700 ease-out"
+                          style={{ width: `${pct}%`, background: color, opacity: item.totalRevenue > 0 ? 1 : 0 }}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-span-1 text-center">
+                      <span className={`text-sm font-medium ${item.totalOrders > 0 ? 'text-cyan-400' : 'text-slate-700'}`}>
+                        {item.totalOrders}
+                      </span>
+                    </div>
+                    <div className="col-span-1 text-center">
+                      <span className="text-sm text-slate-400">{item.packagesSold}</span>
+                    </div>
+                    <div className="col-span-2 text-right">
+                      <span className={`text-sm font-mono font-medium ${item.totalRevenue > 0 ? 'text-emerald-400' : 'text-slate-700'}`}>
+                        {usd(item.totalRevenue)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+              {/* Totals row */}
+              {sorted.length > 1 && (
+                <div className="grid grid-cols-12 items-center px-5 py-3 bg-slate-800/40 border-t border-slate-700">
+                  <div className="col-span-1" />
+                  <div className="col-span-3">
+                    <p className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Toplam</p>
+                  </div>
+                  <div className="col-span-4" />
+                  <div className="col-span-1 text-center">
+                    <span className="text-sm font-bold text-cyan-300">{totals.orders}</span>
+                  </div>
+                  <div className="col-span-1 text-center">
+                    <span className="text-sm font-bold text-slate-300">{totals.packages}</span>
+                  </div>
+                  <div className="col-span-2 text-right">
+                    <span className="text-sm font-mono font-bold text-emerald-300">{usd(totals.revenue)}</span>
+                  </div>
+                </div>
               )}
             </div>
+          )}
+        </div>
+
+        {/* ═══ INACTIVE SHIPS ═══ */}
+        <div className="rounded-xl border border-slate-800 bg-slate-900/80 overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
+              <p className="text-white font-semibold text-sm">Sipariş Geçilmemiş Gemiler</p>
+              {inactiveData && (
+                <span className="text-xs px-2 py-0.5 rounded-full border border-amber-500/30 text-amber-400 bg-amber-500/10">
+                  {inactiveData.totalInactive}/{inactiveData.totalShips}
+                </span>
+              )}
+            </div>
+
             <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1 text-slate-600">
+                <CalendarDays className="h-3.5 w-3.5" />
+              </div>
               <Select value={inactiveRange} onValueChange={(v) => setInactiveRange(v as DateRange)}>
-                <SelectTrigger className="w-44 bg-slate-800 border-slate-600 text-white text-xs">
+                <SelectTrigger className="h-8 w-40 bg-slate-800 border-slate-700 text-white text-xs">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600">
-                  {(Object.entries(dateRangeOptions) as [DateRange, string][]).map(([val, label]) => (
-                    <SelectItem key={val} value={val} className="text-white text-xs">{label}</SelectItem>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  {(Object.entries(RANGE_LABELS) as [DateRange, string][]).map(([k, v]) => (
+                    <SelectItem key={k} value={k} className="text-white text-xs">{v}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-
               {inactiveRange === 'specificMonth' && (
                 <>
                   <Select value={inactiveMonth} onValueChange={setInactiveMonth}>
-                    <SelectTrigger className="w-28 bg-slate-800 border-slate-600 text-white text-xs">
+                    <SelectTrigger className="h-8 w-28 bg-slate-800 border-slate-700 text-white text-xs">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      {TURKISH_MONTHS.map(m => (
-                        <SelectItem key={m.value} value={m.value} className="text-white text-xs">{m.label}</SelectItem>
-                      ))}
+                    <SelectContent className="bg-slate-800 border-slate-700">
+                      {MONTHS.map(m => <SelectItem key={m.value} value={m.value} className="text-white text-xs">{m.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Select value={inactiveYear} onValueChange={setInactiveYear}>
-                    <SelectTrigger className="w-24 bg-slate-800 border-slate-600 text-white text-xs">
+                    <SelectTrigger className="h-8 w-24 bg-slate-800 border-slate-700 text-white text-xs">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      {inactiveYears.map(y => (
-                        <SelectItem key={y} value={y} className="text-white text-xs">{y}</SelectItem>
-                      ))}
+                    <SelectContent className="bg-slate-800 border-slate-700">
+                      {inactiveYears.map(y => <SelectItem key={y} value={y} className="text-white text-xs">{y}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </>
@@ -444,61 +499,58 @@ export default function Reports() {
           </div>
 
           {inactiveLoading ? (
-            <div className="text-center py-8 text-slate-400">Yükleniyor...</div>
-          ) : inactiveData?.ships?.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-600">
-                    <th className="text-left py-3 px-2 text-slate-300 font-medium">Gemi Adı</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Kullanıcı Sayısı</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Son Sipariş</th>
-                    <th className="text-right py-3 px-2 text-slate-300 font-medium">Geçen Süre</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {inactiveData.ships.map((ship: any, index: number) => (
-                    <tr key={ship.shipId} className={index % 2 === 0 ? 'bg-slate-800/50' : ''}>
-                      <td className="py-3 px-2 text-white font-medium flex items-center gap-2">
-                        <Ship size={14} className="text-slate-400 shrink-0" />
-                        {ship.shipName}
-                      </td>
-                      <td className="py-3 px-2 text-right">
-                        <Badge variant="outline" className="border-slate-500 text-slate-300 text-xs">
-                          {ship.userCount} kullanıcı
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-2 text-right text-slate-400 text-xs">
-                        {ship.lastOrderDate
-                          ? new Date(ship.lastOrderDate).toLocaleDateString('tr-TR')
-                          : <span className="text-red-400 text-xs">Hiç sipariş yok</span>}
-                      </td>
-                      <td className="py-3 px-2 text-right">
-                        {ship.daysSinceLastOrder !== null ? (
-                          <span className={`text-xs font-medium ${
-                            ship.daysSinceLastOrder > 60 ? 'text-red-400' :
-                            ship.daysSinceLastOrder > 30 ? 'text-amber-400' : 'text-yellow-300'
-                          }`}>
-                            <Clock size={11} className="inline mr-1" />
-                            {ship.daysSinceLastOrder} gün
-                          </span>
-                        ) : (
-                          <AlertTriangle size={14} className="text-red-400 inline" />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-20 bg-slate-800 rounded-lg animate-pulse" />
+              ))}
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <Ship size={36} className="text-green-500 mx-auto mb-2" />
-              <p className="text-green-400 font-medium">Tüm gemiler bu dönemde sipariş vermiş!</p>
-              <p className="text-slate-500 text-sm mt-1">Seçilen dönemde aktif olmayan gemi bulunmuyor.</p>
+          ) : inactiveData?.ships?.length > 0 ? (
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {inactiveData.ships.map((ship: any) => {
+                const days = ship.daysSinceLastOrder;
+                const urgency =
+                  days === null ? { bg: 'bg-red-900/20', border: 'border-red-700/30', dot: 'bg-red-500', text: 'text-red-400', label: 'Hiç sipariş yok' }
+                  : days > 60  ? { bg: 'bg-red-900/15', border: 'border-red-700/25', dot: 'bg-red-500', text: 'text-red-400', label: `${days} gün önce` }
+                  : days > 30  ? { bg: 'bg-amber-900/15', border: 'border-amber-600/25', dot: 'bg-amber-400', text: 'text-amber-400', label: `${days} gün önce` }
+                  :              { bg: 'bg-yellow-900/10', border: 'border-yellow-600/25', dot: 'bg-yellow-400', text: 'text-yellow-300', label: `${days} gün önce` };
+                return (
+                  <div key={ship.shipId} className={`rounded-xl border ${urgency.border} ${urgency.bg} p-4`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${urgency.dot}`} />
+                        <p className="text-white text-sm font-medium truncate">{ship.shipName}</p>
+                      </div>
+                      <span className="text-[10px] text-slate-500 shrink-0 flex items-center gap-1">
+                        <Ship className="h-2.5 w-2.5" />
+                        {ship.userCount}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-slate-600" />
+                        <span className={`text-xs font-medium ${urgency.text}`}>{urgency.label}</span>
+                      </div>
+                      {ship.lastOrderDate && (
+                        <span className="text-[10px] text-slate-600">
+                          {new Date(ship.lastOrderDate).toLocaleDateString('tr-TR')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : !inactiveLoading && (
+            <div className="py-14 flex flex-col items-center gap-2">
+              <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mb-1">
+                <Ship className="h-6 w-6 text-green-400" />
+              </div>
+              <p className="text-green-400 font-medium text-sm">Tüm gemiler bu dönemde sipariş vermiş!</p>
+              <p className="text-slate-600 text-xs">Seçilen dönemde aktif olmayan gemi yok.</p>
             </div>
           )}
-        </Card>
+        </div>
+
       </div>
     </AdminLayout>
   );
