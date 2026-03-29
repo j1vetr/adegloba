@@ -1201,6 +1201,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Monthly stats for dashboard
+  app.get('/api/admin/stats/monthly', isAdminAuthenticated, async (req, res) => {
+    try {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const [monthly] = await db
+        .select({
+          orders:     sqlExpr<number>`COUNT(CASE WHEN ${orders.status} IN ('paid','completed') THEN 1 END)::int`,
+          revenue:    sqlExpr<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid','completed') THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
+          cancelled:  sqlExpr<number>`COUNT(CASE WHEN ${orders.status} = 'cancelled' THEN 1 END)::int`,
+          newUsers:   sqlExpr<number>`0::int`,
+        })
+        .from(orders)
+        .where(gte(orders.createdAt, monthStart));
+
+      // New users this month separately
+      const [userCount] = await db
+        .select({ count: sqlExpr<number>`count(*)::int` })
+        .from(users)
+        .where(gte(users.createdAt, monthStart));
+
+      res.json({
+        monthlyOrders:    Number(monthly?.orders)    || 0,
+        monthlyRevenue:   Number(monthly?.revenue)   || 0,
+        monthlyCancelled: Number(monthly?.cancelled) || 0,
+        monthlyNewUsers:  Number(userCount?.count)   || 0,
+      });
+    } catch (error: any) {
+      console.error("Error fetching monthly stats:", error);
+      res.status(500).json({ message: "Failed to fetch monthly stats" });
+    }
+  });
+
   // Admin - Reports
   app.get('/api/admin/reports', isAdminAuthenticated, async (req, res) => {
     try {

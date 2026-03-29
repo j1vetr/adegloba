@@ -106,12 +106,8 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       {/* Logo */}
       <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800/80 shrink-0">
         <Link href="/admin">
-          <div className="flex items-center gap-2.5 cursor-pointer">
-            <img src={adeGlobaLogo} alt="AdeGloba" className="h-8 w-auto object-contain" />
-            <div>
-              <p className="text-white font-semibold text-sm leading-none">AdeGloba</p>
-              <p className="text-slate-500 text-[10px] mt-0.5 leading-none">Admin Panel</p>
-            </div>
+          <div className="flex items-center cursor-pointer">
+            <img src={adeGlobaLogo} alt="AdeGloba" className="h-9 w-auto object-contain" />
           </div>
         </Link>
         <button
