@@ -1063,7 +1063,8 @@ function ManualPackageAssignmentButton({ userId, username, phone, shipId }: Manu
       setIsOpen(false);
       setSelectedPlanId("");
       setNote("");
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users", userId, "orders"] });
+      // Force immediate refetch of ALL user detail queries (orders + credentials) 
+      queryClient.refetchQueries({ queryKey: ["/api/admin/users", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users-with-stats"] });
     },
     onError: (error: any) => {
