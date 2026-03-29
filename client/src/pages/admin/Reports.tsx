@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import AdminLayout from "@/components/AdminLayout";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart,
-  RadialBar, Legend
+  ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts";
 import {
   DollarSign, Package, TrendingUp, Database,
   Download, FileSpreadsheet, FileText, Ship,
-  AlertTriangle, Clock, Trophy, ChevronRight,
+  AlertTriangle, Clock, Trophy,
   ArrowUpRight, Filter, CalendarDays
 } from "lucide-react";
 
