@@ -104,10 +104,10 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const SidebarContent = () => (
     <div className="flex h-full flex-col bg-slate-950 border-r border-slate-800/80">
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800/80 shrink-0">
+      <div className="h-20 flex items-center justify-between px-5 border-b border-slate-800/80 shrink-0">
         <Link href="/admin">
           <div className="flex items-center cursor-pointer">
-            <img src={adeGlobaLogo} alt="AdeGloba" className="h-9 w-auto object-contain" />
+            <img src={adeGlobaLogo} alt="AdeGloba" className="h-14 w-auto object-contain" />
           </div>
         </Link>
         <button

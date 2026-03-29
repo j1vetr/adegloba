@@ -117,7 +117,7 @@ export default function AdminDashboard() {
               Hoş geldin, <span className="text-cyan-400">{user?.username || 'Admin'}</span>
             </h1>
           </div>
-          <img src={adeGlobaLogo} alt="AdeGloba" className="h-8 w-auto object-contain opacity-80 self-start sm:self-auto" />
+          <img src={adeGlobaLogo} alt="AdeGloba" className="h-14 w-auto object-contain self-start sm:self-auto" />
         </div>
 
         {/* ═══════════════ GENEL ÖZET — 4 KART ═══════════════ */}
