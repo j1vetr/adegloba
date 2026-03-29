@@ -1103,7 +1103,111 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(orders).orderBy(desc(orders.createdAt));
   }
 
+  // Optimized: single JOIN instead of N+1 queries
+  async getAllOrdersWithDetails(): Promise<any[]> {
+    const rows = await db
+      .select({
+        // Order columns
+        orderId:           orders.id,
+        orderUserId:       orders.userId,
+        orderShipId:       orders.shipId,
+        orderStatus:       orders.status,
+        orderCurrency:     orders.currency,
+        orderSubtotal:     orders.subtotalUsd,
+        orderDiscount:     orders.discountUsd,
+        orderTotal:        orders.totalUsd,
+        orderCouponId:     orders.couponId,
+        orderPaypalId:     orders.paypalOrderId,
+        orderCreatedAt:    orders.createdAt,
+        orderPaidAt:       orders.paidAt,
+        orderExpiresAt:    orders.expiresAt,
+        // User columns
+        userName:          users.username,
+        userEmail:         users.email,
+        userFullName:      users.full_name,
+        userPhone:         users.phone,
+        // Order item columns
+        itemId:            orderItems.id,
+        itemPlanId:        orderItems.planId,
+        itemShipId:        orderItems.shipId,
+        itemQty:           orderItems.qty,
+        itemUnitPrice:     orderItems.unitPriceUsd,
+        itemLineTotal:     orderItems.lineTotalUsd,
+        itemExpiresAt:     orderItems.expiresAt,
+        // Ship columns
+        shipId:            ships.id,
+        shipName:          ships.name,
+        shipSlug:          ships.slug,
+        // Plan columns
+        planId:            plans.id,
+        planName:          plans.name,
+        planDataLimitGb:   plans.dataLimitGb,
+        planDurationDays:  plans.durationDays,
+        planPriceUsd:      plans.priceUsd,
+      })
+      .from(orders)
+      .leftJoin(users,      eq(orders.userId,      users.id))
+      .leftJoin(orderItems, eq(orderItems.orderId, orders.id))
+      .leftJoin(ships,      eq(orders.shipId,      ships.id))
+      .leftJoin(plans,      eq(orderItems.planId,  plans.id))
+      .orderBy(desc(orders.createdAt));
 
+    // Group rows by order (one row per item in a multi-item order)
+    const orderMap = new Map<string, any>();
+    for (const row of rows) {
+      if (!orderMap.has(row.orderId)) {
+        orderMap.set(row.orderId, {
+          id: row.orderId,
+          userId: row.orderUserId,
+          shipId: row.orderShipId,
+          status: row.orderStatus,
+          currency: row.orderCurrency,
+          subtotalUsd: row.orderSubtotal,
+          discountUsd: row.orderDiscount,
+          totalUsd: row.orderTotal,
+          couponId: row.orderCouponId,
+          paypalOrderId: row.orderPaypalId,
+          createdAt: row.orderCreatedAt,
+          paidAt: row.orderPaidAt,
+          expiresAt: row.orderExpiresAt,
+          user: row.userName ? {
+            id: row.orderUserId,
+            username: row.userName,
+            email: row.userEmail,
+            full_name: row.userFullName,
+            phone: row.userPhone,
+          } : null,
+          items: [],
+          orderItems: [],
+          ship: row.shipId ? { id: row.shipId, name: row.shipName, slug: row.shipSlug } : null,
+        });
+      }
+      if (row.itemId) {
+        const item = {
+          id: row.itemId,
+          orderId: row.orderId,
+          planId: row.itemPlanId,
+          shipId: row.itemShipId,
+          qty: row.itemQty,
+          unitPriceUsd: row.itemUnitPrice,
+          lineTotalUsd: row.itemLineTotal,
+          expiresAt: row.itemExpiresAt,
+          ship: row.shipId ? { id: row.shipId, name: row.shipName, slug: row.shipSlug } : null,
+          plan: row.planId ? {
+            id: row.planId,
+            name: row.planName,
+            dataLimitGb: row.planDataLimitGb,
+            durationDays: row.planDurationDays,
+            priceUsd: row.planPriceUsd,
+          } : null,
+        };
+        const o = orderMap.get(row.orderId);
+        o.items.push(item);
+        o.orderItems.push(item);
+      }
+    }
+    return Array.from(orderMap.values());
+  }
 
   async getOrdersByUser(userId: string): Promise<Order[]> {
     return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
@@ -1744,30 +1848,76 @@ export class DatabaseStorage implements IStorage {
 
 
   async getUsersWithOrderStats(): Promise<Array<User & { ship: Ship | undefined; orderStats: { totalOrders: number; totalAmountPaid: number; lastOrderDate: string | null } }>> {
-    const allUsers = await db.select().from(users).orderBy(users.created_at);
-    const allShips = await db.select().from(ships);
-    const allOrders = await db.select().from(orders);
+    // Single JOIN query instead of 3 separate queries + JS aggregation
+    const rows = await db
+      .select({
+        // User fields
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        full_name: users.full_name,
+        phone: users.phone,
+        ship_id: users.ship_id,
+        address: users.address,
+        created_at: users.created_at,
+        reset_required: users.reset_required,
+        failed_login_attempts: users.failed_login_attempts,
+        locked_until: users.locked_until,
+        last_login_at: users.last_login_at,
+        last_activity_at: users.last_activity_at,
+        is_active: users.is_active,
+        first_login_completed: users.first_login_completed,
+        monthly_data_gb: users.monthly_data_gb,
+        loyalty_discount_percent: users.loyalty_discount_percent,
+        loyalty_month_start: users.loyalty_month_start,
+        // Ship fields
+        shipName: ships.name,
+        shipSlug: ships.slug,
+        // Aggregated order stats
+        totalOrders: sql<number>`COUNT(CASE WHEN ${orders.status} IN ('paid','completed') THEN 1 END)`,
+        totalAmountPaid: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid','completed') THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
+        lastOrderDate: sql<string | null>`MAX(CASE WHEN ${orders.status} IN ('paid','completed') THEN ${orders.createdAt} END)`,
+      })
+      .from(users)
+      .leftJoin(ships, eq(users.ship_id, ships.id))
+      .leftJoin(orders, eq(orders.userId, users.id))
+      .groupBy(
+        users.id, users.username, users.email, users.full_name, users.phone,
+        users.ship_id, users.address, users.created_at, users.reset_required,
+        users.failed_login_attempts, users.locked_until, users.last_login_at,
+        users.last_activity_at, users.is_active, users.first_login_completed,
+        users.monthly_data_gb, users.loyalty_discount_percent, users.loyalty_month_start,
+        ships.name, ships.slug
+      )
+      .orderBy(desc(users.created_at));
 
-    return allUsers.map(user => {
-      const ship = allShips.find(s => s.id === user.ship_id);
-      const userOrders = allOrders.filter(o => o.userId === user.id && (o.status === 'paid' || o.status === 'completed'));
-      
-      const totalAmountPaid = userOrders.reduce((sum, order) => sum + parseFloat(order.totalUsd || '0'), 0);
-      console.log(`User ${user.username} - Orders: ${userOrders.length}, Total Amount: ${totalAmountPaid}`);
-      const lastOrderDate = userOrders.length > 0 
-        ? userOrders.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())[0].createdAt
-        : null;
-
-      return {
-        ...user,
-        ship,
-        orderStats: {
-          totalOrders: userOrders.length,
-          totalAmountPaid,
-          lastOrderDate,
-        }
-      };
-    });
+    return rows.map(row => ({
+      id: row.id,
+      username: row.username,
+      email: row.email,
+      full_name: row.full_name,
+      phone: row.phone,
+      ship_id: row.ship_id,
+      address: row.address,
+      created_at: row.created_at,
+      reset_required: row.reset_required,
+      failed_login_attempts: row.failed_login_attempts,
+      locked_until: row.locked_until,
+      last_login_at: row.last_login_at,
+      last_activity_at: row.last_activity_at,
+      is_active: row.is_active,
+      first_login_completed: row.first_login_completed,
+      monthly_data_gb: row.monthly_data_gb,
+      loyalty_discount_percent: row.loyalty_discount_percent,
+      loyalty_month_start: row.loyalty_month_start,
+      password_hash: '',
+      ship: row.ship_id ? { id: row.ship_id, name: row.shipName, slug: row.shipSlug } as any : undefined,
+      orderStats: {
+        totalOrders: Number(row.totalOrders) || 0,
+        totalAmountPaid: Number(row.totalAmountPaid) || 0,
+        lastOrderDate: row.lastOrderDate ? String(row.lastOrderDate) : null,
+      },
+    }));
   }
 
   async getUserOrderHistory(userId: string): Promise<Array<Order & { orderItems: OrderItem[]; ship: Ship | undefined; totalAmount: number }>> {

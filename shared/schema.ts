@@ -48,7 +48,11 @@ export const users = pgTable("users", {
   monthly_data_gb: integer("monthly_data_gb").notNull().default(0), // Bu ay toplam alınan GB
   loyalty_discount_percent: integer("loyalty_discount_percent").notNull().default(0), // Mevcut indirim yüzdesi (0, 5, 10, 15)
   loyalty_month_start: timestamp("loyalty_month_start"), // Sadakat ayı başlangıcı (her ay 1'inde sıfırlanır)
-});
+}, (table) => [
+  index("idx_users_ship_id").on(table.ship_id),
+  index("idx_users_created_at").on(table.created_at),
+  index("idx_users_is_active").on(table.is_active),
+]);
 
 // Admin users table for admin panel access
 export const admin_users = pgTable("admin_users", {
@@ -167,7 +171,12 @@ export const orders = pgTable("orders", {
   createdAt: timestamp("created_at").defaultNow(),
   paidAt: timestamp("paid_at"),
   expiresAt: timestamp("expires_at"), // Expiry date: last day of purchase month at 23:59:59 Europe/Istanbul
-}, (table) => [index("idx_orders_status_expires").on(table.status, table.expiresAt)]);
+}, (table) => [
+  index("idx_orders_status_expires").on(table.status, table.expiresAt),
+  index("idx_orders_user_id").on(table.userId),
+  index("idx_orders_ship_id").on(table.shipId),
+  index("idx_orders_created_at").on(table.createdAt),
+]);
 
 export const orderItems = pgTable("order_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

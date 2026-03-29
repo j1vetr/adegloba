@@ -1070,15 +1070,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin - Orders
   app.get('/api/admin/orders', isAdminAuthenticated, async (req, res) => {
     try {
-      const orders = await orderService.getAllOrdersWithDetails();
-      // Transform the data structure to match frontend expectations
-      const transformedOrders = orders.map((order: any) => ({
-        ...order,
-        // Map 'items' to 'orderItems' and include ship data at root level
-        orderItems: order.items || [],
-        ship: order.items?.[0]?.ship || null
-      }));
-      res.json(transformedOrders);
+      // Use optimized single-JOIN query instead of N+1 pattern
+      const allOrders = await storage.getAllOrdersWithDetails();
+      res.json(allOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
       res.status(500).json({ message: "Failed to fetch orders" });
