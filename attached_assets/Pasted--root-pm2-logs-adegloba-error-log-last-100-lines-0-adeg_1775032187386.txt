@@ -1,0 +1,16 @@
+/root/.pm2/logs/adegloba-error.log last 100 lines:
+0|adegloba |     connection: 'keep-alive',
+0|adegloba |   body: '{"name":"UNPROCESSABLE_ENTITY","details":[{"location":"body","issue":"PAYER_CANNOT_PAY","description":"Payer cannot pay for this transaction. Please contact the payer to find other ways to pay for this transaction."}],"message":"The requested action could not be performed, semantically incorrect, or failed business validation.","debug_id":"b3b8b13d528b9","links":[{"href":"https://developer.paypal.com/api/rest/reference/orders/v2/errors/#PAYER_CANNOT_PAY","rel":"information_link","method":"GET"}]}',
+0|adegloba | Failed to create order: CustomError
+0|adegloba |     at CustomError.ApiError [as constructor] (/var/www/adegloba/node_modules/@apimatic/core/lib/errors/apiError.js:17:28)
+0|adegloba |     at new CustomError (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/errors/customError.js:14:42)
+0|adegloba |     connection: 'keep-alive',
+0|adegloba |   body: '{"name":"UNPROCESSABLE_ENTITY","details":[{"location":"body","issue":"PAYER_CANNOT_PAY","description":"Payer cannot pay for this transaction. Please contact the payer to find other ways to pay for this transaction."}],"message":"The requested action could not be performed, semantically incorrect, or failed business validation.","debug_id":"537442905ae03","links":[{"href":"https://developer.paypal.com/api/rest/reference/orders/v2/errors/#PAYER_CANNOT_PAY","rel":"information_link","method":"GET"}]}',
+0|adegloba | ❌ Errors during startup fix: [
+0|adegloba |     error: 'Order f7cfcca2-82f8-496f-9e65-35074476abcf has no assigned credentials. Use processPaymentCompletion instead.'
+0|adegloba |     error: 'Order ead068e3-0de8-4b44-84fd-346837af52dd has no assigned credentials. Use processPaymentCompletion instead.'
+0|adegloba |     error: 'Order 80c55c33-7ff7-4d05-a828-9e8d073f26fe has no assigned credentials. Use processPaymentCompletion instead.'
+0|adegloba | ❌ Errors during startup fix: [
+0|adegloba |     error: 'Order f7cfcca2-82f8-496f-9e65-35074476abcf has no assigned credentials. Use processPaymentCompletion instead.'
+0|adegloba |     error: 'Order ead068e3-0de8-4b44-84fd-346837af52dd has no assigned credentials. Use processPaymentCompletion instead.'
+0|adegloba |     error: 'Order 80c55c33-7ff7-4d05-a828-9e8d073f26fe has no assigned credentials. Use processPaymentCompletion instead.'
