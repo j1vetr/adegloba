@@ -1232,34 +1232,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin - Reports
   app.get('/api/admin/reports', isAdminAuthenticated, async (req, res) => {
     try {
-      const { ship, range } = req.query;
+      const { ship, range, startDate: sd, endDate: ed } = req.query;
       
-      // Calculate date range
       const now = new Date();
       let startDate: Date;
       let endDate: Date = now;
 
-      switch (range) {
-        case 'last7days':
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case 'thisMonth':
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        case 'lastMonth':
-          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          startDate = lastMonth;
-          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-          break;
-        case 'thisYear':
-          startDate = new Date(now.getFullYear(), 0, 1);
-          break;
-        case 'lastYear':
-          startDate = new Date(now.getFullYear() - 1, 0, 1);
-          endDate = new Date(now.getFullYear() - 1, 11, 31);
-          break;
-        default:
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      if (range === 'custom' && sd && ed) {
+        startDate = new Date(sd as string);
+        endDate = new Date(ed as string);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        switch (range) {
+          case 'last7days':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'thisMonth':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case 'lastMonth':
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            startDate = lastMonth;
+            endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+            break;
+          case 'thisYear':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            break;
+          case 'lastYear':
+            startDate = new Date(now.getFullYear() - 1, 0, 1);
+            endDate = new Date(now.getFullYear() - 1, 11, 31);
+            break;
+          default:
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        }
       }
 
       const reportData = await storage.getReportData(
@@ -1278,14 +1283,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin - Ships with no orders in a period
   app.get('/api/admin/reports/inactive-ships', isAdminAuthenticated, async (req, res) => {
     try {
-      const { range, month, year } = req.query;
+      const { range, month, year, startDate: sd, endDate: ed } = req.query;
       const now = new Date();
       let startDate: Date;
       let endDate: Date = now;
 
-      if (month && year) {
-        // Specific month selected
-        const m = parseInt(month as string) - 1; // 0-indexed
+      if (range === 'custom' && sd && ed) {
+        startDate = new Date(sd as string);
+        endDate = new Date(ed as string);
+        endDate.setHours(23, 59, 59, 999);
+      } else if (month && year) {
+        const m = parseInt(month as string) - 1;
         const y = parseInt(year as string);
         startDate = new Date(y, m, 1);
         endDate = new Date(y, m + 1, 0, 23, 59, 59);
@@ -1391,34 +1399,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin reports export endpoint
   app.get('/api/admin/reports/export', isAdminAuthenticated, async (req, res) => {
     try {
-      const { ship, range, format = 'excel' } = req.query;
+      const { ship, range, format = 'excel', startDate: sd, endDate: ed } = req.query;
       
-      // Calculate date range (same logic as reports endpoint)
       const now = new Date();
       let startDate: Date;
       let endDate: Date = now;
 
-      switch (range) {
-        case 'last7days':
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case 'thisMonth':
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        case 'lastMonth':
-          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          startDate = lastMonth;
-          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-          break;
-        case 'thisYear':
-          startDate = new Date(now.getFullYear(), 0, 1);
-          break;
-        case 'lastYear':
-          startDate = new Date(now.getFullYear() - 1, 0, 1);
-          endDate = new Date(now.getFullYear() - 1, 11, 31);
-          break;
-        default:
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      if (range === 'custom' && sd && ed) {
+        startDate = new Date(sd as string);
+        endDate = new Date(ed as string);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        switch (range) {
+          case 'last7days':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'thisMonth':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case 'lastMonth':
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            startDate = lastMonth;
+            endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+            break;
+          case 'thisYear':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            break;
+          case 'lastYear':
+            startDate = new Date(now.getFullYear() - 1, 0, 1);
+            endDate = new Date(now.getFullYear() - 1, 11, 31);
+            break;
+          default:
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        }
       }
 
       const reportData = await storage.getReportData(

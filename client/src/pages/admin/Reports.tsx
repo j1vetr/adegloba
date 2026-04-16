@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 /* ─── types ─────────────────────────────────────── */
-type DateRange = 'last7days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'specificMonth';
+type DateRange = 'last7days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'specificMonth' | 'custom';
 
 interface ReportData {
   shipId: string; shipName: string;
@@ -34,6 +34,7 @@ const MONTHS = [
 const RANGE_LABELS: Record<DateRange, string> = {
   last7days: 'Son 7 Gün', thisMonth: 'Bu Ay', lastMonth: 'Geçen Ay',
   thisYear: 'Bu Yıl', lastYear: 'Geçen Yıl', specificMonth: 'Belirli Ay',
+  custom: 'Özel Tarih Aralığı',
 };
 const CHART_COLORS = ['#06b6d4','#8b5cf6','#10b981','#f59e0b','#ef4444','#3b82f6','#ec4899','#14b8a6'];
 
@@ -86,13 +87,20 @@ function DonutCenter({ cx, cy, total }: { cx?: number; cy?: number; total: numbe
 /* ─── main component ────────────────────────────── */
 export default function Reports() {
   const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  const monthAgoStr = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).toISOString().slice(0, 10);
+
   const [selectedShip, setSelectedShip] = useState<string>('all');
   const [dateRange, setDateRange] = useState<DateRange>('thisMonth');
+  const [customStart, setCustomStart] = useState(monthAgoStr);
+  const [customEnd, setCustomEnd] = useState(todayStr);
   const [exportOpen, setExportOpen] = useState(false);
 
   const [inactiveRange, setInactiveRange] = useState<DateRange>('thisMonth');
   const [inactiveMonth, setInactiveMonth] = useState(String(now.getMonth() + 1));
   const [inactiveYear, setInactiveYear] = useState(String(now.getFullYear()));
+  const [inactiveCustomStart, setInactiveCustomStart] = useState(monthAgoStr);
+  const [inactiveCustomEnd, setInactiveCustomEnd] = useState(todayStr);
   const inactiveYears = Array.from({ length: 4 }, (_, i) => String(now.getFullYear() - i));
 
   /* queries */
@@ -102,24 +110,33 @@ export default function Reports() {
     staleTime: 0,
   });
 
+  const reportQueryParams = new URLSearchParams({ ship: selectedShip, range: dateRange });
+  if (dateRange === 'custom') {
+    reportQueryParams.set('startDate', customStart);
+    reportQueryParams.set('endDate', customEnd);
+  }
   const { data: reportData = [], isLoading } = useQuery<ReportData[]>({
-    queryKey: ["/api/admin/reports", selectedShip, dateRange],
+    queryKey: ["/api/admin/reports", selectedShip, dateRange, customStart, customEnd],
     queryFn: async () => {
-      const res = await fetch(`/api/admin/reports?ship=${selectedShip}&range=${dateRange}`, { cache: 'no-cache' });
+      const res = await fetch(`/api/admin/reports?${reportQueryParams}`, { cache: 'no-cache' });
       return res.json();
     },
     staleTime: 0,
+    enabled: dateRange !== 'custom' || (!!customStart && !!customEnd),
   });
 
   const inactiveParams = new URLSearchParams(
-    inactiveRange === 'specificMonth'
-      ? { month: inactiveMonth, year: inactiveYear }
-      : { range: inactiveRange }
+    inactiveRange === 'custom'
+      ? { range: 'custom', startDate: inactiveCustomStart, endDate: inactiveCustomEnd }
+      : inactiveRange === 'specificMonth'
+        ? { month: inactiveMonth, year: inactiveYear }
+        : { range: inactiveRange }
   );
   const { data: inactiveData, isLoading: inactiveLoading } = useQuery<any>({
-    queryKey: ["/api/admin/reports/inactive-ships", inactiveRange, inactiveMonth, inactiveYear],
+    queryKey: ["/api/admin/reports/inactive-ships", inactiveRange, inactiveMonth, inactiveYear, inactiveCustomStart, inactiveCustomEnd],
     queryFn: async () => (await fetch(`/api/admin/reports/inactive-ships?${inactiveParams}`)).json(),
     staleTime: 0,
+    enabled: inactiveRange !== 'custom' || (!!inactiveCustomStart && !!inactiveCustomEnd),
   });
 
   /* derived */
@@ -136,12 +153,21 @@ export default function Reports() {
 
   /* export */
   const handleExport = (format: 'excel' | 'csv') => {
-    const url = `/api/admin/reports/export?ship=${selectedShip}&range=${dateRange}&format=${format}`;
+    const params = new URLSearchParams({ ship: selectedShip, range: dateRange, format });
+    if (dateRange === 'custom') {
+      params.set('startDate', customStart);
+      params.set('endDate', customEnd);
+    }
+    const url = `/api/admin/reports/export?${params}`;
     const a = document.createElement('a');
     a.href = url; a.style.display = 'none';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setExportOpen(false);
   };
+
+  const dateLabel = dateRange === 'custom'
+    ? `${new Date(customStart).toLocaleDateString('tr-TR')} – ${new Date(customEnd).toLocaleDateString('tr-TR')}`
+    : RANGE_LABELS[dateRange];
 
   return (
     <AdminLayout title="Raporlama">
@@ -154,7 +180,7 @@ export default function Reports() {
             <span className="text-xs font-medium uppercase tracking-wider">Filtrele</span>
           </div>
 
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className={`flex-1 grid grid-cols-1 sm:grid-cols-2 ${dateRange === 'custom' ? 'lg:grid-cols-5' : 'lg:grid-cols-3'} gap-3`}>
             <div>
               <p className="text-[11px] text-slate-500 mb-1">Gemi</p>
               <Select value={selectedShip} onValueChange={setSelectedShip}>
@@ -186,6 +212,32 @@ export default function Reports() {
               </Select>
             </div>
 
+            {dateRange === 'custom' && (
+              <>
+                <div>
+                  <p className="text-[11px] text-slate-500 mb-1">Başlangıç</p>
+                  <input
+                    type="date"
+                    value={customStart}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                    max={customEnd}
+                    className="h-9 w-full rounded-md bg-slate-800 border border-slate-700 text-white text-sm px-3 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  />
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-500 mb-1">Bitiş</p>
+                  <input
+                    type="date"
+                    value={customEnd}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                    min={customStart}
+                    max={todayStr}
+                    className="h-9 w-full rounded-md bg-slate-800 border border-slate-700 text-white text-sm px-3 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="flex items-end">
               <Dialog open={exportOpen} onOpenChange={setExportOpen}>
                 <DialogTrigger asChild>
@@ -199,7 +251,7 @@ export default function Reports() {
                     <DialogTitle className="text-white">Dışa Aktar</DialogTitle>
                   </DialogHeader>
                   <p className="text-slate-400 text-xs mb-1">
-                    <strong className="text-slate-300">{RANGE_LABELS[dateRange]}</strong> · {selectedShip === 'all' ? 'Tüm Gemiler' : ships.find((s: any) => s.id === selectedShip)?.name}
+                    <strong className="text-slate-300">{dateLabel}</strong> · {selectedShip === 'all' ? 'Tüm Gemiler' : ships.find((s: any) => s.id === selectedShip)?.name}
                   </p>
                   <div className="space-y-2 mt-2">
                     <button onClick={() => handleExport('excel')}
@@ -267,7 +319,7 @@ export default function Reports() {
               <div className="flex items-center justify-between mb-4">
                 <p className="text-white font-semibold text-sm">Gemi Bazlı Gelir</p>
                 <span className="text-[11px] text-slate-500 flex items-center gap-1">
-                  <ArrowUpRight className="h-3 w-3" />{RANGE_LABELS[dateRange]}
+                  <ArrowUpRight className="h-3 w-3" />{dateLabel}
                 </span>
               </div>
               <ResponsiveContainer width="100%" height={Math.max(220, active.length * 42)}>
@@ -348,7 +400,7 @@ export default function Reports() {
             <div className="flex items-center gap-2">
               <Trophy className="h-4 w-4 text-amber-400" />
               <p className="text-white font-semibold text-sm">Gemi Sıralaması</p>
-              <span className="text-slate-600 text-xs">— {RANGE_LABELS[dateRange]}</span>
+              <span className="text-slate-600 text-xs">— {dateLabel}</span>
             </div>
             {selectedShip !== 'all' && (
               <span className="text-xs text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
@@ -492,6 +544,25 @@ export default function Reports() {
                       {inactiveYears.map(y => <SelectItem key={y} value={y} className="text-white text-xs">{y}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                </>
+              )}
+              {inactiveRange === 'custom' && (
+                <>
+                  <input
+                    type="date"
+                    value={inactiveCustomStart}
+                    onChange={(e) => setInactiveCustomStart(e.target.value)}
+                    max={inactiveCustomEnd}
+                    className="h-8 rounded-md bg-slate-800 border border-slate-700 text-white text-xs px-2 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  />
+                  <input
+                    type="date"
+                    value={inactiveCustomEnd}
+                    onChange={(e) => setInactiveCustomEnd(e.target.value)}
+                    min={inactiveCustomStart}
+                    max={todayStr}
+                    className="h-8 rounded-md bg-slate-800 border border-slate-700 text-white text-xs px-2 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  />
                 </>
               )}
             </div>
