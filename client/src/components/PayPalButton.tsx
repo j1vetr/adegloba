@@ -8,6 +8,7 @@ interface PayPalButtonProps {
   currency: string;
   intent: string;
   couponCode?: string;
+  orderId?: string;
   onSuccess?: (orderId: string) => void;
   onError?: (error: any) => void;
 }
@@ -23,6 +24,7 @@ export default function PayPalButton({
   currency,
   intent,
   couponCode,
+  orderId,
   onSuccess,
   onError
 }: PayPalButtonProps) {
@@ -252,7 +254,10 @@ export default function PayPalButton({
             });
 
             try {
-              const completeResponse = await fetch('/api/cart/complete-payment', {
+              const endpoint = orderId
+                ? `/api/orders/${orderId}/complete`
+                : '/api/cart/complete-payment';
+              const completeResponse = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -274,8 +279,11 @@ export default function PayPalButton({
                 description: "PayPal ödemesi tamamlandı ve paketler etkinleştirildi. Yönlendiriliyorsunuz...",
               });
 
+              const finalOrderId = completeData.orderId || completeData.id || orderId;
+              if (onSuccess && finalOrderId) onSuccess(finalOrderId);
+
               setTimeout(() => {
-                window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureDetails?.id || captureData.id}`;
+                window.location.href = `/order-success?orderId=${finalOrderId}&amount=${completeData.totalUsd || amount}&paymentId=${captureDetails?.id || captureData.id}`;
               }, 1500);
 
             } catch (backendError: any) {
@@ -354,13 +362,13 @@ export default function PayPalButton({
     });
 
     paymentSessionRef.current = session;
-  }, [amount, currency, couponCode, toast, onSuccess, onError, settings?.paypal_environment]);
+  }, [amount, currency, couponCode, orderId, toast, onSuccess, onError, settings?.paypal_environment]);
 
   useEffect(() => {
     if (sdkReady && sdkInstanceRef.current) {
       setupPaymentSession(sdkInstanceRef.current);
     }
-  }, [amount, currency, couponCode, sdkReady, setupPaymentSession]);
+  }, [amount, currency, couponCode, orderId, sdkReady, setupPaymentSession]);
 
   const handlePayPalClick = async () => {
     if (!sdkReady || !paymentSessionRef.current) {
