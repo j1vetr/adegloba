@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Check, ArrowRight, Loader2, AlertCircle, Copy, Download } from "lucide-react";
+import { Check, ArrowRight, Loader2, AlertCircle, Copy } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import UserShell from "@/components/UserShell";
 
@@ -133,17 +133,7 @@ export default function OrderSuccess() {
             >
               Aktif Paketinizi Görün <ArrowRight className="h-4 w-4" />
             </button>
-            {orderDetails?.orderId && (
-              <a
-                href={`/api/orders/${orderDetails.orderId}/invoice`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-sm transition flex items-center justify-center gap-2"
-                data-testid="download-invoice-button"
-              >
-                <Download className="h-4 w-4" /> Faturayı İndir
-              </a>
-            )}
+            {/* Invoice download intentionally deferred — see follow-up task #3 */}
           </div>
         </div>
 
