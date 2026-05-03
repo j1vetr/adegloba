@@ -22,7 +22,7 @@ export default function Login() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="theme-dark min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
             <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full opacity-20 blur-xl animate-pulse" />
@@ -37,7 +37,7 @@ export default function Login() {
   if (isAuthenticated) {
     setTimeout(() => setLocation("/admin"), 0);
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="theme-dark min-h-screen bg-slate-950 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
       </div>
     );
@@ -79,7 +79,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex">
+    <div className="theme-dark min-h-screen bg-slate-950 flex">
       {/* Left Panel - Hero Section */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
         {/* Animated Background Gradient */}

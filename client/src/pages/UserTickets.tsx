@@ -1,70 +1,34 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Loader2,
-  Plus,
-  MessageCircle,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  ChevronRight,
-  Satellite,
-  HeadphonesIcon,
-  TicketIcon,
-  Inbox,
+  Loader2, Plus, Clock, CheckCircle, XCircle, AlertCircle, ChevronRight,
+  HeadphonesIcon, TicketIcon, Inbox,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { UserNavigation } from "@/components/UserNavigation";
 import { Link } from "wouter";
+import UserShell from "@/components/UserShell";
 
-interface Ticket {
-  id: string;
-  subject: string;
-  priority: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
+interface Ticket { id: string; subject: string; priority: string; status: string; createdAt: string; updatedAt: string; }
 
-const statusConfig: Record<string, { color: string; bg: string; border: string; icon: any; label: string }> = {
-  'Açık':       { color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/40',   icon: AlertCircle,   label: 'Açık' },
-  'Beklemede':  { color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/40',  icon: Clock,         label: 'Beklemede' },
-  'Cevaplandı': { color: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/40',  icon: CheckCircle,   label: 'Cevaplandı' },
-  'Kapalı':     { color: 'text-slate-400',  bg: 'bg-slate-500/10',  border: 'border-slate-500/40',  icon: XCircle,       label: 'Kapalı' },
+const statusConfig: Record<string, { chip: string; icon: any; label: string }> = {
+  "Açık":       { chip: "chip-info",    icon: AlertCircle, label: "Açık" },
+  "Beklemede":  { chip: "chip-warning", icon: Clock,       label: "Beklemede" },
+  "Cevaplandı": { chip: "chip-success", icon: CheckCircle, label: "Cevaplandı" },
+  "Kapalı":     { chip: "chip-neutral", icon: XCircle,     label: "Kapalı" },
 };
-
-const priorityConfig: Record<string, { color: string; bg: string; border: string; bar: string }> = {
-  'Düşük':  { color: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/30',  bar: 'bg-green-500' },
-  'Orta':   { color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/30',  bar: 'bg-amber-500' },
-  'Yüksek': { color: 'text-red-400',    bg: 'bg-red-500/10',    border: 'border-red-500/30',    bar: 'bg-red-500' },
+const priorityConfig: Record<string, { chip: string; bar: string }> = {
+  "Düşük":  { chip: "chip-success", bar: "bg-emerald-500" },
+  "Orta":   { chip: "chip-warning", bar: "bg-amber-500" },
+  "Yüksek": { chip: "chip-danger",  bar: "bg-rose-500" },
 };
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('tr-TR', {
-    day: 'numeric', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
+  return new Date(dateStr).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 export default function UserTickets() {
@@ -74,231 +38,182 @@ export default function UserTickets() {
   const [formData, setFormData] = useState({ subject: "", message: "", priority: "Orta" });
 
   const { data: tickets, isLoading: ticketsLoading } = useQuery<Ticket[]>({
-    queryKey: ['/api/tickets'],
-    enabled: !!user
+    queryKey: ["/api/tickets"], enabled: !!user,
   });
 
   const createTicketMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       if (!data.subject.trim()) throw new Error("Konu başlığı gerekli");
       if (!data.message.trim()) throw new Error("Mesaj gerekli");
-      const response = await apiRequest('POST', '/api/tickets', data);
-      return response.json();
+      return (await apiRequest("POST", "/api/tickets", data)).json();
     },
     onSuccess: () => {
       toast({ title: "Destek talebiniz oluşturuldu." });
       setIsCreateDialogOpen(false);
       setFormData({ subject: "", message: "", priority: "Orta" });
-      queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
     },
-    onError: (error: Error) => {
-      toast({ title: "Hata", description: error.message, variant: "destructive" });
-    },
+    onError: (error: Error) => toast({ title: "Hata", description: error.message, variant: "destructive" }),
   });
 
   const stats = {
     total: tickets?.length || 0,
-    open: tickets?.filter(t => t.status === 'Açık').length || 0,
-    answered: tickets?.filter(t => t.status === 'Cevaplandı').length || 0,
-    closed: tickets?.filter(t => t.status === 'Kapalı').length || 0,
+    open: tickets?.filter(t => t.status === "Açık").length || 0,
+    answered: tickets?.filter(t => t.status === "Cevaplandı").length || 0,
+    closed: tickets?.filter(t => t.status === "Kapalı").length || 0,
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-cyan-400">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="text-lg">Yükleniyor...</span>
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-slate-400" /></div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <UserNavigation />
-
-      {/* Hero Header */}
-      <div className="relative overflow-hidden border-b border-slate-800">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/40 via-slate-950 to-blue-950/30" />
-        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl" />
-
-        <div className="relative container mx-auto px-4 py-10 max-w-5xl">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/20">
-                <HeadphonesIcon className="h-8 w-8 text-cyan-400" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">Destek Merkezi</h1>
-                <p className="text-slate-400 text-sm mt-0.5">AdeGloba Starlink · Teknik Destek</p>
-              </div>
+    <UserShell title="Destek">
+      <div className="max-w-2xl mx-auto space-y-4">
+        {/* Header card */}
+        <div className="user-card-elevated p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-11 h-11 rounded-xl bg-[#FFF6D6] flex items-center justify-center">
+              <HeadphonesIcon className="h-5 w-5 text-[#7C5E00]" />
             </div>
-
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-cyan-600 hover:bg-cyan-500 text-white font-medium px-5 py-2.5 rounded-xl shadow-lg shadow-cyan-900/30 transition-all">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Yeni Talep Oluştur
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-lg">
-                <DialogHeader>
-                  <DialogTitle className="text-white flex items-center gap-2">
-                    <TicketIcon className="h-5 w-5 text-cyan-400" />
-                    Yeni Destek Talebi
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-5 pt-2">
-                  <div>
-                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">Konu Başlığı</label>
-                    <Input
-                      value={formData.subject}
-                      onChange={(e) => setFormData(p => ({ ...p, subject: e.target.value }))}
-                      placeholder="Sorunu kısaca özetleyin..."
-                      className="bg-slate-800 border-slate-600 text-white placeholder:text-slate-500 focus:border-cyan-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">Öncelik</label>
-                    <Select value={formData.priority} onValueChange={(v) => setFormData(p => ({ ...p, priority: v }))}>
-                      <SelectTrigger className="bg-slate-800 border-slate-600 text-white focus:border-cyan-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700">
-                        <SelectItem value="Düşük" className="text-white focus:bg-slate-700">🟢 Düşük</SelectItem>
-                        <SelectItem value="Orta" className="text-white focus:bg-slate-700">🟡 Orta</SelectItem>
-                        <SelectItem value="Yüksek" className="text-white focus:bg-slate-700">🔴 Yüksek</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">Mesajınız</label>
-                    <Textarea
-                      value={formData.message}
-                      onChange={(e) => setFormData(p => ({ ...p, message: e.target.value }))}
-                      placeholder="Sorununuzu detaylıca açıklayın..."
-                      className="bg-slate-800 border-slate-600 text-white placeholder:text-slate-500 resize-none focus:border-cyan-500"
-                      rows={5}
-                    />
-                  </div>
-                  <div className="flex gap-3 pt-1">
-                    <Button
-                      onClick={() => createTicketMutation.mutate(formData)}
-                      disabled={createTicketMutation.isPending}
-                      className="bg-cyan-600 hover:bg-cyan-500 text-white flex-1 font-medium"
-                    >
-                      {createTicketMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <Plus className="h-4 w-4 mr-2" />
-                      )}
-                      Talebi Gönder
-                    </Button>
-                    <Button
-                      onClick={() => setIsCreateDialogOpen(false)}
-                      variant="outline"
-                      className="border-slate-600 text-slate-300 hover:bg-slate-800"
-                    >
-                      İptal
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-bold text-slate-900">Destek Merkezi</h1>
+              <p className="text-xs text-slate-500">AdeGloba Starlink · Teknik Destek</p>
+            </div>
           </div>
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
-            {[
-              { label: 'Toplam Talep', value: stats.total, color: 'text-slate-300', icon: TicketIcon },
-              { label: 'Açık', value: stats.open, color: 'text-blue-400', icon: AlertCircle },
-              { label: 'Cevaplandı', value: stats.answered, color: 'text-green-400', icon: CheckCircle },
-              { label: 'Kapalı', value: stats.closed, color: 'text-slate-400', icon: XCircle },
-            ].map(stat => (
-              <div key={stat.label} className="bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 flex items-center gap-3">
-                <stat.icon className={`h-4 w-4 ${stat.color} shrink-0`} />
-                <div>
-                  <div className={`text-xl font-bold ${stat.color}`}>{stat.value}</div>
-                  <div className="text-xs text-slate-500">{stat.label}</div>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <button className="w-full h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 transition active:scale-[0.99]">
+                <Plus className="h-4 w-4" /> Yeni Talep Oluştur
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg bg-white">
+              <DialogHeader>
+                <DialogTitle className="text-slate-900 flex items-center gap-2">
+                  <TicketIcon className="h-5 w-5 text-[#7C5E00]" />
+                  Yeni Destek Talebi
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Konu Başlığı</label>
+                  <input
+                    value={formData.subject}
+                    onChange={(e) => setFormData(p => ({ ...p, subject: e.target.value }))}
+                    placeholder="Sorunu kısaca özetleyin..."
+                    className="user-input w-full h-11 px-3.5 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Öncelik</label>
+                  <select
+                    value={formData.priority}
+                    onChange={(e) => setFormData(p => ({ ...p, priority: e.target.value }))}
+                    className="user-input w-full h-11 px-3.5 text-sm"
+                  >
+                    <option value="Düşük">Düşük</option>
+                    <option value="Orta">Orta</option>
+                    <option value="Yüksek">Yüksek</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Mesajınız</label>
+                  <textarea
+                    value={formData.message}
+                    onChange={(e) => setFormData(p => ({ ...p, message: e.target.value }))}
+                    placeholder="Sorununuzu detaylıca açıklayın..."
+                    rows={5}
+                    className="user-input w-full px-3.5 py-2.5 text-sm resize-none"
+                  />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => createTicketMutation.mutate(formData)}
+                    disabled={createTicketMutation.isPending}
+                    className="flex-1 h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    {createTicketMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                    Talebi Gönder
+                  </button>
+                  <button
+                    onClick={() => setIsCreateDialogOpen(false)}
+                    className="flex-1 h-12 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm"
+                  >
+                    İptal
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            </DialogContent>
+          </Dialog>
         </div>
-      </div>
 
-      {/* Tickets List */}
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { label: "Toplam", value: stats.total, color: "text-slate-900" },
+            { label: "Açık", value: stats.open, color: "text-sky-600" },
+            { label: "Cevaplandı", value: stats.answered, color: "text-emerald-600" },
+            { label: "Kapalı", value: stats.closed, color: "text-slate-500" },
+          ].map(s => (
+            <div key={s.label} className="user-card p-3 text-center">
+              <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+              <p className="text-xs text-slate-500 mt-0.5 truncate">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* List */}
         {ticketsLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
-            <span className="text-slate-400">Talepler yükleniyor...</span>
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <Loader2 className="h-7 w-7 animate-spin text-slate-400" />
+            <span className="text-slate-500 text-sm">Talepler yükleniyor...</span>
           </div>
         ) : !tickets || tickets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="p-5 rounded-full bg-cyan-500/10 border border-cyan-500/20">
-              <Inbox className="h-10 w-10 text-cyan-400" />
+          <div className="user-card flex flex-col items-center justify-center py-12 gap-3 text-center px-6">
+            <div className="w-14 h-14 rounded-2xl bg-[#FFF6D6] flex items-center justify-center">
+              <Inbox className="h-7 w-7 text-[#7C5E00]" />
             </div>
-            <h3 className="text-xl font-semibold text-white">Henüz destek talebi yok</h3>
-            <p className="text-slate-400 text-sm text-center max-w-xs">
-              Bir sorunla karşılaştığınızda destek talebi oluşturabilirsiniz. Ekibimiz en kısa sürede yanıt verecektir.
-            </p>
-            <Button
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="mt-2 bg-cyan-600 hover:bg-cyan-500 text-white px-6"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              İlk Talebi Oluştur
-            </Button>
+            <h3 className="text-base font-semibold text-slate-900">Henüz destek talebi yok</h3>
+            <p className="text-slate-500 text-xs max-w-xs">Bir sorunla karşılaştığınızda destek talebi oluşturabilirsiniz.</p>
+            <button onClick={() => setIsCreateDialogOpen(true)} className="mt-2 px-5 h-11 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 text-sm font-semibold flex items-center gap-2">
+              <Plus className="h-4 w-4" /> İlk Talebi Oluştur
+            </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            <p className="text-slate-500 text-sm mb-5">{tickets.length} destek talebi listeleniyor</p>
+          <div className="space-y-2.5">
+            <p className="text-slate-500 text-xs">{tickets.length} destek talebi</p>
             {tickets.map((ticket: Ticket) => {
-              const sc = statusConfig[ticket.status] || statusConfig['Açık'];
-              const pc = priorityConfig[ticket.priority] || priorityConfig['Orta'];
+              const sc = statusConfig[ticket.status] || statusConfig["Açık"];
+              const pc = priorityConfig[ticket.priority] || priorityConfig["Orta"];
               const StatusIcon = sc.icon;
-
               return (
                 <Link key={ticket.id} href={`/destek/${ticket.id}`}>
-                  <div className="group relative bg-slate-900/70 border border-slate-800 hover:border-cyan-700/50 rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:bg-slate-900 hover:shadow-lg hover:shadow-cyan-950/40">
-                    {/* Priority bar */}
-                    <div className={`absolute left-0 top-4 bottom-4 w-0.5 rounded-full ${pc.bar} opacity-60`} />
-
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 pl-3">
+                  <a className="block user-card relative p-4 hover:border-[#FFDD57] transition cursor-pointer">
+                    <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${pc.bar}`} />
+                    <div className="flex items-center gap-3 pl-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start gap-2">
-                          <StatusIcon className={`h-4 w-4 mt-0.5 shrink-0 ${sc.color}`} />
-                          <div>
-                            <h3 className="text-white font-medium leading-snug group-hover:text-cyan-300 transition-colors line-clamp-1">
-                              {ticket.subject}
-                            </h3>
-                            <p className="text-slate-500 text-xs mt-1">
-                              #{ticket.id.slice(-8)} · {formatDate(ticket.createdAt)}
-                            </p>
+                          <StatusIcon className="h-4 w-4 mt-0.5 shrink-0 text-slate-400" />
+                          <div className="min-w-0">
+                            <h3 className="text-sm font-semibold text-slate-900 line-clamp-1">{ticket.subject}</h3>
+                            <p className="text-slate-500 text-xs mt-0.5">#{ticket.id.slice(-8)} · {formatDate(ticket.createdAt)}</p>
                           </div>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2 pl-6 sm:pl-0">
-                        <Badge className={`${pc.bg} ${pc.color} ${pc.border} border text-xs px-2.5 py-0.5 font-normal`}>
-                          {ticket.priority}
-                        </Badge>
-                        <Badge className={`${sc.bg} ${sc.color} ${sc.border} border text-xs px-2.5 py-0.5 font-normal`}>
-                          {sc.label}
-                        </Badge>
-                        <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-cyan-500 transition-colors ml-1" />
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className={`chip ${pc.chip} hidden sm:inline-flex`}>{ticket.priority}</span>
+                        <span className={`chip ${sc.chip}`}>{sc.label}</span>
+                        <ChevronRight className="h-4 w-4 text-slate-300" />
                       </div>
                     </div>
-                  </div>
+                  </a>
                 </Link>
               );
             })}
           </div>
         )}
       </div>
-    </div>
+    </UserShell>
   );
 }

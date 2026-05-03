@@ -1,331 +1,165 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Lock, Shield, CheckCircle2, AlertTriangle, Eye, EyeOff, LogOut } from "lucide-react";
+import { Loader2, Lock, Shield, CheckCircle2, AlertTriangle, Eye, EyeOff, LogOut, AlertCircle } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useLanguage, LanguageSelector } from "@/contexts/LanguageContext";
-import adeGlobaLogo from '@assets/adegloba-1_1756252463127.png';
+import adeGlobaLogo from "@assets/adegloba-1_1756252463127.png";
 
 export default function SifreGuncelle() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const { t } = useLanguage();
-  const [formData, setFormData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: ""
-  });
+  const [formData, setFormData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [show, setShow] = useState({ cur: false, n: false, c: false });
   const { user, isLoading: authLoading } = useUserAuth();
+  const [v, setV] = useState({ minLength: false, hasLetter: false, hasNumber: false, passwordsMatch: false });
 
-  const [passwordValidation, setPasswordValidation] = useState({
-    minLength: false,
-    hasLetter: false,
-    hasNumber: false,
-    passwordsMatch: false
-  });
-
+  useEffect(() => { if (!authLoading && !user) setLocation("/giris"); }, [user, authLoading, setLocation]);
   useEffect(() => {
-    if (!authLoading && !user) {
-      setLocation("/giris");
-    }
-  }, [user, authLoading, setLocation]);
-
-  useEffect(() => {
-    const password = formData.newPassword;
-    setPasswordValidation({
-      minLength: password.length >= 12,
-      hasLetter: /[a-zA-Z]/.test(password),
-      hasNumber: /[0-9]/.test(password),
-      passwordsMatch: password.length > 0 && password === formData.confirmPassword
+    const p = formData.newPassword;
+    setV({
+      minLength: p.length >= 12,
+      hasLetter: /[a-zA-Z]/.test(p),
+      hasNumber: /[0-9]/.test(p),
+      passwordsMatch: p.length > 0 && p === formData.confirmPassword,
     });
   }, [formData.newPassword, formData.confirmPassword]);
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
-      </div>
-    );
+    return <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-slate-400" /></div>;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-    setSuccess("");
-
-    if (formData.newPassword !== formData.confirmPassword) {
-      setError("Yeni şifreler eşleşmiyor");
-      setIsLoading(false);
-      return;
-    }
-
-    if (!passwordValidation.minLength || !passwordValidation.hasLetter || !passwordValidation.hasNumber) {
-      setError("Şifre güvenlik gereksinimlerini karşılamıyor");
-      setIsLoading(false);
-      return;
-    }
-
+    setIsLoading(true); setError(""); setSuccess("");
+    if (formData.newPassword !== formData.confirmPassword) { setError("Yeni şifreler eşleşmiyor"); setIsLoading(false); return; }
+    if (!v.minLength || !v.hasLetter || !v.hasNumber) { setError("Şifre güvenlik gereksinimlerini karşılamıyor"); setIsLoading(false); return; }
     try {
-      const response = await fetch("/api/user/update-password", {
+      const res = await fetch("/api/user/update-password", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: formData.currentPassword, newPassword: formData.newPassword }),
       });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      const data = await res.json();
+      if (res.ok && data.success) {
         setSuccess(data.message);
         await queryClient.invalidateQueries({ queryKey: ["/api/user/me"] });
-        setTimeout(() => {
-          setLocation("/panel");
-        }, 2000);
-      } else {
-        setError(data.message || "Şifre güncellenemedi");
-      }
-    } catch (error) {
-      setError("Bağlantı hatası. Lütfen tekrar deneyin.");
-    } finally {
-      setIsLoading(false);
-    }
+        setTimeout(() => setLocation("/panel"), 1500);
+      } else setError(data.message || "Şifre güncellenemedi");
+    } catch { setError("Bağlantı hatası. Lütfen tekrar deneyin."); }
+    finally { setIsLoading(false); }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
-
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   const handleLogout = async () => {
-    try {
-      await fetch("/api/user/logout", { method: "POST" });
-      await queryClient.invalidateQueries({ queryKey: ["/api/user/me"] });
-      setLocation("/giris");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+    try { await fetch("/api/user/logout", { method: "POST" }); await queryClient.invalidateQueries({ queryKey: ["/api/user/me"] }); setLocation("/giris"); }
+    catch (e) { console.error(e); }
   };
 
-  const ValidationItem = ({ valid, text }: { valid: boolean; text: string }) => (
-    <div className={`flex items-center gap-2 text-sm ${valid ? 'text-green-400' : 'text-slate-400'}`}>
-      {valid ? (
-        <CheckCircle2 className="h-4 w-4" />
-      ) : (
-        <div className="h-4 w-4 rounded-full border border-slate-500" />
-      )}
+  const PasswordField = ({ name, value, onChange, placeholder, label, shown, toggle, testId }: any) => (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+        <Lock className="h-3 w-3" /> {label}
+      </label>
+      <div className="relative">
+        <input
+          name={name} type={shown ? "text" : "password"} value={value} onChange={onChange} required
+          placeholder={placeholder} className="user-input w-full h-12 px-4 pr-11 text-sm" data-testid={testId}
+        />
+        <button type="button" onClick={toggle} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700">
+          {shown ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+    </div>
+  );
+
+  const Vi = ({ ok, text }: { ok: boolean; text: string }) => (
+    <div className={`flex items-center gap-2 text-xs ${ok ? "text-emerald-600" : "text-slate-400"}`}>
+      {ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <div className="h-3.5 w-3.5 rounded-full border border-slate-300" />}
       {text}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-10 left-10 sm:top-20 sm:left-20 w-40 h-40 sm:w-80 sm:h-80 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-10 right-10 sm:bottom-20 sm:right-20 w-32 h-32 sm:w-60 sm:h-60 bg-gradient-to-r from-slate-600/10 to-slate-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:40px_40px] sm:bg-[size:60px_60px]" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-md">
-        {/* Language Selector */}
-        <div className="absolute top-0 right-0">
+    <div className="min-h-screen bg-[#F7F8FA] flex flex-col">
+      <header className="bg-white border-b border-slate-200/70">
+        <div className="mx-auto max-w-md px-4 h-14 flex items-center justify-between">
+          <img src={adeGlobaLogo} alt="AdeGloba" className="h-7 w-auto" />
           <LanguageSelector />
         </div>
+      </header>
 
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-6">
-            <img 
-              src={adeGlobaLogo} 
-              alt="AdeGloba Limited" 
-              className="h-16 sm:h-20 object-contain filter drop-shadow-lg"
-            />
+      <main className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-5">
+            <div className="mx-auto h-14 w-14 rounded-2xl bg-[#FFF6D6] flex items-center justify-center mb-3">
+              <Shield className="h-6 w-6 text-[#7C5E00]" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 mb-1.5">{t.passwordUpdate.title}</h1>
+            <p className="text-sm text-slate-500">{t.passwordUpdate.subtitle}</p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            {t.passwordUpdate.title}
-          </h1>
-          <p className="text-slate-400 text-sm sm:text-base">
-            {t.passwordUpdate.subtitle}
-          </p>
-        </div>
 
-        <Alert className="border-amber-500/50 bg-amber-500/10 backdrop-blur-sm mb-6">
-          <AlertTriangle className="h-4 w-4 text-amber-400" />
-          <AlertDescription className="text-amber-300">
-            {t.passwordUpdate.securityNotice}
-          </AlertDescription>
-        </Alert>
+          <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800 mb-4">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>{t.passwordUpdate.securityNotice}</span>
+          </div>
 
-        <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-700/50 shadow-2xl">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-center text-white text-xl flex items-center justify-center gap-2">
-              <Shield className="h-5 w-5 text-amber-400" />
-              {t.passwordUpdate.title}
-            </CardTitle>
-            <CardDescription className="text-center text-slate-400">
-              {t.passwordUpdate.requirements} {t.passwordUpdate.minLength}, {t.passwordUpdate.hasLetter}, {t.passwordUpdate.hasNumber}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword" className="text-slate-300 flex items-center gap-2 font-medium">
-                  <Lock className="h-4 w-4 text-amber-400" />
-                  {t.passwordUpdate.currentPassword}
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="currentPassword"
-                    name="currentPassword"
-                    type={showCurrentPassword ? "text" : "password"}
-                    value={formData.currentPassword}
-                    onChange={handleChange}
-                    required
-                    className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm pr-10"
-                    placeholder={t.passwordUpdate.currentPasswordPlaceholder}
-                    data-testid="input-current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white"
-                  >
-                    {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
+          <div className="user-card-elevated p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <PasswordField name="currentPassword" value={formData.currentPassword} onChange={handleChange}
+                placeholder={t.passwordUpdate.currentPasswordPlaceholder} label={t.passwordUpdate.currentPassword}
+                shown={show.cur} toggle={() => setShow((s) => ({ ...s, cur: !s.cur }))} testId="input-current-password" />
+              <PasswordField name="newPassword" value={formData.newPassword} onChange={handleChange}
+                placeholder={t.passwordUpdate.newPasswordPlaceholder} label={t.passwordUpdate.newPassword}
+                shown={show.n} toggle={() => setShow((s) => ({ ...s, n: !s.n }))} testId="input-new-password" />
+              <PasswordField name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
+                placeholder={t.passwordUpdate.confirmPasswordPlaceholder} label={t.passwordUpdate.confirmPassword}
+                shown={show.c} toggle={() => setShow((s) => ({ ...s, c: !s.c }))} testId="input-confirm-password" />
 
-              <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-slate-300 flex items-center gap-2 font-medium">
-                  <Lock className="h-4 w-4 text-amber-400" />
-                  {t.passwordUpdate.newPassword}
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="newPassword"
-                    name="newPassword"
-                    type={showNewPassword ? "text" : "password"}
-                    value={formData.newPassword}
-                    onChange={handleChange}
-                    required
-                    className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm pr-10"
-                    placeholder={t.passwordUpdate.newPasswordPlaceholder}
-                    data-testid="input-new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white"
-                  >
-                    {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-slate-300 flex items-center gap-2 font-medium">
-                  <Lock className="h-4 w-4 text-amber-400" />
-                  {t.passwordUpdate.confirmPassword}
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    className="bg-slate-800/50 border-slate-600/50 text-white h-12 placeholder:text-slate-400 focus:border-amber-400/50 focus:ring-amber-400/20 focus:ring-2 transition-all duration-200 backdrop-blur-sm pr-10"
-                    placeholder={t.passwordUpdate.confirmPasswordPlaceholder}
-                    data-testid="input-confirm-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white"
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-slate-800/30 rounded-lg p-4 space-y-2">
-                <p className="text-sm font-medium text-slate-300 mb-3">{t.passwordUpdate.requirements}</p>
-                <ValidationItem valid={passwordValidation.minLength} text={t.passwordUpdate.minLength} />
-                <ValidationItem valid={passwordValidation.hasLetter} text={t.passwordUpdate.hasLetter} />
-                <ValidationItem valid={passwordValidation.hasNumber} text={t.passwordUpdate.hasNumber} />
-                <ValidationItem valid={passwordValidation.passwordsMatch} text={t.passwordUpdate.passwordsMatch} />
+              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 space-y-1.5">
+                <p className="text-xs font-semibold text-slate-700 mb-2">{t.passwordUpdate.requirements}</p>
+                <Vi ok={v.minLength} text={t.passwordUpdate.minLength} />
+                <Vi ok={v.hasLetter} text={t.passwordUpdate.hasLetter} />
+                <Vi ok={v.hasNumber} text={t.passwordUpdate.hasNumber} />
+                <Vi ok={v.passwordsMatch} text={t.passwordUpdate.passwordsMatch} />
               </div>
 
               {success && (
-                <Alert className="border-green-500/50 bg-green-500/10 backdrop-blur-sm">
-                  <CheckCircle2 className="h-4 w-4 text-green-400" />
-                  <AlertDescription className="text-green-400">
-                    {success}
-                  </AlertDescription>
-                </Alert>
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700">
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" /> {success}
+                </div>
               )}
-
               {error && (
-                <Alert className="border-red-500/50 bg-red-500/10 backdrop-blur-sm">
-                  <AlertDescription className="text-red-400">
-                    {error}
-                  </AlertDescription>
-                </Alert>
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700">
+                  <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" /> {error}
+                </div>
               )}
 
-              <Button
+              <button
                 type="submit"
-                disabled={isLoading || !passwordValidation.minLength || !passwordValidation.hasLetter || !passwordValidation.hasNumber || !passwordValidation.passwordsMatch}
-                className="w-full h-12 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-900 font-semibold text-base shadow-lg shadow-amber-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                disabled={isLoading || !v.minLength || !v.hasLetter || !v.hasNumber || !v.passwordsMatch}
+                className="w-full h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm transition active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-2"
                 data-testid="button-update-password"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {t.passwordUpdate.updating}
-                  </>
-                ) : (
-                  <>
-                    <Shield className="h-4 w-4 mr-2" />
-                    {t.passwordUpdate.updateButton}
-                  </>
-                )}
-              </Button>
+                {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> {t.passwordUpdate.updating}</> : t.passwordUpdate.updateButton}
+              </button>
 
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleLogout}
-                className="w-full h-10 text-slate-400 hover:text-white hover:bg-slate-800/50"
+              <button
+                type="button" onClick={handleLogout}
+                className="w-full h-10 flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition"
                 data-testid="button-logout"
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                {t.passwordUpdate.logoutButton}
-              </Button>
+                <LogOut className="h-4 w-4" /> {t.passwordUpdate.logoutButton}
+              </button>
             </form>
-          </CardContent>
-        </Card>
+          </div>
 
-        <p className="text-center text-slate-500 text-xs mt-6">
-          {t.passwordUpdate.securityCompliance}
-        </p>
-      </div>
+          <p className="text-center text-xs text-slate-400 mt-5">{t.passwordUpdate.securityCompliance}</p>
+        </div>
+      </main>
     </div>
   );
 }

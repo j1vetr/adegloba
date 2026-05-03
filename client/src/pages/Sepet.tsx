@@ -1,37 +1,17 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import { Button } from "@/components/ui/button";
-import {
-  Loader2, ShoppingCart, Trash2, ArrowRight,
-  Shield, Wifi, Calendar, Zap, Tag, Check,
-  ChevronRight, Package, CreditCard, Star
-} from "lucide-react";
+import { Loader2, ShoppingCart, Trash2, ArrowRight, Shield, Wifi, Calendar, Zap, Tag, Check, Package, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { UserNavigation } from "@/components/UserNavigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "wouter";
+import UserShell from "@/components/UserShell";
 
 interface CartItem {
-  id: string;
-  userId: string;
-  planId: string;
-  quantity: number;
-  plan?: {
-    id: string;
-    name: string;
-    description: string;
-    dataLimitGb: number;
-    priceUsd: string;
-  };
+  id: string; userId: string; planId: string; quantity: number;
+  plan?: { id: string; name: string; description: string; dataLimitGb: number; priceUsd: string };
 }
-
-interface CartData {
-  items: CartItem[];
-  subtotal: number;
-  total: number;
-  itemCount: number;
-}
+interface CartData { items: CartItem[]; subtotal: number; total: number; itemCount: number; }
 
 export default function Sepet() {
   const { user, isLoading: authLoading } = useUserAuth();
@@ -39,264 +19,163 @@ export default function Sepet() {
   const { toast } = useToast();
 
   const { data: cartData, isLoading: cartLoading } = useQuery<CartData>({
-    queryKey: ["/api/cart"],
-    enabled: !!user
+    queryKey: ["/api/cart"], enabled: !!user,
   });
 
   const removeItemMutation = useMutation({
-    mutationFn: async (planId: string) => {
-      const response = await apiRequest('DELETE', `/api/cart/${planId}`);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-      toast({ title: t.common.removed, description: t.cart.removeSuccess });
-    },
-    onError: (error: any) => {
-      toast({ title: t.common.error, description: error.message || "Ürün kaldırılamadı", variant: "destructive" });
-    },
+    mutationFn: async (planId: string) => (await apiRequest("DELETE", `/api/cart/${planId}`)).json(),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/cart"] }); toast({ title: t.common.removed, description: t.cart.removeSuccess }); },
+    onError: (error: any) => toast({ title: t.common.error, description: error.message || "Ürün kaldırılamadı", variant: "destructive" }),
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/cart/checkout', {});
-      return response.json();
-    },
-    onSuccess: (order) => {
-      window.location.href = `/checkout?orderId=${order.id}`;
-    },
-    onError: (error: any) => {
-      toast({ title: t.common.error, description: error.message || "Sipariş oluşturulamadı", variant: "destructive" });
-    },
+    mutationFn: async () => (await apiRequest("POST", "/api/cart/checkout", {})).json(),
+    onSuccess: (order) => { window.location.href = `/checkout?orderId=${order.id}`; },
+    onError: (error: any) => toast({ title: t.common.error, description: error.message || "Sipariş oluşturulamadı", variant: "destructive" }),
   });
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#080c14]">
-        <UserNavigation />
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-slate-400" /></div>;
   }
-
-  if (!user) { window.location.href = '/giris'; return null; }
+  if (!user) { window.location.href = "/giris"; return null; }
 
   const formatPrice = (price: string | number) => {
-    const n = typeof price === 'string' ? parseFloat(price) : price;
+    const n = typeof price === "string" ? parseFloat(price) : price;
     return `$${(n || 0).toFixed(2)}`;
   };
-
   const item = cartData?.items?.[0];
 
   return (
-    <div className="min-h-screen bg-[#080c14]">
-      {/* Ambient glow */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-cyan-600/8 blur-[100px]" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-blue-700/5 blur-[80px]" />
-      </div>
-
-      <UserNavigation />
-
-      <div className="relative max-w-xl mx-auto px-4 sm:px-6 py-10 pt-28">
-
-        {/* ── Step Progress ── */}
-        <div className="flex items-center justify-center gap-0 mb-10">
+    <UserShell title="Sepet">
+      <div className="max-w-md mx-auto space-y-4">
+        {/* Step progress */}
+        <div className="flex items-center justify-center gap-0">
           {[
-            { label: "Sepet", step: 1, active: true, done: false },
-            { label: "Ödeme", step: 2, active: false, done: false },
-            { label: "Tamamlandı", step: 3, active: false, done: false },
+            { label: "Sepet", step: 1, active: true },
+            { label: "Ödeme", step: 2, active: false },
+            { label: "Bitti", step: 3, active: false },
           ].map((s, i) => (
             <div key={s.step} className="flex items-center">
               <div className="flex flex-col items-center gap-1">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                  s.done
-                    ? 'bg-green-500 text-white'
-                    : s.active
-                    ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/40'
-                    : 'bg-slate-800 border border-slate-700 text-slate-500'
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                  s.active ? "bg-[#FFDD57] text-slate-900" : "bg-slate-100 text-slate-400 border border-slate-200"
                 }`}>
-                  {s.done ? <Check className="h-4 w-4" /> : s.step}
+                  {s.step}
                 </div>
-                <span className={`text-xs font-medium ${s.active ? 'text-cyan-400' : 'text-slate-600'}`}>
-                  {s.label}
-                </span>
+                <span className={`text-xs font-medium ${s.active ? "text-slate-900" : "text-slate-400"}`}>{s.label}</span>
               </div>
-              {i < 2 && (
-                <div className={`w-16 sm:w-24 h-px mx-2 mb-5 ${i === 0 && item ? 'bg-cyan-500/40' : 'bg-slate-800'}`} />
-              )}
+              {i < 2 && <div className={`w-12 sm:w-16 h-px mx-2 mb-5 ${i === 0 && item ? "bg-[#FFDD57]" : "bg-slate-200"}`} />}
             </div>
           ))}
         </div>
 
         {cartLoading ? (
-          <div className="flex items-center justify-center py-32">
-            <div className="text-center">
-              <Loader2 className="h-9 w-9 animate-spin text-cyan-400 mx-auto mb-3" />
-              <p className="text-slate-500 text-sm">{t.cart.loading}</p>
-            </div>
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-7 w-7 animate-spin text-slate-400" />
           </div>
-
         ) : !item ? (
-          /* ── Empty State ── */
-          <div className="text-center py-20">
-            <div className="relative inline-flex mb-8">
-              <div className="w-24 h-24 rounded-3xl bg-slate-900 border border-slate-700/60 flex items-center justify-center">
-                <ShoppingCart className="h-10 w-10 text-slate-600" />
-              </div>
-              <div className="absolute inset-0 rounded-3xl bg-cyan-500/5 blur-xl" />
+          <div className="user-card-elevated text-center py-12 px-6">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+              <ShoppingCart className="h-8 w-8 text-slate-400" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3">{t.cart.empty}</h3>
-            <p className="text-slate-400 mb-10 max-w-xs mx-auto text-sm leading-relaxed">{t.cart.emptyDescription}</p>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">{t.cart.empty}</h3>
+            <p className="text-slate-500 text-sm mb-5">{t.cart.emptyDescription}</p>
             <Link href="/paketler">
-              <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold px-8 py-3 rounded-xl shadow-lg shadow-cyan-900/30">
-                <Package className="h-4 w-4 mr-2" />
-                {t.cart.browsePackages}
-              </Button>
+              <a className="inline-flex items-center gap-2 px-5 h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm">
+                <Package className="h-4 w-4" /> {t.cart.browsePackages}
+              </a>
             </Link>
           </div>
-
         ) : (
           <>
-            {/* ── Main Product Card ── */}
-            <div className="relative rounded-3xl overflow-hidden border border-white/8 bg-gradient-to-b from-slate-900/90 to-slate-950/90 shadow-2xl shadow-black/50 backdrop-blur-sm">
-
-              {/* Gradient header section */}
-              <div className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 px-8 pt-8 pb-6 border-b border-white/5">
-                {/* Glow blob behind number */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
-                {/* Brand tag */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500/15 to-blue-500/15 border border-cyan-400/30 rounded-lg px-3 py-1.5 shadow-sm shadow-cyan-500/10">
-                    <Wifi className="h-3 w-3 text-cyan-400" />
-                    <span className="text-cyan-300 text-xs font-black tracking-[0.15em]">STARLINK MARITIME</span>
-                  </div>
-
-                  {/* Remove button */}
+            <div className="user-card-elevated overflow-hidden">
+              <div className="px-5 pt-5 pb-4 border-b border-slate-100">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="chip chip-brand"><Wifi className="h-3 w-3" /> STARLINK MARITIME</span>
                   <button
                     onClick={() => removeItemMutation.mutate(item.planId)}
                     disabled={removeItemMutation.isPending}
-                    className="group flex items-center gap-1.5 text-slate-600 hover:text-red-400 transition-colors text-xs"
+                    className="flex items-center gap-1 text-slate-400 hover:text-rose-500 text-xs transition"
                   >
-                    {removeItemMutation.isPending
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-                    }
+                    {removeItemMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                     <span>{t.cart.removeItem || "Kaldır"}</span>
                   </button>
                 </div>
 
-                {/* GB Hero Number */}
-                <div className="relative text-center py-4">
+                <div className="text-center py-3">
                   <div className="inline-flex items-baseline gap-2">
-                    <span className="text-8xl sm:text-9xl font-black text-white tracking-tighter leading-none" style={{ textShadow: '0 0 80px rgba(6,182,212,0.3)' }}>
-                      {item.plan?.dataLimitGb}
-                    </span>
-                    <span className="text-3xl font-black text-cyan-400 mb-2 self-end">GB</span>
+                    <span className="text-7xl font-black text-slate-900 leading-none tracking-tight">{item.plan?.dataLimitGb}</span>
+                    <span className="text-2xl font-black text-slate-500 self-end mb-1">GB</span>
                   </div>
-                  <p className="text-slate-400 text-sm mt-2 font-medium">
-                    {item.plan?.name || 'Veri Paketi'}
-                  </p>
-                  {item.plan?.description && (
-                    <p className="text-slate-600 text-xs mt-1">
-                      {item.plan.description}
-                    </p>
-                  )}
+                  <p className="text-slate-700 text-sm mt-2 font-semibold">{item.plan?.name || "Veri Paketi"}</p>
+                  {item.plan?.description && <p className="text-slate-500 text-xs mt-1">{item.plan.description}</p>}
                 </div>
               </div>
 
-              {/* Features section */}
-              <div className="px-8 py-5 border-b border-white/5">
-                <div className="grid grid-cols-3 gap-3">
+              <div className="px-5 py-4 border-b border-slate-100">
+                <div className="grid grid-cols-3 gap-2">
                   {[
-                    { icon: Calendar, label: t.cart.validUntilMonthEnd || "Ay sonuna kadar", color: "text-blue-400", bg: "bg-blue-500/10" },
-                    { icon: Zap, label: t.cart.instantActivation || "Anlık aktivasyon", color: "text-yellow-400", bg: "bg-yellow-500/10" },
-                    { icon: Shield, label: "SSL Güvenli", color: "text-green-400", bg: "bg-green-500/10" },
-                  ].map(({ icon: Icon, label, color, bg }) => (
-                    <div key={label} className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/3 border border-white/5 text-center">
-                      <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
-                        <Icon className={`h-4 w-4 ${color}`} />
-                      </div>
-                      <span className="text-slate-400 text-xs leading-tight">{label}</span>
+                    { icon: Calendar, label: t.cart.validUntilMonthEnd || "Ay sonuna kadar" },
+                    { icon: Zap, label: t.cart.instantActivation || "Anlık aktivasyon" },
+                    { icon: Shield, label: "SSL Güvenli" },
+                  ].map(({ icon: Icon, label }) => (
+                    <div key={label} className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                      <Icon className="h-4 w-4 text-[#7C5E00]" />
+                      <span className="text-slate-600 text-xs leading-tight">{label}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Price + CTA section */}
-              <div className="px-8 py-6">
-                {/* Price row */}
-                <div className="flex items-center justify-between mb-6">
+              <div className="px-5 py-5">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-xs text-slate-500 mb-1">{t.cart.unitPrice || "Toplam tutar"}</p>
+                    <p className="text-xs text-slate-500 mb-0.5">{t.cart.unitPrice || "Toplam tutar"}</p>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-black text-white">{formatPrice(item.plan?.priceUsd || 0)}</span>
-                      <span className="text-slate-500 text-sm">USD</span>
+                      <span className="text-3xl font-black text-slate-900">{formatPrice(item.plan?.priceUsd || 0)}</span>
+                      <span className="text-slate-400 text-sm">USD</span>
                     </div>
                   </div>
                 </div>
 
-                {/* CTA Button */}
-                <Button
+                <button
                   onClick={() => checkoutMutation.mutate()}
                   disabled={checkoutMutation.isPending}
-                  className="w-full h-14 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-base rounded-2xl shadow-xl shadow-cyan-900/40 hover:shadow-cyan-700/40 transition-all duration-200 group"
+                  className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm transition active:scale-[0.99] disabled:opacity-60"
                 >
                   {checkoutMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                      {t.cart.checkoutProcessing}
-                    </>
+                    <><Loader2 className="h-4 w-4 animate-spin" /> {t.cart.checkoutProcessing}</>
                   ) : (
-                    <>
-                      <CreditCard className="h-5 w-5 mr-2" />
-                      {t.checkout?.proceedToPayment || "Ödemeye Geç"}
-                      <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-0.5 transition-transform" />
-                    </>
+                    <><CreditCard className="h-4 w-4" /> {t.checkout?.proceedToPayment || "Ödemeye Geç"} <ArrowRight className="h-4 w-4" /></>
                   )}
-                </Button>
+                </button>
 
-                {/* Security row */}
-                <div className="flex items-center justify-center gap-4 mt-4">
-                  <div className="flex items-center gap-1.5 text-slate-600">
-                    <Shield className="h-3.5 w-3.5 text-green-600" />
-                    <span className="text-xs">{t.cart.securityNotice}</span>
-                  </div>
-                  <span className="text-slate-700">·</span>
-                  <div className="flex items-center gap-1.5 text-slate-600">
-                    <Star className="h-3 w-3 text-yellow-600" />
-                    <span className="text-xs">PayPal korumalı</span>
-                  </div>
+                <div className="flex items-center justify-center gap-3 mt-3 text-xs text-slate-500">
+                  <span className="inline-flex items-center gap-1"><Shield className="h-3 w-3 text-emerald-600" />{t.cart.securityNotice}</span>
+                  <span>·</span>
+                  <span className="inline-flex items-center gap-1"><Check className="h-3 w-3 text-emerald-600" />PayPal korumalı</span>
                 </div>
               </div>
             </div>
 
-            {/* ── Coupon hint ── */}
-            <div className="mt-4 flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-white/3 border border-white/5">
-              <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
-                <Tag className="h-4 w-4 text-green-400" />
+            <div className="user-card flex items-center gap-3 p-3.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                <Tag className="h-4 w-4 text-emerald-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-green-400">{t.cart.couponHint}</p>
+                <p className="text-xs font-semibold text-emerald-700">{t.cart.couponHint}</p>
                 <p className="text-xs text-slate-500">{t.cart.couponDescription}</p>
               </div>
             </div>
 
-            {/* ── Bottom nav ── */}
-            <div className="mt-6 flex items-center justify-center">
+            <div className="text-center">
               <Link href="/paketler">
-                <button className="flex items-center gap-1.5 text-slate-600 hover:text-slate-400 text-sm transition-colors group">
-                  <ChevronRight className="h-4 w-4 rotate-180 group-hover:-translate-x-0.5 transition-transform" />
-                  Paketlere Dön
-                </button>
+                <a className="text-slate-500 hover:text-slate-900 text-sm">← Paketlere Dön</a>
               </Link>
             </div>
           </>
         )}
       </div>
-    </div>
+    </UserShell>
   );
 }

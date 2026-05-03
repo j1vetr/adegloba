@@ -1,70 +1,15 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Zap, CreditCard, Heart, Wifi, Shield, Clock, ShoppingCart, AlertTriangle, Trash2 } from "lucide-react";
+import { Loader2, Zap, CreditCard, Heart, Wifi, Shield, Clock, ShoppingCart, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { UserNavigation } from "@/components/UserNavigation";
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import UserShell from "@/components/UserShell";
 import type { Plan, FavoritePlan } from "@shared/schema";
 
-type PlanWithStock = Plan & {
-  availableStock: number;
-  inStock: boolean;
-};
-
-const TIER_STYLES = [
-  {
-    gradient: 'from-blue-600/20 via-blue-500/10 to-transparent',
-    accent: 'from-blue-500 to-cyan-400',
-    glow: 'hover:shadow-blue-500/20',
-    border: 'hover:border-blue-500/40',
-    badge: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-    dot: 'bg-blue-400',
-  },
-  {
-    gradient: 'from-cyan-600/20 via-cyan-500/10 to-transparent',
-    accent: 'from-cyan-500 to-teal-400',
-    glow: 'hover:shadow-cyan-500/20',
-    border: 'hover:border-cyan-500/40',
-    badge: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
-    dot: 'bg-cyan-400',
-  },
-  {
-    gradient: 'from-violet-600/20 via-violet-500/10 to-transparent',
-    accent: 'from-violet-500 to-purple-400',
-    glow: 'hover:shadow-violet-500/20',
-    border: 'hover:border-violet-500/40',
-    badge: 'bg-violet-500/10 text-violet-300 border-violet-500/20',
-    dot: 'bg-violet-400',
-  },
-  {
-    gradient: 'from-emerald-600/20 via-emerald-500/10 to-transparent',
-    accent: 'from-emerald-500 to-green-400',
-    glow: 'hover:shadow-emerald-500/20',
-    border: 'hover:border-emerald-500/40',
-    badge: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-    dot: 'bg-emerald-400',
-  },
-  {
-    gradient: 'from-orange-600/20 via-orange-500/10 to-transparent',
-    accent: 'from-orange-500 to-amber-400',
-    glow: 'hover:shadow-orange-500/20',
-    border: 'hover:border-orange-500/40',
-    badge: 'bg-orange-500/10 text-orange-300 border-orange-500/20',
-    dot: 'bg-orange-400',
-  },
-  {
-    gradient: 'from-pink-600/20 via-pink-500/10 to-transparent',
-    accent: 'from-pink-500 to-rose-400',
-    glow: 'hover:shadow-pink-500/20',
-    border: 'hover:border-pink-500/40',
-    badge: 'bg-pink-500/10 text-pink-300 border-pink-500/20',
-    dot: 'bg-pink-400',
-  },
-];
+type PlanWithStock = Plan & { availableStock: number; inStock: boolean };
 
 export default function Paketler() {
   const { user, isLoading: authLoading } = useUserAuth();
@@ -74,51 +19,30 @@ export default function Paketler() {
   const [cartFullDialog, setCartFullDialog] = useState<{ open: boolean; pendingPlanId: string | null }>({ open: false, pendingPlanId: null });
 
   const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
-    queryKey: ["/api/user/ship-plans"],
-    enabled: !!user?.ship_id
+    queryKey: ["/api/user/ship-plans"], enabled: !!user?.ship_id,
   });
-
   const { data: favorites } = useQuery<(FavoritePlan & { plan: Plan })[]>({
-    queryKey: ["/api/favorites"],
-    enabled: !!user
+    queryKey: ["/api/favorites"], enabled: !!user,
   });
-
   const favoriteIds = new Set(favorites?.map(f => f.planId) || []);
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async ({ planId, isFavorite }: { planId: string; isFavorite: boolean }) => {
-      if (isFavorite) {
-        await apiRequest('DELETE', `/api/favorites/${planId}`);
-      } else {
-        await apiRequest('POST', `/api/favorites/${planId}`);
-      }
+      if (isFavorite) await apiRequest("DELETE", `/api/favorites/${planId}`);
+      else await apiRequest("POST", `/api/favorites/${planId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
-    },
-    onError: () => {
-      toast({ title: t.packages.error, description: t.packages.favoriteError || "Favori işlemi başarısız", variant: "destructive" });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/favorites"] }),
+    onError: () => toast({ title: t.packages.error, description: t.packages.favoriteError || "Favori işlemi başarısız", variant: "destructive" }),
   });
 
   const clearCartMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest('DELETE', '/api/cart');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-    },
+    mutationFn: async () => { await apiRequest("DELETE", "/api/cart"); },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/cart"] }),
   });
 
   const addToCartMutation = useMutation({
-    mutationFn: async (planId: string) => {
-      const response = await apiRequest('POST', '/api/cart', { planId, quantity: 1 });
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ title: t.packages.addedToCart, description: t.packages.addedToCartDesc });
-      window.location.href = '/sepet';
-    },
+    mutationFn: async (planId: string) => (await apiRequest("POST", "/api/cart", { planId, quantity: 1 })).json(),
+    onSuccess: () => { toast({ title: t.packages.addedToCart, description: t.packages.addedToCartDesc }); window.location.href = "/sepet"; },
     onError: (error: any, planId: string) => {
       const msg: string = error.message || "";
       if (msg.toLowerCase().includes("sepet") || msg.toLowerCase().includes("cart") || msg.toLowerCase().includes("already") || msg.toLowerCase().includes("limit")) {
@@ -140,268 +64,164 @@ export default function Paketler() {
   const sortedPlans = userShipPlans?.slice().sort((a, b) => a.dataLimitGb - b.dataLimitGb);
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-        <UserNavigation />
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-slate-400" /></div>;
   }
-
-  if (!user) {
-    window.location.href = '/giris';
-    return null;
-  }
+  if (!user) { window.location.href = "/giris"; return null; }
 
   return (
-    <>
-    <div className="min-h-screen bg-[#080c14]">
-      {/* Ambient background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-600/5 blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-cyan-600/5 blur-[120px]" />
-      </div>
-
-      <UserNavigation />
-
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-
-        {/* ── Header ── */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-4 py-1.5 mb-4">
-            <Wifi className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-cyan-400 text-xs font-medium tracking-wider uppercase">Starlink Maritime</span>
+    <UserShell title={t.packages.dataPackages}>
+      <div className="max-w-3xl mx-auto space-y-4">
+        {/* Header */}
+        <div className="user-card-elevated p-5 text-center">
+          <div className="inline-flex items-center gap-1.5 chip chip-brand mb-3">
+            <Wifi className="w-3 h-3" /> Starlink Maritime
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-            {t.packages.dataPackages}
-          </h1>
-          <p className="text-slate-400 text-sm max-w-md mx-auto">
-            Geminize özel internet paketleri. Ay sonuna kadar geçerli, kesintisiz bağlantı.
-          </p>
+          <h1 className="text-xl font-bold text-slate-900 mb-1">{t.packages.dataPackages}</h1>
+          <p className="text-sm text-slate-500">Geminize özel paketler. Ay sonuna kadar geçerli.</p>
         </div>
 
-        {/* ── Quick Access Pill Buttons ── */}
+        {/* Quick filter pills */}
         {sortedPlans && sortedPlans.length > 1 && (
-          <div className="flex flex-wrap justify-center gap-2 mb-10">
-            {sortedPlans.map((plan, i) => {
-              const style = TIER_STYLES[i % TIER_STYLES.length];
-              return (
-                <button
-                  key={`q-${plan.id}`}
-                  onClick={() => {
-                    cardRefs.current[plan.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border bg-white/5 ${style.border} hover:bg-white/10 transition-all duration-200 text-sm font-medium text-white/80 hover:text-white`}
-                  data-testid={`quick-access-${plan.dataLimitGb}gb`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
-                  {plan.dataLimitGb} GB
-                </button>
-              );
-            })}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+            {sortedPlans.map((plan) => (
+              <button
+                key={`q-${plan.id}`}
+                onClick={() => cardRefs.current[plan.id]?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                className="shrink-0 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:border-[#FFDD57] hover:bg-[#FFF6D6] transition"
+                data-testid={`quick-access-${plan.dataLimitGb}gb`}
+              >
+                {plan.dataLimitGb} GB
+              </button>
+            ))}
           </div>
         )}
 
-        {/* ── Plans Grid ── */}
+        {/* Plans */}
         {plansLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-7 w-7 animate-spin text-cyan-400" />
-            <span className="ml-3 text-slate-400 text-sm">{t.packages.loadingPackages}</span>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+            <span className="ml-3 text-slate-500 text-sm">{t.packages.loadingPackages}</span>
           </div>
         ) : sortedPlans?.length ? (
-          <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {sortedPlans.map((plan, i) => {
-              const style = TIER_STYLES[i % TIER_STYLES.length];
+          <div className="grid gap-3 sm:grid-cols-2">
+            {sortedPlans.map((plan) => {
               const isFav = favoriteIds.has(plan.id);
               const isLoading = addToCartMutation.isPending;
-
               return (
                 <div
                   key={plan.id}
                   ref={(el) => { cardRefs.current[plan.id] = el; }}
-                  className={`group relative flex flex-col bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl ${style.glow} ${style.border} hover:-translate-y-1`}
+                  className="user-card-elevated relative p-5 flex flex-col"
                   data-testid={`plan-card-${plan.id}`}
                 >
-                  {/* Gradient top glow */}
-                  <div className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r ${style.accent} opacity-60`} />
-                  <div className={`absolute top-0 inset-x-0 h-32 bg-gradient-to-b ${style.gradient} opacity-60`} />
-
-                  {/* Favorite button */}
                   <button
                     onClick={() => toggleFavoriteMutation.mutate({ planId: plan.id, isFavorite: isFav })}
-                    className="absolute top-3.5 right-3.5 z-10 p-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                    className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-50 hover:bg-slate-100 transition"
                     data-testid={`button-favorite-${plan.id}`}
                   >
-                    <Heart className={`w-4 h-4 transition-all duration-300 ${isFav ? 'fill-red-500 text-red-500' : 'text-white/30 hover:text-red-400'}`} />
+                    <Heart className={`w-4 h-4 ${isFav ? "fill-rose-500 text-rose-500" : "text-slate-300 hover:text-rose-400"}`} />
                   </button>
 
-                  <div className="relative z-10 p-5 flex flex-col flex-1">
-                    {/* Plan name */}
-                    <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">{plan.name}</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">{plan.name}</p>
 
-                    {/* GB hero number */}
-                    <div className="flex items-baseline gap-1 mb-1">
-                      <span className={`text-6xl font-black bg-gradient-to-r ${style.accent} bg-clip-text text-transparent leading-none`}>
-                        {plan.dataLimitGb}
-                      </span>
-                      <span className="text-2xl font-bold text-white/60 ml-1">GB</span>
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-5xl font-black text-slate-900 leading-none">{plan.dataLimitGb}</span>
+                    <span className="text-xl font-bold text-slate-500 ml-1">GB</span>
+                  </div>
+
+                  <p className="text-xs text-slate-500 mb-4 min-h-[16px]">
+                    {plan.description || t.packages.highSpeedData}
+                  </p>
+
+                  <div className="space-y-1.5 mb-4">
+                    <div className="flex items-center gap-2 text-xs text-slate-600"><Clock className="w-3.5 h-3.5 text-slate-400" /><span>{t.packages.monthEndValidity}</span></div>
+                    <div className="flex items-center gap-2 text-xs text-slate-600"><Zap className="w-3.5 h-3.5 text-slate-400" /><span>{t.packages.starlinkTech}</span></div>
+                    <div className="flex items-center gap-2 text-xs text-slate-600"><Shield className="w-3.5 h-3.5 text-slate-400" /><span>Anlık aktivasyon</span></div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-auto">
+                    <div>
+                      <span className="text-xl font-bold text-slate-900">${Number(plan.priceUsd).toFixed(2)}</span>
+                      <span className="text-xs text-slate-400 ml-1">USD</span>
                     </div>
-
-                    {/* Plan description or default */}
-                    <p className="text-xs text-white/35 mb-5 min-h-[16px]">
-                      {plan.description || t.packages.highSpeedData}
-                    </p>
-
-                    {/* Features mini-list */}
-                    <div className="space-y-2 mb-6">
-                      <div className="flex items-center gap-2 text-xs text-white/50">
-                        <Clock className="w-3.5 h-3.5 flex-shrink-0 text-white/30" />
-                        <span>{t.packages.monthEndValidity}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-white/50">
-                        <Zap className="w-3.5 h-3.5 flex-shrink-0 text-white/30" />
-                        <span>{t.packages.starlinkTech}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-white/50">
-                        <Shield className="w-3.5 h-3.5 flex-shrink-0 text-white/30" />
-                        <span>Anlık aktivasyon</span>
-                      </div>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="border-t border-white/[0.06] mb-4" />
-
-                    {/* Price + CTA */}
-                    <div className="flex items-center justify-between mt-auto">
-                      <div>
-                        <span className="text-2xl font-bold text-white">
-                          ${Number(plan.priceUsd).toFixed(2)}
-                        </span>
-                        <span className="text-xs text-white/30 ml-1">USD</span>
-                      </div>
-
-                      <button
-                        onClick={() => addToCartMutation.mutate(plan.id)}
-                        disabled={isLoading}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 bg-gradient-to-r ${style.accent} hover:opacity-90 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95`}
-                        data-testid={`button-buy-${plan.id}`}
-                      >
-                        {isLoading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <>
-                            <CreditCard className="w-4 h-4" />
-                            <span>{t.packages.addToCart}</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => addToCartMutation.mutate(plan.id)}
+                      disabled={isLoading}
+                      className="flex items-center gap-1.5 px-4 h-10 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm transition active:scale-[0.99] disabled:opacity-50"
+                      data-testid={`button-buy-${plan.id}`}
+                    >
+                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CreditCard className="w-4 h-4" /><span>{t.packages.addToCart}</span></>}
+                    </button>
                   </div>
                 </div>
               );
             })}
           </div>
         ) : (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-5">
-              <Wifi className="w-8 h-8 text-slate-500" />
+          <div className="user-card text-center py-12">
+            <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <Wifi className="w-6 h-6 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">{t.packages.noPackagesTitle}</h3>
-            <p className="text-slate-400 text-sm mb-1">{t.packages.noPackagesDesc}</p>
-            <p className="text-slate-500 text-xs">{t.packages.contactAdmin}</p>
+            <h3 className="text-base font-semibold text-slate-900 mb-1">{t.packages.noPackagesTitle}</h3>
+            <p className="text-slate-500 text-sm mb-1">{t.packages.noPackagesDesc}</p>
+            <p className="text-slate-400 text-xs">{t.packages.contactAdmin}</p>
           </div>
         )}
 
-        {/* ── Bottom Feature Strip ── */}
+        {/* Bottom features */}
         {sortedPlans && sortedPlans.length > 0 && (
-          <div className="mt-12 grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2.5 pt-2">
             {[
               { icon: Zap, label: t.packages.highSpeedTitle, sub: t.packages.highSpeedDesc },
               { icon: Shield, label: t.packages.flexiblePackagesTitle, sub: t.packages.flexiblePackagesDesc },
               { icon: Wifi, label: t.packages.shipSpecificTitle, sub: t.packages.shipSpecificDesc },
             ].map(({ icon: Icon, label, sub }, i) => (
-              <div key={i} className="flex flex-col items-center text-center p-4 rounded-xl bg-white/[0.02] border border-white/[0.05]">
-                <Icon className="w-5 h-5 text-white/30 mb-2" />
-                <p className="text-white/60 text-xs font-medium mb-1">{label}</p>
-                <p className="text-white/25 text-xs leading-relaxed hidden sm:block">{sub}</p>
+              <div key={i} className="user-card flex flex-col items-center text-center p-3.5">
+                <Icon className="w-5 h-5 text-[#7C5E00] mb-1.5" />
+                <p className="text-slate-900 text-xs font-semibold mb-0.5">{label}</p>
+                <p className="text-slate-500 text-xs leading-relaxed hidden sm:block">{sub}</p>
               </div>
             ))}
           </div>
         )}
       </div>
-    </div>
 
-    {/* ── Cart Full Dialog ── */}
-    {cartFullDialog.open && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-          onClick={() => setCartFullDialog({ open: false, pendingPlanId: null })}
-        />
-
-        {/* Dialog card */}
-        <div className="relative w-full max-w-md rounded-3xl border border-amber-500/30 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl shadow-amber-900/20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          {/* Top accent */}
-          <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500" />
-
-          <div className="p-7">
-            {/* Icon */}
-            <div className="flex justify-center mb-5">
-              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                <ShoppingCart className="h-7 w-7 text-amber-400" />
+      {cartFullDialog.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40" onClick={() => setCartFullDialog({ open: false, pendingPlanId: null })} />
+          <div className="relative w-full max-w-md user-card-elevated overflow-hidden">
+            <div className="p-6">
+              <div className="flex justify-center mb-4">
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center">
+                  <ShoppingCart className="h-7 w-7 text-amber-600" />
+                </div>
               </div>
-            </div>
-
-            {/* Text */}
-            <div className="text-center mb-7">
-              <h2 className="text-xl font-bold text-white mb-3">
-                {t.cart.cartFullTitle || "Sepetinizde Zaten Bir Paket Var"}
-              </h2>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                {t.cart.cartFullDesc || "Yeni bir paket eklemek için önce mevcut paketi satın alın ya da sepetinizi temizleyin."}
-              </p>
-            </div>
-
-            {/* Buttons */}
-            <div className="space-y-3">
-              <Link href="/sepet">
-                <Button
-                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold py-3 rounded-xl text-sm"
-                  onClick={() => setCartFullDialog({ open: false, pendingPlanId: null })}
+              <div className="text-center mb-5">
+                <h2 className="text-lg font-bold text-slate-900 mb-2">{t.cart.cartFullTitle || "Sepetinizde Zaten Bir Paket Var"}</h2>
+                <p className="text-slate-500 text-sm">{t.cart.cartFullDesc || "Yeni bir paket eklemek için önce mevcut paketi satın alın ya da sepetinizi temizleyin."}</p>
+              </div>
+              <div className="space-y-2">
+                <Link href="/sepet">
+                  <a onClick={() => setCartFullDialog({ open: false, pendingPlanId: null })} className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm">
+                    <ShoppingCart className="h-4 w-4" /> {t.cart.cartFullGoToCart || "Sepete Git"}
+                  </a>
+                </Link>
+                <button
+                  onClick={handleClearAndAdd}
+                  disabled={clearCartMutation.isPending || addToCartMutation.isPending}
+                  className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-sm transition"
                 >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  {t.cart.cartFullGoToCart || "Sepete Git"}
-                </Button>
-              </Link>
-
-              <Button
-                variant="outline"
-                className="w-full border-red-500/30 hover:border-red-500/60 bg-red-500/5 hover:bg-red-500/10 text-red-400 hover:text-red-300 font-semibold py-3 rounded-xl text-sm transition-all"
-                onClick={handleClearAndAdd}
-                disabled={clearCartMutation.isPending || addToCartMutation.isPending}
-              >
-                {(clearCartMutation.isPending || addToCartMutation.isPending) ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Trash2 className="h-4 w-4 mr-2" />
-                )}
-                {t.cart.cartFullClearAndAdd || "Sepeti Temizle ve Ekle"}
-              </Button>
-
-              <button
-                onClick={() => setCartFullDialog({ open: false, pendingPlanId: null })}
-                className="w-full text-center text-xs text-slate-500 hover:text-slate-400 py-2 transition-colors"
-              >
-                Vazgeç
-              </button>
+                  {(clearCartMutation.isPending || addToCartMutation.isPending) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  {t.cart.cartFullClearAndAdd || "Sepeti Temizle ve Ekle"}
+                </button>
+                <button onClick={() => setCartFullDialog({ open: false, pendingPlanId: null })} className="w-full text-center text-xs text-slate-500 hover:text-slate-700 py-2">
+                  Vazgeç
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )}
-    </>
+      )}
+    </UserShell>
   );
 }

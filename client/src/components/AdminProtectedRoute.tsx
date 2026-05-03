@@ -19,7 +19,7 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+      <div className="theme-dark min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
       </div>
     );
@@ -29,5 +29,5 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
     return null; // Will redirect to login
   }
 
-  return <>{children}</>;
+  return <div className="theme-dark">{children}</div>;
 }

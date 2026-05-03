@@ -1,199 +1,111 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { CheckCircle2, Clock, ArrowRight, Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { CheckCircle2, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import UserShell from "@/components/UserShell";
 
 export default function OrderSuccess() {
   const [, setLocation] = useLocation();
-  const [countdown, setCountdown] = useState(5);
   const [orderDetails, setOrderDetails] = useState<any>(null);
 
-  // Parse URL parameters for order details
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const orderId = urlParams.get('orderId');
-    const amount = urlParams.get('amount');
-    const paymentId = urlParams.get('paymentId');
-    
+    const p = new URLSearchParams(window.location.search);
     setOrderDetails({
-      orderId,
-      amount,
-      paymentId
+      orderId: p.get("orderId"),
+      amount: p.get("amount"),
+      paymentId: p.get("paymentId"),
     });
   }, []);
 
-  // Verify order exists and get details
-  const { data: ordersData, isLoading, error } = useQuery({
-    queryKey: ['/api/user/orders'],
+  const { data: ordersData, isLoading, error } = useQuery<any[]>({
+    queryKey: ["/api/user/orders"],
     enabled: !!orderDetails?.orderId,
-    retry: false
+    retry: false,
   });
 
-  // Find the specific order by ID
-  const verifiedOrder = ordersData?.find((order: any) => order.id === orderDetails?.orderId);
+  const verifiedOrder = ordersData?.find((o: any) => o.id === orderDetails?.orderId);
 
-  // Auto-redirect to dashboard immediately
-  useEffect(() => {
-    // 2.5 saniye sonra direkt dashboard'a yönlendir
-    const timer = setTimeout(() => {
-      window.location.href = '/panel';
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleRedirectNow = () => {
-    window.location.href = '/panel';
-  };
-
-  // Allow access without orderId for testing/direct access
-  // Only redirect if there's an explicit error after trying to load
-
-  // Show loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-cyan-400 mx-auto mb-4" />
-          <p className="text-slate-300">Sipariş detayları kontrol ediliyor...</p>
+      <UserShell hideBottomNav hideHeader>
+        <div className="min-h-[80vh] flex flex-col items-center justify-center text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-400 mb-3" />
+          <p className="text-sm text-slate-500">Sipariş detayları kontrol ediliyor...</p>
         </div>
-      </div>
+      </UserShell>
     );
   }
 
-  // Show error state
   if (error || (!verifiedOrder && orderDetails?.orderId)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-        <Card className="glassmorphism border border-red-500/30 bg-slate-900/50 p-8 text-center">
-          <div className="text-red-400 mb-4">
-            <p className="text-xl font-semibold">Sipariş Bulunamadı</p>
-            <p className="text-sm text-slate-400 mt-2">Bu sipariş doğrulanamadı.</p>
+      <UserShell title="Sipariş Bulunamadı" showBack backTo="/panel">
+        <div className="max-w-md mx-auto user-card-elevated p-6 text-center">
+          <div className="mx-auto h-14 w-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+            <AlertCircle className="h-7 w-7" />
           </div>
-          <Button
-            onClick={() => setLocation("/panel")}
-            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-          >
+          <h2 className="text-lg font-bold text-slate-900 mb-1">Sipariş Bulunamadı</h2>
+          <p className="text-sm text-slate-500 mb-4">Bu sipariş doğrulanamadı.</p>
+          <button onClick={() => setLocation("/panel")}
+            className="w-full h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm">
             Panele Dön
-          </Button>
-        </Card>
-      </div>
+          </button>
+        </div>
+      </UserShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        {/* Success Card */}
-        <Card className="glassmorphism border border-green-500/30 bg-slate-900/50 p-8 text-center">
-          {/* Success Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center animate-pulse">
-              <CheckCircle2 className="w-10 h-10 text-white" />
-            </div>
+    <UserShell title="Ödeme Başarılı" hideBottomNav>
+      <div className="max-w-md mx-auto space-y-4">
+        <div className="user-card-elevated p-6 text-center">
+          <div className="mx-auto h-16 w-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 animate-scale-in">
+            <CheckCircle2 className="h-8 w-8" />
           </div>
+          <h1 className="text-xl font-bold text-slate-900 mb-1.5">Ödemeniz Kabul Edildi</h1>
+          <p className="text-sm text-slate-500 mb-5">Hesabınız etkinleştirildi ve paketleriniz kullanıma hazır.</p>
 
-          {/* Main Message */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-4">
-              Ödemeniz Kabul Edildi!
-            </h1>
-            <p className="text-lg text-slate-300 mb-4">
-              Başarılı bir şekilde ödeme işleminiz tamamlandı.
-            </p>
-            
-            {(verifiedOrder || orderDetails) && (
-              <div className="bg-slate-800/50 rounded-lg p-4 mb-6 text-left">
-                <h3 className="text-white font-semibold mb-3">Sipariş Detayları:</h3>
-                <div className="space-y-2 text-sm">
-                  {orderDetails?.orderId && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Sipariş ID:</span>
-                      <span className="text-white font-mono">{orderDetails.orderId}</span>
-                    </div>
-                  )}
-                  {(verifiedOrder?.totalUsd || orderDetails?.amount) && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Tutar:</span>
-                      <span className="text-green-400 font-semibold">
-                        ${verifiedOrder?.totalUsd || orderDetails?.amount}
-                      </span>
-                    </div>
-                  )}
-                  {verifiedOrder?.status && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Durum:</span>
-                      <span className="text-green-400 font-semibold">Ödendi</span>
-                    </div>
-                  )}
-                  {orderDetails?.paymentId && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Ödeme ID:</span>
-                      <span className="text-white font-mono text-xs">{orderDetails.paymentId}</span>
-                    </div>
-                  )}
+          {(verifiedOrder || orderDetails) && (
+            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 mb-5 text-left text-sm space-y-1.5">
+              {orderDetails?.orderId && (
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-500">Sipariş ID</span>
+                  <span className="text-slate-900 font-mono text-xs truncate max-w-[180px]">{orderDetails.orderId}</span>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+              {(verifiedOrder?.totalUsd || orderDetails?.amount) && (
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-500">Tutar</span>
+                  <span className="text-emerald-600 font-bold">${verifiedOrder?.totalUsd || orderDetails?.amount}</span>
+                </div>
+              )}
+              {verifiedOrder?.status && (
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-500">Durum</span>
+                  <span className="chip chip-success">Ödendi</span>
+                </div>
+              )}
+              {orderDetails?.paymentId && (
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-500">Ödeme ID</span>
+                  <span className="text-slate-900 font-mono text-xs truncate max-w-[180px]">{orderDetails.paymentId}</span>
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Auto-redirect countdown */}
-          <div className="mb-8">
-            <div className="flex items-center justify-center space-x-3 text-cyan-400 mb-4">
-              <Clock className="w-5 h-5" />
-              <span className="text-lg font-semibold">
-                Ödemeniz kabul edildi — müşteri paneline yönlendiriliyorsunuz
-              </span>
-            </div>
-            
-            {/* Progress bar */}
-            <div className="w-full bg-slate-700 rounded-full h-2 mb-6">
-              <div 
-                className="bg-gradient-to-r from-cyan-400 to-blue-500 h-2 rounded-full transition-all duration-1000 ease-linear"
-                style={{ width: `${((5 - countdown) / 5) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-3">
-            <Button
-              onClick={handleRedirectNow}
-              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl text-base transition-all duration-200 shadow-lg hover:shadow-xl"
-              data-testid="redirect-now-button"
-            >
-              <ArrowRight className="w-5 h-5 mr-2" />
-              Müşteri Paneline Git
-            </Button>
-            
-            <div className="text-center">
-              <p className="text-xs text-slate-500">
-                Hesabınız etkinleştirildi ve tüm paketleriniz kullanıma hazır
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Additional Info */}
-        <div className="mt-6 text-center">
-          {/* AdeGloba Logo */}
-          <div className="flex justify-center mb-4">
-            <div className="text-2xl font-bold text-slate-300">
-              AdeGloba
-            </div>
-          </div>
-          
-          <p className="text-slate-400 text-sm mb-2">
-            Herhangi bir sorun yaşarsanız destek ekibimizle iletişime geçin
-          </p>
-          <div className="flex justify-center space-x-4 text-xs text-slate-500">
-            <span>📧 support@adegloba.space</span>
-            <span>📱 +44 744 022 5375</span>
-          </div>
+          <button
+            onClick={() => setLocation("/panel")}
+            className="w-full h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
+            data-testid="redirect-now-button"
+          >
+            Müşteri Paneline Git <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
+
+        <p className="text-center text-xs text-slate-400">
+          Sorun yaşarsanız · support@adegloba.space
+        </p>
       </div>
-    </div>
+    </UserShell>
   );
 }

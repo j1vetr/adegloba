@@ -15,7 +15,7 @@ Preferred communication style: Simple, everyday language.
 - **State Management**: TanStack Query (React Query) for server state.
 - **Routing**: Wouter for lightweight client-side routing.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Futuristic dark theme, glassmorphism design, smooth animations, responsive design across all pages. All labels and content are in Turkish.
+- **UI/UX Decisions**: Light theme for all user-facing pages with white + #FFDD57 (Turkcell yellow) brand colors, mobile-first Turkish operator app aesthetic (rounded-2xl cards, pill chips, h-12 buttons). Admin panel and `/login` use dark theme via `.theme-dark` wrapper. Sticky header + 5-tab bottom nav (cart as center FAB) via `UserShell`. All labels in Turkish.
 
 ## Backend Architecture
 - **Runtime**: Node.js with Express.js.
