@@ -89,7 +89,7 @@ export default function Giris() {
       </div>
 
       {/* Top bar with language selector */}
-      <header className="relative z-10 px-5 pt-4 sm:pt-6 flex items-center justify-between max-w-6xl mx-auto">
+      <header className="relative z-50 px-5 pt-4 sm:pt-6 flex items-center justify-between max-w-6xl mx-auto">
         <img src={adeGlobaLogo} alt="AdeGloba Limited" className="h-16 w-auto md:hidden" />
         <div className="hidden md:block w-9" />
         <LanguageSelector variant="light" />

@@ -24,7 +24,7 @@ export default function AuthShell({ hero, children }: AuthShellProps) {
       {/* Top yellow zone */}
       <div className="relative bg-[#FFDD57] pt-3 pb-20 px-4">
         <div className="mx-auto max-w-md flex items-center justify-between">
-          <img src={adeGlobaLogo} alt="AdeGloba" className="h-8 w-auto" />
+          <img src={adeGlobaLogo} alt="AdeGloba" className="h-12 w-auto" />
           <LanguageSelector variant="light" />
         </div>
         <div className="mx-auto max-w-md mt-6 mb-2 text-slate-900">

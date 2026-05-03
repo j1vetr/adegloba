@@ -36,7 +36,7 @@ export default function Landing() {
       </div>
 
       {/* Top bar */}
-      <header className="relative z-10 px-5 pt-5 sm:pt-6">
+      <header className="relative z-50 px-5 pt-5 sm:pt-6">
         <div className="mx-auto max-w-6xl flex items-center justify-end">
           <LanguageSelector variant="light" />
         </div>

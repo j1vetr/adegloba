@@ -55,7 +55,7 @@ export default function UserShell({
     <div className="min-h-screen bg-[#F7F8FA] text-slate-900 flex flex-col">
       {!hideHeader && (
         <header className="sticky top-0 z-30 bg-white border-b border-slate-200/70">
-          <div className="mx-auto max-w-md px-4 h-14 flex items-center gap-3">
+          <div className="mx-auto max-w-md px-4 h-16 flex items-center gap-3">
             {showBack ? (
               <button
                 onClick={goBack}
@@ -67,7 +67,7 @@ export default function UserShell({
               </button>
             ) : (
               <Link href="/panel">
-                <img src={adeGlobaLogo} alt="AdeGloba" className="h-7 w-auto cursor-pointer" />
+                <img src={adeGlobaLogo} alt="AdeGloba" className="h-11 w-auto cursor-pointer" />
               </Link>
             )}
             <div className="flex-1 min-w-0">
