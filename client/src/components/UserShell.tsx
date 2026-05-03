@@ -138,7 +138,7 @@ function BottomNav({ location, cartCount }: { location: string; cartCount: numbe
           return (
             <Link key={t.id} href={t.href}>
               <a
-                className="flex flex-col items-center justify-center gap-1 transition active:scale-95"
+                className="flex flex-col items-center justify-center gap-1 pt-3 transition active:scale-95"
                 data-testid={`nav-${t.id}`}
               >
                 <Icon

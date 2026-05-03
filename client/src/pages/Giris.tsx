@@ -90,7 +90,7 @@ export default function Giris() {
 
       {/* Top bar with language selector */}
       <header className="relative z-10 px-5 pt-4 sm:pt-6 flex items-center justify-between max-w-6xl mx-auto">
-        <img src={adeGlobaLogo} alt="AdeGloba Limited" className="h-9 w-auto md:hidden" />
+        <img src={adeGlobaLogo} alt="AdeGloba Limited" className="h-16 w-auto md:hidden" />
         <div className="hidden md:block w-9" />
         <LanguageSelector variant="light" />
       </header>
@@ -100,14 +100,10 @@ export default function Giris() {
         <div className="grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
 
           {/* Left: brand storytelling (desktop only) */}
-          <section className="hidden md:block animate-fade-in">
-            <img src={adeGlobaLogo} alt="AdeGloba Limited" className="h-12 w-auto mb-8" />
+          <section className="hidden md:flex flex-col items-start animate-fade-in">
+            <img src={adeGlobaLogo} alt="AdeGloba Limited" className="h-32 lg:h-40 w-auto mb-8" />
 
-            <h1 className="text-4xl lg:text-5xl font-black text-slate-900 leading-[1.05] tracking-tight">
-              Denizdeki bağlantınız,<br />
-              <span className="text-[#7C5E00]">kıyıdaki kadar güçlü.</span>
-            </h1>
-            <p className="mt-5 text-base lg:text-lg text-slate-600 max-w-md leading-relaxed">
+            <p className="text-base lg:text-lg text-slate-600 max-w-md leading-relaxed">
               Maritime Starlink ile gemilerinize anında, kararlı ve güvenli internet.
               AdeGloba Limited paneliyle paketinizi seçin, ödeme yapın, denizdeyken bağlanın.
             </p>
@@ -137,14 +133,6 @@ export default function Giris() {
 
           {/* Right: login form card */}
           <section className="animate-fade-in">
-            {/* Mobile-only brand line */}
-            <div className="md:hidden mb-5">
-              <h1 className="text-2xl font-black text-slate-900 leading-tight">
-                Denizdeki bağlantınız,<br />
-                <span className="text-[#7C5E00]">kıyıdaki kadar güçlü.</span>
-              </h1>
-            </div>
-
             <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.15)] p-6 md:p-8">
               <div className="mb-6">
                 <h2 className="text-xl md:text-2xl font-bold text-slate-900">{t.auth.systemLogin}</h2>
