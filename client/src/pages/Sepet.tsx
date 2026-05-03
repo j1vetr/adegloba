@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import { Loader2, ShoppingCart, Trash2, ArrowRight, Shield, Wifi, Calendar, Zap, Tag, Check, Package, CreditCard } from "lucide-react";
+import { Loader2, ShoppingCart, Trash2, ArrowRight, Shield, Wifi, Calendar, Zap, Tag, Package, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -128,7 +128,7 @@ export default function Sepet() {
               </div>
 
               <div className="px-5 py-5">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-slate-500 mb-0.5">{t.cart.unitPrice || "Toplam tutar"}</p>
                     <div className="flex items-baseline gap-1">
@@ -136,24 +136,6 @@ export default function Sepet() {
                       <span className="text-slate-400 text-sm">USD</span>
                     </div>
                   </div>
-                </div>
-
-                <button
-                  onClick={() => checkoutMutation.mutate()}
-                  disabled={checkoutMutation.isPending}
-                  className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm transition active:scale-[0.99] disabled:opacity-60"
-                >
-                  {checkoutMutation.isPending ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> {t.cart.checkoutProcessing}</>
-                  ) : (
-                    <><CreditCard className="h-4 w-4" /> {t.checkout?.proceedToPayment || "Ödemeye Geç"} <ArrowRight className="h-4 w-4" /></>
-                  )}
-                </button>
-
-                <div className="flex items-center justify-center gap-3 mt-3 text-xs text-slate-500">
-                  <span className="inline-flex items-center gap-1"><Shield className="h-3 w-3 text-emerald-600" />{t.cart.securityNotice}</span>
-                  <span>·</span>
-                  <span className="inline-flex items-center gap-1"><Check className="h-3 w-3 text-emerald-600" />PayPal korumalı</span>
                 </div>
               </div>
             </div>
@@ -168,10 +150,28 @@ export default function Sepet() {
               </div>
             </div>
 
-            <div className="text-center">
+            <div className="text-center pb-2">
               <Link href="/paketler">
                 <a className="text-slate-500 hover:text-slate-900 text-sm">← Paketlere Dön</a>
               </Link>
+            </div>
+
+            {/* Sticky bottom CTA (sits above bottom nav) */}
+            <div className="fixed left-0 right-0 z-30 bg-white border-t border-slate-200/70" style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}>
+              <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-500 leading-none">Toplam</p>
+                  <p className="text-xl font-black text-slate-900 leading-tight">{formatPrice(item.plan?.priceUsd || 0)}<span className="text-xs text-slate-400 font-normal ml-1">USD</span></p>
+                </div>
+                <button
+                  onClick={() => checkoutMutation.mutate()}
+                  disabled={checkoutMutation.isPending}
+                  className="shrink-0 inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm transition active:scale-[0.99] disabled:opacity-60"
+                  data-testid="button-checkout-sticky"
+                >
+                  {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CreditCard className="h-4 w-4" /> Ödemeye Geç <ArrowRight className="h-4 w-4" /></>}
+                </button>
+              </div>
             </div>
           </>
         )}

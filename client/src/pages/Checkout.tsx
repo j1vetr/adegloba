@@ -266,19 +266,39 @@ export default function Checkout() {
 
           {finalTotal > 0 ? (
             <div className="space-y-3">
+              {/* Payment method segmented */}
+              <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl">
+                <button
+                  onClick={() => setCreditCardDrawerOpen(true)}
+                  className="h-12 rounded-xl bg-white text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98]"
+                  data-testid="payment-method-paypal"
+                >
+                  <span className="font-bold text-[#003087]">Pay</span><span className="font-bold text-[#0070BA]">Pal</span>
+                </button>
+                <button
+                  onClick={() => setCreditCardDrawerOpen(true)}
+                  className="h-12 rounded-xl bg-white text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98]"
+                  data-testid="payment-method-card"
+                >
+                  <CreditCard className="h-4 w-4" /> {t.checkout.cardPayment || "Kredi Kartı"}
+                </button>
+              </div>
+
               <button
                 onClick={() => setCreditCardDrawerOpen(true)}
                 className="w-full h-14 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-bold text-base transition active:scale-[0.99] flex items-center justify-center gap-3"
                 data-testid="credit-card-button"
               >
-                <CreditCard className="h-5 w-5" />
-                <span>{t.checkout.cardPayment}</span>
+                <span>Ödemeye Geç</span>
                 <span className="ml-auto font-black">{formatPrice(finalTotal)}</span>
               </button>
 
-              <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
-                <Shield className="h-3.5 w-3.5 text-emerald-600" />
-                <span>{t.checkout.secure3D || "3D Secure korumalı ödeme"}</span>
+              <div className="flex items-center justify-center gap-3 text-xs text-slate-500 flex-wrap">
+                <span className="inline-flex items-center gap-1"><Shield className="h-3 w-3 text-emerald-600" /> SSL</span>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1"><Lock className="h-3 w-3 text-emerald-600" /> 3D Secure</span>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1"><CheckCircle className="h-3 w-3 text-emerald-600" /> PCI DSS</span>
               </div>
 
               <div className="flex items-center justify-center gap-2 pt-1">

@@ -10,16 +10,7 @@ import { NotificationSettings } from "@/components/NotificationSettings";
 import UserShell from "@/components/UserShell";
 import { Link } from "wouter";
 import type { User as UserType, Ship } from "@shared/schema";
-
-const COUNTRY_CODES = [
-  { code: "+90", country: "Türkiye" }, { code: "+1", country: "ABD/Kanada" },
-  { code: "+44", country: "İngiltere" }, { code: "+49", country: "Almanya" },
-  { code: "+33", country: "Fransa" }, { code: "+39", country: "İtalya" },
-  { code: "+34", country: "İspanya" }, { code: "+31", country: "Hollanda" },
-  { code: "+7", country: "Rusya" }, { code: "+86", country: "Çin" },
-  { code: "+81", country: "Japonya" }, { code: "+91", country: "Hindistan" },
-  { code: "+61", country: "Avustralya" }, { code: "+971", country: "BAE" },
-];
+import { COUNTRY_CODES, findCountryByPhone } from "@/lib/countryCodes";
 
 export default function Profil() {
   const { toast } = useToast();
@@ -60,11 +51,7 @@ export default function Profil() {
   React.useEffect(() => {
     if (user) {
       const phone = user.phone || "";
-      let cc = "+90"; let num = "";
-      if (phone) {
-        const m = COUNTRY_CODES.find(c => phone.startsWith(c.code));
-        if (m) { cc = m.code; num = phone.substring(m.code.length); } else num = phone;
-      }
+      const { code: cc, rest: num } = phone ? findCountryByPhone(phone) : { code: "+90", rest: "" };
       setFormData({
         full_name: user.full_name || "", email: user.email || "",
         phoneCountryCode: cc, phoneNumber: num,
@@ -148,7 +135,11 @@ export default function Profil() {
           <Field icon={Phone} label="Telefon Numarası">
             {isEditing ? (
               <div className="flex gap-2">
-                <input value={formData.phoneCountryCode} onChange={e => handleChange("phoneCountryCode", e.target.value)} placeholder="+90" className="user-input w-[80px] h-11 px-2 text-center text-sm" data-testid="input-country-code" />
+                <select value={formData.phoneCountryCode} onChange={e => handleChange("phoneCountryCode", e.target.value)} className="user-input w-[110px] h-11 px-2 text-sm" data-testid="input-country-code">
+                  {COUNTRY_CODES.map(c => (
+                    <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                  ))}
+                </select>
                 <input value={formData.phoneNumber} onChange={e => handleChange("phoneNumber", e.target.value)} placeholder="532 123 45 67" className="user-input flex-1 h-11 px-3.5 text-sm" data-testid="input-phone-number" />
               </div>
             ) : <Display>{user?.phone || "Henüz girilmemiş"}</Display>}
@@ -218,7 +209,7 @@ export default function Profil() {
 
         {/* Quick links */}
         <div className="user-card p-2">
-          <Link href="/kullanim-kilavuzu">
+          <Link href="/kilavuz">
             <a className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition">
               <div className="w-9 h-9 rounded-xl bg-[#FFF6D6] flex items-center justify-center">
                 <BookOpen className="h-4 w-4 text-[#7C5E00]" />

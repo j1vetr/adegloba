@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { CheckCircle2, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle2, ArrowRight, Loader2, AlertCircle, Copy, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import UserShell from "@/components/UserShell";
 
 export default function OrderSuccess() {
   const [, setLocation] = useLocation();
   const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copyOrderId = async (id: string) => {
+    try { await navigator.clipboard.writeText(id); setCopied(true); setTimeout(() => setCopied(false), 1500); }
+    catch {}
+  };
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -67,9 +73,16 @@ export default function OrderSuccess() {
           {(verifiedOrder || orderDetails) && (
             <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 mb-5 text-left text-sm space-y-1.5">
               {orderDetails?.orderId && (
-                <div className="flex justify-between gap-2">
+                <div className="flex justify-between items-center gap-2">
                   <span className="text-slate-500">Sipariş ID</span>
-                  <span className="text-slate-900 font-mono text-xs truncate max-w-[180px]">{orderDetails.orderId}</span>
+                  <button
+                    onClick={() => copyOrderId(orderDetails.orderId)}
+                    className="flex items-center gap-1.5 text-slate-900 font-mono text-xs hover:text-[#7C5E00] transition"
+                    data-testid="button-copy-order-id"
+                  >
+                    <span className="truncate max-w-[160px]">{orderDetails.orderId}</span>
+                    {copied ? <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> : <Copy className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
+                  </button>
                 </div>
               )}
               {(verifiedOrder?.totalUsd || orderDetails?.amount) && (

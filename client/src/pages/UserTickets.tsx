@@ -2,11 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Loader2, Plus, Clock, CheckCircle, XCircle, AlertCircle, ChevronRight,
-  HeadphonesIcon, TicketIcon, Inbox,
+  HeadphonesIcon, TicketIcon, Inbox, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -82,70 +79,13 @@ export default function UserTickets() {
             </div>
           </div>
 
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <button className="w-full h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 transition active:scale-[0.99]">
-                <Plus className="h-4 w-4" /> Yeni Talep Oluştur
-              </button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg bg-white">
-              <DialogHeader>
-                <DialogTitle className="text-slate-900 flex items-center gap-2">
-                  <TicketIcon className="h-5 w-5 text-[#7C5E00]" />
-                  Yeni Destek Talebi
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-2">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Konu Başlığı</label>
-                  <input
-                    value={formData.subject}
-                    onChange={(e) => setFormData(p => ({ ...p, subject: e.target.value }))}
-                    placeholder="Sorunu kısaca özetleyin..."
-                    className="user-input w-full h-11 px-3.5 text-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Öncelik</label>
-                  <select
-                    value={formData.priority}
-                    onChange={(e) => setFormData(p => ({ ...p, priority: e.target.value }))}
-                    className="user-input w-full h-11 px-3.5 text-sm"
-                  >
-                    <option value="Düşük">Düşük</option>
-                    <option value="Orta">Orta</option>
-                    <option value="Yüksek">Yüksek</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Mesajınız</label>
-                  <textarea
-                    value={formData.message}
-                    onChange={(e) => setFormData(p => ({ ...p, message: e.target.value }))}
-                    placeholder="Sorununuzu detaylıca açıklayın..."
-                    rows={5}
-                    className="user-input w-full px-3.5 py-2.5 text-sm resize-none"
-                  />
-                </div>
-                <div className="flex gap-2 pt-1">
-                  <button
-                    onClick={() => createTicketMutation.mutate(formData)}
-                    disabled={createTicketMutation.isPending}
-                    className="flex-1 h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-                  >
-                    {createTicketMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                    Talebi Gönder
-                  </button>
-                  <button
-                    onClick={() => setIsCreateDialogOpen(false)}
-                    className="flex-1 h-12 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm"
-                  >
-                    İptal
-                  </button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <button
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="w-full h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 transition active:scale-[0.99]"
+            data-testid="button-open-new-ticket"
+          >
+            <Plus className="h-4 w-4" /> Yeni Talep Oluştur
+          </button>
         </div>
 
         {/* Stats */}
@@ -214,6 +154,83 @@ export default function UserTickets() {
           </div>
         )}
       </div>
+
+      {/* New ticket bottom sheet */}
+      {isCreateDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" data-testid="new-ticket-sheet">
+          <div className="absolute inset-0 bg-slate-900/40" onClick={() => setIsCreateDialogOpen(false)} />
+          <div className="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col animate-in slide-in-from-bottom duration-200">
+            <div className="mx-auto w-12 h-1 rounded-full bg-slate-200 mt-2.5 mb-1 sm:hidden" />
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <TicketIcon className="h-5 w-5 text-[#7C5E00]" /> Yeni Destek Talebi
+              </h2>
+              <button onClick={() => setIsCreateDialogOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 transition">
+                <X className="h-4 w-4 text-slate-500" />
+              </button>
+            </div>
+            <div className="px-5 py-4 space-y-4 overflow-y-auto">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Konu Başlığı</label>
+                <input
+                  value={formData.subject}
+                  onChange={(e) => setFormData(p => ({ ...p, subject: e.target.value }))}
+                  placeholder="Sorunu kısaca özetleyin..."
+                  className="user-input w-full h-11 px-3.5 text-sm"
+                  data-testid="input-ticket-subject"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Öncelik</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { v: "Düşük",  cls: "bg-emerald-50 border-emerald-200 text-emerald-700" },
+                    { v: "Orta",   cls: "bg-amber-50 border-amber-200 text-amber-700" },
+                    { v: "Yüksek", cls: "bg-rose-50 border-rose-200 text-rose-700" },
+                  ].map(({ v, cls }) => (
+                    <button
+                      key={v}
+                      onClick={() => setFormData(p => ({ ...p, priority: v }))}
+                      className={`h-11 rounded-xl border text-xs font-semibold transition ${formData.priority === v ? cls : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"}`}
+                      data-testid={`priority-${v}`}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Mesajınız</label>
+                <textarea
+                  value={formData.message}
+                  onChange={(e) => setFormData(p => ({ ...p, message: e.target.value }))}
+                  placeholder="Sorununuzu detaylıca açıklayın..."
+                  rows={5}
+                  className="user-input w-full px-3.5 py-2.5 text-sm resize-none"
+                  data-testid="input-ticket-message"
+                />
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t border-slate-100 flex gap-2 bottom-nav-safe">
+              <button
+                onClick={() => setIsCreateDialogOpen(false)}
+                className="flex-1 h-12 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm"
+              >
+                İptal
+              </button>
+              <button
+                onClick={() => createTicketMutation.mutate(formData)}
+                disabled={createTicketMutation.isPending}
+                className="flex-1 h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                data-testid="button-submit-ticket"
+              >
+                {createTicketMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                Gönder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </UserShell>
   );
 }

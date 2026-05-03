@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Zap, CreditCard, Heart, Wifi, Shield, Clock, ShoppingCart, Trash2 } from "lucide-react";
+import { Loader2, Zap, CreditCard, Heart, Wifi, Shield, Clock, ShoppingCart, Trash2, Check, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
@@ -16,6 +16,7 @@ export default function Paketler() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [cartFullDialog, setCartFullDialog] = useState<{ open: boolean; pendingPlanId: string | null }>({ open: false, pendingPlanId: null });
+  const [addedSheet, setAddedSheet] = useState<{ open: boolean; plan: PlanWithStock | null }>({ open: false, plan: null });
 
   const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
     queryKey: ["/api/user/ship-plans"], enabled: !!user?.ship_id,
@@ -40,8 +41,15 @@ export default function Paketler() {
   });
 
   const addToCartMutation = useMutation({
-    mutationFn: async (planId: string) => (await apiRequest("POST", "/api/cart", { planId, quantity: 1 })).json(),
-    onSuccess: () => { toast({ title: t.packages.addedToCart, description: t.packages.addedToCartDesc }); window.location.href = "/sepet"; },
+    mutationFn: async (planId: string) => {
+      const r = await apiRequest("POST", "/api/cart", { planId, quantity: 1 });
+      return { data: await r.json(), planId };
+    },
+    onSuccess: ({ planId }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      const plan = sortedPlans?.find((p) => p.id === planId) || null;
+      setAddedSheet({ open: true, plan });
+    },
     onError: (error: any, planId: string) => {
       const msg: string = error.message || "";
       if (msg.toLowerCase().includes("sepet") || msg.toLowerCase().includes("cart") || msg.toLowerCase().includes("already") || msg.toLowerCase().includes("limit")) {
@@ -167,6 +175,45 @@ export default function Paketler() {
           </div>
         )}
       </div>
+
+      {/* Add-to-cart confirmation bottom sheet */}
+      {addedSheet.open && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" data-testid="added-to-cart-sheet">
+          <div className="absolute inset-0 bg-slate-900/40" onClick={() => setAddedSheet({ open: false, plan: null })} />
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-200">
+            <div className="mx-auto w-12 h-1 rounded-full bg-slate-200 mb-4 sm:hidden" />
+            <div className="flex justify-center mb-3">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                <Check className="h-7 w-7 text-emerald-600" />
+              </div>
+            </div>
+            <h3 className="text-base font-bold text-slate-900 text-center mb-1">{t.packages.addedToCart || "Sepete Eklendi"}</h3>
+            {addedSheet.plan && (
+              <p className="text-sm text-slate-500 text-center mb-5">
+                <span className="font-semibold text-slate-900">{addedSheet.plan.dataLimitGb}GB</span> · {addedSheet.plan.name}
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setAddedSheet({ open: false, plan: null })}
+                className="h-12 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition"
+                data-testid="button-continue-shopping"
+              >
+                Alışverişe Devam
+              </button>
+              <Link href="/sepet">
+                <a
+                  onClick={() => setAddedSheet({ open: false, plan: null })}
+                  className="h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 transition active:scale-[0.99]"
+                  data-testid="button-go-to-cart"
+                >
+                  Sepete Git <ArrowRight className="h-4 w-4" />
+                </a>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {cartFullDialog.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
