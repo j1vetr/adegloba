@@ -13,6 +13,7 @@ import Login from "@/pages/Login";
 import Kayit from "@/pages/Kayit";
 import Giris from "@/pages/Giris";
 import Panel from "@/pages/Panel";
+import Gecmis from "@/pages/Gecmis";
 import Paketler from "@/pages/Paketler";
 import Sepet from "@/pages/Sepet";
 import OrderSuccess from "@/pages/OrderSuccess";
@@ -243,6 +244,11 @@ function Router() {
       <Route path="/panel">
         <UserProtectedRoute>
           <Panel />
+        </UserProtectedRoute>
+      </Route>
+      <Route path="/panel/gecmis">
+        <UserProtectedRoute>
+          <Gecmis />
         </UserProtectedRoute>
       </Route>
       <Route path="/paketler">

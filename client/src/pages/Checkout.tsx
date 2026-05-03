@@ -11,7 +11,8 @@ import UserShell from "@/components/UserShell";
 
 export default function Checkout() {
   const [location] = useLocation();
-  const { t } = useLanguage();
+  const { t: tRaw } = useLanguage();
+  const t = tRaw as any;
   const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
   const [couponCode, setCouponCode] = useState("");

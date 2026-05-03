@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2, Zap, CreditCard, Heart, Wifi, Shield, Clock, ShoppingCart, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import UserShell from "@/components/UserShell";
 import type { Plan, FavoritePlan } from "@shared/schema";
@@ -15,7 +15,6 @@ export default function Paketler() {
   const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
-  const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [cartFullDialog, setCartFullDialog] = useState<{ open: boolean; pendingPlanId: string | null }>({ open: false, pendingPlanId: null });
 
   const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
@@ -80,22 +79,6 @@ export default function Paketler() {
           <p className="text-sm text-slate-500">Geminize özel paketler. Ay sonuna kadar geçerli.</p>
         </div>
 
-        {/* Quick filter pills */}
-        {sortedPlans && sortedPlans.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-            {sortedPlans.map((plan) => (
-              <button
-                key={`q-${plan.id}`}
-                onClick={() => cardRefs.current[plan.id]?.scrollIntoView({ behavior: "smooth", block: "center" })}
-                className="shrink-0 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:border-[#FFDD57] hover:bg-[#FFF6D6] transition"
-                data-testid={`quick-access-${plan.dataLimitGb}gb`}
-              >
-                {plan.dataLimitGb} GB
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* Plans */}
         {plansLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -110,7 +93,6 @@ export default function Paketler() {
               return (
                 <div
                   key={plan.id}
-                  ref={(el) => { cardRefs.current[plan.id] = el; }}
                   className="user-card-elevated relative p-5 flex flex-col"
                   data-testid={`plan-card-${plan.id}`}
                 >

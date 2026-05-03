@@ -8,7 +8,8 @@ import adeGlobaLogo from "@assets/adegloba-1_1756252463127.png";
 
 export default function Giris() {
   const [, setLocation] = useLocation();
-  const { t } = useLanguage();
+  const { t: tRaw } = useLanguage();
+  const t = tRaw as any;
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");

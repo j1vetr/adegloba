@@ -1,16 +1,30 @@
+import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import UserShell from "@/components/UserShell";
 import {
   ShoppingCart, CreditCard, User, HelpCircle, Package, CheckCircle2,
-  ArrowRight, Wifi, Globe, Shield, Phone, Mail,
+  ArrowRight, Wifi, Globe, Shield, Phone, Mail, ChevronDown, Search,
 } from "lucide-react";
+
+interface Step {
+  id: number;
+  icon: any;
+  title: string;
+  desc: string;
+  details: string[];
+  btn: string;
+  href: string;
+}
 
 export default function KullanimKilavuzu() {
   const [, setLocation] = useLocation();
-  const { t } = useLanguage();
+  const { t: tRaw } = useLanguage();
+  const t = tRaw as any;
+  const [search, setSearch] = useState("");
+  const [openId, setOpenId] = useState<number | null>(1);
 
-  const steps = [
+  const steps: Step[] = [
     { id: 1, icon: User, title: t.userGuide?.step1Title || "Hesap Oluşturun", desc: t.userGuide?.step1Desc || "AdeGloba sistemine kayıt olun ve giriş yapın",
       details: [t.userGuide?.step1Detail1, t.userGuide?.step1Detail2, t.userGuide?.step1Detail3, t.userGuide?.step1Detail4].filter(Boolean) as string[],
       btn: t.userGuide?.step1Button || "Giriş Yap", href: "/giris" },
@@ -38,6 +52,16 @@ export default function KullanimKilavuzu() {
     { icon: Phone,  title: t.userGuide?.support247 || "7/24 Destek",              desc: t.userGuide?.supportDesc || "Her an ulaşılabilir" },
   ];
 
+  const filteredSteps = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return steps;
+    return steps.filter(s =>
+      s.title.toLowerCase().includes(q) ||
+      s.desc.toLowerCase().includes(q) ||
+      s.details.some(d => d.toLowerCase().includes(q))
+    );
+  }, [search, steps]);
+
   return (
     <UserShell title={t.userGuide?.title || "Kullanım Kılavuzu"} showBack backTo="/profil">
       <div className="space-y-4">
@@ -45,9 +69,22 @@ export default function KullanimKilavuzu() {
           <h2 className="text-base font-semibold text-slate-900 mb-1">
             {t.userGuide?.stepsTitle || "6 Adımda Starlink Paketi"}
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 mb-3">
             {t.userGuide?.stepsSubtitle || "Adımları takip ederek kolayca paket satın alabilirsiniz"}
           </p>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Adımlarda ara..."
+              className="user-input w-full h-11 pl-10 pr-3 text-sm"
+              data-testid="input-guide-search"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
@@ -65,12 +102,26 @@ export default function KullanimKilavuzu() {
           })}
         </div>
 
-        <div className="space-y-3">
-          {steps.map((s) => {
+        {/* Accordion */}
+        <div className="space-y-2.5">
+          {filteredSteps.length === 0 && (
+            <div className="user-card text-center py-8 px-4">
+              <p className="text-sm text-slate-500">"{search}" için sonuç bulunamadı</p>
+            </div>
+          )}
+
+          {filteredSteps.map((s) => {
             const Icon = s.icon;
+            const isOpen = openId === s.id;
             return (
-              <div key={s.id} className="user-card p-4">
-                <div className="flex items-start gap-3 mb-3">
+              <div key={s.id} className="user-card overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpenId(isOpen ? null : s.id)}
+                  className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 transition"
+                  aria-expanded={isOpen}
+                  data-testid={`accordion-step-${s.id}`}
+                >
                   <div className="h-10 w-10 rounded-xl bg-[#FFDD57] text-slate-900 flex items-center justify-center font-bold text-sm shrink-0">
                     {s.id}
                   </div>
@@ -78,23 +129,29 @@ export default function KullanimKilavuzu() {
                     <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
                       <Icon className="h-4 w-4 text-slate-500" /> {s.title}
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">{s.desc}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">{s.desc}</p>
                   </div>
-                </div>
-                <ul className="space-y-1.5 mb-3">
-                  {s.details.map((d, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" />
-                      <span>{d}</span>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => setLocation(s.href)}
-                  className="w-full h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm font-medium transition flex items-center justify-center gap-2"
-                >
-                  {s.btn} <ArrowRight className="h-4 w-4" />
+                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform shrink-0 ${isOpen ? "rotate-180" : ""}`} />
                 </button>
+
+                {isOpen && (
+                  <div className="px-4 pb-4 pt-1 border-t border-slate-100">
+                    <ul className="space-y-1.5 mt-3 mb-3">
+                      {s.details.map((d, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" />
+                          <span>{d}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={() => setLocation(s.href)}
+                      className="w-full h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm font-medium transition flex items-center justify-center gap-2"
+                    >
+                      {s.btn} <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

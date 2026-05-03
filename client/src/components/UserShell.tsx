@@ -21,6 +21,7 @@ interface UserShellProps {
 }
 
 interface CartItem { id: string; quantity: number; }
+interface CartResponse { items: CartItem[]; itemCount: number; subtotal: number; total: number; }
 
 export default function UserShell({
   children, title, showBack = false, backTo, rightSlot,
@@ -29,12 +30,14 @@ export default function UserShell({
   const [location, setLocation] = useLocation();
   const { user } = useUserAuth();
 
-  const { data: cart = [] } = useQuery<CartItem[]>({
+  const { data: cart } = useQuery<CartResponse>({
     queryKey: ["/api/cart"],
     enabled: !!user,
     refetchInterval: 30000,
   });
-  const cartCount = cart.reduce((sum, i) => sum + (i.quantity || 0), 0);
+  const cartCount = typeof cart?.itemCount === "number"
+    ? cart.itemCount
+    : (Array.isArray(cart?.items) ? cart!.items.reduce((s, i) => s + (i.quantity || 0), 0) : 0);
 
   // Lock html background to light for user pages
   useEffect(() => {
