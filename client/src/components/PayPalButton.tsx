@@ -279,7 +279,7 @@ export default function PayPalButton({
                 description: "PayPal ödemesi tamamlandı ve paketler etkinleştirildi. Yönlendiriliyorsunuz...",
               });
 
-              const finalOrderId = completeData.orderId || completeData.id || orderId;
+              const finalOrderId = completeData.order?.id || completeData.orderId || completeData.id || orderId;
               if (onSuccess && finalOrderId) onSuccess(finalOrderId);
 
               setTimeout(() => {

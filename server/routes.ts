@@ -518,6 +518,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Account-closure request: opens a high-priority support ticket so admins can
+  // process the user's request manually (avoids destructive auto-deletion).
+  app.post('/api/user/request-account-closure', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    try {
+      const userId = req.session.userId;
+      const ticket = await storage.createTicket({
+        userId,
+        subject: 'Hesap Kapatma Talebi',
+        priority: 'high',
+        status: 'open',
+        message: 'Kullanıcı hesabının kapatılmasını talep etti. Lütfen iletişime geçin.',
+      } as any);
+      res.json({ success: true, ticketId: ticket.id });
+    } catch (error: any) {
+      console.error('Error creating account-closure request:', error);
+      res.status(500).json({ message: error?.message || 'Failed to submit request' });
+    }
+  });
+
   app.post('/api/orders/:orderId/complete', async (req: any, res) => {
     if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -3301,7 +3323,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
       
       const tickets = await storage.getTicketsByUserId(userId);
-      res.json(tickets);
+      // Enrich each ticket with its latest message preview for list UI
+      const enriched = await Promise.all(
+        tickets.map(async (t: any) => {
+          try {
+            const msgs = await storage.getTicketMessages(t.id);
+            const last = msgs && msgs.length > 0 ? msgs[msgs.length - 1] : null;
+            return {
+              ...t,
+              lastMessage: last?.message || null,
+              lastMessageAt: last?.createdAt || null,
+              lastMessageFromAdmin: last ? last.senderType === 'admin' : null,
+            };
+          } catch {
+            return { ...t, lastMessage: null, lastMessageAt: null, lastMessageFromAdmin: null };
+          }
+        })
+      );
+      res.json(enriched);
     } catch (error) {
       console.error('Error fetching tickets:', error);
       res.status(500).json({ message: 'Failed to fetch tickets' });
