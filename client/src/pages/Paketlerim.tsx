@@ -88,7 +88,7 @@ export default function Paketlerim() {
             <p className="text-slate-500 text-xs">Aktif Paket</p>
             <p className="text-slate-900 font-bold text-base leading-tight">
               {sorted.length} paket
-              <span className="text-slate-400 font-medium text-sm"> · {totalGb} GB toplam</span>
+              <span className="text-slate-400 font-medium text-sm"> · {totalGb} GB toplam paket</span>
             </p>
           </div>
           <Link href="/paketler">
@@ -182,7 +182,7 @@ export default function Paketlerim() {
         )}
 
         {/* Expired link */}
-        <Link href="/panel/gecmis">
+        <Link href="/panel/gecmis?tab=expired">
           <a className="user-card flex items-center gap-3 p-4 hover:border-[#FFDD57] transition" data-testid="link-expired">
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
               <Archive className="w-4 h-4 text-slate-600" />

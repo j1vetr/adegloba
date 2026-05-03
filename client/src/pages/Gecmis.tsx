@@ -10,7 +10,13 @@ const fmtPrice = (p: string | number) => `$${Number(p).toFixed(2)}`;
 
 export default function Gecmis() {
   const { user, isLoading: authLoading } = useUserAuth();
-  const [tab, setTab] = useState<"orders" | "expired">("orders");
+  const [tab, setTab] = useState<"orders" | "expired">(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("tab");
+      if (p === "expired") return "expired";
+    }
+    return "orders";
+  });
   const [expiredPage, setExpiredPage] = useState(1);
   const expiredPageSize = 6;
 
