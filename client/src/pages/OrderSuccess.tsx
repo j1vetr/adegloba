@@ -45,7 +45,7 @@ export default function OrderSuccess() {
   if (error || (!verifiedOrder && orderDetails?.orderId)) {
     return (
       <UserShell title="Sipariş Bulunamadı" showBack backTo="/panel">
-        <div className="max-w-md mx-auto user-card-elevated p-6 text-center">
+        <div className="user-card-elevated p-6 text-center">
           <div className="mx-auto h-14 w-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
             <AlertCircle className="h-7 w-7" />
           </div>
@@ -62,7 +62,7 @@ export default function OrderSuccess() {
 
   return (
     <UserShell title="Ödeme Başarılı" hideBottomNav>
-      <div className="max-w-md mx-auto space-y-4">
+      <div className="space-y-4">
         <div className="user-card-elevated p-6 text-center">
           <div className="mx-auto h-16 w-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 animate-scale-in">
             <CheckCircle2 className="h-8 w-8" />

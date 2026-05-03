@@ -4,7 +4,7 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import { Link } from "wouter";
 import {
   Loader2, Package, Clock, Heart, ShoppingCart, Copy, Wifi, Satellite,
-  CalendarDays, History, ChevronRight,
+  CalendarDays, History, ChevronRight, HeadphonesIcon, BookOpen, User as UserIcon,
 } from "lucide-react";
 import UserShell from "@/components/UserShell";
 import { FeedbackModal, useFeedbackModal } from "@/components/FeedbackModal";
@@ -102,7 +102,7 @@ export default function Panel() {
     <UserShell title="Ana Sayfa">
       {showFeedback && user?.id && <FeedbackModal userId={user.id} onClose={() => setShowFeedback(false)} />}
 
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="space-y-4">
         {/* Hero */}
         <div className="user-card-elevated p-5">
           <div className="flex items-center gap-3 mb-4">
@@ -142,6 +142,60 @@ export default function Panel() {
             </a>
           </Link>
         </div>
+
+        {/* Operator-style quick actions */}
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { href: "/paketler", icon: Package,        label: "Paketler",   testId: "qa-packages" },
+            { href: "/destek",   icon: HeadphonesIcon, label: "Destek",     testId: "qa-support" },
+            { href: "/kilavuz",  icon: BookOpen,       label: "Kılavuz",    testId: "qa-guide" },
+            { href: "/profil",   icon: UserIcon,       label: "Profil",     testId: "qa-profile" },
+          ].map((qa) => {
+            const Icon = qa.icon;
+            return (
+              <Link key={qa.href} href={qa.href}>
+                <a
+                  className="user-card flex flex-col items-center justify-center gap-1.5 py-3.5 hover:border-[#FFDD57] active:scale-[0.97] transition"
+                  data-testid={qa.testId}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#FFF6D6] flex items-center justify-center">
+                    <Icon className="h-4.5 w-4.5 text-[#7C5E00]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-slate-700">{qa.label}</span>
+                </a>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Recent orders snapshot */}
+        {userOrders && userOrders.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-2.5 px-1">
+              <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <History className="w-4 h-4 text-[#7C5E00]" /> Son Siparişler
+              </h2>
+              <Link href="/panel/gecmis"><a className="text-xs text-slate-500 hover:text-slate-900" data-testid="link-all-orders">Tümü ›</a></Link>
+            </div>
+            <div className="user-card divide-y divide-slate-100">
+              {userOrders.slice(0, 3).map((o: any) => (
+                <Link key={o.id} href="/panel/gecmis">
+                  <a className="flex items-center gap-3 p-3 hover:bg-slate-50 transition" data-testid={`recent-order-${o.id}`}>
+                    <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                      <Package className="w-4 h-4 text-slate-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">#{String(o.id).slice(-8).toUpperCase()}</p>
+                      <p className="text-xs text-slate-500 truncate">{o.createdAt ? fmtDate(o.createdAt) : ""}</p>
+                    </div>
+                    <span className="text-sm font-bold text-slate-900 shrink-0">{fmtPrice(o.total ?? o.amount ?? 0)}</span>
+                    <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+                  </a>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Active packages */}
         <section>

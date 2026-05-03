@@ -84,7 +84,7 @@ export default function TicketDetail() {
 
   return (
     <UserShell title="Destek Detayı" showBack backTo="/destek" hideBottomNav>
-      <div className="max-w-2xl mx-auto flex flex-col gap-3 min-h-[calc(100vh-200px)]">
+      <div className="flex flex-col gap-3 min-h-[calc(100vh-200px)]">
         {/* Header card */}
         {ticketLoading ? (
           <div className="user-card p-4 flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /><span className="text-slate-500 text-sm">Yükleniyor...</span></div>

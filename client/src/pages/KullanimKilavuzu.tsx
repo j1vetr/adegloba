@@ -19,37 +19,37 @@ interface Step {
 
 export default function KullanimKilavuzu() {
   const [, setLocation] = useLocation();
-  const { t: tRaw } = useLanguage();
-  const t = tRaw as any;
+  const { t } = useLanguage();
+  const ug = (t as unknown as { userGuide?: Record<string, string> }).userGuide ?? {};
   const [search, setSearch] = useState("");
   const [openId, setOpenId] = useState<number | null>(1);
 
   const steps: Step[] = [
-    { id: 1, icon: User, title: t.userGuide?.step1Title || "Hesap Oluşturun", desc: t.userGuide?.step1Desc || "AdeGloba sistemine kayıt olun ve giriş yapın",
-      details: [t.userGuide?.step1Detail1, t.userGuide?.step1Detail2, t.userGuide?.step1Detail3, t.userGuide?.step1Detail4].filter(Boolean) as string[],
-      btn: t.userGuide?.step1Button || "Giriş Yap", href: "/giris" },
-    { id: 2, icon: Package, title: t.userGuide?.step2Title || "Paketleri İnceleyin", desc: t.userGuide?.step2Desc || "Size uygun veri paketlerini keşfedin",
-      details: [t.userGuide?.step2Detail1, t.userGuide?.step2Detail2, t.userGuide?.step2Detail3, t.userGuide?.step2Detail4].filter(Boolean) as string[],
-      btn: t.userGuide?.step2Button || "Paketleri Gör", href: "/paketler" },
-    { id: 3, icon: ShoppingCart, title: t.userGuide?.step3Title || "Sepete Ekleme", desc: t.userGuide?.step3Desc || "Seçtiğiniz paketleri sepete ekleyin",
-      details: [t.userGuide?.step3Detail1, t.userGuide?.step3Detail2, t.userGuide?.step3Detail3, t.userGuide?.step3Detail4].filter(Boolean) as string[],
-      btn: t.userGuide?.step3Button || "Sepeti Gör", href: "/sepet" },
-    { id: 4, icon: CreditCard, title: t.userGuide?.step4Title || "Ödeme ve Aktivasyon", desc: t.userGuide?.step4Desc || "Güvenle ödeyin, anında kullanın",
-      details: [t.userGuide?.step4Detail1, t.userGuide?.step4Detail2, t.userGuide?.step4Detail3, t.userGuide?.step4Detail4].filter(Boolean) as string[],
-      btn: t.userGuide?.step4Button || "Panel", href: "/panel" },
-    { id: 5, icon: User, title: t.userGuide?.step5Title || "Profil Yönetimi", desc: t.userGuide?.step5Desc || "Kişisel bilgilerinizi güncelleyin",
-      details: [t.userGuide?.step5Detail1, t.userGuide?.step5Detail2, t.userGuide?.step5Detail3, t.userGuide?.step5Detail4].filter(Boolean) as string[],
-      btn: t.userGuide?.step5Button || "Profil", href: "/profil" },
-    { id: 6, icon: HelpCircle, title: t.userGuide?.step6Title || "Destek Alma", desc: t.userGuide?.step6Desc || "Profesyonel destek alın",
-      details: [t.userGuide?.step6Detail1, t.userGuide?.step6Detail2, t.userGuide?.step6Detail3, t.userGuide?.step6Detail4].filter(Boolean) as string[],
-      btn: t.userGuide?.step6Button || "Destek", href: "/destek" },
+    { id: 1, icon: User, title: ug.step1Title || "Hesap Oluşturun", desc: ug.step1Desc || "AdeGloba sistemine kayıt olun ve giriş yapın",
+      details: [ug.step1Detail1, ug.step1Detail2, ug.step1Detail3, ug.step1Detail4].filter(Boolean) as string[],
+      btn: ug.step1Button || "Giriş Yap", href: "/giris" },
+    { id: 2, icon: Package, title: ug.step2Title || "Paketleri İnceleyin", desc: ug.step2Desc || "Size uygun veri paketlerini keşfedin",
+      details: [ug.step2Detail1, ug.step2Detail2, ug.step2Detail3, ug.step2Detail4].filter(Boolean) as string[],
+      btn: ug.step2Button || "Paketleri Gör", href: "/paketler" },
+    { id: 3, icon: ShoppingCart, title: ug.step3Title || "Sepete Ekleme", desc: ug.step3Desc || "Seçtiğiniz paketleri sepete ekleyin",
+      details: [ug.step3Detail1, ug.step3Detail2, ug.step3Detail3, ug.step3Detail4].filter(Boolean) as string[],
+      btn: ug.step3Button || "Sepeti Gör", href: "/sepet" },
+    { id: 4, icon: CreditCard, title: ug.step4Title || "Ödeme ve Aktivasyon", desc: ug.step4Desc || "Güvenle ödeyin, anında kullanın",
+      details: [ug.step4Detail1, ug.step4Detail2, ug.step4Detail3, ug.step4Detail4].filter(Boolean) as string[],
+      btn: ug.step4Button || "Panel", href: "/panel" },
+    { id: 5, icon: User, title: ug.step5Title || "Profil Yönetimi", desc: ug.step5Desc || "Kişisel bilgilerinizi güncelleyin",
+      details: [ug.step5Detail1, ug.step5Detail2, ug.step5Detail3, ug.step5Detail4].filter(Boolean) as string[],
+      btn: ug.step5Button || "Profil", href: "/profil" },
+    { id: 6, icon: HelpCircle, title: ug.step6Title || "Destek Alma", desc: ug.step6Desc || "Profesyonel destek alın",
+      details: [ug.step6Detail1, ug.step6Detail2, ug.step6Detail3, ug.step6Detail4].filter(Boolean) as string[],
+      btn: ug.step6Button || "Destek", href: "/destek" },
   ];
 
   const features = [
-    { icon: Wifi,   title: t.userGuide?.instantActivation || "Anlık Aktivasyon", desc: t.userGuide?.instantDesc || "Ödeme sonrası anında aktif" },
-    { icon: Globe,  title: t.userGuide?.globalCoverage || "Global Kapsama",       desc: t.userGuide?.globalDesc || "Dünya genelinde erişim" },
-    { icon: Shield, title: t.userGuide?.securePayment || "Güvenli Ödeme",         desc: t.userGuide?.secureDesc || "PayPal ile korumalı" },
-    { icon: Phone,  title: t.userGuide?.support247 || "7/24 Destek",              desc: t.userGuide?.supportDesc || "Her an ulaşılabilir" },
+    { icon: Wifi,   title: ug.instantActivation || "Anlık Aktivasyon", desc: ug.instantDesc || "Ödeme sonrası anında aktif" },
+    { icon: Globe,  title: ug.globalCoverage || "Global Kapsama",       desc: ug.globalDesc || "Dünya genelinde erişim" },
+    { icon: Shield, title: ug.securePayment || "Güvenli Ödeme",         desc: ug.secureDesc || "PayPal ile korumalı" },
+    { icon: Phone,  title: ug.support247 || "7/24 Destek",              desc: ug.supportDesc || "Her an ulaşılabilir" },
   ];
 
   const filteredSteps = useMemo(() => {
@@ -63,14 +63,14 @@ export default function KullanimKilavuzu() {
   }, [search, steps]);
 
   return (
-    <UserShell title={t.userGuide?.title || "Kullanım Kılavuzu"} showBack backTo="/profil">
+    <UserShell title={ug.title || "Kullanım Kılavuzu"} showBack backTo="/profil">
       <div className="space-y-4">
         <div className="user-card p-4">
           <h2 className="text-base font-semibold text-slate-900 mb-1">
-            {t.userGuide?.stepsTitle || "6 Adımda Starlink Paketi"}
+            {ug.stepsTitle || "6 Adımda Starlink Paketi"}
           </h2>
           <p className="text-sm text-slate-500 mb-3">
-            {t.userGuide?.stepsSubtitle || "Adımları takip ederek kolayca paket satın alabilirsiniz"}
+            {ug.stepsSubtitle || "Adımları takip ederek kolayca paket satın alabilirsiniz"}
           </p>
 
           {/* Search */}
@@ -162,10 +162,10 @@ export default function KullanimKilavuzu() {
             <HelpCircle className="h-6 w-6" />
           </div>
           <h3 className="text-base font-semibold text-slate-900 mb-1">
-            {t.userGuide?.needHelp || "Yardıma mı ihtiyacınız var?"}
+            {ug.needHelp || "Yardıma mı ihtiyacınız var?"}
           </h3>
           <p className="text-sm text-slate-500 mb-4">
-            {t.userGuide?.needHelpDesc || "Destek ekibimiz size yardımcı olur"}
+            {ug.needHelpDesc || "Destek ekibimiz size yardımcı olur"}
           </p>
           <div className="grid grid-cols-2 gap-2">
             <button

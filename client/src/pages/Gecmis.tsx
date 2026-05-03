@@ -34,7 +34,7 @@ export default function Gecmis() {
 
   return (
     <UserShell title="Geçmiş" showBack backTo="/panel">
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="space-y-4">
         {/* Tabs */}
         <div className="flex gap-1.5 bg-white border border-slate-200/70 rounded-2xl p-1.5">
           <button

@@ -38,7 +38,7 @@ export default function OrderCancel() {
 
   return (
     <UserShell title="Ödeme Durumu" showBack backTo="/sepet">
-      <div className="max-w-md mx-auto space-y-4">
+      <div className="space-y-4">
         <div className="user-card-elevated p-6 text-center">
           <div className={`mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-4 ${cfg.iconBg}`}>
             <Icon className="h-8 w-8" />

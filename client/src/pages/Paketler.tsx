@@ -77,7 +77,7 @@ export default function Paketler() {
 
   return (
     <UserShell title={t.packages.dataPackages}>
-      <div className="max-w-3xl mx-auto space-y-4">
+      <div className="space-y-4">
         {/* Header */}
         <div className="user-card-elevated p-5 text-center">
           <div className="inline-flex items-center gap-1.5 chip chip-brand mb-3">

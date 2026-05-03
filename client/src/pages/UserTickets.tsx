@@ -10,7 +10,19 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
 import UserShell from "@/components/UserShell";
 
-interface Ticket { id: string; subject: string; priority: string; status: string; createdAt: string; updatedAt: string; }
+interface Ticket { id: string; subject: string; priority: string; status: string; createdAt: string; updatedAt: string; lastMessage?: string | null; lastMessageAt?: string | null; }
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "şimdi";
+  if (m < 60) return `${m} dk önce`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} sa önce`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d} gün önce`;
+  return new Date(iso).toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+}
 
 const statusConfig: Record<string, { chip: string; icon: any; label: string }> = {
   "Açık":       { chip: "chip-info",    icon: AlertCircle, label: "Açık" },
@@ -66,7 +78,7 @@ export default function UserTickets() {
 
   return (
     <UserShell title="Destek">
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="space-y-4">
         {/* Header card */}
         <div className="user-card-elevated p-5">
           <div className="flex items-center gap-3 mb-4">
@@ -129,23 +141,27 @@ export default function UserTickets() {
               const StatusIcon = sc.icon;
               return (
                 <Link key={ticket.id} href={`/destek/${ticket.id}`}>
-                  <a className="block user-card relative p-4 hover:border-[#FFDD57] transition cursor-pointer">
+                  <a className="block user-card relative p-4 hover:border-[#FFDD57] transition cursor-pointer" data-testid={`ticket-card-${ticket.id}`}>
                     <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${pc.bar}`} />
-                    <div className="flex items-center gap-3 pl-2">
+                    <div className="flex items-start gap-3 pl-2">
+                      <StatusIcon className="h-4 w-4 mt-0.5 shrink-0 text-slate-400" />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start gap-2">
-                          <StatusIcon className="h-4 w-4 mt-0.5 shrink-0 text-slate-400" />
-                          <div className="min-w-0">
-                            <h3 className="text-sm font-semibold text-slate-900 line-clamp-1">{ticket.subject}</h3>
-                            <p className="text-slate-500 text-xs mt-0.5">#{ticket.id.slice(-8)} · {formatDate(ticket.createdAt)}</p>
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-slate-900 line-clamp-1 flex-1">{ticket.subject}</h3>
+                          <span className={`chip ${sc.chip} shrink-0`}>{sc.label}</span>
+                        </div>
+                        {(ticket.lastMessage) && (
+                          <p className="text-xs text-slate-600 line-clamp-1 mt-1">{ticket.lastMessage}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1.5 text-[11px] text-slate-400">
+                          <span>#{ticket.id.slice(-8)}</span>
+                          <span>·</span>
+                          <span className={`chip ${pc.chip} !py-0 !px-1.5 !text-[10px]`}>{ticket.priority}</span>
+                          <span>·</span>
+                          <span>Son hareket: {timeAgo(ticket.lastMessageAt || ticket.updatedAt || ticket.createdAt)}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className={`chip ${pc.chip} hidden sm:inline-flex`}>{ticket.priority}</span>
-                        <span className={`chip ${sc.chip}`}>{sc.label}</span>
-                        <ChevronRight className="h-4 w-4 text-slate-300" />
-                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-300 shrink-0 mt-0.5" />
                     </div>
                   </a>
                 </Link>

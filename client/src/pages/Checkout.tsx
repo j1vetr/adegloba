@@ -7,44 +7,70 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
 import CreditCardDrawer from "@/components/CreditCardDrawer";
+import PayPalButton from "@/components/PayPalButton";
 import UserShell from "@/components/UserShell";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+
+interface CartItem {
+  id: string; planId?: string; quantity: number; unitPriceUsd?: string;
+  plan?: { id: string; name?: string; title?: string; dataLimitGb?: number; gbAmount?: number; priceUsd?: string };
+}
+interface CartData { items: CartItem[]; itemCount: number; subtotal: number | string; total: number | string; }
+interface OrderData {
+  items?: CartItem[]; couponCode?: string;
+  subtotalUsd?: string; total?: string;
+}
+
+type PaymentMethod = "paypal" | "card";
 
 export default function Checkout() {
   const [location] = useLocation();
-  const { t: tRaw } = useLanguage();
-  const t = tRaw as any;
+  const { t } = useLanguage();
   const { user, isLoading: authLoading } = useUserAuth();
   const { toast } = useToast();
   const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountType: string; discountValue: number } | null>(null);
   const [discount, setDiscount] = useState(0);
   const [couponValidating, setCouponValidating] = useState(false);
   const [couponOpen, setCouponOpen] = useState(false);
   const [creditCardDrawerOpen, setCreditCardDrawerOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("paypal");
 
   const urlParams = new URLSearchParams(location.split("?")[1] || "");
   const orderId = urlParams.get("orderId");
 
-  const { data: cartData, isLoading: cartLoading } = useQuery({
+  const { data: cartData, isLoading: cartLoading } = useQuery<CartData>({
     queryKey: ["/api/cart"], enabled: !!user && !orderId,
   });
-  const { data: orderData, isLoading: orderLoading } = useQuery({
+  const { data: orderData, isLoading: orderLoading } = useQuery<OrderData>({
     queryKey: [`/api/orders/${orderId}`], enabled: !!orderId && !!user,
   });
 
   useEffect(() => {
-    if (orderData && (orderData as any).couponCode && !appliedCoupon) {
-      validateCouponMutation.mutate((orderData as any).couponCode);
+    if (orderData?.couponCode && !appliedCoupon) {
+      validateCouponMutation.mutate(orderData.couponCode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderData]);
+
+  const getCurrentSubtotal = (): number => {
+    if (orderId && orderData) {
+      const s = parseFloat(orderData.subtotalUsd || "0");
+      return s > 0 ? s : parseFloat(orderData.total || "0");
+    }
+    return parseFloat(String(cartData?.subtotal ?? "0"));
+  };
+  const getCurrentItems = (): CartItem[] => {
+    if (orderId && orderData) return orderData.items || [];
+    return cartData?.items || [];
+  };
 
   const validateCouponMutation = useMutation({
     mutationFn: async (code: string) => {
       setCouponValidating(true);
       const subtotal = getCurrentSubtotal();
       const items = getCurrentItems();
-      const planIds = items.map((it: any) => it.planId || it.plan?.id).filter(Boolean);
+      const planIds = items.map(it => it.planId || it.plan?.id).filter(Boolean);
       const response = await apiRequest("POST", "/api/coupons/validate", {
         code: code.trim().toUpperCase(), shipId: user?.ship_id, subtotal, planIds,
       });
@@ -66,7 +92,7 @@ export default function Checkout() {
         }
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       setCouponValidating(false); setAppliedCoupon(null); setDiscount(0);
       if (couponCode.trim()) toast({ title: "Kupon Hatası", description: error.message || "Kupon doğrulanamadı", variant: "destructive" });
     },
@@ -82,7 +108,7 @@ export default function Checkout() {
       if (!orderId) queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       window.location.href = `/order-success?orderId=${result.id || result.orderId}`;
     },
-    onError: (error: any) => toast({ title: "Ödeme Başarısız", description: error.message || "Ödeme işlemi başarısız oldu", variant: "destructive" }),
+    onError: (error: Error) => toast({ title: "Ödeme Başarısız", description: error.message || "Ödeme işlemi başarısız oldu", variant: "destructive" }),
   });
 
   const getDetailedErrorMessage = (reason: string) => {
@@ -102,23 +128,11 @@ export default function Checkout() {
     toast({ title: "Kupon Kaldırıldı", description: "İndirim iptal edildi." });
   };
 
-  const getCurrentSubtotal = () => {
-    if (orderId && orderData) {
-      const s = parseFloat((orderData as any)?.subtotalUsd || "0");
-      return s > 0 ? s : parseFloat((orderData as any)?.total || "0");
-    }
-    return parseFloat((cartData as any)?.subtotal || "0");
-  };
-  const getCurrentItems = () => {
-    if (orderId && orderData) return (orderData as any)?.items || [];
-    return (cartData as any)?.items || [];
-  };
-
   const currentSubtotal = getCurrentSubtotal();
   const currentDiscount = appliedCoupon ? discount : 0;
   const currentTotal = Math.max(0, currentSubtotal - currentDiscount);
-  const finalTotal = (orderId && orderData && (orderData as any).total && !appliedCoupon)
-    ? parseFloat((orderData as any).total) : currentTotal;
+  const finalTotal = (orderId && orderData?.total && !appliedCoupon)
+    ? parseFloat(orderData.total) : currentTotal;
 
   const formatPrice = (price: string | number) => {
     const n = typeof price === "string" ? parseFloat(price) : price;
@@ -130,7 +144,7 @@ export default function Checkout() {
       toast({ title: "Giriş Gerekli", description: "Ödeme yapmak için giriş yapmalısınız", variant: "destructive" });
       setTimeout(() => { window.location.href = "/giris"; }, 1500);
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, toast]);
 
   useEffect(() => {
     if (!authLoading && !cartLoading && !orderLoading && user) {
@@ -159,7 +173,7 @@ export default function Checkout() {
 
   return (
     <UserShell title="Ödeme" hideBottomNav showBack backTo="/sepet">
-      <div className="max-w-md mx-auto space-y-4">
+      <div className="space-y-4">
         <div className="user-card flex items-center gap-3 p-4">
           <div className="w-10 h-10 rounded-xl bg-[#FFF6D6] flex items-center justify-center shrink-0">
             <Lock className="h-4 w-4 text-[#7C5E00]" />
@@ -265,33 +279,48 @@ export default function Checkout() {
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">{t.checkout.securePayment}</h2>
 
           {finalTotal > 0 ? (
-            <div className="space-y-3">
-              {/* Payment method segmented */}
-              <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl">
-                <button
-                  onClick={() => setCreditCardDrawerOpen(true)}
-                  className="h-12 rounded-xl bg-white text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98]"
-                  data-testid="payment-method-paypal"
-                >
-                  <span className="font-bold text-[#003087]">Pay</span><span className="font-bold text-[#0070BA]">Pal</span>
-                </button>
-                <button
-                  onClick={() => setCreditCardDrawerOpen(true)}
-                  className="h-12 rounded-xl bg-white text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98]"
-                  data-testid="payment-method-card"
-                >
-                  <CreditCard className="h-4 w-4" /> {t.checkout.cardPayment || "Kredi Kartı"}
-                </button>
-              </div>
+            <div className="space-y-4">
+              <SegmentedControl
+                value={paymentMethod}
+                onChange={(v) => setPaymentMethod(v as PaymentMethod)}
+                options={[
+                  {
+                    value: "paypal",
+                    testId: "payment-method-paypal",
+                    label: <span><span className="font-bold text-[#003087]">Pay</span><span className="font-bold text-[#0070BA]">Pal</span></span>,
+                  },
+                  {
+                    value: "card",
+                    testId: "payment-method-card",
+                    label: t.checkout.cardPayment || "Kredi Kartı",
+                    icon: <CreditCard className="h-4 w-4" />,
+                  },
+                ]}
+              />
 
-              <button
-                onClick={() => setCreditCardDrawerOpen(true)}
-                className="w-full h-14 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-bold text-base transition active:scale-[0.99] flex items-center justify-center gap-3"
-                data-testid="credit-card-button"
-              >
-                <span>Ödemeye Geç</span>
-                <span className="ml-auto font-black">{formatPrice(finalTotal)}</span>
-              </button>
+              {paymentMethod === "paypal" ? (
+                <div data-testid="paypal-button-container">
+                  <PayPalButton
+                    amount={finalTotal.toFixed(2)}
+                    currency="USD"
+                    intent="CAPTURE"
+                    couponCode={appliedCoupon?.code}
+                    onError={(error) => {
+                      toast({ title: "Ödeme Hatası", description: error?.message || "PayPal ödemesi başarısız", variant: "destructive" });
+                    }}
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => setCreditCardDrawerOpen(true)}
+                  className="w-full h-14 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-bold text-base transition active:scale-[0.99] flex items-center justify-center gap-3"
+                  data-testid="credit-card-button"
+                >
+                  <CreditCard className="h-5 w-5" />
+                  <span>Kart ile Öde</span>
+                  <span className="ml-auto font-black">{formatPrice(finalTotal)}</span>
+                </button>
+              )}
 
               <div className="flex items-center justify-center gap-3 text-xs text-slate-500 flex-wrap">
                 <span className="inline-flex items-center gap-1"><Shield className="h-3 w-3 text-emerald-600" /> SSL</span>
@@ -333,7 +362,7 @@ export default function Checkout() {
         onSuccess={(paymentData) => {
           setCreditCardDrawerOpen(false);
           toast({ title: "Ödeme Başarılı", description: "Kredi kartı ödemesi başarıyla tamamlandı!" });
-          completeOrderMutation.mutate(paymentData.paypalOrderId || paymentData.orderId || "card_payment_" + Date.now());
+          completeOrderMutation.mutate(paymentData?.paypalOrderId || paymentData?.orderId || "card_payment_" + Date.now());
         }}
         onError={(error) => {
           toast({ title: "Ödeme Hatası", description: error?.message || "Kart ödemesi başarısız oldu", variant: "destructive" });
