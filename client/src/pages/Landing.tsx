@@ -1,15 +1,12 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import { useLanguage, LanguageSelector } from "@/contexts/LanguageContext";
-import {
-  Satellite, Waves, Globe, Zap, Shield, ArrowRight, Anchor, Navigation,
-} from "lucide-react";
+import { LanguageSelector } from "@/contexts/LanguageContext";
+import { ArrowRight, Anchor, Navigation, ShieldCheck } from "lucide-react";
 import adeGlobaLogo from "@assets/logo-gu-5770B_1777775485509.png";
 
 export default function Landing() {
   const { user } = useUserAuth();
-  const { t } = useLanguage();
 
   useEffect(() => {
     if (user) window.location.href = "/panel";
@@ -18,61 +15,75 @@ export default function Landing() {
   if (user) return null;
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] flex flex-col">
-      <header className="bg-white border-b border-slate-200/70">
-        <div className="mx-auto max-w-5xl px-4 h-14 flex items-center justify-between">
-          <img src={adeGlobaLogo} alt="AdeGloba" className="h-8 w-auto" />
-          <LanguageSelector />
+    <div className="min-h-screen bg-[#F7F8FA] relative overflow-hidden flex flex-col">
+      {/* Decorative background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-[#FFDD57]/30 blur-3xl" />
+        <div className="absolute top-1/3 -right-40 w-[440px] h-[440px] rounded-full bg-[#FFE9A0]/40 blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] rounded-full bg-amber-100/40 blur-3xl" />
+        <svg
+          className="absolute inset-0 w-full h-full opacity-[0.06]"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <defs>
+            <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+              <path d="M 32 0 L 0 0 0 32" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" className="text-slate-900" />
+        </svg>
+      </div>
+
+      {/* Top bar */}
+      <header className="relative z-10 px-5 pt-5 sm:pt-6">
+        <div className="mx-auto max-w-6xl flex items-center justify-end">
+          <LanguageSelector variant="light" />
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="max-w-2xl w-full text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFF6D6] text-[#7C5E00] text-xs font-semibold mb-5">
-            <Satellite className="h-3.5 w-3.5" /> AdeGloba Starlink System
-          </div>
+      {/* Hero */}
+      <main className="relative z-10 flex-1 flex items-center justify-center px-5 py-10 sm:py-16">
+        <div className="w-full max-w-xl text-center animate-fade-in">
 
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight mb-3">
-            {t.landing.heroTitle1}
-            <br />
-            <span className="text-slate-700">{t.landing.heroTitle2}</span>
-          </h1>
+          <img
+            src={adeGlobaLogo}
+            alt="AdeGloba Limited"
+            className="h-32 sm:h-44 w-auto mx-auto mb-10 drop-shadow-[0_10px_30px_rgba(124,94,0,0.18)]"
+          />
 
-          <p className="text-base sm:text-lg text-slate-500 max-w-xl mx-auto mb-7">
-            {t.landing.heroDescription}
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-2 mb-7">
-            <span className="chip chip-brand"><Satellite className="h-3 w-3" /> {t.landing.features.starlink}</span>
-            <span className="chip chip-neutral"><Waves className="h-3 w-3" /> {t.landing.features.maritime}</span>
-            <span className="chip chip-brand"><Zap className="h-3 w-3" /> {t.landing.features.instant}</span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center max-w-md mx-auto">
             <Link to="/kayit">
-              <a className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold transition active:scale-[0.99] shadow-sm" data-testid="link-register">
-                <Anchor className="h-4 w-4" /> {t.landing.buttons.register} <ArrowRight className="h-4 w-4" />
+              <a
+                className="group inline-flex items-center justify-center gap-2 px-7 h-13 sm:h-12 rounded-2xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-bold text-sm transition active:scale-[0.99] shadow-[0_10px_30px_-10px_rgba(255,221,87,0.85)]"
+                data-testid="link-register"
+              >
+                <Anchor className="h-4 w-4" />
+                Kayıt Ol
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </a>
             </Link>
             <Link to="/giris">
-              <a className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-slate-900 font-semibold transition active:scale-[0.99]" data-testid="link-login">
-                <Navigation className="h-4 w-4" /> {t.landing.buttons.login}
+              <a
+                className="inline-flex items-center justify-center gap-2 px-7 h-13 sm:h-12 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 text-slate-900 font-semibold text-sm transition active:scale-[0.99] shadow-sm"
+                data-testid="link-login"
+              >
+                <Navigation className="h-4 w-4" />
+                Giriş Yap
               </a>
             </Link>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-4 text-xs text-slate-500">
-            <span className="inline-flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-slate-400" /> {t.landing.trustBadges.securePayment}</span>
-            <span className="inline-flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-slate-400" /> {t.landing.trustBadges.instantActivation}</span>
-            <span className="inline-flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-slate-400" /> {t.landing.trustBadges.globalCoverage}</span>
+          <div className="mt-12 flex items-center justify-center gap-5 text-[11px] text-slate-500">
+            <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> SSL</span>
+            <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> ISO 27001</span>
+            <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> KVKK</span>
           </div>
         </div>
       </main>
 
-      <footer className="border-t border-slate-200/70 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-5 text-center text-xs text-slate-400">
-          © 2025 AdeGloba Limited · Maritime Starlink Çözümleri
-        </div>
+      <footer className="relative z-10 px-5 pb-5 text-center text-[11px] text-slate-400">
+        © 2025 AdeGloba Limited
       </footer>
     </div>
   );
