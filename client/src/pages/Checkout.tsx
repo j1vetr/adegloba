@@ -305,6 +305,7 @@ export default function Checkout() {
                     currency="USD"
                     intent="CAPTURE"
                     couponCode={appliedCoupon?.code}
+                    orderId={orderId || undefined}
                     onError={(error) => {
                       toast({ title: "Ödeme Hatası", description: error?.message || "PayPal ödemesi başarısız", variant: "destructive" });
                     }}
