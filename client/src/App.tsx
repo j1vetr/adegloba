@@ -15,6 +15,7 @@ import Giris from "@/pages/Giris";
 import Panel from "@/pages/Panel";
 import Gecmis from "@/pages/Gecmis";
 import Paketler from "@/pages/Paketler";
+import Paketlerim from "@/pages/Paketlerim";
 import Sepet from "@/pages/Sepet";
 import OrderSuccess from "@/pages/OrderSuccess";
 import OrderCancel from "@/pages/OrderCancel";
@@ -254,6 +255,11 @@ function Router() {
       <Route path="/paketler">
         <UserProtectedRoute>
           <Paketler />
+        </UserProtectedRoute>
+      </Route>
+      <Route path="/paketlerim">
+        <UserProtectedRoute>
+          <Paketlerim />
         </UserProtectedRoute>
       </Route>
       

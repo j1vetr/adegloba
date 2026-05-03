@@ -2,12 +2,12 @@ import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Home, Package, ShoppingCart, HeadphonesIcon, User,
-  ChevronLeft, Bell,
+  Home, Package, ShoppingCart, User,
+  ChevronLeft, Wifi,
 } from "lucide-react";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { LanguageSelector } from "@/contexts/LanguageContext";
-import adeGlobaLogo from "@assets/adegloba-1_1756252463127.png";
+import adeGlobaLogo from "@assets/logo-gu-5770B_1777775485509.png";
 
 interface UserShellProps {
   children: ReactNode;
@@ -78,7 +78,7 @@ export default function UserShell({
               )}
             </div>
             {rightSlot}
-            <LanguageSelectorLight />
+            <LanguageSelector variant="light" />
           </div>
         </header>
       )}
@@ -97,7 +97,7 @@ function BottomNav({ location, cartCount }: { location: string; cartCount: numbe
     { id: "panel",    href: "/panel",    label: "Ana Sayfa", icon: Home,            match: ["/panel"] },
     { id: "paketler", href: "/paketler", label: "Paketler",  icon: Package,         match: ["/paketler"] },
     { id: "sepet",    href: "/sepet",    label: "Sepet",     icon: ShoppingCart,    match: ["/sepet", "/checkout"], center: true, badge: cartCount },
-    { id: "destek",   href: "/destek",   label: "Destek",    icon: HeadphonesIcon,  match: ["/destek"] },
+    { id: "paketlerim", href: "/paketlerim", label: "Paketlerim", icon: Wifi, match: ["/paketlerim"] },
     { id: "profil",   href: "/profil",   label: "Profil",    icon: User,            match: ["/profil", "/kilavuz"] },
   ];
 
@@ -157,10 +157,3 @@ function BottomNav({ location, cartCount }: { location: string; cartCount: numbe
   );
 }
 
-function LanguageSelectorLight() {
-  return (
-    <div className="theme-light-language">
-      <LanguageSelector />
-    </div>
-  );
-}

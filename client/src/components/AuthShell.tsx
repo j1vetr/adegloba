@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { LanguageSelector } from "@/contexts/LanguageContext";
-import adeGlobaLogo from "@assets/adegloba-1_1756252463127.png";
+import adeGlobaLogo from "@assets/logo-gu-5770B_1777775485509.png";
 
 interface AuthShellProps {
   hero: ReactNode;
@@ -25,9 +25,7 @@ export default function AuthShell({ hero, children }: AuthShellProps) {
       <div className="relative bg-[#FFDD57] pt-3 pb-20 px-4">
         <div className="mx-auto max-w-md flex items-center justify-between">
           <img src={adeGlobaLogo} alt="AdeGloba" className="h-8 w-auto" />
-          <div className="theme-light-language">
-            <LanguageSelector />
-          </div>
+          <LanguageSelector variant="light" />
         </div>
         <div className="mx-auto max-w-md mt-6 mb-2 text-slate-900">
           {hero}

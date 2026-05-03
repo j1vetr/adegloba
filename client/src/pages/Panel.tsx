@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { Link } from "wouter";
 import {
-  Loader2, Package, Clock, Heart, ShoppingCart, Copy, Wifi, Satellite,
+  Loader2, Package, Clock, Heart, ShoppingCart, Copy, Wifi,
   CalendarDays, History, ChevronRight, HeadphonesIcon, User as UserIcon,
 } from "lucide-react";
 import UserShell from "@/components/UserShell";
@@ -105,21 +105,15 @@ export default function Panel() {
       <div className="space-y-4">
         {/* Hero */}
         <div className="user-card-elevated p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-11 h-11 rounded-xl bg-[#FFDD57] flex items-center justify-center shrink-0">
-              <span className="text-slate-900 font-bold text-lg uppercase">{user.username?.[0] ?? "U"}</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-slate-900 font-semibold text-base leading-tight truncate">
-                {t.dashboard.welcome}, <span className="text-slate-700">{user.username}</span>
+          <div className="mb-4">
+            <p className="text-slate-900 font-semibold text-base leading-tight">
+              {t.dashboard.welcome}, <span className="text-slate-700">{user.username}</span>
+            </p>
+            {user.ship && (
+              <p className="text-xs text-slate-500 mt-1">
+                Gemi Adı: <span className="text-[#7C5E00] font-semibold">{user.ship.name}</span>
               </p>
-              {user.ship && (
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Satellite className="w-3 h-3 text-[#7C5E00]" />
-                  <span className="text-[#7C5E00] text-xs font-medium truncate">{user.ship.name}</span>
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-2 mb-4">
@@ -168,36 +162,7 @@ export default function Panel() {
           })}
         </div>
 
-        {/* Recent orders snapshot */}
-        {userOrders && userOrders.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-2.5 px-1">
-              <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <History className="w-4 h-4 text-[#7C5E00]" /> Son Siparişler
-              </h2>
-              <Link href="/panel/gecmis"><a className="text-xs text-slate-500 hover:text-slate-900" data-testid="link-all-orders">Tümü ›</a></Link>
-            </div>
-            <div className="user-card divide-y divide-slate-100">
-              {userOrders.slice(0, 3).map((o: any) => (
-                <Link key={o.id} href="/panel/gecmis">
-                  <a className="flex items-center gap-3 p-3 hover:bg-slate-50 transition" data-testid={`recent-order-${o.id}`}>
-                    <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-                      <Package className="w-4 h-4 text-slate-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">#{String(o.id).slice(-8).toUpperCase()}</p>
-                      <p className="text-xs text-slate-500 truncate">{o.createdAt ? fmtDate(o.createdAt) : ""}</p>
-                    </div>
-                    <span className="text-sm font-bold text-slate-900 shrink-0">{fmtPrice(o.total ?? o.amount ?? 0)}</span>
-                    <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
-                  </a>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Active packages */}
+        {/* Active packages (rendered BEFORE Son Siparişler per spec) */}
         <section>
           <div className="flex items-center justify-between mb-2.5 px-1">
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
@@ -284,6 +249,35 @@ export default function Panel() {
             </div>
           )}
         </section>
+
+        {/* Recent orders snapshot (after Active Packages) */}
+        {userOrders && userOrders.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-2.5 px-1">
+              <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <History className="w-4 h-4 text-[#7C5E00]" /> Son Siparişler
+              </h2>
+              <Link href="/panel/gecmis"><a className="text-xs text-slate-500 hover:text-slate-900" data-testid="link-all-orders">Tümü ›</a></Link>
+            </div>
+            <div className="user-card divide-y divide-slate-100">
+              {userOrders.slice(0, 3).map((o: any) => (
+                <Link key={o.id} href="/panel/gecmis">
+                  <a className="flex items-center gap-3 p-3 hover:bg-slate-50 transition" data-testid={`recent-order-${o.id}`}>
+                    <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                      <Package className="w-4 h-4 text-slate-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">#{String(o.id).slice(-8).toUpperCase()}</p>
+                      <p className="text-xs text-slate-500 truncate">{o.createdAt ? fmtDate(o.createdAt) : ""}</p>
+                    </div>
+                    <span className="text-sm font-bold text-slate-900 shrink-0">{fmtPrice(o.totalUsd ?? o.total ?? o.amount ?? 0)}</span>
+                    <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+                  </a>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Favorites */}
         <section>

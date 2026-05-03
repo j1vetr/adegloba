@@ -34,7 +34,7 @@ export default function Checkout() {
   const [couponValidating, setCouponValidating] = useState(false);
   const [couponOpen, setCouponOpen] = useState(false);
   const [creditCardDrawerOpen, setCreditCardDrawerOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("paypal");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
 
   const urlParams = new URLSearchParams(location.split("?")[1] || "");
   const orderId = urlParams.get("orderId");
@@ -335,12 +335,14 @@ export default function Checkout() {
               ) : (
                 <button
                   onClick={() => setCreditCardDrawerOpen(true)}
-                  className="w-full h-14 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-bold text-base transition active:scale-[0.99] flex items-center justify-center gap-3"
+                  className="w-full h-14 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-bold text-base transition active:scale-[0.99] flex items-center justify-between px-5"
                   data-testid="credit-card-button"
                 >
-                  <CreditCard className="h-5 w-5" />
-                  <span>Kart ile Öde</span>
-                  <span className="ml-auto font-black">{formatPrice(finalTotal)}</span>
+                  <span className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Kart ile Öde
+                  </span>
+                  <span className="font-black tabular-nums">{formatPrice(finalTotal)}</span>
                 </button>
               )}
 

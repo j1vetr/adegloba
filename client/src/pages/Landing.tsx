@@ -5,7 +5,7 @@ import { useLanguage, LanguageSelector } from "@/contexts/LanguageContext";
 import {
   Satellite, Waves, Globe, Zap, Shield, ArrowRight, Anchor, Navigation,
 } from "lucide-react";
-import adeGlobaLogo from "@assets/adegloba-1_1756252463127.png";
+import adeGlobaLogo from "@assets/logo-gu-5770B_1777775485509.png";
 
 export default function Landing() {
   const { user } = useUserAuth();
