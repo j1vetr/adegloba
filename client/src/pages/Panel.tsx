@@ -4,7 +4,7 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import { Link } from "wouter";
 import {
   Loader2, Package, Clock, Heart, ShoppingCart, Copy, Wifi, Satellite,
-  CalendarDays, History, ChevronRight, HeadphonesIcon, BookOpen, User as UserIcon,
+  CalendarDays, History, ChevronRight, HeadphonesIcon, User as UserIcon,
 } from "lucide-react";
 import UserShell from "@/components/UserShell";
 import { FeedbackModal, useFeedbackModal } from "@/components/FeedbackModal";
@@ -146,10 +146,10 @@ export default function Panel() {
         {/* Operator-style quick actions */}
         <div className="grid grid-cols-4 gap-2">
           {[
-            { href: "/paketler", icon: Package,        label: "Paketler",   testId: "qa-packages" },
-            { href: "/destek",   icon: HeadphonesIcon, label: "Destek",     testId: "qa-support" },
-            { href: "/kilavuz",  icon: BookOpen,       label: "Kılavuz",    testId: "qa-guide" },
-            { href: "/profil",   icon: UserIcon,       label: "Profil",     testId: "qa-profile" },
+            { href: "/paketler", icon: Package,        label: "Paketler", testId: "qa-packages" },
+            { href: "/sepet",    icon: ShoppingCart,   label: "Sepet",    testId: "qa-cart" },
+            { href: "/destek",   icon: HeadphonesIcon, label: "Destek",   testId: "qa-support" },
+            { href: "/profil",   icon: UserIcon,       label: "Profil",   testId: "qa-profile" },
           ].map((qa) => {
             const Icon = qa.icon;
             return (

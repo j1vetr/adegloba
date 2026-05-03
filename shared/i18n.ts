@@ -76,6 +76,14 @@ export interface Translation {
     termsAccept: string;
     termsRequired: string;
     termsTitle: string;
+
+    // Optional UI keys (used by redesigned auth pages)
+    enterUsername?: string;
+    enterPassword?: string;
+    enterEmail?: string;
+    loggingIn?: string;
+    passwordMinLength?: string;
+    registering?: string;
   };
 
   // Password Update Page
@@ -328,6 +336,19 @@ export interface Translation {
     amount: string;
     status: string;
     paid: string;
+
+    // Optional UI keys (used by redesigned checkout)
+    description?: string;
+    loading?: string;
+    orderDetails?: string;
+    couponPlaceholder?: string;
+    applyCoupon?: string;
+    couponDiscount?: string;
+    totalDiscount?: string;
+    couponApplied?: string;
+    secureSsl?: string;
+    secure3D?: string;
+    paymentMethod?: string;
   };
 
   // Admin Panel

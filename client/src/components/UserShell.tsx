@@ -55,7 +55,7 @@ export default function UserShell({
     <div className="min-h-screen bg-[#F7F8FA] text-slate-900 flex flex-col">
       {!hideHeader && (
         <header className="sticky top-0 z-30 bg-white border-b border-slate-200/70">
-          <div className="mx-auto max-w-3xl px-4 h-14 flex items-center gap-3">
+          <div className="mx-auto max-w-md px-4 h-14 flex items-center gap-3">
             {showBack ? (
               <button
                 onClick={goBack}
@@ -83,7 +83,7 @@ export default function UserShell({
         </header>
       )}
 
-      <main className={`flex-1 mx-auto w-full max-w-3xl ${noPadding ? "" : "px-4 py-4"} ${hideBottomNav ? "" : "pb-bottom-nav"}`}>
+      <main className={`flex-1 mx-auto w-full max-w-md ${noPadding ? "" : "px-4 py-4"} ${hideBottomNav ? "" : "pb-bottom-nav"}`}>
         {children}
       </main>
 
@@ -103,7 +103,7 @@ function BottomNav({ location, cartCount }: { location: string; cartCount: numbe
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200/70 bottom-nav-safe">
-      <div className="mx-auto max-w-3xl px-2 h-[68px] grid grid-cols-5">
+      <div className="mx-auto max-w-md px-2 h-[68px] grid grid-cols-5">
         {tabs.map((t) => {
           const active = t.match.some((m) => location === m || location.startsWith(m + "/"));
           const Icon = t.icon;

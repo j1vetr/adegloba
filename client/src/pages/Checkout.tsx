@@ -174,6 +174,27 @@ export default function Checkout() {
   return (
     <UserShell title="Ödeme" hideBottomNav showBack backTo="/sepet">
       <div className="space-y-4">
+        {/* Step indicator */}
+        <div className="flex items-center justify-center gap-2 text-xs">
+          {["Sepet", "Ödeme", "Onay"].map((s, i) => {
+            const isActive = i === 1;
+            const isPast = i < 1;
+            return (
+              <div key={s} className="flex items-center gap-2">
+                <span className={`flex items-center gap-1.5 ${isActive ? "text-slate-900 font-semibold" : isPast ? "text-slate-700" : "text-slate-400"}`}>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    isActive ? "bg-[#FFDD57] text-slate-900" : isPast ? "bg-slate-300 text-slate-700" : "bg-slate-200 text-slate-500"
+                  }`}>
+                    {i + 1}
+                  </span>
+                  {s}
+                </span>
+                {i < 2 && <span className={`w-4 h-px ${isPast ? "bg-slate-300" : "bg-slate-200"}`} />}
+              </div>
+            );
+          })}
+        </div>
+
         <div className="user-card flex items-center gap-3 p-4">
           <div className="w-10 h-10 rounded-xl bg-[#FFF6D6] flex items-center justify-center shrink-0">
             <Lock className="h-4 w-4 text-[#7C5E00]" />
@@ -305,7 +326,6 @@ export default function Checkout() {
                     currency="USD"
                     intent="CAPTURE"
                     couponCode={appliedCoupon?.code}
-                    orderId={orderId || undefined}
                     onError={(error) => {
                       toast({ title: "Ödeme Hatası", description: error?.message || "PayPal ödemesi başarısız", variant: "destructive" });
                     }}
