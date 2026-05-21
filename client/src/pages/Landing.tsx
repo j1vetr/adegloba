@@ -82,7 +82,7 @@ export default function Landing() {
             {t.landing.heroDescription}
           </p>
 
-          <div className="space-y-4 mb-7">
+          <div className="flex flex-col gap-5 mb-7">
             <Link to="/kayit">
               <a
                 className="w-full inline-flex items-center justify-center gap-3 h-14 rounded-2xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-bold text-base transition active:scale-[0.99] shadow-[0_10px_28px_-10px_rgba(255,200,61,0.85)]"
