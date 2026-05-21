@@ -1,8 +1,42 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Globe } from 'lucide-react';
 import { translations, Translation } from '@/../../shared/i18n';
 
 type Language = 'tr' | 'en' | 'ru';
+
+function FlagIcon({ code, className = 'w-5 h-[14px]' }: { code: Language; className?: string }) {
+  const common = 'rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.06)] overflow-hidden inline-block';
+  if (code === 'tr') {
+    return (
+      <svg viewBox="0 0 30 20" className={`${className} ${common}`} aria-hidden="true">
+        <rect width="30" height="20" fill="#E30A17" />
+        <circle cx="11" cy="10" r="4.5" fill="#fff" />
+        <circle cx="12.2" cy="10" r="3.6" fill="#E30A17" />
+        <polygon fill="#fff" points="15.6,10 18.4,10.9 16.7,8.6 16.7,11.4 18.4,9.1" />
+      </svg>
+    );
+  }
+  if (code === 'en') {
+    return (
+      <svg viewBox="0 0 60 30" className={`${className} ${common}`} aria-hidden="true">
+        <clipPath id="uk-c"><rect width="60" height="30" /></clipPath>
+        <g clipPath="url(#uk-c)">
+          <rect width="60" height="30" fill="#012169" />
+          <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
+          <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="3" />
+          <path d="M30,0 V30 M0,15 H60" stroke="#fff" strokeWidth="10" />
+          <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6" />
+        </g>
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 30 20" className={`${className} ${common}`} aria-hidden="true">
+      <rect width="30" height="6.67" y="0" fill="#fff" />
+      <rect width="30" height="6.67" y="6.67" fill="#0039A6" />
+      <rect width="30" height="6.67" y="13.33" fill="#D52B1E" />
+    </svg>
+  );
+}
 
 interface LanguageContextType {
   language: Language;
@@ -71,7 +105,7 @@ export function LanguageSelector({ className = '', variant = 'light' }: Language
         data-testid="language-dropdown-trigger"
       >
         <div className="flex items-center gap-1.5">
-          <Globe className={`w-3.5 h-3.5 ${isDark ? 'text-amber-400' : 'text-[#7C5E00]'}`} />
+          <FlagIcon code={currentLanguage.code} />
           <span className="font-bold text-xs">{currentLanguage.code.toUpperCase()}</span>
         </div>
         <svg
@@ -102,9 +136,7 @@ export function LanguageSelector({ className = '', variant = 'light' }: Language
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150 ${itemCls}`}
                   data-testid={`language-option-${lang.code}`}
                 >
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold tracking-wide">
-                    {lang.code.toUpperCase()}
-                  </span>
+                  <FlagIcon code={lang.code} className="w-6 h-[18px]" />
                   <div className="flex flex-col">
                     <span className="font-semibold text-sm">{lang.code.toUpperCase()}</span>
                     <span className="text-xs opacity-75">{lang.name}</span>
