@@ -1,40 +1,21 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { translations, Translation } from '@/../../shared/i18n';
+import flagTr from '@/assets/flags/tr.svg';
+import flagGb from '@/assets/flags/gb.svg';
+import flagRu from '@/assets/flags/ru.svg';
 
 type Language = 'tr' | 'en' | 'ru';
 
+const FLAG_SRC: Record<Language, string> = { tr: flagTr, en: flagGb, ru: flagRu };
+
 function FlagIcon({ code, className = 'w-5 h-[14px]' }: { code: Language; className?: string }) {
-  const common = 'rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.06)] overflow-hidden inline-block';
-  if (code === 'tr') {
-    return (
-      <svg viewBox="0 0 30 20" className={`${className} ${common}`} aria-hidden="true">
-        <rect width="30" height="20" fill="#E30A17" />
-        <circle cx="11" cy="10" r="4.5" fill="#fff" />
-        <circle cx="12.2" cy="10" r="3.6" fill="#E30A17" />
-        <polygon fill="#fff" points="15.6,10 18.4,10.9 16.7,8.6 16.7,11.4 18.4,9.1" />
-      </svg>
-    );
-  }
-  if (code === 'en') {
-    return (
-      <svg viewBox="0 0 60 30" className={`${className} ${common}`} aria-hidden="true">
-        <clipPath id="uk-c"><rect width="60" height="30" /></clipPath>
-        <g clipPath="url(#uk-c)">
-          <rect width="60" height="30" fill="#012169" />
-          <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
-          <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="3" />
-          <path d="M30,0 V30 M0,15 H60" stroke="#fff" strokeWidth="10" />
-          <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6" />
-        </g>
-      </svg>
-    );
-  }
   return (
-    <svg viewBox="0 0 30 20" className={`${className} ${common}`} aria-hidden="true">
-      <rect width="30" height="6.67" y="0" fill="#fff" />
-      <rect width="30" height="6.67" y="6.67" fill="#0039A6" />
-      <rect width="30" height="6.67" y="13.33" fill="#D52B1E" />
-    </svg>
+    <img
+      src={FLAG_SRC[code]}
+      alt=""
+      aria-hidden="true"
+      className={`${className} object-cover rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.06)] inline-block`}
+    />
   );
 }
 
