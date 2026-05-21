@@ -33,8 +33,8 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem('preferred-language');
-      return (saved === 'tr' || saved === 'en' || saved === 'ru') ? saved : 'tr';
-    } catch { return 'tr'; }
+      return (saved === 'tr' || saved === 'en' || saved === 'ru') ? saved : 'en';
+    } catch { return 'en'; }
   });
 
   const setLanguage = (lang: Language) => {

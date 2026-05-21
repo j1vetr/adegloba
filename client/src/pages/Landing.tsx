@@ -71,7 +71,10 @@ export default function Landing() {
             className="h-20 sm:h-24 w-auto mx-auto mb-7 drop-shadow-[0_10px_30px_rgba(124,94,0,0.18)]"
           />
 
-          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-4 pt-1">
+          <h1
+            className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight mb-4 pt-2 pb-1"
+            style={{ lineHeight: 1.3 }}
+          >
             {t.landing.heroTitle1}<br />{t.landing.heroTitle2}
           </h1>
 
