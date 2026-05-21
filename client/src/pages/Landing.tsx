@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Link } from "wouter";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { LanguageSelector, useLanguage } from "@/contexts/LanguageContext";
-import { ShoppingCart, Navigation, ShieldCheck, Zap, Headphones } from "lucide-react";
+import { ShoppingCart, Navigation, Zap, Headphones } from "lucide-react";
 import adeGlobaLogo from "@assets/logo-gu-5770B_1777775485509.png";
 
 export default function Landing() {
@@ -105,9 +105,8 @@ export default function Landing() {
 
           {/* Trust card */}
           <div className="bg-white/80 backdrop-blur-sm border border-amber-100 rounded-2xl shadow-sm p-3">
-            <div className="grid grid-cols-3 divide-x divide-amber-100">
+            <div className="grid grid-cols-2 divide-x divide-amber-100">
               {[
-                { icon: ShieldCheck, label: t.landing.trustBadges.securePayment },
                 { icon: Zap, label: t.landing.trustBadges.instantActivation },
                 { icon: Headphones, label: t.landing.trustBadges.globalCoverage },
               ].map(({ icon: Icon, label }) => (
