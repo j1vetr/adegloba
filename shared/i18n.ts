@@ -446,9 +446,9 @@ export interface Translation {
 export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
   tr: {
     landing: {
-      heroTitle1: "AÇIK DENİZDE",
-      heroTitle2: "SINIR YOK",
-      heroDescription: "ile geminizde kesintisiz internet bağlantısının keyfini çıkarın.",
+      heroTitle1: "Gemide İnternete",
+      heroTitle2: "Bağlanın",
+      heroDescription: "İnternet paketinizi satın alın veya mevcut hesabınızla giriş yapın.",
       features: {
         starlink: "Starlink Uydu",
         maritime: "Maritime Özel",
@@ -456,13 +456,13 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
         global: "Global Kapsama"
       },
       buttons: {
-        register: "Kayıt Ol",
+        register: "İnternet Paketi Satın Al",
         login: "Giriş Yap"
       },
       trustBadges: {
-        securePayment: "Güvenli Ödeme",
-        instantActivation: "Anında Aktif",
-        globalCoverage: "Global Kapsama"
+        securePayment: "SSL",
+        instantActivation: "Anında\nAktivasyon",
+        globalCoverage: "7/24\nDestek"
       }
     },
     
@@ -953,9 +953,9 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
   
   en: {
     landing: {
-      heroTitle1: "UNLIMITED",
-      heroTitle2: "ON THE HIGH SEAS",
-      heroDescription: "Enjoy uninterrupted internet connectivity on your vessel.",
+      heroTitle1: "Get Online",
+      heroTitle2: "At Sea",
+      heroDescription: "Buy an internet package or sign in with your existing account.",
       features: {
         starlink: "Starlink Satellite",
         maritime: "Maritime Special",
@@ -963,13 +963,13 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
         global: "Global Coverage"
       },
       buttons: {
-        register: "Sign Up",
+        register: "Buy Internet Package",
         login: "Sign In"
       },
       trustBadges: {
-        securePayment: "Secure Payment",
-        instantActivation: "Instant Activation",
-        globalCoverage: "Global Coverage"
+        securePayment: "SSL",
+        instantActivation: "Instant\nActivation",
+        globalCoverage: "24/7\nSupport"
       }
     },
     
@@ -1460,9 +1460,9 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
 
   ru: {
     landing: {
-      heroTitle1: "В ОТКРЫТОМ МОРЕ",
-      heroTitle2: "НЕТ ГРАНИЦ",
-      heroDescription: "Система морского интернета AdeGloba Starlink обеспечивает бесперебойную связь на любой широте мирового океана",
+      heroTitle1: "Интернет",
+      heroTitle2: "на борту",
+      heroDescription: "Купите интернет-пакет или войдите в существующий аккаунт.",
       features: {
         starlink: "Технология Starlink",
         maritime: "Морской Интернет",
@@ -1470,13 +1470,13 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
         global: "Глобальное Покрытие"
       },
       buttons: {
-        register: "Регистрация",
-        login: "Вход"
+        register: "Купить интернет-пакет",
+        login: "Войти"
       },
       trustBadges: {
-        securePayment: "Безопасная Оплата",
-        instantActivation: "Мгновенная Активация",
-        globalCoverage: "Глобальное Покрытие"
+        securePayment: "SSL",
+        instantActivation: "Мгновенная\nактивация",
+        globalCoverage: "Поддержка\n24/7"
       }
     },
 

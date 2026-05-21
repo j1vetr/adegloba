@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import { LanguageSelector } from "@/contexts/LanguageContext";
+import { LanguageSelector, useLanguage } from "@/contexts/LanguageContext";
 import { ShoppingCart, Navigation, ShieldCheck, Zap, Headphones } from "lucide-react";
 import adeGlobaLogo from "@assets/logo-gu-5770B_1777775485509.png";
 
 export default function Landing() {
   const { user } = useUserAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (user) window.location.href = "/panel";
@@ -71,11 +72,11 @@ export default function Landing() {
           />
 
           <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-4 pt-1">
-            Gemide İnternete<br />Bağlanın
+            {t.landing.heroTitle1}<br />{t.landing.heroTitle2}
           </h1>
 
           <p className="text-base text-slate-600 leading-relaxed mb-8 max-w-sm mx-auto">
-            İnternet paketinizi satın alın veya mevcut hesabınızla giriş yapın.
+            {t.landing.heroDescription}
           </p>
 
           <div className="space-y-4 mb-7">
@@ -85,7 +86,7 @@ export default function Landing() {
                 data-testid="link-buy-package"
               >
                 <ShoppingCart className="h-5 w-5" strokeWidth={2.4} />
-                İnternet Paketi Satın Al
+                {t.landing.buttons.register}
               </a>
             </Link>
             <Link to="/giris">
@@ -94,7 +95,7 @@ export default function Landing() {
                 data-testid="link-login"
               >
                 <Navigation className="h-5 w-5" strokeWidth={2.4} />
-                Giriş Yap
+                {t.landing.buttons.login}
               </a>
             </Link>
           </div>
@@ -103,9 +104,9 @@ export default function Landing() {
           <div className="bg-white/80 backdrop-blur-sm border border-amber-100 rounded-2xl shadow-sm p-3">
             <div className="grid grid-cols-3 divide-x divide-amber-100">
               {[
-                { icon: ShieldCheck, label: "SSL" },
-                { icon: Zap, label: "Anında\nAktivasyon" },
-                { icon: Headphones, label: "7/24\nDestek" },
+                { icon: ShieldCheck, label: t.landing.trustBadges.securePayment },
+                { icon: Zap, label: t.landing.trustBadges.instantActivation },
+                { icon: Headphones, label: t.landing.trustBadges.globalCoverage },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center justify-center gap-2 px-2 py-1">
                   <div className="w-9 h-9 rounded-full bg-[#FFF4C9] flex items-center justify-center shrink-0">
