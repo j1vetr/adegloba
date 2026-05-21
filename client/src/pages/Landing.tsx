@@ -70,7 +70,7 @@ export default function Landing() {
             className="h-20 sm:h-24 w-auto mx-auto mb-7 drop-shadow-[0_10px_30px_rgba(124,94,0,0.18)]"
           />
 
-          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-[1.05] tracking-tight mb-4">
+          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-4 pt-1">
             Gemide İnternete<br />Bağlanın
           </h1>
 
@@ -78,7 +78,7 @@ export default function Landing() {
             İnternet paketinizi satın alın veya mevcut hesabınızla giriş yapın.
           </p>
 
-          <div className="space-y-3 mb-7">
+          <div className="space-y-4 mb-7">
             <Link to="/kayit">
               <a
                 className="w-full inline-flex items-center justify-center gap-3 h-14 rounded-2xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-bold text-base transition active:scale-[0.99] shadow-[0_10px_28px_-10px_rgba(255,200,61,0.85)]"

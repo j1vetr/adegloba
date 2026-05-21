@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { Globe } from 'lucide-react';
 import { translations, Translation } from '@/../../shared/i18n';
 
 type Language = 'tr' | 'en' | 'ru';
@@ -70,7 +71,7 @@ export function LanguageSelector({ className = '', variant = 'light' }: Language
         data-testid="language-dropdown-trigger"
       >
         <div className="flex items-center gap-1.5">
-          <span className="text-base">{currentLanguage.flag}</span>
+          <Globe className={`w-3.5 h-3.5 ${isDark ? 'text-amber-400' : 'text-[#7C5E00]'}`} />
           <span className="font-bold text-xs">{currentLanguage.code.toUpperCase()}</span>
         </div>
         <svg
@@ -101,7 +102,9 @@ export function LanguageSelector({ className = '', variant = 'light' }: Language
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150 ${itemCls}`}
                   data-testid={`language-option-${lang.code}`}
                 >
-                  <span className="text-lg">{lang.flag}</span>
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold tracking-wide">
+                    {lang.code.toUpperCase()}
+                  </span>
                   <div className="flex flex-col">
                     <span className="font-semibold text-sm">{lang.code.toUpperCase()}</span>
                     <span className="text-xs opacity-75">{lang.name}</span>
