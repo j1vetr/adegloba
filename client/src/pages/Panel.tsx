@@ -14,7 +14,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User, Ship, FavoritePlan, Plan } from "@shared/schema";
 
 const IST = "Europe/Istanbul";
-const fmtDate = (d: string) => new Date(d).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric", timeZone: IST });
+const LANG_LOCALE: Record<string, string> = { tr: "tr-TR", en: "en-US", ru: "ru-RU" };
+const fmtDate = (d: string, locale: string) => new Date(d).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric", timeZone: IST });
 const fmtPrice = (p: string | number) => `$${Number(p).toFixed(2)}`;
 
 interface ActivePackage {
@@ -39,13 +40,13 @@ function calcExpiry(paidAt: string, expiresAt: string) {
   return { daysLeft, exp, pct };
 }
 
-function CopyBtn({ value, label, testId }: { value: string; label: string; testId?: string }) {
+function CopyBtn({ value, label, testId, copyFailed }: { value: string; label: string; testId?: string; copyFailed: string }) {
   const { toast } = useToast();
   return (
     <button
       onClick={async () => {
-        try { await navigator.clipboard.writeText(value); toast({ title: `${label} kopyalandı` }); }
-        catch { toast({ title: "Kopyalama başarısız", variant: "destructive" }); }
+        try { await navigator.clipboard.writeText(value); toast({ title: `${label} ✓` }); }
+        catch { toast({ title: copyFailed, variant: "destructive" }); }
       }}
       data-testid={testId}
       className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition"
@@ -57,7 +58,8 @@ function CopyBtn({ value, label, testId }: { value: string; label: string; testI
 
 export default function Panel() {
   const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }; isLoading: boolean };
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const dateLocale = LANG_LOCALE[language] ?? "tr-TR";
 
   const shouldShowFeedback = useFeedbackModal(user?.id);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -82,7 +84,7 @@ export default function Panel() {
   const addToCartMutation = useMutation({
     mutationFn: async (planId: string) => (await apiRequest("POST", "/api/cart", { planId, quantity: 1 })).json(),
     onSuccess: () => { toast({ title: t.packages.addedToCart, description: t.packages.addedToCartDesc }); window.location.href = "/sepet"; },
-    onError: () => toast({ title: t.common.error, description: "Sepete eklenemedi", variant: "destructive" }),
+    onError: () => toast({ title: t.common.error, description: t.panel.cannotAddToCart, variant: "destructive" }),
   });
   const removeFavoriteMutation = useMutation({
     mutationFn: async (planId: string) => { await apiRequest("DELETE", `/api/favorites/${planId}`); },
@@ -99,7 +101,7 @@ export default function Panel() {
   const sortedPkgs = [...pkgs].sort((a, b) => new Date(b.paidAt || b.assignedAt).getTime() - new Date(a.paidAt || a.assignedAt).getTime());
 
   return (
-    <UserShell title="Ana Sayfa">
+    <UserShell title={t.dashboard.navigation.home}>
       {showFeedback && user?.id && <FeedbackModal userId={user.id} onClose={() => setShowFeedback(false)} />}
 
       <div className="space-y-4">
@@ -111,16 +113,16 @@ export default function Panel() {
             </p>
             {user.ship && (
               <p className="text-xs text-slate-500 mt-1">
-                Gemi Adı: <span className="text-[#7C5E00] font-semibold">{user.ship.name}</span>
+                {t.panel.shipName} <span className="text-[#7C5E00] font-semibold">{user.ship.name}</span>
               </p>
             )}
           </div>
 
           <div className="grid grid-cols-3 gap-2 mb-4">
             {[
-              { label: "Aktif", value: pkgs.length },
-              { label: "Sipariş", value: userOrders?.length ?? 0 },
-              { label: "Favori", value: favorites?.length ?? 0 },
+              { label: t.panel.activeLabel, value: pkgs.length },
+              { label: t.panel.orderLabel, value: userOrders?.length ?? 0 },
+              { label: t.panel.favoriteLabel, value: favorites?.length ?? 0 },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-xl bg-slate-50 border border-slate-100 p-2.5 text-center">
                 <p className="text-xl font-bold text-slate-900">{value}</p>
@@ -140,10 +142,10 @@ export default function Panel() {
         {/* Operator-style quick actions */}
         <div className="grid grid-cols-4 gap-2">
           {[
-            { href: "/paketler", icon: Package,        label: "Paketler", testId: "qa-packages" },
-            { href: "/sepet",    icon: ShoppingCart,   label: "Sepet",    testId: "qa-cart" },
-            { href: "/destek",   icon: HeadphonesIcon, label: "Destek",   testId: "qa-support" },
-            { href: "/profil",   icon: UserIcon,       label: "Profil",   testId: "qa-profile" },
+            { href: "/paketler", icon: Package,        label: t.panel.packagesLabel, testId: "qa-packages" },
+            { href: "/sepet",    icon: ShoppingCart,   label: t.panel.cartLabel,     testId: "qa-cart" },
+            { href: "/destek",   icon: HeadphonesIcon, label: t.panel.supportLabel,  testId: "qa-support" },
+            { href: "/profil",   icon: UserIcon,       label: t.panel.profileLabel,  testId: "qa-profile" },
           ].map((qa) => {
             const Icon = qa.icon;
             return (
@@ -162,11 +164,11 @@ export default function Panel() {
           })}
         </div>
 
-        {/* Active packages (rendered BEFORE Son Siparişler per spec) */}
+        {/* Active packages */}
         <section>
           <div className="flex items-center justify-between mb-2.5 px-1">
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <Package className="w-4 h-4 text-[#7C5E00]" /> Aktif Paketleriniz
+              <Package className="w-4 h-4 text-[#7C5E00]" /> {t.panel.activePackagesTitle}
             </h2>
             {pkgs.length > 0 && <span className="text-xs text-slate-500">{pkgs.length}</span>}
           </div>
@@ -189,7 +191,7 @@ export default function Panel() {
           ) : (
             <div className="space-y-3">
               {sortedPkgs.map((pkg) => {
-                const purchaseLabel = fmtDate(pkg.paidAt || pkg.assignedAt);
+                const purchaseLabel = fmtDate(pkg.paidAt || pkg.assignedAt, dateLocale);
                 const { daysLeft, exp, pct } = calcExpiry(pkg.paidAt || pkg.assignedAt, pkg.expiresAt);
                 const urgency = daysLeft > 7 ? "ok" : daysLeft > 3 ? "warn" : "danger";
                 const barColor = { ok: "bg-emerald-500", warn: "bg-amber-500", danger: "bg-rose-500" }[urgency];
@@ -204,41 +206,41 @@ export default function Panel() {
                           <span className="text-base font-bold text-slate-500">GB</span>
                           <span className="text-slate-400 text-xs ml-1">· {pkg.planName}</span>
                         </div>
-                        <span className={`chip ${daysLeft > 0 ? "chip-success" : "chip-danger"}`}>{daysLeft > 0 ? "Aktif" : "Bitti"}</span>
+                        <span className={`chip ${daysLeft > 0 ? "chip-success" : "chip-danger"}`}>{daysLeft > 0 ? t.panel.active : t.panel.ended}</span>
                       </div>
 
                       <div className="flex items-center gap-1.5 mb-3 text-xs text-slate-500">
-                        <CalendarDays className="w-3 h-3" /> Satın alma: {purchaseLabel}
+                        <CalendarDays className="w-3 h-3" /> {t.panel.purchaseDate} {purchaseLabel}
                       </div>
 
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1.5 text-slate-500"><Clock className="w-3 h-3" /><span>Kalan süre</span></div>
-                          <span className={`font-bold text-sm ${dayColor}`}>{daysLeft} gün</span>
+                          <div className="flex items-center gap-1.5 text-slate-500"><Clock className="w-3 h-3" /><span>{t.panel.timeRemaining}</span></div>
+                          <span className={`font-bold text-sm ${dayColor}`}>{daysLeft} {t.panel.days}</span>
                         </div>
                         <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                           <div className={`h-full ${barColor} transition-all duration-500`} style={{ width: `${pct}%` }} />
                         </div>
-                        <p className="text-slate-400 text-xs">Bitiş: {fmtDate(exp.toISOString())}</p>
+                        <p className="text-slate-400 text-xs">{t.panel.expires} {fmtDate(exp.toISOString(), dateLocale)}</p>
                       </div>
                     </div>
 
                     <div className="px-4 py-3 border-t border-slate-100">
                       <div className="flex items-center gap-1.5 mb-2">
                         <Wifi className="w-3 h-3 text-slate-400" />
-                        <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Bağlantı Bilgileri</span>
+                        <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">{t.panel.connectionInfo}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         {[
-                          { label: "Kullanıcı Adı", val: pkg.username, testId: `copy-username-${pkg.credentialId}` },
-                          { label: "Şifre", val: pkg.password, testId: `copy-password-${pkg.credentialId}` },
+                          { label: t.panel.usernameLabel, val: pkg.username, testId: `copy-username-${pkg.credentialId}` },
+                          { label: t.panel.passwordLabel, val: pkg.password, testId: `copy-password-${pkg.credentialId}` },
                         ].map(({ label, val, testId }) => (
                           <div key={label} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
                             <div className="min-w-0 flex-1">
                               <p className="text-slate-500 text-xs mb-0.5">{label}</p>
                               <p className="text-slate-900 font-mono text-xs font-medium truncate">{val}</p>
                             </div>
-                            <CopyBtn value={val} label={label} testId={testId} />
+                            <CopyBtn value={val} label={label} testId={testId} copyFailed={t.panel.copyFailed} />
                           </div>
                         ))}
                       </div>
@@ -250,14 +252,14 @@ export default function Panel() {
           )}
         </section>
 
-        {/* Recent orders snapshot (after Active Packages) */}
+        {/* Recent orders snapshot */}
         {userOrders && userOrders.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-2.5 px-1">
               <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <History className="w-4 h-4 text-[#7C5E00]" /> Son Siparişler
+                <History className="w-4 h-4 text-[#7C5E00]" /> {t.panel.recentOrders}
               </h2>
-              <Link href="/panel/gecmis"><a className="text-xs text-slate-500 hover:text-slate-900" data-testid="link-all-orders">Tümü ›</a></Link>
+              <Link href="/panel/gecmis"><a className="text-xs text-slate-500 hover:text-slate-900" data-testid="link-all-orders">{t.panel.viewAll}</a></Link>
             </div>
             <div className="user-card divide-y divide-slate-100">
               {userOrders.slice(0, 3).map((o: any) => (
@@ -268,7 +270,7 @@ export default function Panel() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-900 truncate">#{String(o.id).slice(-8).toUpperCase()}</p>
-                      <p className="text-xs text-slate-500 truncate">{o.createdAt ? fmtDate(o.createdAt) : ""}</p>
+                      <p className="text-xs text-slate-500 truncate">{o.createdAt ? fmtDate(o.createdAt, dateLocale) : ""}</p>
                     </div>
                     <span className="text-sm font-bold text-slate-900 shrink-0">{fmtPrice(o.totalUsd ?? o.total ?? o.amount ?? 0)}</span>
                     <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
@@ -283,7 +285,7 @@ export default function Panel() {
         <section>
           <div className="flex items-center justify-between mb-2.5 px-1">
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <Heart className="w-4 h-4 text-rose-500" /> Favori Paketler
+              <Heart className="w-4 h-4 text-rose-500" /> {t.panel.favoritePackages}
             </h2>
             {favorites && favorites.length > 0 && <span className="text-xs text-slate-500">{favorites.length}</span>}
           </div>
@@ -296,8 +298,8 @@ export default function Panel() {
                 <Heart className="w-4 h-4 text-slate-400" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-slate-900 font-medium">{t.dashboard.sections.noFavorites ?? "Henüz favori paket yok"}</p>
-                <p className="text-xs text-slate-500">Beğendiğiniz paketleri kalp ikonuyla ekleyin.</p>
+                <p className="text-sm text-slate-900 font-medium">{t.dashboard.sections.noFavorites}</p>
+                <p className="text-xs text-slate-500">{t.panel.addWithHeart}</p>
               </div>
             </div>
           ) : (
@@ -334,8 +336,8 @@ export default function Panel() {
               <History className="w-4 h-4 text-slate-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900">Sipariş Geçmişi & Süresi Bitmiş Paketler</p>
-              <p className="text-xs text-slate-500">Tüm satın alma kayıtlarınızı görüntüleyin</p>
+              <p className="text-sm font-semibold text-slate-900">{t.panel.orderHistory}</p>
+              <p className="text-xs text-slate-500">{t.panel.orderHistoryDesc}</p>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400" />
           </a>

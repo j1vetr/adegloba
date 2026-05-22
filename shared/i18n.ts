@@ -238,8 +238,137 @@ export interface Translation {
     registrationDate: string;
     changePassword: string;
     cannotChange: string;
+    edit?: string;
+    notFilled?: string;
+    selectShipOption?: string;
+    noShipSelected?: string;
+    shipChangeNote?: string;
+    save?: string;
+    security?: string;
+    securityDesc?: string;
+    changePasswordBtn?: string;
+    userGuideLink?: string;
+    logout?: string;
+    closeAccount?: string;
+    closeAccountDesc?: string;
+    closeAccountRequest?: string;
+    update?: string;
+    currentPasswordLabel?: string;
+    newPasswordMin12?: string;
+    confirmPasswordRepeat?: string;
+    hide?: string;
+    show?: string;
+    dismiss?: string;
+    submitRequest?: string;
+    closeAccountWarningTitle?: string;
+    closeAccountBullet1?: string;
+    closeAccountBullet2?: string;
+    closeAccountBullet3?: string;
+    typeToConfirm?: string;
+    closeAccountConfirmWord?: string;
+    emailPlaceholder?: string;
+    fullNamePlaceholder?: string;
+    addressPlaceholder?: string;
   };
 
+  // Home Page (authenticated)
+  home: {
+    manageFleet: string;
+    activePlans: string;
+    totalSpent: string;
+    shipsConnected: string;
+    quickActions: string;
+    browseShips: string;
+    browseShipsDesc: string;
+    viewOrders: string;
+    viewOrdersDesc: string;
+    getSupport: string;
+    getSupportDesc: string;
+    availableShips: string;
+    active: string;
+    viewPlans: string;
+    noShipsTitle: string;
+    noShipsDesc: string;
+  };
+
+  // Ship Plans Page
+  shipPlans: {
+    orderCreated: string;
+    orderCreatedDesc: string;
+    unauthorized: string;
+    unauthorizedDesc: string;
+    failedToCreateOrder: string;
+    authRequired: string;
+    authRequiredDesc: string;
+    shipNotFound: string;
+    shipNotFoundDesc: string;
+    goBack: string;
+    active: string;
+    dataPackagesFor: string;
+    chooseDataPlan: string;
+    mostPopular: string;
+    perMonth: string;
+    dataAllowance: string;
+    support247: string;
+    creatingOrder: string;
+    selectPlan: string;
+    noDataPlans: string;
+    noDataPlansDesc: string;
+    defaultShipDesc: string;
+    highSpeed: string;
+    monthlyRenewal: string;
+  };
+
+  // Order Success Page
+  orderSuccess: {
+    checkingOrder: string;
+    orderNotFound: string;
+    orderNotVerified: string;
+    backToPanel: string;
+    paymentSuccessful: string;
+    stepCart: string;
+    stepPayment: string;
+    stepConfirm: string;
+    paymentReceived: string;
+    accountActivated: string;
+    orderId: string;
+    amount: string;
+    status: string;
+    paid: string;
+    paymentId: string;
+    viewActivePackage: string;
+    supportContact: string;
+  };
+
+  // Panel Page
+  panel: {
+    shipName: string;
+    activeLabel: string;
+    orderLabel: string;
+    favoriteLabel: string;
+    activePackagesTitle: string;
+    active: string;
+    ended: string;
+    purchaseDate: string;
+    timeRemaining: string;
+    days: string;
+    expires: string;
+    connectionInfo: string;
+    usernameLabel: string;
+    passwordLabel: string;
+    recentOrders: string;
+    viewAll: string;
+    favoritePackages: string;
+    addWithHeart: string;
+    orderHistory: string;
+    orderHistoryDesc: string;
+    copyFailed: string;
+    cannotAddToCart: string;
+    packagesLabel: string;
+    cartLabel: string;
+    supportLabel: string;
+    profileLabel: string;
+  };
 
   // User Guide
   guide: {
@@ -707,7 +836,133 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       confirmPassword: "Yeni Şifre Tekrar",
       registrationDate: "Kayıt Tarihi",
       changePassword: "Şifre Değiştir (İsteğe Bağlı)",
-      cannotChange: "Bu alan değiştirilemez"
+      cannotChange: "Bu alan değiştirilemez",
+      edit: "Düzenle",
+      notFilled: "Henüz girilmemiş",
+      selectShipOption: "Gemi seçin...",
+      noShipSelected: "Gemi seçilmemiş",
+      shipChangeNote: "Gemi değiştirildiğinde paket atamaları yenilenecek",
+      save: "Kaydet",
+      security: "Güvenlik",
+      securityDesc: "Şifrenizi düzenli aralıklarla güncelleyin",
+      changePasswordBtn: "Şifre Değiştir",
+      userGuideLink: "Kullanım Kılavuzu",
+      logout: "Çıkış Yap",
+      closeAccount: "Hesabı Kapat",
+      closeAccountDesc: "Hesabınızı kalıcı olarak kapatma talebi oluşturun. Bu işlem geri alınamaz.",
+      closeAccountRequest: "Hesap Kapatma Talebi",
+      update: "Güncelle",
+      currentPasswordLabel: "Mevcut Şifre",
+      newPasswordMin12: "Yeni Şifre (en az 12 karakter)",
+      confirmPasswordRepeat: "Yeni Şifre (Tekrar)",
+      hide: "Gizle",
+      show: "Göster",
+      dismiss: "Vazgeç",
+      submitRequest: "Talebi Gönder",
+      closeAccountWarningTitle: "Aşağıdakiler dikkate alın:",
+      closeAccountBullet1: "Aktif paketleriniz iptal edilecek",
+      closeAccountBullet2: "Sipariş geçmişiniz arşivlenecek",
+      closeAccountBullet3: "İşlem destek ekibi tarafından doğrulanacak",
+      typeToConfirm: "Onaylamak için KAPAT yazın",
+      closeAccountConfirmWord: "KAPAT",
+      emailPlaceholder: "E-posta adresiniz",
+      fullNamePlaceholder: "Ad Soyad",
+      addressPlaceholder: "Teslimat/fatura adresi"
+    },
+
+    home: {
+      manageFleet: "Filonuzun bağlantısını yönetin ve aktif data paketlerinizi görüntüleyin",
+      activePlans: "Aktif Planlar",
+      totalSpent: "Toplam Harcama",
+      shipsConnected: "Bağlı Gemiler",
+      quickActions: "Hızlı İşlemler",
+      browseShips: "Gemileri Gör",
+      browseShipsDesc: "Mevcut gemileri ve data paketlerini görüntüleyin",
+      viewOrders: "Siparişleri Gör",
+      viewOrdersDesc: "Satın alma geçmişinizi ve aktif planlarınızı kontrol edin",
+      getSupport: "Destek Al",
+      getSupportDesc: "WhatsApp üzerinden destek ekibimizle iletişime geçin",
+      availableShips: "Mevcut Gemiler",
+      active: "Aktif",
+      viewPlans: "Paketleri Gör",
+      noShipsTitle: "Gemi bulunamadı",
+      noShipsDesc: "Gemi kaydı için lütfen destek ile iletişime geçin."
+    },
+
+    shipPlans: {
+      orderCreated: "Sipariş Oluşturuldu",
+      orderCreatedDesc: "Siparişiniz başarıyla oluşturuldu. Ödeme sayfasına yönlendiriliyorsunuz.",
+      unauthorized: "Yetkisiz",
+      unauthorizedDesc: "Oturumunuz sonlandı. Yeniden giriş yapılıyor...",
+      failedToCreateOrder: "Sipariş oluşturulamadı",
+      authRequired: "Kimlik Doğrulama Gerekli",
+      authRequiredDesc: "Data planlarını görüntülemek için giriş yapın.",
+      shipNotFound: "Gemi Bulunamadı",
+      shipNotFoundDesc: "İstenen gemi bulunamadı.",
+      goBack: "Geri Dön",
+      active: "Aktif",
+      dataPackagesFor: "Data Paketleri:",
+      chooseDataPlan: "Yolculuğunuz için en uygun data planını seçin",
+      mostPopular: "En Popüler",
+      perMonth: "aylık",
+      dataAllowance: "GB data kotası",
+      support247: "7/24 destek",
+      creatingOrder: "Sipariş Oluşturuluyor...",
+      selectPlan: "Planı Seç",
+      noDataPlans: "Data planı bulunamadı",
+      noDataPlansDesc: "Bu gemiye ait aktif data paketi şu an mevcut değil.",
+      defaultShipDesc: "Operasyonlar ve mürettebat için güvenilir uydu bağlantısı gerektiren deniz aracı.",
+      highSpeed: "Yüksek Hız",
+      monthlyRenewal: "Aylık Yenileme"
+    },
+
+    orderSuccess: {
+      checkingOrder: "Sipariş detayları kontrol ediliyor...",
+      orderNotFound: "Sipariş Bulunamadı",
+      orderNotVerified: "Bu sipariş doğrulanamadı.",
+      backToPanel: "Panele Dön",
+      paymentSuccessful: "Ödeme Başarılı",
+      stepCart: "Sepet",
+      stepPayment: "Ödeme",
+      stepConfirm: "Onay",
+      paymentReceived: "Ödemeniz Alındı",
+      accountActivated: "Hesabınız etkinleştirildi ve paketleriniz kullanıma hazır.",
+      orderId: "Sipariş ID",
+      amount: "Tutar",
+      status: "Durum",
+      paid: "Ödendi",
+      paymentId: "Ödeme ID",
+      viewActivePackage: "Aktif Paketinizi Görün",
+      supportContact: "Sorun yaşarsanız · support@adegloba.space"
+    },
+
+    panel: {
+      shipName: "Gemi Adı:",
+      activeLabel: "Aktif",
+      orderLabel: "Sipariş",
+      favoriteLabel: "Favori",
+      activePackagesTitle: "Aktif Paketleriniz",
+      active: "Aktif",
+      ended: "Bitti",
+      purchaseDate: "Satın alma:",
+      timeRemaining: "Kalan süre",
+      days: "gün",
+      expires: "Bitiş:",
+      connectionInfo: "Bağlantı Bilgileri",
+      usernameLabel: "Kullanıcı Adı",
+      passwordLabel: "Şifre",
+      recentOrders: "Son Siparişler",
+      viewAll: "Tümü ›",
+      favoritePackages: "Favori Paketler",
+      addWithHeart: "Beğendiğiniz paketleri kalp ikonuyla ekleyin.",
+      orderHistory: "Sipariş Geçmişi & Süresi Bitmiş Paketler",
+      orderHistoryDesc: "Tüm satın alma kayıtlarınızı görüntüleyin",
+      copyFailed: "Kopyalama başarısız",
+      cannotAddToCart: "Sepete eklenemedi",
+      packagesLabel: "Paketler",
+      cartLabel: "Sepet",
+      supportLabel: "Destek",
+      profileLabel: "Profil"
     },
 
     cart: {
@@ -1240,7 +1495,133 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       confirmPassword: "Confirm New Password",
       registrationDate: "Registration Date",
       changePassword: "Change Password (Optional)",
-      cannotChange: "This field cannot be changed"
+      cannotChange: "This field cannot be changed",
+      edit: "Edit",
+      notFilled: "Not filled yet",
+      selectShipOption: "Select ship...",
+      noShipSelected: "No ship selected",
+      shipChangeNote: "Package assignments will be renewed when ship changes",
+      save: "Save",
+      security: "Security",
+      securityDesc: "Update your password regularly",
+      changePasswordBtn: "Change Password",
+      userGuideLink: "User Guide",
+      logout: "Sign Out",
+      closeAccount: "Close Account",
+      closeAccountDesc: "Submit a request to permanently close your account. This action cannot be undone.",
+      closeAccountRequest: "Account Closure Request",
+      update: "Update",
+      currentPasswordLabel: "Current Password",
+      newPasswordMin12: "New Password (at least 12 characters)",
+      confirmPasswordRepeat: "Confirm New Password",
+      hide: "Hide",
+      show: "Show",
+      dismiss: "Cancel",
+      submitRequest: "Submit Request",
+      closeAccountWarningTitle: "Please consider the following:",
+      closeAccountBullet1: "Your active packages will be cancelled",
+      closeAccountBullet2: "Your order history will be archived",
+      closeAccountBullet3: "The operation will be verified by the support team",
+      typeToConfirm: "Type CLOSE to confirm",
+      closeAccountConfirmWord: "CLOSE",
+      emailPlaceholder: "Your email address",
+      fullNamePlaceholder: "First Last",
+      addressPlaceholder: "Delivery/billing address"
+    },
+
+    home: {
+      manageFleet: "Manage your fleet connectivity and view your active data packages",
+      activePlans: "Active Plans",
+      totalSpent: "Total Spent",
+      shipsConnected: "Ships Connected",
+      quickActions: "Quick Actions",
+      browseShips: "Browse Ships",
+      browseShipsDesc: "View available ships and data packages",
+      viewOrders: "View Orders",
+      viewOrdersDesc: "Check your purchase history and active plans",
+      getSupport: "Get Support",
+      getSupportDesc: "Contact our support team via WhatsApp",
+      availableShips: "Available Ships",
+      active: "Active",
+      viewPlans: "View Plans",
+      noShipsTitle: "No ships available",
+      noShipsDesc: "Please contact support for ship registration."
+    },
+
+    shipPlans: {
+      orderCreated: "Order Created",
+      orderCreatedDesc: "Your order has been created successfully. Proceed to checkout.",
+      unauthorized: "Unauthorized",
+      unauthorizedDesc: "You are logged out. Logging in again...",
+      failedToCreateOrder: "Failed to create order",
+      authRequired: "Authentication Required",
+      authRequiredDesc: "Please log in to view data plans.",
+      shipNotFound: "Ship Not Found",
+      shipNotFoundDesc: "The requested ship could not be found.",
+      goBack: "Go Back",
+      active: "Active",
+      dataPackagesFor: "Data Packages for",
+      chooseDataPlan: "Choose the perfect data plan for your voyage",
+      mostPopular: "Most Popular",
+      perMonth: "per month",
+      dataAllowance: "data allowance",
+      support247: "24/7 support",
+      creatingOrder: "Creating Order...",
+      selectPlan: "Select Plan",
+      noDataPlans: "No data plans available",
+      noDataPlansDesc: "This ship doesn't have any active data packages at the moment.",
+      defaultShipDesc: "Maritime vessel requiring reliable satellite connectivity for operations and crew.",
+      highSpeed: "High-speed",
+      monthlyRenewal: "Monthly renewal"
+    },
+
+    orderSuccess: {
+      checkingOrder: "Checking order details...",
+      orderNotFound: "Order Not Found",
+      orderNotVerified: "This order could not be verified.",
+      backToPanel: "Back to Panel",
+      paymentSuccessful: "Payment Successful",
+      stepCart: "Cart",
+      stepPayment: "Payment",
+      stepConfirm: "Confirm",
+      paymentReceived: "Payment Received",
+      accountActivated: "Your account has been activated and your packages are ready to use.",
+      orderId: "Order ID",
+      amount: "Amount",
+      status: "Status",
+      paid: "Paid",
+      paymentId: "Payment ID",
+      viewActivePackage: "View Your Active Package",
+      supportContact: "If you have issues · support@adegloba.space"
+    },
+
+    panel: {
+      shipName: "Ship Name:",
+      activeLabel: "Active",
+      orderLabel: "Orders",
+      favoriteLabel: "Favorites",
+      activePackagesTitle: "Your Active Packages",
+      active: "Active",
+      ended: "Ended",
+      purchaseDate: "Purchase:",
+      timeRemaining: "Time remaining",
+      days: "days",
+      expires: "Expires:",
+      connectionInfo: "Connection Details",
+      usernameLabel: "Username",
+      passwordLabel: "Password",
+      recentOrders: "Recent Orders",
+      viewAll: "All ›",
+      favoritePackages: "Favorite Packages",
+      addWithHeart: "Add packages you like with the heart icon.",
+      orderHistory: "Order History & Expired Packages",
+      orderHistoryDesc: "View all your purchase records",
+      copyFailed: "Copy failed",
+      cannotAddToCart: "Could not add to cart",
+      packagesLabel: "Packages",
+      cartLabel: "Cart",
+      supportLabel: "Support",
+      profileLabel: "Profile"
     },
 
     cart: {
@@ -1760,7 +2141,133 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       profileUpdateError: "Ошибка при обновлении профиля",
       registrationDate: "Дата регистрации",
       changePassword: "Изменить пароль",
-      cannotChange: "Невозможно изменить"
+      cannotChange: "Невозможно изменить",
+      edit: "Редактировать",
+      notFilled: "Не заполнено",
+      selectShipOption: "Выберите судно...",
+      noShipSelected: "Судно не выбрано",
+      shipChangeNote: "При смене судна назначения пакетов будут обновлены",
+      save: "Сохранить",
+      security: "Безопасность",
+      securityDesc: "Регулярно обновляйте свой пароль",
+      changePasswordBtn: "Изменить пароль",
+      userGuideLink: "Руководство пользователя",
+      logout: "Выйти",
+      closeAccount: "Закрыть аккаунт",
+      closeAccountDesc: "Подайте запрос на постоянное закрытие аккаунта. Это действие нельзя отменить.",
+      closeAccountRequest: "Запрос на закрытие аккаунта",
+      update: "Обновить",
+      currentPasswordLabel: "Текущий пароль",
+      newPasswordMin12: "Новый пароль (не менее 12 символов)",
+      confirmPasswordRepeat: "Подтвердите новый пароль",
+      hide: "Скрыть",
+      show: "Показать",
+      dismiss: "Отмена",
+      submitRequest: "Отправить запрос",
+      closeAccountWarningTitle: "Примите во внимание следующее:",
+      closeAccountBullet1: "Ваши активные пакеты будут отменены",
+      closeAccountBullet2: "История заказов будет архивирована",
+      closeAccountBullet3: "Операция будет подтверждена командой поддержки",
+      typeToConfirm: "Напишите ЗАКРЫТЬ для подтверждения",
+      closeAccountConfirmWord: "ЗАКРЫТЬ",
+      emailPlaceholder: "Ваш адрес электронной почты",
+      fullNamePlaceholder: "Имя Фамилия",
+      addressPlaceholder: "Адрес доставки/выставления счёта"
+    },
+
+    home: {
+      manageFleet: "Управляйте связью флота и просматривайте активные пакеты данных",
+      activePlans: "Активных планов",
+      totalSpent: "Общие расходы",
+      shipsConnected: "Подключённых судов",
+      quickActions: "Быстрые действия",
+      browseShips: "Просмотр судов",
+      browseShipsDesc: "Просматривайте доступные суда и пакеты данных",
+      viewOrders: "Мои заказы",
+      viewOrdersDesc: "Проверьте историю покупок и активные планы",
+      getSupport: "Получить поддержку",
+      getSupportDesc: "Свяжитесь с нашей командой поддержки через WhatsApp",
+      availableShips: "Доступные суда",
+      active: "Активно",
+      viewPlans: "Просмотреть планы",
+      noShipsTitle: "Суда не найдены",
+      noShipsDesc: "Пожалуйста, свяжитесь с поддержкой для регистрации судна."
+    },
+
+    shipPlans: {
+      orderCreated: "Заказ создан",
+      orderCreatedDesc: "Ваш заказ успешно создан. Переходите к оплате.",
+      unauthorized: "Нет авторизации",
+      unauthorizedDesc: "Вы вышли из системы. Выполняется вход...",
+      failedToCreateOrder: "Не удалось создать заказ",
+      authRequired: "Требуется аутентификация",
+      authRequiredDesc: "Пожалуйста, войдите для просмотра планов данных.",
+      shipNotFound: "Судно не найдено",
+      shipNotFoundDesc: "Запрошенное судно не найдено.",
+      goBack: "Назад",
+      active: "Активно",
+      dataPackagesFor: "Пакеты данных для",
+      chooseDataPlan: "Выберите оптимальный план данных для вашего рейса",
+      mostPopular: "Наиболее популярный",
+      perMonth: "в месяц",
+      dataAllowance: "данных",
+      support247: "поддержка 24/7",
+      creatingOrder: "Создание заказа...",
+      selectPlan: "Выбрать план",
+      noDataPlans: "Нет доступных планов данных",
+      noDataPlansDesc: "У этого судна нет активных пакетов данных в данный момент.",
+      defaultShipDesc: "Морское судно, требующее надёжного спутникового соединения для операций и экипажа.",
+      highSpeed: "Высокая скорость",
+      monthlyRenewal: "Ежемесячное продление"
+    },
+
+    orderSuccess: {
+      checkingOrder: "Проверка деталей заказа...",
+      orderNotFound: "Заказ не найден",
+      orderNotVerified: "Этот заказ не удалось подтвердить.",
+      backToPanel: "Вернуться в панель",
+      paymentSuccessful: "Оплата успешна",
+      stepCart: "Корзина",
+      stepPayment: "Оплата",
+      stepConfirm: "Подтверждение",
+      paymentReceived: "Оплата получена",
+      accountActivated: "Ваш аккаунт активирован, пакеты готовы к использованию.",
+      orderId: "ID заказа",
+      amount: "Сумма",
+      status: "Статус",
+      paid: "Оплачено",
+      paymentId: "ID платежа",
+      viewActivePackage: "Просмотреть активный пакет",
+      supportContact: "Если возникли проблемы · support@adegloba.space"
+    },
+
+    panel: {
+      shipName: "Название судна:",
+      activeLabel: "Активных",
+      orderLabel: "Заказов",
+      favoriteLabel: "Избранных",
+      activePackagesTitle: "Ваши активные пакеты",
+      active: "Активно",
+      ended: "Истёк",
+      purchaseDate: "Покупка:",
+      timeRemaining: "Осталось",
+      days: "дн.",
+      expires: "Истекает:",
+      connectionInfo: "Данные подключения",
+      usernameLabel: "Имя пользователя",
+      passwordLabel: "Пароль",
+      recentOrders: "Последние заказы",
+      viewAll: "Все ›",
+      favoritePackages: "Избранные пакеты",
+      addWithHeart: "Добавляйте понравившиеся пакеты иконкой сердца.",
+      orderHistory: "История заказов и истёкшие пакеты",
+      orderHistoryDesc: "Просмотрите все записи о покупках",
+      copyFailed: "Копирование не удалось",
+      cannotAddToCart: "Не удалось добавить в корзину",
+      packagesLabel: "Пакеты",
+      cartLabel: "Корзина",
+      supportLabel: "Поддержка",
+      profileLabel: "Профиль"
     },
 
     guide: {
