@@ -190,19 +190,6 @@ export default function Checkout() {
           })}
         </div>
 
-        <div className="user-card flex items-center gap-3 p-4">
-          <div className="w-10 h-10 rounded-xl bg-[#FFF6D6] flex items-center justify-center shrink-0">
-            <Lock className="h-4 w-4 text-[#7C5E00]" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-bold text-slate-900">{t.checkout.title}</p>
-            <p className="text-xs text-slate-500">{t.checkout.description}</p>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-emerald-600">
-            <Shield className="h-3.5 w-3.5" /><span className="hidden sm:inline">SSL</span>
-          </div>
-        </div>
-
         {/* Order summary */}
         <div className="user-card-elevated p-5">
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">{t.checkout.orderDetails}</h3>
