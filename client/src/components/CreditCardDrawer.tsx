@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Lock, CheckCircle2, ShieldCheck, Wifi } from "lucide-react";
+import { X, Lock, ShieldCheck, CreditCard, CheckCircle2, Wifi } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,489 +19,363 @@ export default function CreditCardDrawer({
   amount,
   currency,
   onSuccess,
-  onError
+  onError,
 }: CreditCardDrawerProps) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const c = t.checkout;
 
-  const { data: user } = useQuery({
-    queryKey: ['/api/user/me'],
-    enabled: isOpen,
-  });
+  const { data: user } = useQuery({ queryKey: ["/api/user/me"], enabled: isOpen });
 
-  const [formData, setFormData] = useState({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    fullName: '',
-  });
+  const [formData, setFormData] = useState({ cardNumber: "", expiryDate: "", cvv: "", fullName: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const [cardBrand, setCardBrand] = useState('');
+  const [cardBrand, setCardBrand] = useState("");
   const [isFlipped, setIsFlipped] = useState(false);
-  const [focusedField, setFocusedField] = useState('');
+  const [focusedField, setFocusedField] = useState("");
 
   useEffect(() => {
     if (isOpen && user) {
-      const userData = user as any;
-      setFormData(prev => ({
-        ...prev,
-        fullName: userData.full_name || '',
-      }));
+      const u = user as any;
+      setFormData((p) => ({ ...p, fullName: u.full_name || "" }));
     }
   }, [isOpen, user]);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
-  const detectCardBrand = (cardNumber: string) => {
-    const cleaned = cardNumber.replace(/\s/g, '');
-    if (/^4/.test(cleaned)) return 'visa';
-    if (/^5[1-5]/.test(cleaned)) return 'mastercard';
-    if (/^3[47]/.test(cleaned)) return 'amex';
-    if (/^6011|^644|^65/.test(cleaned)) return 'discover';
-    return '';
+  const detectBrand = (v: string) => {
+    const n = v.replace(/\s/g, "");
+    if (/^4/.test(n)) return "visa";
+    if (/^5[1-5]/.test(n)) return "mastercard";
+    if (/^3[47]/.test(n)) return "amex";
+    return "";
   };
 
-  const formatCardNumber = (value: string) => {
-    const cleaned = value.replace(/\s/g, '');
-    const match = cleaned.match(/.{1,4}/g);
-    return match ? match.join(' ') : cleaned;
+  const fmtCard = (v: string) => {
+    const c = v.replace(/\s/g, "");
+    return (c.match(/.{1,4}/g) || [c]).join(" ");
   };
 
-  const formatExpiryDate = (value: string) => {
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length >= 2) {
-      return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}`;
-    }
-    return cleaned;
+  const fmtExpiry = (v: string) => {
+    const c = v.replace(/\D/g, "");
+    return c.length >= 2 ? `${c.slice(0, 2)}/${c.slice(2, 4)}` : c;
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    let formattedValue = value;
-    if (field === 'cardNumber') {
-      formattedValue = formatCardNumber(value);
-      setCardBrand(detectCardBrand(value));
-    } else if (field === 'expiryDate') {
-      formattedValue = formatExpiryDate(value);
-    } else if (field === 'cvv') {
-      formattedValue = value.replace(/\D/g, '').slice(0, 4);
-    }
-    setFormData(prev => ({ ...prev, [field]: formattedValue }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
+  const handleChange = (field: string, value: string) => {
+    let v = value;
+    if (field === "cardNumber") { v = fmtCard(value); setCardBrand(detectBrand(value)); }
+    else if (field === "expiryDate") v = fmtExpiry(value);
+    else if (field === "cvv") v = value.replace(/\D/g, "").slice(0, 4);
+    setFormData((p) => ({ ...p, [field]: v }));
+    if (errors[field]) setErrors((p) => ({ ...p, [field]: "" }));
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.cardNumber || formData.cardNumber.replace(/\s/g, '').length < 13)
-      newErrors.cardNumber = c.cardNumberPlaceholder || 'Enter a valid card number';
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!formData.cardNumber || formData.cardNumber.replace(/\s/g, "").length < 13)
+      e.cardNumber = c.cardNumberPlaceholder || "Enter a valid card number";
     if (!formData.expiryDate || !/^\d{2}\/\d{2}$/.test(formData.expiryDate))
-      newErrors.expiryDate = c.expiryFormatError || 'MM/YY';
+      e.expiryDate = c.expiryFormatError || "MM/YY";
     if (!formData.cvv || formData.cvv.length < 3)
-      newErrors.cvv = c.cvvPlaceholder || 'Enter valid CVV';
+      e.cvv = c.cvvPlaceholder || "Enter valid CVV";
     if (!formData.fullName.trim())
-      newErrors.fullName = c.cardHolderPlaceholder || 'Enter your full name';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+      e.fullName = c.cardHolderPlaceholder || "Enter your full name";
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) {
+    if (!validate()) {
       toast({ title: t.common.error, description: c.formErrorDesc, variant: "destructive" });
       return;
     }
     setIsProcessing(true);
     try {
-      const cardPayload = {
+      const payload = {
         amount: parseFloat(amount).toString(),
         currency,
-        intent: 'CAPTURE',
-        paymentMethod: 'CARD',
+        intent: "CAPTURE",
+        paymentMethod: "CARD",
         cardDetails: {
-          number: formData.cardNumber.replace(/\s/g, ''),
-          expiryMonth: formData.expiryDate.split('/')[0].padStart(2, '0'),
-          expiryYear: '20' + formData.expiryDate.split('/')[1],
+          number: formData.cardNumber.replace(/\s/g, ""),
+          expiryMonth: formData.expiryDate.split("/")[0].padStart(2, "0"),
+          expiryYear: "20" + formData.expiryDate.split("/")[1],
           securityCode: formData.cvv,
           name: formData.fullName.trim(),
-          billingAddress: {
-            addressLine1: 'N/A',
-            addressLine2: '',
-            city: 'Istanbul',
-            state: 'TR',
-            postalCode: '34000',
-            countryCode: 'TR'
-          }
-        }
+          billingAddress: { addressLine1: "N/A", addressLine2: "", city: "Istanbul", state: "TR", postalCode: "34000", countryCode: "TR" },
+        },
       };
 
-      const createResponse = await fetch('/api/paypal/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cardPayload),
+      const createRes = await fetch("/api/paypal/create-order", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
-      if (!createResponse.ok) {
-        const errorData = await createResponse.json();
-        throw new Error(errorData.message || 'Order creation failed');
-      }
-      const createData = await createResponse.json();
+      if (!createRes.ok) throw new Error((await createRes.json()).message || "Order creation failed");
+      const createData = await createRes.json();
 
       toast({ title: c.processingCard, description: c.processingCardDesc });
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((r) => setTimeout(r, 2000));
 
-      const captureResponse = await fetch('/api/paypal/capture-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: createData.id }),
+      const captureRes = await fetch("/api/paypal/capture-order", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: createData.id }),
       });
-      if (!captureResponse.ok) {
-        const errorData = await captureResponse.json();
-        throw new Error(errorData.message || c.paymentFailedDesc);
-      }
-      const captureData = await captureResponse.json();
+      if (!captureRes.ok) throw new Error((await captureRes.json()).message || c.paymentFailedDesc);
+      const captureData = await captureRes.json();
 
-      const orderStatus = captureData.status;
       const captureDetails = captureData.purchase_units?.[0]?.payments?.captures?.[0];
-      const captureStatus = captureDetails?.status;
-
-      if (orderStatus === 'COMPLETED' && captureStatus === 'COMPLETED') {
+      if (captureData.status === "COMPLETED" && captureDetails?.status === "COMPLETED") {
         toast({ title: c.verifyingPayment, description: c.verifyingPaymentDesc });
-        const completeResponse = await fetch('/api/cart/complete-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paypalOrderId: createData.id, couponCode: '' }),
+        const completeRes = await fetch("/api/cart/complete-payment", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paypalOrderId: createData.id, couponCode: "" }),
         });
-        if (!completeResponse.ok) {
-          const errorData = await completeResponse.json();
-          throw new Error(errorData.message || c.paymentErrorCardDesc);
-        }
-        const completeData = await completeResponse.json();
+        if (!completeRes.ok) throw new Error((await completeRes.json()).message || c.paymentErrorCardDesc);
+        const completeData = await completeRes.json();
         toast({ title: c.paymentSuccess, description: c.paymentSuccessActivated });
         setTimeout(() => {
           window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureDetails.id}`;
         }, 1500);
       } else {
-        const errorMessage = captureStatus === 'DECLINED'
-          ? c.declinedMsg
-          : `${c.paymentFailedDesc} (${captureStatus || orderStatus})`;
-        throw new Error(errorMessage);
+        throw new Error(captureDetails?.status === "DECLINED" ? c.declinedMsg : `${c.paymentFailedDesc} (${captureDetails?.status || captureData.status})`);
       }
-    } catch (error) {
-      console.error('Credit card payment error:', error);
-      toast({
-        title: c.paymentError,
-        description: error instanceof Error ? error.message : c.paymentErrorCardDesc,
-        variant: "destructive"
-      });
-      onError?.(error);
+    } catch (err) {
+      console.error("Card payment error:", err);
+      toast({ title: c.paymentError, description: err instanceof Error ? err.message : c.paymentErrorCardDesc, variant: "destructive" });
+      onError?.(err);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const getCardBrandLogo = () => {
-    if (cardBrand === 'visa') return (
-      <div className="flex items-center justify-end">
-        <span className="text-white font-black text-xl italic tracking-tight" style={{ fontFamily: 'serif' }}>VISA</span>
-      </div>
-    );
-    if (cardBrand === 'mastercard') return (
-      <div className="flex items-center justify-end gap-[-4px]">
-        <div className="w-7 h-7 rounded-full bg-red-500 opacity-90" />
-        <div className="w-7 h-7 rounded-full bg-yellow-400 opacity-90 -ml-3" />
-      </div>
-    );
-    if (cardBrand === 'amex') return (
-      <span className="text-white font-bold text-sm bg-blue-600 px-2 py-1 rounded">AMEX</span>
-    );
-    return <Wifi className="w-6 h-6 text-white/60 rotate-90" />;
+  const maskedNumber = () => {
+    const raw = formData.cardNumber.replace(/\s/g, "").padEnd(16, "•");
+    return `${raw.slice(0,4)} ${raw.slice(4,8)} ${raw.slice(8,12)} ${raw.slice(12,16)}`;
   };
 
-  const maskedCardNumber = () => {
-    if (!formData.cardNumber) return '•••• •••• •••• ••••';
-    const raw = formData.cardNumber.replace(/\s/g, '');
-    const padded = raw.padEnd(16, '•');
-    return `${padded.slice(0,4)} ${padded.slice(4,8)} ${padded.slice(8,12)} ${padded.slice(12,16)}`;
+  const BrandLogo = () => {
+    if (cardBrand === "visa") return <span className="text-white font-black text-xl italic" style={{ fontFamily: "serif" }}>VISA</span>;
+    if (cardBrand === "mastercard") return (
+      <div className="flex"><div className="w-6 h-6 rounded-full bg-red-500/90" /><div className="w-6 h-6 rounded-full bg-yellow-400/90 -ml-2.5" /></div>
+    );
+    if (cardBrand === "amex") return <span className="text-white font-bold text-xs bg-blue-600 px-1.5 py-0.5 rounded">AMEX</span>;
+    return <Wifi className="w-5 h-5 text-white/40 rotate-90" />;
   };
+
+  const inputBase = "w-full border rounded-xl px-4 py-3 text-slate-900 placeholder-slate-300 text-sm outline-none transition-all duration-150 bg-white";
+  const inputIdle = "border-slate-200 hover:border-slate-300";
+  const inputFocus = "border-[#FFDD57] ring-2 ring-[#FFDD57]/30 shadow-sm";
+  const inputError = "border-red-400 bg-red-50";
+
+  const fieldClass = (field: string) =>
+    `${inputBase} ${errors[field] ? inputError : focusedField === field ? inputFocus : inputIdle}`;
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-md"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Sheet / Modal */}
+      {/* Sheet */}
       <div className="relative w-full sm:max-w-md mx-auto animate-in slide-in-from-bottom-4 duration-300 ease-out">
-        <div className="bg-gradient-to-b from-slate-900 to-slate-950 rounded-t-3xl sm:rounded-3xl shadow-2xl shadow-black/60 border border-white/5 overflow-hidden">
+        <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden">
 
-          {/* Drag handle (mobile) */}
+          {/* Drag handle */}
           <div className="flex justify-center pt-3 pb-1 sm:hidden">
-            <div className="w-10 h-1 rounded-full bg-white/20" />
+            <div className="w-10 h-1 rounded-full bg-slate-200" />
           </div>
 
-          {/* ── Card Visual Preview ── */}
-          <div className="px-6 pt-4 pb-2">
-            <div className="relative h-44 w-full max-w-xs mx-auto" style={{ perspective: '1000px' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#FFF6D6] flex items-center justify-center">
+                <CreditCard className="w-4.5 h-4.5 text-[#7C5E00]" style={{ width: 18, height: 18 }} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">{c.cardPayment}</p>
+                <p className="text-xs text-slate-500">{c.securePayment}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition">
+              <X className="w-4 h-4 text-slate-500" />
+            </button>
+          </div>
+
+          {/* 3D Card Visual */}
+          <div className="px-5 pt-4 pb-3">
+            <div className="relative h-40 w-full max-w-xs mx-auto" style={{ perspective: "1000px" }}>
               <div
                 className="relative w-full h-full transition-all duration-700"
-                style={{
-                  transformStyle: 'preserve-3d',
-                  transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
-                }}
+                style={{ transformStyle: "preserve-3d", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
               >
-                {/* Card Front */}
+                {/* Front */}
                 <div
-                  className="absolute inset-0 rounded-2xl p-5 flex flex-col justify-between overflow-hidden"
+                  className="absolute inset-0 rounded-2xl p-4 flex flex-col justify-between overflow-hidden"
                   style={{
-                    backfaceVisibility: 'hidden',
-                    background: cardBrand === 'visa'
-                      ? 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #1d4ed8 100%)'
-                      : cardBrand === 'mastercard'
-                      ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
-                      : 'linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #0e7490 100%)',
+                    backfaceVisibility: "hidden",
+                    background: cardBrand === "visa"
+                      ? "linear-gradient(135deg,#1e3a5f,#2563eb)"
+                      : cardBrand === "mastercard"
+                      ? "linear-gradient(135deg,#1a1a2e,#0f3460)"
+                      : "linear-gradient(135deg,#0f172a,#0e7490)",
                   }}
                 >
-                  {/* Decorative circles */}
-                  <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/5" />
-                  <div className="absolute -right-4 -top-4 w-28 h-28 rounded-full bg-white/5" />
-                  <div className="absolute -left-6 -bottom-6 w-32 h-32 rounded-full bg-white/5" />
-
+                  <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/5" />
+                  <div className="absolute -left-4 -bottom-4 w-24 h-24 rounded-full bg-white/5" />
                   <div className="flex justify-between items-start relative z-10">
-                    <div className="w-10 h-7 rounded-md bg-gradient-to-br from-yellow-300 to-yellow-500 flex items-center justify-center shadow-md">
-                      <div className="grid grid-cols-2 gap-0.5 p-1">
-                        <div className="w-1.5 h-1 bg-yellow-700/50 rounded-sm" />
-                        <div className="w-1.5 h-1 bg-yellow-700/50 rounded-sm" />
-                        <div className="w-1.5 h-1 bg-yellow-700/50 rounded-sm" />
-                        <div className="w-1.5 h-1 bg-yellow-700/50 rounded-sm" />
-                      </div>
+                    <div className="w-9 h-6 rounded bg-gradient-to-br from-yellow-300 to-yellow-500 grid grid-cols-2 gap-0.5 p-1">
+                      {[...Array(4)].map((_, i) => <div key={i} className="bg-yellow-700/40 rounded-sm" />)}
                     </div>
-                    {getCardBrandLogo()}
+                    <BrandLogo />
                   </div>
-
                   <div className="relative z-10">
-                    <p className="text-white/90 text-lg font-mono tracking-widest mb-3 font-medium">
-                      {maskedCardNumber()}
-                    </p>
+                    <p className="text-white/90 text-base font-mono tracking-widest mb-2">{maskedNumber()}</p>
                     <div className="flex justify-between items-end">
                       <div>
-                        <p className="text-white/40 text-xs uppercase tracking-widest mb-0.5">{c.cardHolderPreview}</p>
-                        <p className="text-white font-medium text-sm uppercase tracking-wider truncate max-w-[160px]">
+                        <p className="text-white/40 text-[10px] uppercase tracking-widest mb-0.5">{c.cardHolderPreview}</p>
+                        <p className="text-white text-xs font-medium uppercase tracking-wide truncate max-w-[140px]">
                           {formData.fullName || c.cardHolderPlaceholder}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-white/40 text-xs uppercase tracking-widest mb-0.5">{c.expiryPreview}</p>
-                        <p className="text-white font-medium text-sm font-mono">
-                          {formData.expiryDate || 'MM/YY'}
-                        </p>
+                        <p className="text-white/40 text-[10px] uppercase tracking-widest mb-0.5">{c.expiryPreview}</p>
+                        <p className="text-white text-xs font-mono">{formData.expiryDate || "MM/YY"}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Card Back */}
+                {/* Back */}
                 <div
                   className="absolute inset-0 rounded-2xl overflow-hidden"
-                  style={{
-                    backfaceVisibility: 'hidden',
-                    transform: 'rotateY(180deg)',
-                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-                  }}
+                  style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", background: "linear-gradient(135deg,#1e293b,#0f172a)" }}
                 >
-                  <div className="h-10 bg-slate-700/80 mt-6" />
-                  <div className="px-5 mt-4">
-                    <p className="text-white/40 text-xs uppercase tracking-widest mb-1">{c.cvv}</p>
-                    <div className="bg-white/10 rounded-md px-4 py-2 flex justify-end">
-                      <span className="text-white font-mono tracking-widest">
-                        {formData.cvv ? '•'.repeat(formData.cvv.length) : '•••'}
+                  <div className="h-9 bg-slate-700/80 mt-5" />
+                  <div className="px-4 mt-3">
+                    <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1">{c.cvv}</p>
+                    <div className="bg-white/10 rounded px-3 py-1.5 flex justify-end">
+                      <span className="text-white font-mono text-sm tracking-widest">
+                        {formData.cvv ? "•".repeat(formData.cvv.length) : "•••"}
                       </span>
                     </div>
                   </div>
-                  <div className="absolute bottom-4 right-5">
-                    {getCardBrandLogo()}
-                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ── Amount Badge ── */}
-          <div className="flex justify-center mb-2">
-            <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-full px-5 py-1.5 flex items-center gap-2">
-              <span className="text-cyan-400 font-bold text-lg">{amount} {currency.toUpperCase()}</span>
-              <Lock className="w-3.5 h-3.5 text-cyan-400/70" />
+          {/* Amount pill */}
+          <div className="flex justify-center mb-3">
+            <div className="inline-flex items-center gap-2 bg-[#FFF6D6] border border-[#FFDD57]/50 rounded-full px-4 py-1.5">
+              <Lock className="w-3 h-3 text-[#7C5E00]" />
+              <span className="text-[#7C5E00] font-bold text-sm">{amount} {currency.toUpperCase()}</span>
             </div>
           </div>
 
-          {/* ── Form ── */}
-          <div className="px-6 pb-6 space-y-3 max-h-[55vh] overflow-y-auto">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="px-5 space-y-3 max-h-[40vh] overflow-y-auto">
 
             {/* Card Number */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">{c.cardNumber}</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{c.cardNumber}</label>
               <div className="relative">
                 <input
-                  type="text"
-                  name="ccnumber"
-                  autoComplete="cc-number"
-                  inputMode="numeric"
-                  placeholder="1234 5678 9012 3456"
-                  value={formData.cardNumber}
-                  onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-                  onFocus={() => { setFocusedField('cardNumber'); setIsFlipped(false); }}
-                  onBlur={() => setFocusedField('')}
-                  maxLength={19}
-                  className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-white placeholder-slate-600 font-mono text-base tracking-widest outline-none transition-all duration-200
-                    ${errors.cardNumber ? 'border-red-500/70 bg-red-500/5' : focusedField === 'cardNumber' ? 'border-cyan-500/50 bg-cyan-500/5 shadow-sm shadow-cyan-500/10' : 'border-white/10 hover:border-white/20'}`}
+                  type="text" name="ccnumber" autoComplete="cc-number" inputMode="numeric"
+                  placeholder="1234 5678 9012 3456" value={formData.cardNumber} maxLength={19}
+                  onChange={(e) => handleChange("cardNumber", e.target.value)}
+                  onFocus={() => { setFocusedField("cardNumber"); setIsFlipped(false); }}
+                  onBlur={() => setFocusedField("")}
+                  className={fieldClass("cardNumber") + " font-mono tracking-widest pr-12"}
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  {cardBrand === 'visa' && <span className="text-blue-400 font-black text-sm italic">VISA</span>}
-                  {cardBrand === 'mastercard' && (
-                    <div className="flex">
-                      <div className="w-4 h-4 rounded-full bg-red-500" />
-                      <div className="w-4 h-4 rounded-full bg-yellow-400 -ml-2" />
-                    </div>
-                  )}
-                  {cardBrand === 'amex' && <span className="text-blue-400 font-bold text-xs">AMEX</span>}
-                  {!cardBrand && <div className="w-5 h-3.5 rounded bg-white/10" />}
+                  {cardBrand === "visa" && <span className="text-blue-600 font-black text-sm italic">VISA</span>}
+                  {cardBrand === "mastercard" && <div className="flex"><div className="w-4 h-4 rounded-full bg-red-500" /><div className="w-4 h-4 rounded-full bg-yellow-400 -ml-2" /></div>}
+                  {cardBrand === "amex" && <span className="text-blue-600 font-bold text-xs">AMEX</span>}
+                  {!cardBrand && <CreditCard className="w-4 h-4 text-slate-300" />}
                 </div>
               </div>
-              {errors.cardNumber && <p className="text-red-400 text-xs">{errors.cardNumber}</p>}
+              {errors.cardNumber && <p className="text-red-500 text-xs">{errors.cardNumber}</p>}
             </div>
 
             {/* Expiry + CVV */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">{c.expiryDate}</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{c.expiryDate}</label>
                 <input
-                  type="text"
-                  name="ccexp"
-                  autoComplete="cc-exp"
-                  inputMode="numeric"
-                  placeholder="MM/YY"
-                  value={formData.expiryDate}
-                  onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                  onFocus={() => { setFocusedField('expiryDate'); setIsFlipped(false); }}
-                  onBlur={() => setFocusedField('')}
-                  maxLength={5}
-                  className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-white placeholder-slate-600 font-mono text-base tracking-wider outline-none transition-all duration-200
-                    ${errors.expiryDate ? 'border-red-500/70 bg-red-500/5' : focusedField === 'expiryDate' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/10 hover:border-white/20'}`}
+                  type="text" name="ccexp" autoComplete="cc-exp" inputMode="numeric"
+                  placeholder="MM/YY" value={formData.expiryDate} maxLength={5}
+                  onChange={(e) => handleChange("expiryDate", e.target.value)}
+                  onFocus={() => { setFocusedField("expiryDate"); setIsFlipped(false); }}
+                  onBlur={() => setFocusedField("")}
+                  className={fieldClass("expiryDate") + " font-mono tracking-wider"}
                 />
-                {errors.expiryDate && <p className="text-red-400 text-xs">{errors.expiryDate}</p>}
+                {errors.expiryDate && <p className="text-red-500 text-xs">{errors.expiryDate}</p>}
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">{c.cvv}</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{c.cvv}</label>
                 <input
-                  type="text"
-                  name="cvc"
-                  autoComplete="cc-csc"
-                  inputMode="numeric"
-                  placeholder="•••"
-                  value={formData.cvv}
-                  onChange={(e) => handleInputChange('cvv', e.target.value)}
-                  onFocus={() => { setFocusedField('cvv'); setIsFlipped(true); }}
-                  onBlur={() => { setFocusedField(''); setIsFlipped(false); }}
-                  maxLength={4}
-                  className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-white placeholder-slate-600 font-mono text-base tracking-widest outline-none transition-all duration-200
-                    ${errors.cvv ? 'border-red-500/70 bg-red-500/5' : focusedField === 'cvv' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/10 hover:border-white/20'}`}
+                  type="text" name="cvc" autoComplete="cc-csc" inputMode="numeric"
+                  placeholder="•••" value={formData.cvv} maxLength={4}
+                  onChange={(e) => handleChange("cvv", e.target.value)}
+                  onFocus={() => { setFocusedField("cvv"); setIsFlipped(true); }}
+                  onBlur={() => { setFocusedField(""); setIsFlipped(false); }}
+                  className={fieldClass("cvv") + " font-mono tracking-widest"}
                 />
-                {errors.cvv && <p className="text-red-400 text-xs">{errors.cvv}</p>}
+                {errors.cvv && <p className="text-red-500 text-xs">{errors.cvv}</p>}
               </div>
             </div>
 
             {/* Full Name */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">{c.cardHolderLabel}</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{c.cardHolderLabel}</label>
               <input
-                type="text"
-                name="ccname"
-                autoComplete="cc-name"
-                placeholder={c.cardHolderPlaceholder?.toUpperCase()}
-                value={formData.fullName}
-                onChange={(e) => handleInputChange('fullName', e.target.value.toUpperCase())}
-                onFocus={() => { setFocusedField('fullName'); setIsFlipped(false); }}
-                onBlur={() => setFocusedField('')}
-                className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-white placeholder-slate-600 font-mono text-sm uppercase tracking-widest outline-none transition-all duration-200
-                  ${errors.fullName ? 'border-red-500/70 bg-red-500/5' : focusedField === 'fullName' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/10 hover:border-white/20'}`}
+                type="text" name="ccname" autoComplete="cc-name"
+                placeholder={c.cardHolderPlaceholder?.toUpperCase()} value={formData.fullName}
+                onChange={(e) => handleChange("fullName", e.target.value.toUpperCase())}
+                onFocus={() => { setFocusedField("fullName"); setIsFlipped(false); }}
+                onBlur={() => setFocusedField("")}
+                className={fieldClass("fullName") + " uppercase tracking-widest"}
               />
-              {errors.fullName && <p className="text-red-400 text-xs">{errors.fullName}</p>}
+              {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}
             </div>
+          </form>
 
-          </div>
-
-          {/* ── Footer ── */}
-          <div className="px-6 pb-6 pt-2 space-y-3">
+          {/* Footer */}
+          <div className="px-5 pt-3 pb-5 mt-2 space-y-3">
             {/* Security badges */}
-            <div className="flex items-center justify-center gap-4 text-slate-500 text-xs">
-              <div className="flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-green-500/70" />
-                <span>256-bit SSL</span>
-              </div>
-              <div className="w-px h-3 bg-slate-700" />
-              <div className="flex items-center gap-1">
-                <Lock className="w-3.5 h-3.5 text-cyan-500/70" />
-                <span>{c.securePayment}</span>
-              </div>
-              <div className="w-px h-3 bg-slate-700" />
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-blue-500/70" />
-                <span>PCI DSS</span>
-              </div>
+            <div className="flex items-center justify-center gap-3 text-xs text-slate-400">
+              <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />256-bit SSL</span>
+              <span className="w-px h-3 bg-slate-200" />
+              <span className="flex items-center gap-1"><Lock className="w-3.5 h-3.5 text-slate-400" />{c.securePayment}</span>
+              <span className="w-px h-3 bg-slate-200" />
+              <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />PCI DSS</span>
             </div>
 
             {/* Pay Button */}
             <button
               onClick={handleSubmit}
               disabled={isProcessing}
-              className="w-full relative overflow-hidden rounded-2xl py-4 font-semibold text-base text-white transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed group"
-              style={{
-                background: isProcessing
-                  ? 'linear-gradient(135deg, #0e7490, #1d4ed8)'
-                  : 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #6366f1 100%)',
-                boxShadow: isProcessing ? 'none' : '0 0 30px rgba(6, 182, 212, 0.3), 0 4px 20px rgba(0,0,0,0.4)',
-              }}
+              className="w-full h-14 rounded-2xl font-bold text-base text-slate-900 bg-[#FFDD57] hover:brightness-95 active:scale-[0.99] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-between px-5"
             >
-              {/* Shine effect */}
-              {!isProcessing && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              )}
-              <div className="relative flex items-center justify-center gap-2.5">
-                {isProcessing ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>{c.processingBtn}</span>
-                  </>
-                ) : (
-                  <>
+              {isProcessing ? (
+                <span className="flex items-center gap-2 mx-auto">
+                  <div className="w-5 h-5 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />
+                  {c.processingBtn}
+                </span>
+              ) : (
+                <>
+                  <span className="flex items-center gap-2">
                     <Lock className="w-4 h-4" />
-                    <span>{c.completePayment} — {amount} {currency.toUpperCase()}</span>
-                  </>
-                )}
-              </div>
+                    {c.completePayment}
+                  </span>
+                  <span className="font-black tabular-nums">{amount} {currency.toUpperCase()}</span>
+                </>
+              )}
             </button>
           </div>
         </div>
-
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute -top-12 right-0 sm:right-auto sm:-top-4 sm:-right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all duration-200 backdrop-blur-sm"
-        >
-          <X className="w-4 h-4" />
-        </button>
       </div>
     </div>
   );
