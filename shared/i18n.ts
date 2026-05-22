@@ -505,6 +505,20 @@ export interface Translation {
     paymentSuccessCard?: string;
     paymentFailedDesc?: string;
     couponErrorMsg?: string;
+    cardHolderPreview?: string;
+    expiryPreview?: string;
+    expiryFormatError?: string;
+    formErrorDesc?: string;
+    processingCard?: string;
+    processingCardDesc?: string;
+    verifyingPayment?: string;
+    verifyingPaymentDesc?: string;
+    completePayment?: string;
+    processingBtn?: string;
+    paymentSuccessActivated?: string;
+    paymentErrorCardDesc?: string;
+    cardHolderLabel?: string;
+    declinedMsg?: string;
   };
 
   // Admin Panel
@@ -1083,7 +1097,21 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       loginRequiredDesc: "Ödeme yapmak için giriş yapmalısınız",
       paymentSuccessCard: "Kredi kartı ödemesi başarıyla tamamlandı!",
       paymentFailedDesc: "Ödeme işlemi başarısız oldu",
-      couponErrorMsg: "Kupon Hatası"
+      couponErrorMsg: "Kupon Hatası",
+      cardHolderPreview: "Kart Sahibi",
+      expiryPreview: "Son Tarih",
+      expiryFormatError: "MM/YY formatında girin",
+      formErrorDesc: "Lütfen tüm gerekli alanları doldurun",
+      processingCard: "Kart İşleniyor",
+      processingCardDesc: "Kredi kartı bilgileri doğrulanıyor...",
+      verifyingPayment: "Ödeme Kontrol Ediliyor",
+      verifyingPaymentDesc: "Ödeme doğrulandı, işleminiz tamamlanıyor...",
+      completePayment: "Ödemeyi Tamamla",
+      processingBtn: "İşleniyor...",
+      paymentSuccessActivated: "Kredi kartı ödemesi tamamlandı ve paketler etkinleştirildi.",
+      paymentErrorCardDesc: "Kart ödemesi işlenirken bir hata oluştu",
+      cardHolderLabel: "Kart Üzerindeki Ad",
+      declinedMsg: "Ödeme reddedildi - kart bilgilerini kontrol edin"
     },
     
     admin: {
@@ -1743,7 +1771,21 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       loginRequiredDesc: "You must log in to make a payment",
       paymentSuccessCard: "Credit card payment completed successfully!",
       paymentFailedDesc: "Payment process failed",
-      couponErrorMsg: "Coupon Error"
+      couponErrorMsg: "Coupon Error",
+      cardHolderPreview: "Cardholder",
+      expiryPreview: "Expiry",
+      expiryFormatError: "Enter in MM/YY format",
+      formErrorDesc: "Please fill in all required fields",
+      processingCard: "Processing Card",
+      processingCardDesc: "Verifying credit card details...",
+      verifyingPayment: "Verifying Payment",
+      verifyingPaymentDesc: "Payment verified, completing your order...",
+      completePayment: "Complete Payment",
+      processingBtn: "Processing...",
+      paymentSuccessActivated: "Card payment completed and packages activated.",
+      paymentErrorCardDesc: "An error occurred while processing card payment",
+      cardHolderLabel: "Name on Card",
+      declinedMsg: "Payment declined - check your card details"
     },
     
     admin: {
@@ -2336,7 +2378,6 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       orderSummary: "Сводка заказа",
       paymentMethod: "Способ оплаты",
       payWithPayPal: "Оплатить через PayPal",
-      payWithCard: "Оплатить кредитной картой",
       processing: "Обработка...",
       secureCheckout: "Безопасная оплата",
       subtotal: "Подитог",
@@ -2397,7 +2438,21 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       loginRequiredDesc: "Войдите для совершения оплаты",
       paymentSuccessCard: "Оплата картой успешно завершена!",
       paymentFailedDesc: "Процесс оплаты не удался",
-      couponErrorMsg: "Ошибка купона"
+      couponErrorMsg: "Ошибка купона",
+      cardHolderPreview: "Держатель",
+      expiryPreview: "Срок",
+      expiryFormatError: "Введите в формате MM/YY",
+      formErrorDesc: "Пожалуйста, заполните все обязательные поля",
+      processingCard: "Обработка карты",
+      processingCardDesc: "Проверка данных кредитной карты...",
+      verifyingPayment: "Проверка оплаты",
+      verifyingPaymentDesc: "Оплата подтверждена, завершаем заказ...",
+      completePayment: "Оплатить",
+      processingBtn: "Обработка...",
+      paymentSuccessActivated: "Оплата картой завершена и пакеты активированы.",
+      paymentErrorCardDesc: "Произошла ошибка при обработке платежа картой",
+      cardHolderLabel: "Имя на карте",
+      declinedMsg: "Платёж отклонён — проверьте данные карты"
     },
 
     admin: {

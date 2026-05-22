@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { X, Lock, CheckCircle2, ShieldCheck, Wifi } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CreditCardDrawerProps {
   isOpen: boolean;
@@ -22,6 +22,8 @@ export default function CreditCardDrawer({
   onError
 }: CreditCardDrawerProps) {
   const { toast } = useToast();
+  const { t } = useLanguage();
+  const c = t.checkout;
 
   const { data: user } = useQuery({
     queryKey: ['/api/user/me'],
@@ -101,13 +103,13 @@ export default function CreditCardDrawer({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.cardNumber || formData.cardNumber.replace(/\s/g, '').length < 13)
-      newErrors.cardNumber = 'Geçerli bir kart numarası girin';
+      newErrors.cardNumber = c.cardNumberPlaceholder || 'Enter a valid card number';
     if (!formData.expiryDate || !/^\d{2}\/\d{2}$/.test(formData.expiryDate))
-      newErrors.expiryDate = 'MM/YY formatında girin';
+      newErrors.expiryDate = c.expiryFormatError || 'MM/YY';
     if (!formData.cvv || formData.cvv.length < 3)
-      newErrors.cvv = 'Geçerli CVV girin';
+      newErrors.cvv = c.cvvPlaceholder || 'Enter valid CVV';
     if (!formData.fullName.trim())
-      newErrors.fullName = 'Ad ve soyadınızı girin';
+      newErrors.fullName = c.cardHolderPlaceholder || 'Enter your full name';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -115,7 +117,7 @@ export default function CreditCardDrawer({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast({ title: "Hata", description: "Lütfen tüm gerekli alanları doldurun", variant: "destructive" });
+      toast({ title: t.common.error, description: c.formErrorDesc, variant: "destructive" });
       return;
     }
     setIsProcessing(true);
@@ -153,7 +155,7 @@ export default function CreditCardDrawer({
       }
       const createData = await createResponse.json();
 
-      toast({ title: "Kart İşleniyor", description: "Kredi kartı bilgileri doğrulanıyor..." });
+      toast({ title: c.processingCard, description: c.processingCardDesc });
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const captureResponse = await fetch('/api/paypal/capture-order', {
@@ -163,7 +165,7 @@ export default function CreditCardDrawer({
       });
       if (!captureResponse.ok) {
         const errorData = await captureResponse.json();
-        throw new Error(errorData.message || 'Ödeme başarısız oldu. Kart bilgilerini kontrol edin.');
+        throw new Error(errorData.message || c.paymentFailedDesc);
       }
       const captureData = await captureResponse.json();
 
@@ -172,7 +174,7 @@ export default function CreditCardDrawer({
       const captureStatus = captureDetails?.status;
 
       if (orderStatus === 'COMPLETED' && captureStatus === 'COMPLETED') {
-        toast({ title: "Ödeme Kontrol Ediliyor", description: "Ödeme doğrulandı, işleminiz tamamlanıyor..." });
+        toast({ title: c.verifyingPayment, description: c.verifyingPaymentDesc });
         const completeResponse = await fetch('/api/cart/complete-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -180,24 +182,24 @@ export default function CreditCardDrawer({
         });
         if (!completeResponse.ok) {
           const errorData = await completeResponse.json();
-          throw new Error(errorData.message || 'Ödeme tamamlanırken hata oluştu');
+          throw new Error(errorData.message || c.paymentErrorCardDesc);
         }
         const completeData = await completeResponse.json();
-        toast({ title: "Ödeme Başarılı!", description: "Kredi kartı ödemesi tamamlandı ve paketler etkinleştirildi." });
+        toast({ title: c.paymentSuccess, description: c.paymentSuccessActivated });
         setTimeout(() => {
           window.location.href = `/order-success?orderId=${completeData.orderId}&amount=${completeData.totalUsd}&paymentId=${captureDetails.id}`;
         }, 1500);
       } else {
         const errorMessage = captureStatus === 'DECLINED'
-          ? 'Ödeme reddedildi - kart bilgilerini kontrol edin'
-          : `Ödeme tamamlanamadı (${captureStatus || orderStatus})`;
+          ? c.declinedMsg
+          : `${c.paymentFailedDesc} (${captureStatus || orderStatus})`;
         throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Credit card payment error:', error);
       toast({
-        title: "Ödeme Hatası",
-        description: error instanceof Error ? error.message : "Kart ödemesi işlenirken bir hata oluştu",
+        title: c.paymentError,
+        description: error instanceof Error ? error.message : c.paymentErrorCardDesc,
         variant: "destructive"
       });
       onError?.(error);
@@ -295,13 +297,13 @@ export default function CreditCardDrawer({
                     </p>
                     <div className="flex justify-between items-end">
                       <div>
-                        <p className="text-white/40 text-xs uppercase tracking-widest mb-0.5">Kart Sahibi</p>
+                        <p className="text-white/40 text-xs uppercase tracking-widest mb-0.5">{c.cardHolderPreview}</p>
                         <p className="text-white font-medium text-sm uppercase tracking-wider truncate max-w-[160px]">
-                          {formData.fullName || 'AD SOYAD'}
+                          {formData.fullName || c.cardHolderPlaceholder}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-white/40 text-xs uppercase tracking-widest mb-0.5">Son Tarih</p>
+                        <p className="text-white/40 text-xs uppercase tracking-widest mb-0.5">{c.expiryPreview}</p>
                         <p className="text-white font-medium text-sm font-mono">
                           {formData.expiryDate || 'MM/YY'}
                         </p>
@@ -321,7 +323,7 @@ export default function CreditCardDrawer({
                 >
                   <div className="h-10 bg-slate-700/80 mt-6" />
                   <div className="px-5 mt-4">
-                    <p className="text-white/40 text-xs uppercase tracking-widest mb-1">CVV</p>
+                    <p className="text-white/40 text-xs uppercase tracking-widest mb-1">{c.cvv}</p>
                     <div className="bg-white/10 rounded-md px-4 py-2 flex justify-end">
                       <span className="text-white font-mono tracking-widest">
                         {formData.cvv ? '•'.repeat(formData.cvv.length) : '•••'}
@@ -349,7 +351,7 @@ export default function CreditCardDrawer({
 
             {/* Card Number */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Kart Numarası</label>
+              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">{c.cardNumber}</label>
               <div className="relative">
                 <input
                   type="text"
@@ -383,7 +385,7 @@ export default function CreditCardDrawer({
             {/* Expiry + CVV */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Son Tarih</label>
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">{c.expiryDate}</label>
                 <input
                   type="text"
                   name="ccexp"
@@ -401,7 +403,7 @@ export default function CreditCardDrawer({
                 {errors.expiryDate && <p className="text-red-400 text-xs">{errors.expiryDate}</p>}
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">CVV</label>
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">{c.cvv}</label>
                 <input
                   type="text"
                   name="cvc"
@@ -422,12 +424,12 @@ export default function CreditCardDrawer({
 
             {/* Full Name */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Kart Üzerindeki Ad</label>
+              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">{c.cardHolderLabel}</label>
               <input
                 type="text"
                 name="ccname"
                 autoComplete="cc-name"
-                placeholder="AD SOYAD"
+                placeholder={c.cardHolderPlaceholder?.toUpperCase()}
                 value={formData.fullName}
                 onChange={(e) => handleInputChange('fullName', e.target.value.toUpperCase())}
                 onFocus={() => { setFocusedField('fullName'); setIsFlipped(false); }}
@@ -451,7 +453,7 @@ export default function CreditCardDrawer({
               <div className="w-px h-3 bg-slate-700" />
               <div className="flex items-center gap-1">
                 <Lock className="w-3.5 h-3.5 text-cyan-500/70" />
-                <span>Güvenli Ödeme</span>
+                <span>{c.securePayment}</span>
               </div>
               <div className="w-px h-3 bg-slate-700" />
               <div className="flex items-center gap-1">
@@ -480,12 +482,12 @@ export default function CreditCardDrawer({
                 {isProcessing ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>İşleniyor...</span>
+                    <span>{c.processingBtn}</span>
                   </>
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
-                    <span>Ödemeyi Tamamla — {amount} {currency.toUpperCase()}</span>
+                    <span>{c.completePayment} — {amount} {currency.toUpperCase()}</span>
                   </>
                 )}
               </div>
@@ -493,7 +495,7 @@ export default function CreditCardDrawer({
           </div>
         </div>
 
-        {/* Close button (top right, outside modal on desktop) */}
+        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute -top-12 right-0 sm:right-auto sm:-top-4 sm:-right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all duration-200 backdrop-blur-sm"
