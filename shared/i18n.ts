@@ -212,6 +212,11 @@ export interface Translation {
     addedToFavorites: string;
     removedFromFavorites: string;
     removeFromFavorites: string;
+    instantActivation?: string;
+    continueShopping?: string;
+    goToCart?: string;
+    cancelBtn?: string;
+    shipSubtitle?: string;
   };
 
   // Profile
@@ -274,6 +279,15 @@ export interface Translation {
     instantActivation?: string;
     unitPrice?: string;
     freeShipping?: string;
+    stepCart?: string;
+    stepCheckout?: string;
+    stepDone?: string;
+    backToPackages?: string;
+    totalLabel?: string;
+    proceedToCheckout?: string;
+    sslSecure?: string;
+    removeError?: string;
+    checkoutError?: string;
   };
 
   // Checkout & Payment
@@ -349,6 +363,18 @@ export interface Translation {
     secureSsl?: string;
     secure3D?: string;
     paymentMethod?: string;
+    payWithCard?: string;
+    freeOrder?: string;
+    monthEndNote?: string;
+    couponNotApplied?: string;
+    couponValidationError?: string;
+    removeCoupon?: string;
+    couponAppliedSuffix?: string;
+    loginRequired?: string;
+    loginRequiredDesc?: string;
+    paymentSuccessCard?: string;
+    paymentFailedDesc?: string;
+    couponErrorMsg?: string;
   };
 
   // Admin Panel
@@ -656,7 +682,12 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       favoriteError: "Favori işlemi başarısız oldu",
       addedToFavorites: "Favorilere eklendi",
       removedFromFavorites: "Favorilerden kaldırıldı",
-      removeFromFavorites: "Favorilerden Kaldır"
+      removeFromFavorites: "Favorilerden Kaldır",
+      instantActivation: "Anlık aktivasyon",
+      continueShopping: "Alışverişe Devam",
+      goToCart: "Sepete Git",
+      cancelBtn: "Vazgeç",
+      shipSubtitle: "Geminize özel paketler. Ay sonuna kadar geçerli."
     },
 
     profile: {
@@ -707,7 +738,16 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       validUntilMonthEnd: "Ay sonuna kadar geçerli",
       instantActivation: "Anlık aktivasyon",
       unitPrice: "Birim fiyat",
-      freeShipping: "Ücretsiz"
+      freeShipping: "Ücretsiz",
+      stepCart: "Sepet",
+      stepCheckout: "Ödeme",
+      stepDone: "Bitti",
+      backToPackages: "← Paketlere Dön",
+      totalLabel: "Toplam",
+      proceedToCheckout: "Ödemeye Geç",
+      sslSecure: "SSL Güvenli",
+      removeError: "Ürün kaldırılamadı",
+      checkoutError: "Sipariş oluşturulamadı"
     },
     
     checkout: {
@@ -774,7 +814,19 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       couponError: "❌ Kupon Hatası",
       amount: "Tutar",
       status: "Durum",
-      paid: "Ödendi"
+      paid: "Ödendi",
+      payWithCard: "Kart ile Öde",
+      freeOrder: "Ücretsiz Siparişi Tamamla",
+      monthEndNote: "Paketler satın alınan ayın sonuna kadar geçerlidir",
+      couponNotApplied: "Kupon Uygulanamadı",
+      couponValidationError: "Kupon doğrulanamadı",
+      removeCoupon: "Kaldır",
+      couponAppliedSuffix: "uygulandı",
+      loginRequired: "Giriş Gerekli",
+      loginRequiredDesc: "Ödeme yapmak için giriş yapmalısınız",
+      paymentSuccessCard: "Kredi kartı ödemesi başarıyla tamamlandı!",
+      paymentFailedDesc: "Ödeme işlemi başarısız oldu",
+      couponErrorMsg: "Kupon Hatası"
     },
     
     admin: {
@@ -1163,7 +1215,12 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       favoriteError: "Favorite operation failed",
       addedToFavorites: "Added to favorites",
       removedFromFavorites: "Removed from favorites",
-      removeFromFavorites: "Remove from Favorites"
+      removeFromFavorites: "Remove from Favorites",
+      instantActivation: "Instant activation",
+      continueShopping: "Continue Shopping",
+      goToCart: "Go to Cart",
+      cancelBtn: "Cancel",
+      shipSubtitle: "Packages for your vessel. Valid until month end."
     },
 
     profile: {
@@ -1214,7 +1271,16 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       validUntilMonthEnd: "Valid until end of month",
       instantActivation: "Instant activation",
       unitPrice: "Unit price",
-      freeShipping: "Free"
+      freeShipping: "Free",
+      stepCart: "Cart",
+      stepCheckout: "Payment",
+      stepDone: "Done",
+      backToPackages: "← Back to Packages",
+      totalLabel: "Total",
+      proceedToCheckout: "Proceed to Checkout",
+      sslSecure: "SSL Secure",
+      removeError: "Could not remove item",
+      checkoutError: "Could not create order"
     },
     
     checkout: {
@@ -1281,7 +1347,19 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       couponError: "❌ Coupon Error",
       amount: "Amount",
       status: "Status",
-      paid: "Paid"
+      paid: "Paid",
+      payWithCard: "Pay with Card",
+      freeOrder: "Complete Free Order",
+      monthEndNote: "Packages are valid until the end of the purchase month",
+      couponNotApplied: "Coupon Not Applied",
+      couponValidationError: "Could not validate coupon",
+      removeCoupon: "Remove",
+      couponAppliedSuffix: "applied",
+      loginRequired: "Login Required",
+      loginRequiredDesc: "You must log in to make a payment",
+      paymentSuccessCard: "Credit card payment completed successfully!",
+      paymentFailedDesc: "Payment process failed",
+      couponErrorMsg: "Coupon Error"
     },
     
     admin: {
@@ -1658,7 +1736,12 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       favoriteError: "Ошибка операции избранного",
       addedToFavorites: "Добавлено в избранное",
       removedFromFavorites: "Удалено из избранного",
-      removeFromFavorites: "Удалить из избранного"
+      removeFromFavorites: "Удалить из избранного",
+      instantActivation: "Мгновенная активация",
+      continueShopping: "Продолжить покупки",
+      goToCart: "Перейти в корзину",
+      cancelBtn: "Отмена",
+      shipSubtitle: "Пакеты для вашего судна. Действительны до конца месяца."
     },
 
     profile: {
@@ -1719,6 +1802,15 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       instantActivation: "Мгновенная активация",
       unitPrice: "Цена за единицу",
       freeShipping: "Бесплатно",
+      stepCart: "Корзина",
+      stepCheckout: "Оплата",
+      stepDone: "Готово",
+      backToPackages: "← К пакетам",
+      totalLabel: "Итого",
+      proceedToCheckout: "К оплате",
+      sslSecure: "SSL защита",
+      removeError: "Не удалось удалить товар",
+      checkoutError: "Не удалось создать заказ",
       browsePackages: "Просмотреть пакеты",
       empty: "Ваша корзина пуста",
       emptyDescription: "Добавьте пакеты данных в корзину для покупки.",
@@ -1782,7 +1874,19 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       orderCancelledDesc: "Ваш заказ был отменен. Вы можете попробовать еще раз.",
       amount: "Сумма",
       status: "Статус",
-      paid: "Оплачено"
+      paid: "Оплачено",
+      payWithCard: "Оплатить картой",
+      freeOrder: "Завершить бесплатный заказ",
+      monthEndNote: "Пакеты действительны до конца месяца покупки",
+      couponNotApplied: "Купон не применён",
+      couponValidationError: "Не удалось проверить купон",
+      removeCoupon: "Удалить",
+      couponAppliedSuffix: "применён",
+      loginRequired: "Требуется вход",
+      loginRequiredDesc: "Войдите для совершения оплаты",
+      paymentSuccessCard: "Оплата картой успешно завершена!",
+      paymentFailedDesc: "Процесс оплаты не удался",
+      couponErrorMsg: "Ошибка купона"
     },
 
     admin: {

@@ -25,13 +25,13 @@ export default function Sepet() {
   const removeItemMutation = useMutation({
     mutationFn: async (planId: string) => (await apiRequest("DELETE", `/api/cart/${planId}`)).json(),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/cart"] }); toast({ title: t.common.removed, description: t.cart.removeSuccess }); },
-    onError: (error: any) => toast({ title: t.common.error, description: error.message || "Ürün kaldırılamadı", variant: "destructive" }),
+    onError: (error: any) => toast({ title: t.common.error, description: error.message || t.cart.removeError, variant: "destructive" }),
   });
 
   const checkoutMutation = useMutation({
     mutationFn: async () => (await apiRequest("POST", "/api/cart/checkout", {})).json(),
     onSuccess: (order) => { window.location.href = `/checkout?orderId=${order.id}`; },
-    onError: (error: any) => toast({ title: t.common.error, description: error.message || "Sipariş oluşturulamadı", variant: "destructive" }),
+    onError: (error: any) => toast({ title: t.common.error, description: error.message || t.cart.checkoutError, variant: "destructive" }),
   });
 
   if (authLoading) {
@@ -46,14 +46,14 @@ export default function Sepet() {
   const item = cartData?.items?.[0];
 
   return (
-    <UserShell title="Sepet">
+    <UserShell title={t.cart.stepCart}>
       <div className="space-y-4">
         {/* Step progress */}
         <div className="flex items-center justify-center gap-0">
           {[
-            { label: "Sepet", step: 1, active: true },
-            { label: "Ödeme", step: 2, active: false },
-            { label: "Bitti", step: 3, active: false },
+            { label: t.cart.stepCart, step: 1, active: true },
+            { label: t.cart.stepCheckout, step: 2, active: false },
+            { label: t.cart.stepDone, step: 3, active: false },
           ].map((s, i) => (
             <div key={s.step} className="flex items-center">
               <div className="flex flex-col items-center gap-1">
@@ -115,9 +115,9 @@ export default function Sepet() {
               <div className="px-5 py-4 border-b border-slate-100">
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { icon: Calendar, label: t.cart.validUntilMonthEnd || "Ay sonuna kadar" },
-                    { icon: Zap, label: t.cart.instantActivation || "Anlık aktivasyon" },
-                    { icon: Shield, label: "SSL Güvenli" },
+                    { icon: Calendar, label: t.cart.validUntilMonthEnd },
+                    { icon: Zap, label: t.cart.instantActivation },
+                    { icon: Shield, label: t.cart.sslSecure },
                   ].map(({ icon: Icon, label }) => (
                     <div key={label} className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
                       <Icon className="h-4 w-4 text-[#7C5E00]" />
@@ -130,7 +130,7 @@ export default function Sepet() {
               <div className="px-5 py-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-slate-500 mb-0.5">{t.cart.unitPrice || "Toplam tutar"}</p>
+                    <p className="text-xs text-slate-500 mb-0.5">{t.cart.unitPrice}</p>
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-black text-slate-900">{formatPrice(item.plan?.priceUsd || 0)}</span>
                       <span className="text-slate-400 text-sm">USD</span>
@@ -152,7 +152,7 @@ export default function Sepet() {
 
             <div className="text-center pb-2">
               <Link href="/paketler">
-                <a className="text-slate-500 hover:text-slate-900 text-sm">← Paketlere Dön</a>
+                <a className="text-slate-500 hover:text-slate-900 text-sm">{t.cart.backToPackages}</a>
               </Link>
             </div>
 
@@ -160,7 +160,7 @@ export default function Sepet() {
             <div className="fixed left-0 right-0 z-30 bg-white border-t border-slate-200/70" style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}>
               <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-500 leading-none">Toplam</p>
+                  <p className="text-xs text-slate-500 leading-none">{t.cart.totalLabel}</p>
                   <p className="text-xl font-black text-slate-900 leading-tight">{formatPrice(item.plan?.priceUsd || 0)}<span className="text-xs text-slate-400 font-normal ml-1">USD</span></p>
                 </div>
                 <button
@@ -169,7 +169,7 @@ export default function Sepet() {
                   className="shrink-0 inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 font-semibold text-sm transition active:scale-[0.99] disabled:opacity-60"
                   data-testid="button-checkout-sticky"
                 >
-                  {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CreditCard className="h-4 w-4" /> Ödemeye Geç <ArrowRight className="h-4 w-4" /></>}
+                  {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CreditCard className="h-4 w-4" /> {t.cart.proceedToCheckout} <ArrowRight className="h-4 w-4" /></>}
                 </button>
               </div>
             </div>
