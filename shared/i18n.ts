@@ -126,6 +126,7 @@ export interface Translation {
       cart: string;
       logout: string;
       admin: string;
+      myPackages?: string;
     };
     sections: {
       activePackages: string;
@@ -725,7 +726,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
         profile: "Profil",
         cart: "Sepet",
         logout: "Çıkış",
-        admin: "Yönetim Paneli"
+        admin: "Yönetim Paneli",
+        myPackages: "Paketlerim"
       },
       sections: {
         activePackages: "Aktif Paketlerim",
@@ -1384,7 +1386,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
         profile: "Profile",
         cart: "Cart",
         logout: "Logout",
-        admin: "Admin Panel"
+        admin: "Admin Panel",
+        myPackages: "My Packages"
       },
       sections: {
         activePackages: "My Active Packages",
@@ -2032,7 +2035,8 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
         profile: "Профиль",
         cart: "Корзина",
         logout: "Выход",
-        admin: "Администратор"
+        admin: "Администратор",
+        myPackages: "Мои пакеты"
       },
       sections: {
         activePackages: "Активные пакеты",

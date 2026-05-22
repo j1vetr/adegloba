@@ -6,7 +6,7 @@ import {
   ChevronLeft, Wifi,
 } from "lucide-react";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import { LanguageSelector } from "@/contexts/LanguageContext";
+import { LanguageSelector, useLanguage } from "@/contexts/LanguageContext";
 import adeGlobaLogo from "@assets/logo-gu-5770B_1777775485509.png";
 
 interface UserShellProps {
@@ -93,12 +93,14 @@ export default function UserShell({
 }
 
 function BottomNav({ location, cartCount }: { location: string; cartCount: number }) {
+  const { t } = useLanguage();
+  const nav = t.dashboard.navigation;
   const tabs = [
-    { id: "panel",    href: "/panel",    label: "Ana Sayfa", icon: Home,            match: ["/panel"] },
-    { id: "paketler", href: "/paketler", label: "Paketler",  icon: Package,         match: ["/paketler"] },
-    { id: "sepet",    href: "/sepet",    label: "Sepet",     icon: ShoppingCart,    match: ["/sepet", "/checkout"], center: true, badge: cartCount },
-    { id: "paketlerim", href: "/paketlerim", label: "Paketlerim", icon: Wifi, match: ["/paketlerim"] },
-    { id: "profil",   href: "/profil",   label: "Profil",    icon: User,            match: ["/profil", "/kilavuz"] },
+    { id: "panel",      href: "/panel",      label: nav.home,                       icon: Home,         match: ["/panel"] },
+    { id: "paketler",   href: "/paketler",   label: nav.packages,                   icon: Package,      match: ["/paketler"] },
+    { id: "sepet",      href: "/sepet",      label: nav.cart,                       icon: ShoppingCart, match: ["/sepet", "/checkout"], center: true, badge: cartCount },
+    { id: "paketlerim", href: "/paketlerim", label: nav.myPackages || "Paketlerim", icon: Wifi,         match: ["/paketlerim"] },
+    { id: "profil",     href: "/profil",     label: nav.profile,                    icon: User,         match: ["/profil", "/kilavuz"] },
   ];
 
   return (
