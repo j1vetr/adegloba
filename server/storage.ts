@@ -68,6 +68,11 @@ import {
   favoritePlans,
   type FavoritePlan,
   type InsertFavoritePlan,
+  giftCampaigns,
+  giftCampaignLogs,
+  type GiftCampaign,
+  type InsertGiftCampaign,
+  type GiftCampaignLog,
 } from "@shared/schema";
 import { getDaysRemainingIstanbul, isExpiredIstanbul, getEndOfMonthIstanbul } from './utils/dateUtils';
 import { db } from "./db";
@@ -349,6 +354,17 @@ export interface IStorage {
   addFavoritePlan(userId: string, planId: string): Promise<FavoritePlan>;
   removeFavoritePlan(userId: string, planId: string): Promise<void>;
   isFavoritePlan(userId: string, planId: string): Promise<boolean>;
+
+  // Gift campaign operations
+  createGiftCampaign(campaign: InsertGiftCampaign): Promise<GiftCampaign>;
+  getGiftCampaigns(): Promise<GiftCampaign[]>;
+  getGiftCampaignById(id: string): Promise<GiftCampaign | undefined>;
+  updateGiftCampaign(id: string, data: Partial<GiftCampaign>): Promise<GiftCampaign | undefined>;
+  deleteGiftCampaign(id: string): Promise<void>;
+  previewGiftCampaign(campaignId: string): Promise<{ userId: string; username: string; fullName: string; phone: string | null; shipName: string; ordersCount: number }[]>;
+  executeGiftCampaign(campaignId: string, adminUserId: string): Promise<{ recipientCount: number; giftOrders: string[] }>;
+  getPendingGiftBanners(userId: string): Promise<(GiftCampaignLog & { campaign: GiftCampaign })[]>;
+  dismissGiftBanner(userId: string, campaignId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3478,6 +3494,240 @@ export class DatabaseStorage implements IStorage {
         eq(favoritePlans.planId, planId)
       ));
     return !!result;
+  }
+
+  // ═══════════════ GIFT CAMPAIGN OPERATIONS ═══════════════
+  async createGiftCampaign(campaign: InsertGiftCampaign): Promise<GiftCampaign> {
+    const [result] = await db.insert(giftCampaigns).values(campaign).returning();
+    return result;
+  }
+
+  async getGiftCampaigns(): Promise<GiftCampaign[]> {
+    return db.select().from(giftCampaigns).orderBy(desc(giftCampaigns.createdAt));
+  }
+
+  async getGiftCampaignById(id: string): Promise<GiftCampaign | undefined> {
+    const [result] = await db.select().from(giftCampaigns).where(eq(giftCampaigns.id, id));
+    return result;
+  }
+
+  async updateGiftCampaign(id: string, data: Partial<GiftCampaign>): Promise<GiftCampaign | undefined> {
+    const [result] = await db.update(giftCampaigns).set(data).where(eq(giftCampaigns.id, id)).returning();
+    return result;
+  }
+
+  async deleteGiftCampaign(id: string): Promise<void> {
+    await db.delete(giftCampaigns).where(eq(giftCampaigns.id, id));
+  }
+
+  async previewGiftCampaign(campaignId: string): Promise<{ userId: string; username: string; fullName: string; phone: string | null; shipName: string; ordersCount: number }[]> {
+    const campaign = await this.getGiftCampaignById(campaignId);
+    if (!campaign) return [];
+
+    // Get all paid orders in the date range
+    let query = db
+      .select({
+        userId: orders.userId,
+        shipId: orders.shipId,
+        totalUsd: orders.totalUsd,
+        orderId: orders.id,
+      })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.status, 'paid'),
+          gte(orders.createdAt, campaign.orderStartDate),
+          lte(orders.createdAt, campaign.orderEndDate),
+        )
+      );
+
+    const rawOrders = await query;
+
+    // Get already-gifted user IDs for this campaign
+    const alreadyGifted = await db
+      .select({ userId: giftCampaignLogs.userId })
+      .from(giftCampaignLogs)
+      .where(eq(giftCampaignLogs.campaignId, campaignId));
+    const giftedSet = new Set(alreadyGifted.map(r => r.userId));
+
+    // Filter by ship if specified
+    const shipFilter = (campaign.shipIds as string[]) || [];
+
+    // Group by user and apply filters
+    const userMap = new Map<string, { shipId: string; orders: string[]; totalUsd: number[] }>();
+    for (const o of rawOrders) {
+      if (giftedSet.has(o.userId)) continue;
+      if (shipFilter.length > 0 && !shipFilter.includes(o.shipId)) continue;
+      if (!userMap.has(o.userId)) {
+        userMap.set(o.userId, { shipId: o.shipId, orders: [], totalUsd: [] });
+      }
+      userMap.get(o.userId)!.orders.push(o.orderId);
+      userMap.get(o.userId)!.totalUsd.push(Number(o.totalUsd));
+    }
+
+    // Apply min order amount filter
+    const minAmount = campaign.minOrderAmountUsd ? Number(campaign.minOrderAmountUsd) : null;
+
+    // Apply package GB filter via order items
+    const eligibleUserIds: string[] = [];
+    for (const [userId, data] of userMap.entries()) {
+      if (minAmount !== null) {
+        const maxOrder = Math.max(...data.totalUsd);
+        if (maxOrder < minAmount) continue;
+      }
+
+      // Check plan filters if needed
+      if (campaign.minPackageGb !== null && campaign.minPackageGb !== undefined) {
+        const items = await db
+          .select({ dataLimitGb: plans.dataLimitGb, planName: plans.name })
+          .from(orderItems)
+          .innerJoin(plans, eq(orderItems.planId, plans.id))
+          .where(sql`${orderItems.orderId} = ANY(ARRAY[${sql.raw(data.orders.map(id => `'${id}'`).join(','))}]::text[])`);
+        
+        const hasQualifying = items.some(i => (i.dataLimitGb || 0) >= campaign.minPackageGb!);
+        if (!hasQualifying) continue;
+      }
+
+      if (campaign.packageNameFilter) {
+        const filter = campaign.packageNameFilter.toLowerCase();
+        const items = await db
+          .select({ planName: plans.name })
+          .from(orderItems)
+          .innerJoin(plans, eq(orderItems.planId, plans.id))
+          .where(sql`${orderItems.orderId} = ANY(ARRAY[${sql.raw(data.orders.map(id => `'${id}'`).join(','))}]::text[])`);
+        const hasMatch = items.some(i => i.planName.toLowerCase().includes(filter));
+        if (!hasMatch) continue;
+      }
+
+      eligibleUserIds.push(userId);
+    }
+
+    // Fetch user + ship details
+    if (eligibleUserIds.length === 0) return [];
+
+    const userDetails = await db
+      .select({
+        userId: users.id,
+        username: users.username,
+        fullName: users.fullName,
+        phone: users.phone,
+        shipName: ships.name,
+      })
+      .from(users)
+      .leftJoin(ships, eq(users.shipId, ships.id))
+      .where(sql`${users.id} = ANY(ARRAY[${sql.raw(eligibleUserIds.map(id => `'${id}'`).join(','))}]::text[])`);
+
+    return userDetails.map(u => ({
+      userId: u.userId,
+      username: u.username,
+      fullName: u.fullName || u.username,
+      phone: u.phone,
+      shipName: u.shipName || 'Bilinmiyor',
+      ordersCount: userMap.get(u.userId)?.orders.length || 0,
+    }));
+  }
+
+  async executeGiftCampaign(campaignId: string, adminUserId: string): Promise<{ recipientCount: number; giftOrders: string[] }> {
+    const campaign = await this.getGiftCampaignById(campaignId);
+    if (!campaign) throw new Error('Campaign not found');
+
+    const recipients = await this.previewGiftCampaign(campaignId);
+    const giftOrderIds: string[] = [];
+
+    for (const recipient of recipients) {
+      try {
+        // Find the user's ship
+        const user = await this.getUserById(recipient.userId);
+        if (!user || !user.shipId) continue;
+
+        // Find the end of current month for expiry
+        const expiresAt = getEndOfMonthIstanbul(new Date());
+
+        // Create gift order
+        const [giftOrder] = await db.insert(orders).values({
+          userId: recipient.userId,
+          shipId: user.shipId,
+          status: 'paid',
+          orderType: 'gift',
+          currency: 'USD',
+          subtotalUsd: '0',
+          discountUsd: '0',
+          totalUsd: '0',
+          giftCampaignId: campaignId,
+          paidAt: new Date(),
+          expiresAt,
+        }).returning();
+
+        giftOrderIds.push(giftOrder.id);
+
+        // Log the gift
+        await db.insert(giftCampaignLogs).values({
+          campaignId,
+          userId: recipient.userId,
+          orderId: giftOrder.id,
+          whatsappSent: false,
+          bannerDismissed: false,
+        }).onConflictDoNothing();
+
+        // Send WhatsApp if phone available
+        if (recipient.phone) {
+          try {
+            const { sendGiftWhatsApp } = await import('./whatsappService');
+            const waResult = await sendGiftWhatsApp(recipient.phone, {
+              fullName: recipient.fullName,
+              campaignName: campaign.name,
+              giftDescription: campaign.giftDescription,
+              giftDataGb: campaign.giftDataGb,
+              shipName: recipient.shipName,
+            });
+            if (waResult.success) {
+              await db.update(giftCampaignLogs)
+                .set({ whatsappSent: true })
+                .where(and(
+                  eq(giftCampaignLogs.campaignId, campaignId),
+                  eq(giftCampaignLogs.userId, recipient.userId)
+                ));
+            }
+          } catch (_) { /* WhatsApp failure shouldn't stop execution */ }
+        }
+      } catch (err) {
+        console.error(`Gift campaign: failed for user ${recipient.userId}:`, err);
+      }
+    }
+
+    // Update campaign status
+    await db.update(giftCampaigns).set({
+      status: 'completed',
+      executedAt: new Date(),
+      totalRecipients: giftOrderIds.length,
+    }).where(eq(giftCampaigns.id, campaignId));
+
+    return { recipientCount: giftOrderIds.length, giftOrders: giftOrderIds };
+  }
+
+  async getPendingGiftBanners(userId: string): Promise<(GiftCampaignLog & { campaign: GiftCampaign })[]> {
+    const rows = await db
+      .select({
+        log: giftCampaignLogs,
+        campaign: giftCampaigns,
+      })
+      .from(giftCampaignLogs)
+      .innerJoin(giftCampaigns, eq(giftCampaignLogs.campaignId, giftCampaigns.id))
+      .where(and(
+        eq(giftCampaignLogs.userId, userId),
+        eq(giftCampaignLogs.bannerDismissed, false)
+      ));
+
+    return rows.map(r => ({ ...r.log, campaign: r.campaign }));
+  }
+
+  async dismissGiftBanner(userId: string, campaignId: string): Promise<void> {
+    await db.update(giftCampaignLogs)
+      .set({ bannerDismissed: true })
+      .where(and(
+        eq(giftCampaignLogs.userId, userId),
+        eq(giftCampaignLogs.campaignId, campaignId)
+      ));
   }
 }
 

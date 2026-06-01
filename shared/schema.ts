@@ -161,6 +161,7 @@ export const orders = pgTable("orders", {
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   shipId: varchar("ship_id").notNull().references(() => ships.id, { onDelete: "cascade" }),
   status: varchar("status").notNull().default('pending'), // 'pending', 'paid', 'failed', 'refunded', 'expired'
+  orderType: varchar("order_type").notNull().default('regular'), // 'regular' | 'gift'
   currency: varchar("currency").notNull().default('USD'),
   subtotalUsd: decimal("subtotal_usd", { precision: 10, scale: 2 }).notNull(),
   discountUsd: decimal("discount_usd", { precision: 10, scale: 2 }).notNull().default('0'),
@@ -168,6 +169,7 @@ export const orders = pgTable("orders", {
   couponId: varchar("coupon_id").references(() => coupons.id, { onDelete: "set null" }),
   paypalOrderId: varchar("paypal_order_id"),
   assignedCredentialId: varchar("assigned_credential_id"),
+  giftCampaignId: varchar("gift_campaign_id"),
   createdAt: timestamp("created_at").defaultNow(),
   paidAt: timestamp("paid_at"),
   expiresAt: timestamp("expires_at"), // Expiry date: last day of purchase month at 23:59:59 Europe/Istanbul
@@ -800,6 +802,58 @@ export const favoritePlans = pgTable("favorite_plans", {
   unique().on(table.userId, table.planId),
   index("idx_favorite_plans_user").on(table.userId)
 ]);
+
+// ═══════════════ GIFT CAMPAIGNS ═══════════════
+export const giftCampaigns = pgTable("gift_campaigns", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: varchar("description"),
+  orderStartDate: timestamp("order_start_date").notNull(),
+  orderEndDate: timestamp("order_end_date").notNull(),
+  giftDescription: varchar("gift_description").notNull(), // e.g. "1 GB Bayram Hediyesi"
+  giftDataGb: integer("gift_data_gb").notNull().default(1),
+  minPackageGb: integer("min_package_gb"), // null = no filter
+  minOrderAmountUsd: decimal("min_order_amount_usd", { precision: 10, scale: 2 }), // null = no filter
+  packageNameFilter: varchar("package_name_filter"), // partial match on plan name, null = no filter
+  shipIds: jsonb("ship_ids").default('[]'), // [] = all ships
+  status: varchar("status").notNull().default('draft'), // 'draft' | 'active' | 'completed'
+  executedAt: timestamp("executed_at"),
+  totalRecipients: integer("total_recipients").default(0),
+  createdBy: varchar("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const giftCampaignLogs = pgTable("gift_campaign_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  campaignId: varchar("campaign_id").notNull().references(() => giftCampaigns.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  orderId: varchar("order_id").references(() => orders.id, { onDelete: "set null" }),
+  whatsappSent: boolean("whatsapp_sent").notNull().default(false),
+  bannerDismissed: boolean("banner_dismissed").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  unique().on(table.campaignId, table.userId),
+  index("idx_gift_logs_user").on(table.userId),
+  index("idx_gift_logs_campaign").on(table.campaignId),
+]);
+
+export const giftCampaignsRelations = relations(giftCampaigns, ({ one, many }) => ({
+  creator: one(users, { fields: [giftCampaigns.createdBy], references: [users.id] }),
+  logs: many(giftCampaignLogs),
+}));
+
+export const giftCampaignLogsRelations = relations(giftCampaignLogs, ({ one }) => ({
+  campaign: one(giftCampaigns, { fields: [giftCampaignLogs.campaignId], references: [giftCampaigns.id] }),
+  user: one(users, { fields: [giftCampaignLogs.userId], references: [users.id] }),
+  order: one(orders, { fields: [giftCampaignLogs.orderId], references: [orders.id] }),
+}));
+
+export const insertGiftCampaignSchema = createInsertSchema(giftCampaigns).omit({ id: true, createdAt: true, executedAt: true, totalRecipients: true });
+export const insertGiftCampaignLogSchema = createInsertSchema(giftCampaignLogs).omit({ id: true, createdAt: true });
+export type InsertGiftCampaign = z.infer<typeof insertGiftCampaignSchema>;
+export type GiftCampaign = typeof giftCampaigns.$inferSelect;
+export type InsertGiftCampaignLog = z.infer<typeof insertGiftCampaignLogSchema>;
+export type GiftCampaignLog = typeof giftCampaignLogs.$inferSelect;
 
 // Relations
 export const favoritePlansRelations = relations(favoritePlans, ({ one }) => ({

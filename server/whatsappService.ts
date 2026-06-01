@@ -183,3 +183,32 @@ export async function sendOrderConfirmationWhatsApp(
 
   return sendWhatsApp(phone, lines.join('\n'));
 }
+
+interface GiftWhatsAppData {
+  fullName: string;
+  campaignName: string;
+  giftDescription: string;
+  giftDataGb: number;
+  shipName?: string;
+}
+
+export async function sendGiftWhatsApp(
+  phone: string,
+  data: GiftWhatsAppData
+): Promise<{ success: boolean; message: string }> {
+  const lines: string[] = [
+    `🎁 *ADS.ADEGLOBA.SPACE — Özel Hediye!*`,
+    ``,
+    `Sayın *${data.fullName}*,`,
+    ``,
+    `*${data.campaignName}* kapsamında size özel bir hediye tanımlandı!`,
+    ``,
+    `🎉 Hediye: *${data.giftDescription}*`,
+    ...(data.shipName ? [`🚢 Gemi: *${data.shipName}*`] : []),
+    ``,
+    `Hediyeniz hesabınıza tanımlanmıştır. Sisteme giriş yaparak siparişlerinizde görebilirsiniz.`,
+  ];
+
+  lines.push(...buildFooter());
+  return sendWhatsApp(phone, lines.join('\n'));
+}

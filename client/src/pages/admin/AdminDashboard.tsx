@@ -347,10 +347,11 @@ export default function AdminDashboard() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { name: 'Gemiler',        href: '/admin/ships',            icon: Ship,    color: 'bg-blue-600/20 text-blue-400 border-blue-600/30'    },
-              { name: 'Paketler',       href: '/admin/packages',         icon: Package, color: 'bg-purple-600/20 text-purple-400 border-purple-600/30'},
-              { name: 'Kuponlar',       href: '/admin/coupons',          icon: Gift,    color: 'bg-green-600/20 text-green-400 border-green-600/30'  },
-              { name: 'Kimlik Havuzu',  href: '/admin/credential-pools', icon: Key,     color: 'bg-orange-600/20 text-orange-400 border-orange-600/30'},
+              { name: 'Gemiler',         href: '/admin/ships',             icon: Ship,    color: 'bg-blue-600/20 text-blue-400 border-blue-600/30'    },
+              { name: 'Paketler',        href: '/admin/packages',          icon: Package, color: 'bg-purple-600/20 text-purple-400 border-purple-600/30'},
+              { name: 'Kuponlar',        href: '/admin/coupons',           icon: Gift,    color: 'bg-green-600/20 text-green-400 border-green-600/30'  },
+              { name: 'Kimlik Havuzu',   href: '/admin/credential-pools',  icon: Key,     color: 'bg-orange-600/20 text-orange-400 border-orange-600/30'},
+              { name: 'Hediye Kampanyası', href: '/admin/gift-campaigns',  icon: Gift,    color: 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30'},
             ].map((a) => {
               const Icon = a.icon;
               return (

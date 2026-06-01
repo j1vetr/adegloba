@@ -8,6 +8,7 @@ import {
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { LanguageSelector, useLanguage } from "@/contexts/LanguageContext";
 import adeGlobaLogo from "@assets/logo-gu-5770B_1777775485509.png";
+import GiftBanner from "@/components/GiftBanner";
 
 interface UserShellProps {
   children: ReactNode;
@@ -84,6 +85,7 @@ export default function UserShell({
       )}
 
       <main className={`flex-1 mx-auto w-full max-w-md ${noPadding ? "" : "px-4 py-4"} ${hideBottomNav ? "" : "pb-bottom-nav"}`}>
+        {!noPadding && <GiftBanner />}
         {children}
       </main>
 

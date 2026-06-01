@@ -4805,6 +4805,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ═══════════════ GIFT CAMPAIGNS ═══════════════
+  app.get('/api/admin/gift-campaigns', isAdminAuthenticated, async (req, res) => {
+    try {
+      const campaigns = await storage.getGiftCampaigns();
+      res.json(campaigns);
+    } catch (e) { res.status(500).json({ message: 'Failed' }); }
+  });
+
+  app.post('/api/admin/gift-campaigns', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { name, description, orderStartDate, orderEndDate, giftDescription, giftDataGb, minPackageGb, minOrderAmountUsd, packageNameFilter, shipIds } = req.body;
+      if (!name || !orderStartDate || !orderEndDate || !giftDescription || !giftDataGb) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+      const campaign = await storage.createGiftCampaign({
+        name, description: description || null,
+        orderStartDate: new Date(orderStartDate), orderEndDate: new Date(orderEndDate),
+        giftDescription, giftDataGb: Number(giftDataGb),
+        minPackageGb: minPackageGb ? Number(minPackageGb) : null,
+        minOrderAmountUsd: minOrderAmountUsd ? String(minOrderAmountUsd) : null,
+        packageNameFilter: packageNameFilter || null,
+        shipIds: shipIds || [],
+        status: 'draft',
+        createdBy: (req as any).adminUser?.id || null,
+      });
+      res.json(campaign);
+    } catch (e) { res.status(500).json({ message: 'Failed to create campaign' }); }
+  });
+
+  app.put('/api/admin/gift-campaigns/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, orderStartDate, orderEndDate, giftDescription, giftDataGb, minPackageGb, minOrderAmountUsd, packageNameFilter, shipIds } = req.body;
+      const updated = await storage.updateGiftCampaign(id, {
+        ...(name && { name }),
+        ...(description !== undefined && { description }),
+        ...(orderStartDate && { orderStartDate: new Date(orderStartDate) }),
+        ...(orderEndDate && { orderEndDate: new Date(orderEndDate) }),
+        ...(giftDescription && { giftDescription }),
+        ...(giftDataGb && { giftDataGb: Number(giftDataGb) }),
+        minPackageGb: minPackageGb ? Number(minPackageGb) : null,
+        minOrderAmountUsd: minOrderAmountUsd ? String(minOrderAmountUsd) : null,
+        packageNameFilter: packageNameFilter || null,
+        ...(shipIds !== undefined && { shipIds }),
+      });
+      res.json(updated);
+    } catch (e) { res.status(500).json({ message: 'Failed to update' }); }
+  });
+
+  app.delete('/api/admin/gift-campaigns/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteGiftCampaign(req.params.id);
+      res.json({ success: true });
+    } catch (e) { res.status(500).json({ message: 'Failed to delete' }); }
+  });
+
+  app.get('/api/admin/gift-campaigns/:id/preview', isAdminAuthenticated, async (req, res) => {
+    try {
+      const recipients = await storage.previewGiftCampaign(req.params.id);
+      res.json(recipients);
+    } catch (e) { res.status(500).json({ message: 'Failed to preview' }); }
+  });
+
+  app.post('/api/admin/gift-campaigns/:id/execute', isAdminAuthenticated, async (req, res) => {
+    try {
+      const campaign = await storage.getGiftCampaignById(req.params.id);
+      if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+      if (campaign.status === 'completed') return res.status(400).json({ message: 'Campaign already executed' });
+      const result = await storage.executeGiftCampaign(req.params.id, (req as any).adminUser?.id || '');
+      res.json(result);
+    } catch (e: any) { res.status(500).json({ message: e?.message || 'Failed to execute' }); }
+  });
+
+  // User-facing gift banner
+  app.get('/api/user/gift-banners', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+      const banners = await storage.getPendingGiftBanners(userId);
+      res.json(banners);
+    } catch (e) { res.status(500).json({ message: 'Failed' }); }
+  });
+
+  app.post('/api/user/gift-banners/:campaignId/dismiss', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+      await storage.dismissGiftBanner(userId, req.params.campaignId);
+      res.json({ success: true });
+    } catch (e) { res.status(500).json({ message: 'Failed' }); }
+  });
+
   // Run startup check after a short delay
   setTimeout(startupIncompleteOrdersCheck, 5000);
   

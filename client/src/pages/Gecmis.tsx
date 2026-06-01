@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import { Loader2, History, Archive, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, History, Archive, ChevronLeft, ChevronRight, Gift } from "lucide-react";
 import UserShell from "@/components/UserShell";
 
 const IST = "Europe/Istanbul";
@@ -75,11 +75,22 @@ export default function Gecmis() {
                   <div key={order.id} className="user-card p-4" data-testid={`order-card-${order.id}`}>
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="text-slate-900 font-semibold text-sm">Sipariş #{order.id.slice(-8)}</p>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className="text-slate-900 font-semibold text-sm">
+                            {order.orderType === 'gift' ? '🎁 Hediye Paketi' : `Sipariş #${order.id.slice(-8)}`}
+                          </p>
+                          {order.orderType === 'gift' && (
+                            <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF6D6] text-[#7C5E00] border border-[#FFDD57]/50">
+                              <Gift className="w-2.5 h-2.5" /> HEDİYE
+                            </span>
+                          )}
+                        </div>
                         <p className="text-slate-500 text-xs">{fmtDate(order.createdAt)}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-slate-900 font-bold text-sm">{fmtPrice(order.totalUsd)}</span>
+                        {order.orderType !== 'gift' && (
+                          <span className="text-slate-900 font-bold text-sm">{fmtPrice(order.totalUsd)}</span>
+                        )}
                         <span className={`chip ${isCancelled ? "chip-danger" : isPaid ? "chip-success" : "chip-warning"}`}>
                           {isCancelled ? "İptal" : isPaid ? "Ödendi" : "Beklemede"}
                         </span>
