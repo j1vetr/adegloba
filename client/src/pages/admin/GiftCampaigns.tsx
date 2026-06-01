@@ -18,7 +18,7 @@ const statusLabel: Record<string, string> = { draft: "Taslak", active: "Aktif", 
 
 interface Campaign {
   id: string; name: string; description: string | null; orderStartDate: string; orderEndDate: string;
-  giftDescription: string; giftDataGb: number; minPackageGb: number | null;
+  giftDescription: string; giftDataGb: number; giftPlanNameFilter: string | null; minPackageGb: number | null;
   minOrderAmountUsd: string | null; packageNameFilter: string | null; shipIds: string[];
   status: string; executedAt: string | null; totalRecipients: number | null; createdAt: string;
 }
@@ -27,8 +27,8 @@ interface PreviewUser { userId: string; username: string; fullName: string; phon
 
 const empty = {
   name: "", description: "", orderStartDate: "", orderEndDate: "",
-  giftDescription: "", giftDataGb: "1", minPackageGb: "", minOrderAmountUsd: "",
-  packageNameFilter: "", shipIds: [] as string[],
+  giftDescription: "", giftDataGb: "1", giftPlanNameFilter: "",
+  minPackageGb: "", minOrderAmountUsd: "", packageNameFilter: "", shipIds: [] as string[],
 };
 
 export default function GiftCampaigns() {
@@ -87,6 +87,7 @@ export default function GiftCampaigns() {
       name: c.name, description: c.description || "",
       orderStartDate: c.orderStartDate.slice(0, 10), orderEndDate: c.orderEndDate.slice(0, 10),
       giftDescription: c.giftDescription, giftDataGb: String(c.giftDataGb),
+      giftPlanNameFilter: c.giftPlanNameFilter || "",
       minPackageGb: c.minPackageGb != null ? String(c.minPackageGb) : "",
       minOrderAmountUsd: c.minOrderAmountUsd || "", packageNameFilter: c.packageNameFilter || "",
       shipIds: c.shipIds || [],
@@ -101,6 +102,7 @@ export default function GiftCampaigns() {
       name: form.name, description: form.description || null,
       orderStartDate: form.orderStartDate, orderEndDate: form.orderEndDate,
       giftDescription: form.giftDescription, giftDataGb: Number(form.giftDataGb),
+      giftPlanNameFilter: form.giftPlanNameFilter || null,
       minPackageGb: form.minPackageGb ? Number(form.minPackageGb) : null,
       minOrderAmountUsd: form.minOrderAmountUsd || null,
       packageNameFilter: form.packageNameFilter || null,
@@ -170,6 +172,24 @@ export default function GiftCampaigns() {
                   <label className={labelCls}>Hediye GB *</label>
                   <input required type="number" min="1" value={form.giftDataGb} onChange={e => setForm(p => ({ ...p, giftDataGb: e.target.value }))} className={inputCls} />
                 </div>
+              </div>
+
+              {/* Gift plan selection */}
+              <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-4 space-y-1">
+                <label className={labelCls + " text-yellow-400/80"}>🎁 Hediye Edilecek Paket (Anahtar Kelime)</label>
+                <input
+                  value={form.giftPlanNameFilter}
+                  onChange={e => setForm(p => ({ ...p, giftPlanNameFilter: e.target.value }))}
+                  placeholder="Örn: 1 GB"
+                  className={inputCls}
+                />
+                <p className="text-slate-500 text-xs">
+                  Her kullanıcının gemisinde bu kelimeyi içeren paket otomatik bulunur ve sipariş kalemi oluşturulur.
+                  Boş bırakılırsa sipariş kalemi eklenmez — sadece kayıt tutulur.
+                </p>
+                <p className="text-yellow-500/70 text-xs mt-1">
+                  💡 Tüm gemilerde "1 GB" ile başlayan paketler için <strong>1 GB</strong> yazmanız yeterli.
+                </p>
               </div>
 
               <div className="border-t border-slate-700 pt-4">
@@ -279,11 +299,12 @@ export default function GiftCampaigns() {
                   </div>
 
                   {/* Filter pills */}
-                  {(c.minPackageGb || c.minOrderAmountUsd || c.packageNameFilter) && (
+                  {(c.giftPlanNameFilter || c.minPackageGb || c.minOrderAmountUsd || c.packageNameFilter) && (
                     <div className="flex flex-wrap gap-2 mt-3">
+                      {c.giftPlanNameFilter && <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-900/30 text-yellow-300 border border-yellow-700/40">🎁 Hediye Paketi: "{c.giftPlanNameFilter}"</span>}
                       {c.minPackageGb && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-300 border border-blue-800/30">Min {c.minPackageGb} GB paket</span>}
                       {c.minOrderAmountUsd && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900/30 text-purple-300 border border-purple-800/30">Min ${c.minOrderAmountUsd} sipariş</span>}
-                      {c.packageNameFilter && <span className="text-xs px-2 py-0.5 rounded-full bg-orange-900/30 text-orange-300 border border-orange-800/30">Paket: "{c.packageNameFilter}"</span>}
+                      {c.packageNameFilter && <span className="text-xs px-2 py-0.5 rounded-full bg-orange-900/30 text-orange-300 border border-orange-800/30">Uygunluk: "{c.packageNameFilter}"</span>}
                     </div>
                   )}
                 </div>

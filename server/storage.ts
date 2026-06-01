@@ -3643,6 +3643,17 @@ export class DatabaseStorage implements IStorage {
         // Find the end of current month for expiry
         const expiresAt = getEndOfMonthIstanbul(new Date());
 
+        // Find matching gift plan on user's ship (if filter set)
+        let giftPlan: { id: string; name: string; dataLimitGb: number; priceUsd: string } | null = null;
+        if (campaign.giftPlanNameFilter) {
+          const filter = campaign.giftPlanNameFilter.toLowerCase();
+          const shipPlans = await db
+            .select({ id: plans.id, name: plans.name, dataLimitGb: plans.dataLimitGb, priceUsd: plans.priceUsd })
+            .from(plans)
+            .where(and(eq(plans.shipId, user.shipId), eq(plans.isActive, true)));
+          giftPlan = shipPlans.find(p => p.name.toLowerCase().includes(filter)) || null;
+        }
+
         // Create gift order
         const [giftOrder] = await db.insert(orders).values({
           userId: recipient.userId,
@@ -3657,6 +3668,18 @@ export class DatabaseStorage implements IStorage {
           paidAt: new Date(),
           expiresAt,
         }).returning();
+
+        // Create order item if plan found
+        if (giftPlan) {
+          await db.insert(orderItems).values({
+            orderId: giftOrder.id,
+            shipId: user.shipId,
+            planId: giftPlan.id,
+            qty: 1,
+            unitPriceUsd: '0',
+            lineTotalUsd: '0',
+          });
+        }
 
         giftOrderIds.push(giftOrder.id);
 

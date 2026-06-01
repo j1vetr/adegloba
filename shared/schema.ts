@@ -814,7 +814,8 @@ export const giftCampaigns = pgTable("gift_campaigns", {
   giftDataGb: integer("gift_data_gb").notNull().default(1),
   minPackageGb: integer("min_package_gb"), // null = no filter
   minOrderAmountUsd: decimal("min_order_amount_usd", { precision: 10, scale: 2 }), // null = no filter
-  packageNameFilter: varchar("package_name_filter"), // partial match on plan name, null = no filter
+  packageNameFilter: varchar("package_name_filter"), // partial match on plan name, null = no filter (for ELIGIBILITY)
+  giftPlanNameFilter: varchar("gift_plan_name_filter"), // partial match to find which plan to gift per ship (e.g. "1 GB")
   shipIds: jsonb("ship_ids").default('[]'), // [] = all ships
   status: varchar("status").notNull().default('draft'), // 'draft' | 'active' | 'completed'
   executedAt: timestamp("executed_at"),

@@ -4815,7 +4815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/gift-campaigns', isAdminAuthenticated, async (req, res) => {
     try {
-      const { name, description, orderStartDate, orderEndDate, giftDescription, giftDataGb, minPackageGb, minOrderAmountUsd, packageNameFilter, shipIds } = req.body;
+      const { name, description, orderStartDate, orderEndDate, giftDescription, giftDataGb, giftPlanNameFilter, minPackageGb, minOrderAmountUsd, packageNameFilter, shipIds } = req.body;
       if (!name || !orderStartDate || !orderEndDate || !giftDescription || !giftDataGb) {
         return res.status(400).json({ message: 'Missing required fields' });
       }
@@ -4823,6 +4823,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name, description: description || null,
         orderStartDate: new Date(orderStartDate), orderEndDate: new Date(orderEndDate),
         giftDescription, giftDataGb: Number(giftDataGb),
+        giftPlanNameFilter: giftPlanNameFilter || null,
         minPackageGb: minPackageGb ? Number(minPackageGb) : null,
         minOrderAmountUsd: minOrderAmountUsd ? String(minOrderAmountUsd) : null,
         packageNameFilter: packageNameFilter || null,
@@ -4837,7 +4838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/admin/gift-campaigns/:id', isAdminAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, orderStartDate, orderEndDate, giftDescription, giftDataGb, minPackageGb, minOrderAmountUsd, packageNameFilter, shipIds } = req.body;
+      const { name, description, orderStartDate, orderEndDate, giftDescription, giftDataGb, giftPlanNameFilter, minPackageGb, minOrderAmountUsd, packageNameFilter, shipIds } = req.body;
       const updated = await storage.updateGiftCampaign(id, {
         ...(name && { name }),
         ...(description !== undefined && { description }),
@@ -4845,6 +4846,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(orderEndDate && { orderEndDate: new Date(orderEndDate) }),
         ...(giftDescription && { giftDescription }),
         ...(giftDataGb && { giftDataGb: Number(giftDataGb) }),
+        giftPlanNameFilter: giftPlanNameFilter || null,
         minPackageGb: minPackageGb ? Number(minPackageGb) : null,
         minOrderAmountUsd: minOrderAmountUsd ? String(minOrderAmountUsd) : null,
         packageNameFilter: packageNameFilter || null,
