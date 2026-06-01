@@ -3568,8 +3568,8 @@ export class DatabaseStorage implements IStorage {
     if (eligibleUserIds.length === 0) return { count: 0, users: [] };
 
     const userDetails = await db
-      .select({ userId: users.id, username: users.username, fullName: users.fullName, shipName: ships.name })
-      .from(users).leftJoin(ships, eq(users.shipId, ships.id))
+      .select({ userId: users.id, username: users.username, fullName: users.full_name, shipName: ships.name })
+      .from(users).leftJoin(ships, eq(users.ship_id, ships.id))
       .where(sql`${users.id} = ANY(ARRAY[${sql.raw(eligibleUserIds.map(id => `'${id}'`).join(','))}]::text[])`);
 
     return {
