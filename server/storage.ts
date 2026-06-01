@@ -3634,6 +3634,10 @@ export class DatabaseStorage implements IStorage {
     const recipients = await this.previewGiftCampaign(campaignId);
     const giftOrderIds: string[] = [];
 
+    let emailsSentInBatch = 0;
+    const EMAIL_BATCH_SIZE = 2;
+    const EMAIL_BATCH_DELAY_MS = 30_000; // 30 seconds between batches
+
     for (const recipient of recipients) {
       try {
         // Find the user's ship
@@ -3715,9 +3719,14 @@ export class DatabaseStorage implements IStorage {
           } catch (_) { /* WhatsApp failure shouldn't stop execution */ }
         }
 
-        // Send Email if enabled and email available
+        // Send Email if enabled and email available (throttled: 2 per 30s)
         if (campaign.notifyEmail && recipient.email) {
           try {
+            // Throttle: wait 30s after every EMAIL_BATCH_SIZE emails
+            if (emailsSentInBatch > 0 && emailsSentInBatch % EMAIL_BATCH_SIZE === 0) {
+              console.log(`📧 Gift email throttle: waiting ${EMAIL_BATCH_DELAY_MS / 1000}s after ${emailsSentInBatch} emails…`);
+              await new Promise(resolve => setTimeout(resolve, EMAIL_BATCH_DELAY_MS));
+            }
             const { emailService } = await import('./emailService');
             const baseUrl = (await this.getSetting('base_url'))?.value || 'https://adegloba.toov.com.tr';
             await emailService.sendEmail(
@@ -3734,6 +3743,7 @@ export class DatabaseStorage implements IStorage {
                 dashboardUrl: baseUrl + '/gecmis',
               }
             );
+            emailsSentInBatch++;
           } catch (_) { /* Email failure shouldn't stop execution */ }
         }
       } catch (err) {
