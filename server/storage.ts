@@ -508,13 +508,32 @@ export class DatabaseStorage implements IStorage {
         )
         .orderBy(desc(orders.paidAt));
 
-      console.log(`Found ${results.length} active packages for user ${userId}`);
-      
-      return results.map(r => {
-        // Use the expires_at field directly (end of purchase month)
+      // Also fetch active gift orders (no credential, show campaign info)
+      const giftResults = await db
+        .select({
+          orderId: orders.id,
+          paidAt: orders.paidAt,
+          expiresAt: orders.expiresAt,
+          createdAt: orders.createdAt,
+          giftDescription: giftCampaigns.giftDescription,
+          giftDataGb: giftCampaigns.giftDataGb,
+        })
+        .from(orders)
+        .innerJoin(giftCampaigns, eq(orders.giftCampaignId, giftCampaigns.id))
+        .where(
+          and(
+            eq(orders.userId, userId),
+            eq(orders.orderType, 'gift'),
+            eq(orders.status, 'paid'),
+            isNotNull(orders.expiresAt),
+            gt(orders.expiresAt, new Date())
+          )
+        )
+        .orderBy(desc(orders.paidAt));
+
+      const credentialPackages = results.map(r => {
         const expirationDate = r.expiresAt ? new Date(r.expiresAt) : null;
         const daysRemaining = expirationDate ? getDaysRemainingIstanbul(expirationDate) : 0;
-        
         return {
           credentialId: r.credentialId,
           username: r.username,
@@ -526,9 +545,32 @@ export class DatabaseStorage implements IStorage {
           expiresAt: expirationDate,
           expirationDate: expirationDate,
           daysRemaining: daysRemaining,
-          orderStatus: r.orderStatus
+          orderStatus: r.orderStatus,
+          isGift: false,
         };
       });
+
+      const giftPackages = giftResults.map(r => {
+        const expirationDate = r.expiresAt ? new Date(r.expiresAt) : null;
+        const daysRemaining = expirationDate ? getDaysRemainingIstanbul(expirationDate) : 0;
+        return {
+          credentialId: null,
+          username: null,
+          password: null,
+          planName: r.giftDescription,
+          dataLimitGb: r.giftDataGb,
+          assignedAt: r.paidAt,
+          paidAt: r.paidAt,
+          expiresAt: expirationDate,
+          expirationDate: expirationDate,
+          daysRemaining: daysRemaining,
+          orderStatus: 'paid',
+          isGift: true,
+        };
+      });
+
+      console.log(`Found ${credentialPackages.length} credential + ${giftPackages.length} gift packages for user ${userId}`);
+      return [...credentialPackages, ...giftPackages];
     } catch (error) {
       console.error('Error fetching user active packages:', error);
       return [];

@@ -12,9 +12,10 @@ const IST = "Europe/Istanbul";
 const fmtDate = (d: string) => new Date(d).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric", timeZone: IST });
 
 interface ActivePackage {
-  credentialId: string; planName: string; dataLimitGb: number;
-  username: string; password: string;
+  credentialId: string | null; planName: string; dataLimitGb: number;
+  username: string | null; password: string | null;
   paidAt: string; assignedAt: string; expiresAt: string;
+  isGift?: boolean;
 }
 
 function calcExpiry(paidAt: string, expiresAt: string) {
@@ -125,8 +126,9 @@ export default function Paketlerim() {
               const barColor = { ok: "bg-emerald-500", warn: "bg-amber-500", danger: "bg-rose-500" }[urgency];
               const dayColor = { ok: "text-emerald-600", warn: "text-amber-600", danger: "text-rose-600" }[urgency];
 
+              const cardKey = pkg.credentialId || `gift-${pkg.paidAt}-${pkg.planName}`;
               return (
-                <div key={pkg.credentialId} className="user-card-elevated overflow-hidden" data-testid={`my-package-${pkg.credentialId}`}>
+                <div key={cardKey} className="user-card-elevated overflow-hidden" data-testid={`my-package-${cardKey}`}>
                   <div className="px-4 pt-4 pb-3">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-baseline gap-2">
@@ -134,13 +136,19 @@ export default function Paketlerim() {
                         <span className="text-base font-bold text-slate-500">GB</span>
                         <span className="text-slate-400 text-xs ml-1">· {pkg.planName}</span>
                       </div>
-                      <span className={`chip ${daysLeft > 0 ? "chip-success" : "chip-danger"}`}>
-                        {daysLeft > 0 ? "Aktif" : "Bitti"}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {pkg.isGift && (
+                          <span className="chip bg-amber-100 text-amber-700 border-amber-200">🎁 Hediye</span>
+                        )}
+                        <span className={`chip ${daysLeft > 0 ? "chip-success" : "chip-danger"}`}>
+                          {daysLeft > 0 ? "Aktif" : "Bitti"}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 mb-3 text-xs text-slate-500">
-                      <CalendarDays className="w-3 h-3" /> Satın alma: {purchaseLabel}
+                      <CalendarDays className="w-3 h-3" />
+                      {pkg.isGift ? "Tanımlanma:" : "Satın alma:"} {purchaseLabel}
                     </div>
 
                     <div className="space-y-1.5">
@@ -155,26 +163,28 @@ export default function Paketlerim() {
                     </div>
                   </div>
 
-                  <div className="px-4 py-3 border-t border-slate-100">
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <Wifi className="w-3 h-3 text-slate-400" />
-                      <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Bağlantı Bilgileri</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { label: "Kullanıcı Adı", val: pkg.username, testId: `copy-mu-${pkg.credentialId}` },
-                        { label: "Şifre", val: pkg.password, testId: `copy-mp-${pkg.credentialId}` },
-                      ].map(({ label, val, testId }) => (
-                        <div key={label} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-slate-500 text-xs mb-0.5">{label}</p>
-                            <p className="text-slate-900 font-mono text-xs font-medium truncate">{val}</p>
+                  {!pkg.isGift && pkg.username && (
+                    <div className="px-4 py-3 border-t border-slate-100">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Wifi className="w-3 h-3 text-slate-400" />
+                        <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Bağlantı Bilgileri</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { label: "Kullanıcı Adı", val: pkg.username!, testId: `copy-mu-${pkg.credentialId}` },
+                          { label: "Şifre", val: pkg.password!, testId: `copy-mp-${pkg.credentialId}` },
+                        ].map(({ label, val, testId }) => (
+                          <div key={label} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-slate-500 text-xs mb-0.5">{label}</p>
+                              <p className="text-slate-900 font-mono text-xs font-medium truncate">{val}</p>
+                            </div>
+                            <CopyBtn value={val} label={label} testId={testId} />
                           </div>
-                          <CopyBtn value={val} label={label} testId={testId} />
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}
