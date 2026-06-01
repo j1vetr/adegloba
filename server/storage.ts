@@ -3664,12 +3664,12 @@ export class DatabaseStorage implements IStorage {
       .select({
         userId: users.id,
         username: users.username,
-        fullName: users.fullName,
+        fullName: users.full_name,
         phone: users.phone,
         shipName: ships.name,
       })
       .from(users)
-      .leftJoin(ships, eq(users.shipId, ships.id))
+      .leftJoin(ships, eq(users.ship_id, ships.id))
       .where(sql`${users.id} = ANY(ARRAY[${sql.raw(eligibleUserIds.map(id => `'${id}'`).join(','))}]::text[])`);
 
     return userDetails.map(u => ({
@@ -3697,7 +3697,7 @@ export class DatabaseStorage implements IStorage {
       try {
         // Find the user's ship
         const user = await this.getUserById(recipient.userId);
-        if (!user || !user.shipId) continue;
+        if (!user || !user.ship_id) continue;
 
         // Find the end of current month for expiry
         const expiresAt = getEndOfMonthIstanbul(new Date());
@@ -3709,14 +3709,14 @@ export class DatabaseStorage implements IStorage {
           const shipPlans = await db
             .select({ id: plans.id, name: plans.name, dataLimitGb: plans.dataLimitGb, priceUsd: plans.priceUsd })
             .from(plans)
-            .where(and(eq(plans.shipId, user.shipId), eq(plans.isActive, true)));
+            .where(and(eq(plans.shipId, user.ship_id), eq(plans.isActive, true)));
           giftPlan = shipPlans.find(p => p.name.toLowerCase().includes(filter)) || null;
         }
 
         // Create gift order
         const [giftOrder] = await db.insert(orders).values({
           userId: recipient.userId,
-          shipId: user.shipId,
+          shipId: user.ship_id,
           status: 'paid',
           orderType: 'gift',
           currency: 'USD',
@@ -3732,7 +3732,7 @@ export class DatabaseStorage implements IStorage {
         if (giftPlan) {
           await db.insert(orderItems).values({
             orderId: giftOrder.id,
-            shipId: user.shipId,
+            shipId: user.ship_id,
             planId: giftPlan.id,
             qty: 1,
             unitPriceUsd: '0',
