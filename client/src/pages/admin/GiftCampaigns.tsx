@@ -18,8 +18,9 @@ const statusLabel: Record<string, string> = { draft: "Taslak", active: "Aktif", 
 
 interface Campaign {
   id: string; name: string; description: string | null; orderStartDate: string; orderEndDate: string;
-  giftDescription: string; giftDataGb: number; giftPlanNameFilter: string | null; minPackageGb: number | null;
-  minOrderAmountUsd: string | null; packageNameFilter: string | null; shipIds: string[];
+  giftDescription: string; giftDataGb: number; giftPlanNameFilter: string | null;
+  customMessage: string | null; notifyWhatsapp: boolean; notifyEmail: boolean;
+  minPackageGb: number | null; minOrderAmountUsd: string | null; packageNameFilter: string | null; shipIds: string[];
   status: string; executedAt: string | null; totalRecipients: number | null; createdAt: string;
 }
 
@@ -28,6 +29,7 @@ interface PreviewUser { userId: string; username: string; fullName: string; phon
 const empty = {
   name: "", description: "", orderStartDate: "", orderEndDate: "",
   giftDescription: "", giftDataGb: "1", giftPlanNameFilter: "",
+  customMessage: "", notifyWhatsapp: true, notifyEmail: false,
   minPackageGb: "", minOrderAmountUsd: "", packageNameFilter: "", shipIds: [] as string[],
 };
 
@@ -88,6 +90,9 @@ export default function GiftCampaigns() {
       orderStartDate: c.orderStartDate.slice(0, 10), orderEndDate: c.orderEndDate.slice(0, 10),
       giftDescription: c.giftDescription, giftDataGb: String(c.giftDataGb),
       giftPlanNameFilter: c.giftPlanNameFilter || "",
+      customMessage: c.customMessage || "",
+      notifyWhatsapp: c.notifyWhatsapp !== false,
+      notifyEmail: c.notifyEmail === true,
       minPackageGb: c.minPackageGb != null ? String(c.minPackageGb) : "",
       minOrderAmountUsd: c.minOrderAmountUsd || "", packageNameFilter: c.packageNameFilter || "",
       shipIds: c.shipIds || [],
@@ -103,6 +108,9 @@ export default function GiftCampaigns() {
       orderStartDate: form.orderStartDate, orderEndDate: form.orderEndDate,
       giftDescription: form.giftDescription, giftDataGb: Number(form.giftDataGb),
       giftPlanNameFilter: form.giftPlanNameFilter || null,
+      customMessage: form.customMessage || null,
+      notifyWhatsapp: form.notifyWhatsapp,
+      notifyEmail: form.notifyEmail,
       minPackageGb: form.minPackageGb ? Number(form.minPackageGb) : null,
       minOrderAmountUsd: form.minOrderAmountUsd || null,
       packageNameFilter: form.packageNameFilter || null,
@@ -190,6 +198,47 @@ export default function GiftCampaigns() {
                 <p className="text-yellow-500/70 text-xs mt-1">
                   💡 Tüm gemilerde "1 GB" ile başlayan paketler için <strong>1 GB</strong> yazmanız yeterli.
                 </p>
+              </div>
+
+              {/* Custom message */}
+              <div>
+                <label className={labelCls}>💬 Kullanıcıya Gösterilecek Mesaj <span className="text-slate-500 font-normal normal-case">(opsiyonel)</span></label>
+                <textarea
+                  rows={3}
+                  value={form.customMessage}
+                  onChange={e => setForm(p => ({ ...p, customMessage: e.target.value }))}
+                  placeholder="Bayramınız kutlu olsun! Bu özel günde size 1 GB hediye ediyoruz..."
+                  className={inputCls + " resize-none"}
+                />
+                <p className="text-slate-500 text-xs mt-1">WhatsApp ve e-posta bildirimlerinde kullanıcıya iletilir.</p>
+              </div>
+
+              {/* Notification toggles */}
+              <div className="border border-slate-700 rounded-xl p-4 space-y-3">
+                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">📣 Bildirim Kanalları</p>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div
+                    onClick={() => setForm(p => ({ ...p, notifyWhatsapp: !p.notifyWhatsapp }))}
+                    className={`w-10 h-6 rounded-full transition-colors flex items-center px-0.5 ${form.notifyWhatsapp ? 'bg-green-500' : 'bg-slate-600'}`}
+                  >
+                    <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${form.notifyWhatsapp ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </div>
+                  <span className="text-slate-300 text-sm">WhatsApp bildirimi gönder</span>
+                  {form.notifyWhatsapp && <span className="text-green-400 text-xs">✓ Açık</span>}
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div
+                    onClick={() => setForm(p => ({ ...p, notifyEmail: !p.notifyEmail }))}
+                    className={`w-10 h-6 rounded-full transition-colors flex items-center px-0.5 ${form.notifyEmail ? 'bg-blue-500' : 'bg-slate-600'}`}
+                  >
+                    <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${form.notifyEmail ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </div>
+                  <span className="text-slate-300 text-sm">E-posta bildirimi gönder</span>
+                  {form.notifyEmail && <span className="text-blue-400 text-xs">✓ Açık</span>}
+                </label>
+                {!form.notifyWhatsapp && !form.notifyEmail && (
+                  <p className="text-amber-400/70 text-xs">⚠️ Hiçbir bildirim kanalı seçili değil — hediye yine de oluşturulur ama kullanıcıya haber verilmez.</p>
+                )}
               </div>
 
               <div className="border-t border-slate-700 pt-4">

@@ -3692,8 +3692,8 @@ export class DatabaseStorage implements IStorage {
           bannerDismissed: false,
         }).onConflictDoNothing();
 
-        // Send WhatsApp if phone available
-        if (recipient.phone) {
+        // Send WhatsApp if enabled and phone available
+        if (campaign.notifyWhatsapp !== false && recipient.phone) {
           try {
             const { sendGiftWhatsApp } = await import('./whatsappService');
             const waResult = await sendGiftWhatsApp(recipient.phone, {
@@ -3702,6 +3702,7 @@ export class DatabaseStorage implements IStorage {
               giftDescription: campaign.giftDescription,
               giftDataGb: campaign.giftDataGb,
               shipName: recipient.shipName,
+              customMessage: campaign.customMessage || undefined,
             });
             if (waResult.success) {
               await db.update(giftCampaignLogs)
@@ -3712,6 +3713,28 @@ export class DatabaseStorage implements IStorage {
                 ));
             }
           } catch (_) { /* WhatsApp failure shouldn't stop execution */ }
+        }
+
+        // Send Email if enabled and email available
+        if (campaign.notifyEmail && recipient.email) {
+          try {
+            const { emailService } = await import('./emailService');
+            const baseUrl = (await this.getSetting('base_url'))?.value || 'https://adegloba.toov.com.tr';
+            await emailService.sendEmail(
+              recipient.email,
+              `🎁 ${campaign.giftDescription} — AdeGloba Hediyeniz!`,
+              'gift_notification',
+              {
+                userName: recipient.fullName || recipient.email,
+                campaignName: campaign.name,
+                shipName: recipient.shipName,
+                giftDescription: campaign.giftDescription,
+                giftDataGb: campaign.giftDataGb,
+                customMessage: campaign.customMessage || '',
+                dashboardUrl: baseUrl + '/gecmis',
+              }
+            );
+          } catch (_) { /* Email failure shouldn't stop execution */ }
         }
       } catch (err) {
         console.error(`Gift campaign: failed for user ${recipient.userId}:`, err);

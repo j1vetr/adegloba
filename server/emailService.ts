@@ -950,6 +950,39 @@ export class EmailService {
           </p>
         `);
 
+      case 'gift_notification':
+        return baseTemplate.replace('{{content}}', `
+          <h2>🎁 Size Özel Hediye!</h2>
+          <p>Merhaba <span class="highlight">{{userName}}</span>,</p>
+          <p>AdeGloba ailesinin kıymetli bir üyesi olduğunuz için size özel bir kampanya hediye ettik!</p>
+
+          <div class="order-details">
+            <h3 class="maritime-accent">🎉 Hediye Detayları</h3>
+            <div class="order-item"><strong>🎫 Kampanya:</strong> <span class="highlight">{{campaignName}}</span></div>
+            <div class="order-item"><strong>🚢 Gemi:</strong> <span class="highlight">{{shipName}}</span></div>
+            <div class="order-item"><strong>📦 Hediye Paket:</strong> <span class="highlight">{{giftDescription}}</span></div>
+            <div class="order-item"><strong>📡 Veri:</strong> <span class="price">{{giftDataGb}} GB Starlink</span></div>
+          </div>
+
+          {{#if customMessage}}
+          <div style="background: #1e3a5f; border-left: 4px solid #facc15; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #facc15; font-weight: 700; margin: 0 0 8px 0;">💬 Mesajımız</p>
+            <p style="color: #e2e8f0; margin: 0; line-height: 1.6;">{{customMessage}}</p>
+          </div>
+          {{/if}}
+
+          <div class="status-badge">✅ Hediye Siparişiniz Oluşturuldu</div>
+          <p>Hediyeniz hesabınıza tanımlandı. Sipariş geçmişinizden 🎁 HEDİYE rozeti ile görebilirsiniz.</p>
+
+          <div style="text-align: center; margin-top: 24px;">
+            <a href="{{dashboardUrl}}" class="button">📋 Siparişlerimi Gör</a>
+          </div>
+
+          <p style="margin-top: 20px; color: #94a3b8; font-size: 13px; text-align: center;">
+            Bu hediye AdeGloba tarafından <strong>ücretsiz</strong> olarak sunulmaktadır. Herhangi bir ödeme gerekmemektedir.
+          </p>
+        `);
+
       default:
         return baseTemplate.replace('{{content}}', '<p>Email content not found.</p>');
     }

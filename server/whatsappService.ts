@@ -190,6 +190,7 @@ interface GiftWhatsAppData {
   giftDescription: string;
   giftDataGb: number;
   shipName?: string;
+  customMessage?: string;
 }
 
 export async function sendGiftWhatsApp(
@@ -206,6 +207,7 @@ export async function sendGiftWhatsApp(
     `🎉 Hediye: *${data.giftDescription}*`,
     ...(data.shipName ? [`🚢 Gemi: *${data.shipName}*`] : []),
     ``,
+    ...(data.customMessage ? [`💬 *Mesajımız:*`, data.customMessage, ``] : []),
     `Hediyeniz hesabınıza tanımlanmıştır. Sisteme giriş yaparak siparişlerinizde görebilirsiniz.`,
   ];
 
