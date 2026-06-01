@@ -53,18 +53,14 @@ export default function GiftCampaigns() {
     debounceRef.current = setTimeout(async () => {
       setLivePreviewLoading(true);
       try {
-        const res = await fetch('/api/admin/gift-campaigns/filter-preview', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderStartDate: form.orderStartDate,
-            orderEndDate: form.orderEndDate,
-            minPackageGb: form.minPackageGb ? Number(form.minPackageGb) : null,
-            minOrderAmountUsd: form.minOrderAmountUsd || null,
-            packageNameFilter: form.packageNameFilter || null,
-          }),
+        const res = await apiRequest('POST', '/api/admin/gift-campaigns/filter-preview', {
+          orderStartDate: form.orderStartDate,
+          orderEndDate: form.orderEndDate,
+          minPackageGb: form.minPackageGb ? Number(form.minPackageGb) : null,
+          minOrderAmountUsd: form.minOrderAmountUsd || null,
+          packageNameFilter: form.packageNameFilter || null,
         });
-        if (res.ok) setLivePreview(await res.json());
+        setLivePreview(await res.json());
       } catch (_) {}
       setLivePreviewLoading(false);
     }, 600);
@@ -286,7 +282,7 @@ export default function GiftCampaigns() {
                         ? <><Loader2 className="w-3 h-3 animate-spin" /> Hesaplanıyor…</>
                         : livePreview
                           ? <><Users className="w-3 h-3" /> {livePreview.count} kullanıcı etkilenecek</>
-                          : <><Users className="w-3 h-3" /> Tarih seçin</>
+                          : <><Loader2 className="w-3 h-3 animate-spin" /> Hesaplanıyor…</>
                       }
                     </div>
                   )}
