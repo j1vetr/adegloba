@@ -495,15 +495,9 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(credentialPools.assignedToUserId, userId),
             eq(credentialPools.isAssigned, true),
-            or(
-              eq(orders.status, 'paid'),
-              eq(orders.status, 'completed')
-            ),
-            // Only include packages that haven't expired
-            and(
-              isNotNull(orders.expiresAt),
-              gt(orders.expiresAt, new Date())
-            )
+            sql`${orders.status} IN ('paid', 'completed')`,
+            isNotNull(orders.expiresAt),
+            gt(orders.expiresAt, new Date())
           )
         )
         .orderBy(desc(orders.paidAt));

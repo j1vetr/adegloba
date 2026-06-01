@@ -163,26 +163,30 @@ export default function Paketlerim() {
                     </div>
                   </div>
 
-                  {!pkg.isGift && pkg.username && (
+                  {!pkg.isGift && (
                     <div className="px-4 py-3 border-t border-slate-100">
                       <div className="flex items-center gap-1.5 mb-2">
                         <Wifi className="w-3 h-3 text-slate-400" />
                         <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Bağlantı Bilgileri</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { label: "Kullanıcı Adı", val: pkg.username!, testId: `copy-mu-${pkg.credentialId}` },
-                          { label: "Şifre", val: pkg.password!, testId: `copy-mp-${pkg.credentialId}` },
-                        ].map(({ label, val, testId }) => (
-                          <div key={label} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-slate-500 text-xs mb-0.5">{label}</p>
-                              <p className="text-slate-900 font-mono text-xs font-medium truncate">{val}</p>
+                      {pkg.username ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { label: "Kullanıcı Adı", val: pkg.username, testId: `copy-mu-${pkg.credentialId}` },
+                            { label: "Şifre", val: pkg.password ?? "", testId: `copy-mp-${pkg.credentialId}` },
+                          ].map(({ label, val, testId }) => (
+                            <div key={label} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-slate-500 text-xs mb-0.5">{label}</p>
+                                <p className="text-slate-900 font-mono text-xs font-medium truncate">{val}</p>
+                              </div>
+                              <CopyBtn value={val} label={label} testId={testId} />
                             </div>
-                            <CopyBtn value={val} label={label} testId={testId} />
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-slate-400 text-xs">Bağlantı bilgileri henüz atanmadı.</p>
+                      )}
                     </div>
                   )}
                 </div>
