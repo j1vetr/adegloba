@@ -1979,20 +1979,22 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getUserOrderHistory(userId: string): Promise<Array<Order & { orderItems: OrderItem[]; ship: Ship | undefined; totalAmount: number }>> {
-    const userOrders = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(orders.createdAt);
+  async getUserOrderHistory(userId: string): Promise<Array<Order & { orderItems: OrderItem[]; ship: Ship | undefined; totalAmount: number; giftDescription?: string }>> {
+    const userOrders = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
     const allOrderItems = await db.select().from(orderItems);
     const allShips = await db.select().from(ships);
+    const allCampaigns = await db.select({ id: giftCampaigns.id, giftDescription: giftCampaigns.giftDescription }).from(giftCampaigns);
 
     return userOrders.map(order => {
       const items = allOrderItems.filter(item => item.orderId === order.id);
       const ship = allShips.find(s => s.id === order.shipId);
-      
+      const campaign = order.giftCampaignId ? allCampaigns.find(c => c.id === order.giftCampaignId) : null;
       return {
         ...order,
         orderItems: items,
         ship,
         totalAmount: parseFloat(order.totalUsd || '0'),
+        giftDescription: campaign?.giftDescription,
       };
     });
   }

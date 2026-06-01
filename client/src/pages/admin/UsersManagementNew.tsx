@@ -37,6 +37,7 @@ interface OrderWithDetails extends Order {
   orderItems: OrderItem[];
   ship: Ship;
   totalAmount: number;
+  giftDescription?: string;
 }
 
 // User Status Toggle Button Component
@@ -669,22 +670,38 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
-                          {order.orderItems.map((item, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm">
-                              <Package className="h-3 w-3 text-green-400" />
-                              <span className="text-white">{item.quantity}x</span>
-                              <span className="text-gray-300">{item.planTitle}</span>
+                          {order.orderType === 'gift' ? (
+                            <div className="flex items-center gap-2 text-sm">
+                              <span>🎁</span>
+                              <span className="text-amber-300">{order.giftDescription || 'Hediye Paketi'}</span>
                             </div>
-                          ))}
+                          ) : order.orderItems.length > 0 ? (
+                            order.orderItems.map((item, index) => (
+                              <div key={index} className="flex items-center gap-2 text-sm">
+                                <Package className="h-3 w-3 text-green-400" />
+                                <span className="text-white">{(item as any).qty ?? (item as any).quantity ?? 1}x</span>
+                                <span className="text-gray-300">{(item as any).planTitle || (item as any).planId?.slice(0,8)}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-gray-500 text-xs">—</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-green-400 font-semibold">
-                          {formatPrice(order.totalAmount)}
+                          {order.orderType === 'gift' ? (
+                            <span className="text-amber-400">Ücretsiz</span>
+                          ) : formatPrice(order.totalAmount)}
                         </div>
                       </TableCell>
                       <TableCell>
-                        {getStatusBadge(order.status)}
+                        <div className="flex flex-col gap-1">
+                          {order.orderType === 'gift' && (
+                            <Badge className="bg-amber-600/20 text-amber-300 border border-amber-600/40 text-xs w-fit">🎁 Hediye</Badge>
+                          )}
+                          {getStatusBadge(order.status)}
+                        </div>
                       </TableCell>
                       <TableCell className="text-gray-300">
                         {formatDate(order.createdAt)}
