@@ -2007,6 +2007,7 @@ export class DatabaseStorage implements IStorage {
     username: string;
     password: string;
     deliveredAt: Date;
+    isGift: boolean;
   }>> {
     try {
       const userCredentials = await db
@@ -2017,6 +2018,7 @@ export class DatabaseStorage implements IStorage {
           username: credentialPools.username,
           password: credentialPools.password,
           deliveredAt: orderCredentials.deliveredAt,
+          orderType: orders.orderType,
         })
         .from(orderCredentials)
         .innerJoin(orders, eq(orderCredentials.orderId, orders.id))
@@ -2034,6 +2036,7 @@ export class DatabaseStorage implements IStorage {
         username: cred.username || '',
         password: cred.password || '',
         deliveredAt: cred.deliveredAt || new Date(),
+        isGift: cred.orderType === 'gift',
       }));
     } catch (error) {
       console.error('Error fetching user credentials:', error);

@@ -40,6 +40,16 @@ interface OrderWithDetails extends Order {
   giftDescription?: string;
 }
 
+interface UserCredential {
+  id: string;
+  shipName: string;
+  planName: string;
+  username: string;
+  password: string;
+  deliveredAt: string | Date;
+  isGift: boolean;
+}
+
 // User Status Toggle Button Component
 interface UserStatusToggleButtonProps {
   userId: string;
@@ -762,6 +772,9 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
                         <div className="flex items-center gap-2">
                           <Package className="h-4 w-4 text-purple-400" />
                           <span className="text-white">{credential.planName}</span>
+                          {credential.isGift && (
+                            <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30 text-xs px-1.5 py-0">🎁 Hediye</Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
