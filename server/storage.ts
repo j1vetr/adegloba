@@ -3522,14 +3522,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async previewGiftCampaignByFilters(filters: { orderStartDate: string; orderEndDate: string; minPackageGb?: number | null; minOrderAmountUsd?: string | null; packageNameFilter?: string | null; shipIds?: string[] }): Promise<{ count: number; users: { userId: string; username: string; fullName: string; shipName: string }[] }> {
-    const start = new Date(filters.orderStartDate);
-    const end = new Date(filters.orderEndDate);
+    const start = new Date(filters.orderStartDate + 'T00:00:00.000Z');
+    const end = new Date(filters.orderEndDate + 'T23:59:59.999Z');
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return { count: 0, users: [] };
 
     const rawOrders = await db
       .select({ userId: orders.userId, shipId: orders.shipId, totalUsd: orders.totalUsd, orderId: orders.id })
       .from(orders)
-      .where(and(eq(orders.status, 'paid'), gte(orders.createdAt, start), lte(orders.createdAt, end)));
+      .where(and(
+        or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
+        gte(orders.createdAt, start),
+        lte(orders.createdAt, end)
+      ));
 
     const shipFilter = filters.shipIds || [];
     const userMap = new Map<string, { shipId: string; orders: string[]; totalUsd: number[] }>();
@@ -3582,8 +3586,11 @@ export class DatabaseStorage implements IStorage {
     const campaign = await this.getGiftCampaignById(campaignId);
     if (!campaign) return [];
 
-    // Get all paid orders in the date range
-    let query = db
+    // Get all paid/completed orders in the date range (end date extended to 23:59:59)
+    const rangeEnd = new Date(campaign.orderEndDate);
+    rangeEnd.setUTCHours(23, 59, 59, 999);
+
+    const rawOrders = await db
       .select({
         userId: orders.userId,
         shipId: orders.shipId,
@@ -3593,13 +3600,11 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .where(
         and(
-          eq(orders.status, 'paid'),
+          or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
           gte(orders.createdAt, campaign.orderStartDate),
-          lte(orders.createdAt, campaign.orderEndDate),
+          lte(orders.createdAt, rangeEnd),
         )
       );
-
-    const rawOrders = await query;
 
     // Get already-gifted user IDs for this campaign
     const alreadyGifted = await db
