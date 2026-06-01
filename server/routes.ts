@@ -4869,6 +4869,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e) { res.status(500).json({ message: 'Failed to delete' }); }
   });
 
+  // Live filter preview (no campaign ID needed — used while filling the form)
+  app.post('/api/admin/gift-campaigns/filter-preview', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { orderStartDate, orderEndDate, minPackageGb, minOrderAmountUsd, packageNameFilter, shipIds } = req.body;
+      if (!orderStartDate || !orderEndDate) return res.json({ count: 0, users: [] });
+      const result = await storage.previewGiftCampaignByFilters({
+        orderStartDate, orderEndDate,
+        minPackageGb: minPackageGb ? Number(minPackageGb) : null,
+        minOrderAmountUsd: minOrderAmountUsd || null,
+        packageNameFilter: packageNameFilter || null,
+        shipIds: shipIds || [],
+      });
+      res.json(result);
+    } catch (e) { res.status(500).json({ count: 0, users: [] }); }
+  });
+
   app.get('/api/admin/gift-campaigns/:id/preview', isAdminAuthenticated, async (req, res) => {
     try {
       const recipients = await storage.previewGiftCampaign(req.params.id);

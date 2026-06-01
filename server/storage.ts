@@ -362,6 +362,7 @@ export interface IStorage {
   updateGiftCampaign(id: string, data: Partial<GiftCampaign>): Promise<GiftCampaign | undefined>;
   deleteGiftCampaign(id: string): Promise<void>;
   previewGiftCampaign(campaignId: string): Promise<{ userId: string; username: string; fullName: string; phone: string | null; shipName: string; ordersCount: number }[]>;
+  previewGiftCampaignByFilters(filters: { orderStartDate: string; orderEndDate: string; minPackageGb?: number | null; minOrderAmountUsd?: string | null; packageNameFilter?: string | null; shipIds?: string[] }): Promise<{ count: number; users: { userId: string; username: string; fullName: string; shipName: string }[] }>;
   executeGiftCampaign(campaignId: string, adminUserId: string): Promise<{ recipientCount: number; giftOrders: string[] }>;
   getPendingGiftBanners(userId: string): Promise<(GiftCampaignLog & { campaign: GiftCampaign })[]>;
   dismissGiftBanner(userId: string, campaignId: string): Promise<void>;
@@ -3518,6 +3519,62 @@ export class DatabaseStorage implements IStorage {
 
   async deleteGiftCampaign(id: string): Promise<void> {
     await db.delete(giftCampaigns).where(eq(giftCampaigns.id, id));
+  }
+
+  async previewGiftCampaignByFilters(filters: { orderStartDate: string; orderEndDate: string; minPackageGb?: number | null; minOrderAmountUsd?: string | null; packageNameFilter?: string | null; shipIds?: string[] }): Promise<{ count: number; users: { userId: string; username: string; fullName: string; shipName: string }[] }> {
+    const start = new Date(filters.orderStartDate);
+    const end = new Date(filters.orderEndDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return { count: 0, users: [] };
+
+    const rawOrders = await db
+      .select({ userId: orders.userId, shipId: orders.shipId, totalUsd: orders.totalUsd, orderId: orders.id })
+      .from(orders)
+      .where(and(eq(orders.status, 'paid'), gte(orders.createdAt, start), lte(orders.createdAt, end)));
+
+    const shipFilter = filters.shipIds || [];
+    const userMap = new Map<string, { shipId: string; orders: string[]; totalUsd: number[] }>();
+    for (const o of rawOrders) {
+      if (shipFilter.length > 0 && !shipFilter.includes(o.shipId)) continue;
+      if (!userMap.has(o.userId)) userMap.set(o.userId, { shipId: o.shipId, orders: [], totalUsd: [] });
+      userMap.get(o.userId)!.orders.push(o.orderId);
+      userMap.get(o.userId)!.totalUsd.push(Number(o.totalUsd));
+    }
+
+    const minAmount = filters.minOrderAmountUsd ? Number(filters.minOrderAmountUsd) : null;
+    const eligibleUserIds: string[] = [];
+    for (const [userId, data] of userMap.entries()) {
+      if (minAmount !== null) {
+        if (Math.max(...data.totalUsd) < minAmount) continue;
+      }
+      if (filters.minPackageGb) {
+        const items = await db
+          .select({ dataLimitGb: plans.dataLimitGb })
+          .from(orderItems).innerJoin(plans, eq(orderItems.planId, plans.id))
+          .where(sql`${orderItems.orderId} = ANY(ARRAY[${sql.raw(data.orders.map(id => `'${id}'`).join(','))}]::text[])`);
+        if (!items.some(i => (i.dataLimitGb || 0) >= filters.minPackageGb!)) continue;
+      }
+      if (filters.packageNameFilter) {
+        const filter = filters.packageNameFilter.toLowerCase();
+        const items = await db
+          .select({ planName: plans.name })
+          .from(orderItems).innerJoin(plans, eq(orderItems.planId, plans.id))
+          .where(sql`${orderItems.orderId} = ANY(ARRAY[${sql.raw(data.orders.map(id => `'${id}'`).join(','))}]::text[])`);
+        if (!items.some(i => i.planName.toLowerCase().includes(filter))) continue;
+      }
+      eligibleUserIds.push(userId);
+    }
+
+    if (eligibleUserIds.length === 0) return { count: 0, users: [] };
+
+    const userDetails = await db
+      .select({ userId: users.id, username: users.username, fullName: users.fullName, shipName: ships.name })
+      .from(users).leftJoin(ships, eq(users.shipId, ships.id))
+      .where(sql`${users.id} = ANY(ARRAY[${sql.raw(eligibleUserIds.map(id => `'${id}'`).join(','))}]::text[])`);
+
+    return {
+      count: userDetails.length,
+      users: userDetails.map(u => ({ userId: u.userId, username: u.username, fullName: u.fullName || u.username, shipName: u.shipName || 'Bilinmiyor' })),
+    };
   }
 
   async previewGiftCampaign(campaignId: string): Promise<{ userId: string; username: string; fullName: string; phone: string | null; shipName: string; ordersCount: number }[]> {

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import AdminLayout from "@/components/AdminLayout";
-import { Gift, Plus, Play, Eye, Trash2, X, ChevronDown, ChevronUp, CheckCircle2, Clock, Users } from "lucide-react";
+import { Gift, Plus, Play, Eye, Trash2, X, ChevronDown, ChevronUp, CheckCircle2, Clock, Users, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const IST = "Europe/Istanbul";
@@ -41,6 +41,35 @@ export default function GiftCampaigns() {
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmExecuteId, setConfirmExecuteId] = useState<string | null>(null);
+  const [livePreview, setLivePreview] = useState<{ count: number; users: { userId: string; username: string; fullName: string; shipName: string }[] } | null>(null);
+  const [livePreviewLoading, setLivePreviewLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced live count — fires 600ms after any filter-related field changes
+  useEffect(() => {
+    if (!showForm) return;
+    if (!form.orderStartDate || !form.orderEndDate) { setLivePreview(null); return; }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setLivePreviewLoading(true);
+      try {
+        const res = await fetch('/api/admin/gift-campaigns/filter-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderStartDate: form.orderStartDate,
+            orderEndDate: form.orderEndDate,
+            minPackageGb: form.minPackageGb ? Number(form.minPackageGb) : null,
+            minOrderAmountUsd: form.minOrderAmountUsd || null,
+            packageNameFilter: form.packageNameFilter || null,
+          }),
+        });
+        if (res.ok) setLivePreview(await res.json());
+      } catch (_) {}
+      setLivePreviewLoading(false);
+    }, 600);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [showForm, form.orderStartDate, form.orderEndDate, form.minPackageGb, form.minOrderAmountUsd, form.packageNameFilter]);
 
   const { data: campaigns = [], isLoading } = useQuery<Campaign[]>({ queryKey: ["/api/admin/gift-campaigns"] });
 
@@ -242,7 +271,26 @@ export default function GiftCampaigns() {
               </div>
 
               <div className="border-t border-slate-700 pt-4">
-                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3">Filtreler (Opsiyonel)</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">Filtreler (Opsiyonel)</p>
+                  {/* Live count badge */}
+                  {form.orderStartDate && form.orderEndDate && (
+                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                      livePreviewLoading
+                        ? 'bg-slate-700/50 border-slate-600 text-slate-400'
+                        : livePreview && livePreview.count > 0
+                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                          : 'bg-slate-700/50 border-slate-600 text-slate-500'
+                    }`}>
+                      {livePreviewLoading
+                        ? <><Loader2 className="w-3 h-3 animate-spin" /> Hesaplanıyor…</>
+                        : livePreview
+                          ? <><Users className="w-3 h-3" /> {livePreview.count} kullanıcı etkilenecek</>
+                          : <><Users className="w-3 h-3" /> Tarih seçin</>
+                      }
+                    </div>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className={labelCls}>Min. Paket GB</label>
@@ -259,6 +307,30 @@ export default function GiftCampaigns() {
                     <p className="text-slate-500 text-xs mt-1">Kısmi eşleşme (büyük/küçük harf duyarsız)</p>
                   </div>
                 </div>
+
+                {/* Live user list preview */}
+                {livePreview && livePreview.count > 0 && !livePreviewLoading && (
+                  <div className="mt-3 bg-slate-800/40 border border-slate-700/50 rounded-xl overflow-hidden">
+                    <div className="px-3 py-2 border-b border-slate-700/50 flex items-center justify-between">
+                      <span className="text-slate-400 text-xs font-semibold">Etkilenecek Kullanıcılar</span>
+                      <span className="text-emerald-400 text-xs">{livePreview.count} kişi</span>
+                    </div>
+                    <div className="max-h-36 overflow-y-auto divide-y divide-slate-700/30">
+                      {livePreview.users.slice(0, 20).map(u => (
+                        <div key={u.userId} className="flex items-center justify-between px-3 py-1.5">
+                          <span className="text-slate-300 text-xs">{u.fullName || u.username}</span>
+                          <span className="text-slate-500 text-xs">🚢 {u.shipName}</span>
+                        </div>
+                      ))}
+                      {livePreview.count > 20 && (
+                        <div className="px-3 py-1.5 text-center text-slate-500 text-xs">+{livePreview.count - 20} kişi daha…</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {livePreview && livePreview.count === 0 && !livePreviewLoading && form.orderStartDate && form.orderEndDate && (
+                  <p className="mt-2 text-amber-400/70 text-xs">⚠️ Bu filtrelerle eşleşen kullanıcı bulunamadı.</p>
+                )}
               </div>
 
               <div className="flex gap-3 pt-2">
