@@ -4882,7 +4882,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shipIds: shipIds || [],
       });
       res.json(result);
-    } catch (e) { res.status(500).json({ count: 0, users: [] }); }
+    } catch (e) { console.error('filter-preview error:', e); res.status(500).json({ count: 0, users: [], error: String(e) }); }
   });
 
   app.get('/api/admin/gift-campaigns/:id/preview', isAdminAuthenticated, async (req, res) => {

@@ -3529,11 +3529,7 @@ export class DatabaseStorage implements IStorage {
     const rawOrders = await db
       .select({ userId: orders.userId, shipId: orders.shipId, totalUsd: orders.totalUsd, orderId: orders.id })
       .from(orders)
-      .where(and(
-        or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
-        gte(orders.createdAt, start),
-        lte(orders.createdAt, end)
-      ));
+      .where(sql`${orders.status} IN ('paid', 'completed') AND ${orders.createdAt} >= ${start} AND ${orders.createdAt} <= ${end}`);
 
     const shipFilter = filters.shipIds || [];
     const userMap = new Map<string, { shipId: string; orders: string[]; totalUsd: number[] }>();
@@ -3599,11 +3595,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(orders)
       .where(
-        and(
-          or(eq(orders.status, 'paid'), eq(orders.status, 'completed')),
-          gte(orders.createdAt, campaign.orderStartDate),
-          lte(orders.createdAt, rangeEnd),
-        )
+        sql`${orders.status} IN ('paid', 'completed') AND ${orders.createdAt} >= ${campaign.orderStartDate} AND ${orders.createdAt} <= ${rangeEnd}`
       );
 
     // Get already-gifted user IDs for this campaign
