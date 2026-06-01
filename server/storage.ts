@@ -3551,7 +3551,8 @@ export class DatabaseStorage implements IStorage {
           .select({ dataLimitGb: plans.dataLimitGb })
           .from(orderItems).innerJoin(plans, eq(orderItems.planId, plans.id))
           .where(sql`${orderItems.orderId} = ANY(ARRAY[${sql.raw(data.orders.map(id => `'${id}'`).join(','))}]::text[])`);
-        if (!items.some(i => (i.dataLimitGb || 0) >= filters.minPackageGb!)) continue;
+        const totalGb = items.reduce((sum, i) => sum + (i.dataLimitGb || 0), 0);
+        if (totalGb < filters.minPackageGb!) continue;
       }
       if (filters.packageNameFilter) {
         const filter = filters.packageNameFilter.toLowerCase();
@@ -3633,7 +3634,7 @@ export class DatabaseStorage implements IStorage {
         if (maxOrder < minAmount) continue;
       }
 
-      // Check plan filters if needed
+      // Check plan filters if needed — cumulative GB across all orders in range
       if (campaign.minPackageGb !== null && campaign.minPackageGb !== undefined) {
         const items = await db
           .select({ dataLimitGb: plans.dataLimitGb, planName: plans.name })
@@ -3641,8 +3642,8 @@ export class DatabaseStorage implements IStorage {
           .innerJoin(plans, eq(orderItems.planId, plans.id))
           .where(sql`${orderItems.orderId} = ANY(ARRAY[${sql.raw(data.orders.map(id => `'${id}'`).join(','))}]::text[])`);
         
-        const hasQualifying = items.some(i => (i.dataLimitGb || 0) >= campaign.minPackageGb!);
-        if (!hasQualifying) continue;
+        const totalGb = items.reduce((sum, i) => sum + (i.dataLimitGb || 0), 0);
+        if (totalGb < campaign.minPackageGb!) continue;
       }
 
       if (campaign.packageNameFilter) {

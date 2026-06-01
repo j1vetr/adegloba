@@ -293,9 +293,9 @@ export default function GiftCampaigns() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className={labelCls}>Min. Paket GB</label>
+                    <label className={labelCls}>Min. Toplam GB</label>
                     <input type="number" min="1" value={form.minPackageGb} onChange={e => setForm(p => ({ ...p, minPackageGb: e.target.value }))} placeholder="Örn: 5" className={inputCls} />
-                    <p className="text-slate-500 text-xs mt-1">Bu GB ve üzeri paket almış olanlar</p>
+                    <p className="text-slate-500 text-xs mt-1">Seçili dönemde toplam bu GB ve üzerini almış olanlar</p>
                   </div>
                   <div>
                     <label className={labelCls}>Min. Sipariş Tutarı ($)</label>
