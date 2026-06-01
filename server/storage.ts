@@ -484,6 +484,7 @@ export class DatabaseStorage implements IStorage {
           assignedAt: credentialPools.assignedAt,
           orderId: orders.id,
           orderStatus: orders.status,
+          orderType: orders.orderType,
           paidAt: orders.paidAt,
           expiresAt: orders.expiresAt,
           createdAt: orders.createdAt
@@ -502,7 +503,10 @@ export class DatabaseStorage implements IStorage {
         )
         .orderBy(desc(orders.paidAt));
 
-      // Also fetch active gift orders (no credential, show campaign info)
+      // Collect order IDs already covered by credential query
+      const coveredOrderIds = new Set(results.map(r => r.orderId));
+
+      // Also fetch active gift orders without credentials (fallback) (no credential, show campaign info)
       const giftResults = await db
         .select({
           orderId: orders.id,
@@ -540,30 +544,33 @@ export class DatabaseStorage implements IStorage {
           expirationDate: expirationDate,
           daysRemaining: daysRemaining,
           orderStatus: r.orderStatus,
-          isGift: false,
+          isGift: r.orderType === 'gift',
         };
       });
 
-      const giftPackages = giftResults.map(r => {
-        const expirationDate = r.expiresAt ? new Date(r.expiresAt) : null;
-        const daysRemaining = expirationDate ? getDaysRemainingIstanbul(expirationDate) : 0;
-        return {
-          credentialId: null,
-          username: null,
-          password: null,
-          planName: r.giftDescription,
-          dataLimitGb: r.giftDataGb,
-          assignedAt: r.paidAt,
-          paidAt: r.paidAt,
-          expiresAt: expirationDate,
-          expirationDate: expirationDate,
-          daysRemaining: daysRemaining,
-          orderStatus: 'paid',
-          isGift: true,
-        };
-      });
+      // Fallback: gift orders that have NO credential yet (e.g. old gifts before credential delivery)
+      const giftPackages = giftResults
+        .filter(r => !coveredOrderIds.has(r.orderId))
+        .map(r => {
+          const expirationDate = r.expiresAt ? new Date(r.expiresAt) : null;
+          const daysRemaining = expirationDate ? getDaysRemainingIstanbul(expirationDate) : 0;
+          return {
+            credentialId: null,
+            username: null,
+            password: null,
+            planName: r.giftDescription,
+            dataLimitGb: r.giftDataGb,
+            assignedAt: r.paidAt,
+            paidAt: r.paidAt,
+            expiresAt: expirationDate,
+            expirationDate: expirationDate,
+            daysRemaining: daysRemaining,
+            orderStatus: 'paid',
+            isGift: true,
+          };
+        });
 
-      console.log(`Found ${credentialPackages.length} credential + ${giftPackages.length} gift packages for user ${userId}`);
+      console.log(`Found ${credentialPackages.length} credential (${credentialPackages.filter(p => p.isGift).length} gift) + ${giftPackages.length} no-credential gift packages for user ${userId}`);
       return [...credentialPackages, ...giftPackages];
     } catch (error) {
       console.error('Error fetching user active packages:', error);
@@ -3766,7 +3773,7 @@ export class DatabaseStorage implements IStorage {
           expiresAt,
         }).returning();
 
-        // Create order item if plan found
+        // Create order item + assign credentials if plan found
         if (giftPlan) {
           await db.insert(orderItems).values({
             orderId: giftOrder.id,
@@ -3776,6 +3783,13 @@ export class DatabaseStorage implements IStorage {
             unitPriceUsd: '0',
             lineTotalUsd: '0',
           });
+          // Deliver credentials just like a paid order
+          try {
+            await this.deliverCredentialsForOrder(giftOrder.id, giftPlan.id, 1);
+            console.log(`✅ Gift credential assigned for user ${recipient.userId}`);
+          } catch (credErr: any) {
+            console.warn(`⚠️ No credentials available for gift plan "${giftPlan.name}": ${credErr.message}`);
+          }
         }
 
         giftOrderIds.push(giftOrder.id);

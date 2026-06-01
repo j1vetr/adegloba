@@ -163,8 +163,7 @@ export default function Paketlerim() {
                     </div>
                   </div>
 
-                  {!pkg.isGift && (
-                    <div className="px-4 py-3 border-t border-slate-100">
+                  <div className="px-4 py-3 border-t border-slate-100">
                       <div className="flex items-center gap-1.5 mb-2">
                         <Wifi className="w-3 h-3 text-slate-400" />
                         <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Bağlantı Bilgileri</span>
@@ -188,7 +187,6 @@ export default function Paketlerim() {
                         <p className="text-slate-400 text-xs">Bağlantı bilgileri henüz atanmadı.</p>
                       )}
                     </div>
-                  )}
                 </div>
               );
             })}
