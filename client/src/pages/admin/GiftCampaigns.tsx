@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import AdminLayout from "@/components/AdminLayout";
@@ -43,29 +43,30 @@ export default function GiftCampaigns() {
   const [confirmExecuteId, setConfirmExecuteId] = useState<string | null>(null);
   const [livePreview, setLivePreview] = useState<{ count: number; users: { userId: string; username: string; fullName: string; shipName: string }[] } | null>(null);
   const [livePreviewLoading, setLivePreviewLoading] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounced live count — fires 600ms after any filter-related field changes
-  useEffect(() => {
-    if (!showForm) return;
-    if (!form.orderStartDate || !form.orderEndDate) { setLivePreview(null); return; }
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      setLivePreviewLoading(true);
-      try {
-        const res = await apiRequest('POST', '/api/admin/gift-campaigns/filter-preview', {
-          orderStartDate: form.orderStartDate,
-          orderEndDate: form.orderEndDate,
-          minPackageGb: form.minPackageGb ? Number(form.minPackageGb) : null,
-          minOrderAmountUsd: form.minOrderAmountUsd || null,
-          packageNameFilter: form.packageNameFilter || null,
-        });
-        setLivePreview(await res.json());
-      } catch (_) {}
+  const handleFilterPreview = async () => {
+    if (!form.orderStartDate || !form.orderEndDate) {
+      toast({ title: "Lütfen önce tarih aralığı seçin", variant: "destructive" });
+      return;
+    }
+    setLivePreviewLoading(true);
+    setLivePreview(null);
+    try {
+      const res = await apiRequest('POST', '/api/admin/gift-campaigns/filter-preview', {
+        orderStartDate: form.orderStartDate,
+        orderEndDate: form.orderEndDate,
+        minPackageGb: form.minPackageGb ? Number(form.minPackageGb) : null,
+        minOrderAmountUsd: form.minOrderAmountUsd || null,
+        packageNameFilter: form.packageNameFilter || null,
+      });
+      const data = await res.json();
+      setLivePreview(data);
+    } catch (e: any) {
+      toast({ title: "Hesaplama hatası", description: e?.message || "Sunucu hatası", variant: "destructive" });
+    } finally {
       setLivePreviewLoading(false);
-    }, 600);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [showForm, form.orderStartDate, form.orderEndDate, form.minPackageGb, form.minOrderAmountUsd, form.packageNameFilter]);
+    }
+  };
 
   const { data: campaigns = [], isLoading } = useQuery<Campaign[]>({ queryKey: ["/api/admin/gift-campaigns"] });
 
@@ -269,23 +270,17 @@ export default function GiftCampaigns() {
               <div className="border-t border-slate-700 pt-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">Filtreler (Opsiyonel)</p>
-                  {/* Live count badge */}
-                  {form.orderStartDate && form.orderEndDate && (
-                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
-                      livePreviewLoading
-                        ? 'bg-slate-700/50 border-slate-600 text-slate-400'
-                        : livePreview && livePreview.count > 0
-                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                          : 'bg-slate-700/50 border-slate-600 text-slate-500'
-                    }`}>
-                      {livePreviewLoading
-                        ? <><Loader2 className="w-3 h-3 animate-spin" /> Hesaplanıyor…</>
-                        : livePreview
-                          ? <><Users className="w-3 h-3" /> {livePreview.count} kullanıcı etkilenecek</>
-                          : <><Loader2 className="w-3 h-3 animate-spin" /> Hesaplanıyor…</>
-                      }
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleFilterPreview}
+                    disabled={livePreviewLoading || !form.orderStartDate || !form.orderEndDate}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold disabled:opacity-50 transition"
+                  >
+                    {livePreviewLoading
+                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Hesaplanıyor…</>
+                      : <><Users className="w-3 h-3" /> Etkilenenleri Hesapla</>
+                    }
+                  </button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
