@@ -1,0 +1,237 @@
+0|adegloba  | 12:33:20 PM [express] GET /api/user/gift-banners 304 in 6ms :: []
+0|adegloba  | 12:33:20 PM [express] GET /api/cart 304 in 10ms :: {"items":[{"id":"2418e0fb-0371-404b-948d-639b7d671…
+0|adegloba  | 12:33:21 PM [express] GET /api/user/gift-banners 304 in 4ms :: []
+0|adegloba  | 12:33:21 PM [express] GET /api/cart 304 in 5ms :: {"items":[{"id":"2418e0fb-0371-404b-948d-639b7d6713…
+0|adegloba  | 12:33:23 PM [express] POST /api/cart/checkout 200 in 8ms :: {"id":"5f1fe5ca-65ed-4d6a-915c-209b4bf98e…
+0|adegloba  | 12:33:24 PM [express] GET /api/user/me 200 in 4ms :: {"id":"0783b72f-36e5-4379-8f20-10b56f9818ca","us…
+0|adegloba  | 12:33:24 PM [express] GET /api/user/gift-banners 304 in 4ms :: []
+0|adegloba  | 12:33:24 PM [express] GET /api/cart 304 in 7ms :: {"items":[{"id":"2418e0fb-0371-404b-948d-639b7d6713…
+0|adegloba  | 12:33:26 PM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba  | 12:33:26 PM [express] GET /api/user/me 401 in 1ms :: {"message":"Unauthorized"}
+0|adegloba  | 12:33:27 PM [express] DELETE /api/cart/ed39ec07-9f6a-4318-bf50-9efde1dc56c5 200 in 2ms :: {"message":…
+0|adegloba  | 12:33:27 PM [express] GET /api/cart 200 in 3ms :: {"items":[],"subtotal":0,"total":0,"itemCount":0,"s…
+0|adegloba  | 12:33:30 PM [express] POST /api/cart 200 in 83ms :: {"id":"128ff619-958d-4597-9bcc-18835394ab29","use…
+0|adegloba  | 12:33:30 PM [express] GET /api/cart 200 in 4ms :: {"items":[{"id":"128ff619-958d-4597-9bcc-18835394ab…
+0|adegloba  | 12:33:35 PM [express] POST /api/cart/checkout 200 in 8ms :: {"id":"ee81e0cc-2b5a-4be2-9503-6469e92766…
+0|adegloba  | 12:33:35 PM [express] GET /api/user/me 200 in 4ms :: {"id":"0783b72f-36e5-4379-8f20-10b56f9818ca","us…
+0|adegloba  | 12:33:36 PM [express] GET /api/user/gift-banners 304 in 5ms :: []
+0|adegloba  | 12:33:36 PM [express] GET /api/cart 304 in 6ms :: {"items":[{"id":"128ff619-958d-4597-9bcc-18835394ab…
+0|adegloba  | 12:33:37 PM [express] GET /api/user/me 401 in 0ms :: {"message":"Unauthorized"}
+0|adegloba  | 12:33:37 PM [express] GET /api/user/me 401 in 2ms :: {"message":"Unauthorized"}
+0|adegloba  | 🔍 PayPal Order Request Debug: {
+0|adegloba  |   amount: '15',
+0|adegloba  |   currency: 'USD',
+0|adegloba  |   intent: 'CAPTURE',
+0|adegloba  |   paymentMethod: 'CARD',
+0|adegloba  |   hasCardDetails: true,
+0|adegloba  |   cardNumber: '5170****'
+0|adegloba  | }
+0|adegloba  | 🔧 Adding card paymentSource to PayPal order
+0|adegloba  | 📤 PayPal Order Body: {
+0|adegloba  |   "intent": "CAPTURE",
+0|adegloba  |   "purchaseUnits": [
+0|adegloba  |     {
+0|adegloba  |       "amount": {
+0|adegloba  |         "currencyCode": "USD",
+0|adegloba  |         "value": "15"
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   ],
+0|adegloba  |   "paymentSource": {
+0|adegloba  |     "card": {
+0|adegloba  |       "number": "5170409492804196",
+0|adegloba  |       "securityCode": "732",
+0|adegloba  |       "expiry": "2031-04",
+0|adegloba  |       "name": "Birol",
+0|adegloba  |       "billingAddress": {
+0|adegloba  |         "addressLine1": "N/A",
+0|adegloba  |         "addressLine2": "",
+0|adegloba  |         "adminArea2": "Istanbul",
+0|adegloba  |         "adminArea1": "TR",
+0|adegloba  |         "postalCode": "34000",
+0|adegloba  |         "countryCode": "TR"
+0|adegloba  |       },
+0|adegloba  |       "attributes": {
+0|adegloba  |         "verification": {
+0|adegloba  |           "method": "SCA_WHEN_REQUIRED"
+0|adegloba  |         }
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | info: Request POST https://api-m.paypal.com/v1/oauth2/token
+0|adegloba  | info: Request body {"type":"form","content":[{"key":"grant_type","value":"client_credentials"}]}
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","set-cookie":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","x-paypal-token-service":"**Redacted**","pragma":"no-cache","edge-control":"**Redacted**","via":"1.1 varnish, 1.1 varnish","access-control-expose-headers":"**Redacted**","edge":"**Redacted**","paypal-debug-id":"**Redacted**","server-timing":"**Redacted**","x-processed-by":"**Redacted**","accept-ranges":"**Redacted**","content-type":"application/json","date":"Tue, 23 Jun 2026 09:33:42 GMT","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | info: Request POST https://api-m.paypal.com/v2/checkout/orders application/json
+0|adegloba  | info: Request body {"type":"text","content":"{\"intent\":\"CAPTURE\",\"purchase_units\":[{\"amount\":{\"currency_code\":\"USD\",\"value\":\"15\"}}],\"payment_source\":{\"card\":{\"name\":\"Birol\",\"number\":\"5170409492804196\",\"expiry\":\"2031-04\",\"security_code\":\"732\",\"billing_address\":{\"address_line_1\":\"N/A\",\"address_line_2\":\"\",\"admin_area_2\":\"Istanbul\",\"admin_area_1\":\"TR\",\"postal_code\":\"34000\",\"country_code\":\"TR\"},\"attributes\":{\"verification\":{\"method\":\"SCA_WHEN_REQUIRED\"}}}}}"}
+0|adegloba  | info: Response 422 483 application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-length":"483","accept-ranges":"**Redacted**","content-type":"application/json","server-timing":"**Redacted**","access-control-expose-headers":"**Redacted**","x-processed-by":"**Redacted**","edge":"**Redacted**","set-cookie":"**Redacted**","edge-control":"**Redacted**","paypal-debug-id":"**Redacted**","via":"1.1 varnish, 1.1 varnish","cache-control":"max-age=0, no-cache, no-store, must-revalidate","date":"Tue, 23 Jun 2026 09:33:43 GMT","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding"}
+0|adegloba  | Failed to create order: CustomError
+0|adegloba  |     at CustomError.ApiError [as constructor] (/var/www/adegloba/node_modules/@apimatic/core/lib/errors/apiError.js:17:28)
+0|adegloba  |     at new CustomError (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/errors/customError.js:14:42)
+0|adegloba  |     at DefaultRequestBuilder.<anonymous> (/var/www/adegloba/node_modules/@apimatic/core/lib/http/requestBuilder.js:686:33)
+0|adegloba  |     at step (/var/www/adegloba/node_modules/tslib/tslib.js:196:27)
+0|adegloba  |     at Object.next (/var/www/adegloba/node_modules/tslib/tslib.js:177:57)
+0|adegloba  |     at fulfilled (/var/www/adegloba/node_modules/tslib/tslib.js:167:62)
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+0|adegloba  |   request: {
+0|adegloba  |     method: 'POST',
+0|adegloba  |     url: 'https://api-m.paypal.com/v2/checkout/orders',
+0|adegloba  |     headers: {
+0|adegloba  |       'Content-Type': 'application/json',
+0|adegloba  |       'PayPal-Request-Id': 'order-1782207222742-5bnob7mesqj',
+0|adegloba  |       Prefer: 'return=minimal',
+0|adegloba  |       authorization: 'Bearer A21AAN1uy4HhgE8donWzhhdvkQE5GJ7KOrGkeCuixoLbtEcSN_pl7yLBRXQnuPTwWPCZy7ACfsIjgPI3lT3pXw7Zv-KLxwvsA',
+0|adegloba  |       'user-agent': 'PayPal REST API TypeScript SDK, Version: 1.1.0, on OS linux',
+0|adegloba  |       accept: 'application/json'
+0|adegloba  |     },
+0|adegloba  |     body: {
+0|adegloba  |       type: 'text',
+0|adegloba  |       content: '{"intent":"CAPTURE","purchase_units":[{"amount":{"currency_code":"USD","value":"15"}}],"payment_source":{"card":{"name":"Birol","number":"5170409492804196","expiry":"2031-04","security_code":"732","billing_address":{"address_line_1":"N/A","address_line_2":"","admin_area_2":"Istanbul","admin_area_1":"TR","postal_code":"34000","country_code":"TR"},"attributes":{"verification":{"method":"SCA_WHEN_REQUIRED"}}}}}'
+0|adegloba  |     }
+0|adegloba  |   },
+0|adegloba  |   statusCode: 422,
+0|adegloba  |   headers: {
+0|adegloba  |     connection: 'keep-alive',
+0|adegloba  |     'content-length': '483',
+0|adegloba  |     'accept-ranges': 'bytes',
+0|adegloba  |     'content-type': 'application/json',
+0|adegloba  |     'server-timing': 'traceparent;desc="00-0000000000000000000e04012964140e-eecfc6a2b98c6b09-01"',
+0|adegloba  |     'access-control-expose-headers': 'Server-Timing',
+0|adegloba  |     'x-processed-by': 'sid1, sid2-edge, sid2-edge',
+0|adegloba  |     edge: 'pop_sid2=FRA,server_hostname_sid2=cache-fra-etou8220143',
+0|adegloba  |     'set-cookie': 'l7_az=ccg14.slc; Path=/; Domain=paypal.com; Expires=Tue, 23 Jun 2026 10:03:43 GMT; HttpOnly; Secure',
+0|adegloba  |     'edge-control': 'max-age=0',
+0|adegloba  |     'paypal-debug-id': 'e04012964140e',
+0|adegloba  |     via: '1.1 varnish, 1.1 varnish',
+0|adegloba  |     'cache-control': 'max-age=0, no-cache, no-store, must-revalidate',
+0|adegloba  |     date: 'Tue, 23 Jun 2026 09:33:43 GMT',
+0|adegloba  |     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
+0|adegloba  |     'x-served-by': 'cache-fra-etou8220143-FRA, cache-fra-etou8220143-FRA, cache-fra-etou8220143-FRA',
+0|adegloba  |     'x-cache': 'MISS, MISS, MISS',
+0|adegloba  |     'x-cache-hits': '0, 0, 0',
+0|adegloba  |     'x-timer': 'S1782207223.002982,VS0,VE937',
+0|adegloba  |     vary: 'Accept-Encoding'
+0|adegloba  |   },
+0|adegloba  |   body: '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"PAYER_CANNOT_PAY","description":"Payer cannot pay for this transaction. Please contact the payer to find other ways to pay for this transaction."}],"message":"The requested action could not be performed, semantically incorrect, or failed business validation.","debug_id":"e04012964140e","links":[{"href":"https://developer.paypal.com/api/rest/reference/orders/v2/errors/#PAYER_CANNOT_PAY","rel":"information_link","method":"GET"}]}',
+0|adegloba  |   result: [Object: null prototype] {
+0|adegloba  |     name: 'UNPROCESSABLE_ENTITY',
+0|adegloba  |     details: [ [Object: null prototype] ],
+0|adegloba  |     message: 'The requested action could not be performed, semantically incorrect, or failed business validation.',
+0|adegloba  |     debug_id: 'e04012964140e',
+0|adegloba  |     links: [ [Object: null prototype] ]
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | 12:33:43 PM [express] POST /api/paypal/create-order 500 in 1206ms :: {"error":"Failed to create order…
+0|adegloba  | 🔍 PayPal Order Request Debug: {
+0|adegloba  |   amount: '15',
+0|adegloba  |   currency: 'USD',
+0|adegloba  |   intent: 'CAPTURE',
+0|adegloba  |   paymentMethod: 'CARD',
+0|adegloba  |   hasCardDetails: true,
+0|adegloba  |   cardNumber: '5170****'
+0|adegloba  | }
+0|adegloba  | 🔧 Adding card paymentSource to PayPal order
+0|adegloba  | 📤 PayPal Order Body: {
+0|adegloba  |   "intent": "CAPTURE",
+0|adegloba  |   "purchaseUnits": [
+0|adegloba  |     {
+0|adegloba  |       "amount": {
+0|adegloba  |         "currencyCode": "USD",
+0|adegloba  |         "value": "15"
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   ],
+0|adegloba  |   "paymentSource": {
+0|adegloba  |     "card": {
+0|adegloba  |       "number": "5170409492804196",
+0|adegloba  |       "securityCode": "732",
+0|adegloba  |       "expiry": "2031-04",
+0|adegloba  |       "name": "BIROL KARAKAYA",
+0|adegloba  |       "billingAddress": {
+0|adegloba  |         "addressLine1": "N/A",
+0|adegloba  |         "addressLine2": "",
+0|adegloba  |         "adminArea2": "Istanbul",
+0|adegloba  |         "adminArea1": "TR",
+0|adegloba  |         "postalCode": "34000",
+0|adegloba  |         "countryCode": "TR"
+0|adegloba  |       },
+0|adegloba  |       "attributes": {
+0|adegloba  |         "verification": {
+0|adegloba  |           "method": "SCA_WHEN_REQUIRED"
+0|adegloba  |         }
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | info: Request POST https://api-m.paypal.com/v1/oauth2/token
+0|adegloba  | info: Request body {"type":"form","content":[{"key":"grant_type","value":"client_credentials"}]}
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","paypal-debug-id":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","x-paypal-token-service":"**Redacted**","via":"1.1 varnish, 1.1 varnish","accept-ranges":"**Redacted**","content-type":"application/json","server-timing":"**Redacted**","edge":"**Redacted**","x-processed-by":"**Redacted**","pragma":"no-cache","edge-control":"**Redacted**","access-control-expose-headers":"**Redacted**","set-cookie":"**Redacted**","date":"Tue, 23 Jun 2026 09:33:54 GMT","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | info: Request POST https://api-m.paypal.com/v2/checkout/orders application/json
+0|adegloba  | info: Request body {"type":"text","content":"{\"intent\":\"CAPTURE\",\"purchase_units\":[{\"amount\":{\"currency_code\":\"USD\",\"value\":\"15\"}}],\"payment_source\":{\"card\":{\"name\":\"BIROL KARAKAYA\",\"number\":\"5170409492804196\",\"expiry\":\"2031-04\",\"security_code\":\"732\",\"billing_address\":{\"address_line_1\":\"N/A\",\"address_line_2\":\"\",\"admin_area_2\":\"Istanbul\",\"admin_area_1\":\"TR\",\"postal_code\":\"34000\",\"country_code\":\"TR\"},\"attributes\":{\"verification\":{\"method\":\"SCA_WHEN_REQUIRED\"}}}}}"}
+0|adegloba  | info: Response 422 483 application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-length":"483","accept-ranges":"**Redacted**","edge-control":"**Redacted**","set-cookie":"**Redacted**","edge":"**Redacted**","content-type":"application/json","cache-control":"max-age=0, no-cache, no-store, must-revalidate","via":"1.1 varnish, 1.1 varnish","access-control-expose-headers":"**Redacted**","paypal-debug-id":"**Redacted**","x-processed-by":"**Redacted**","server-timing":"**Redacted**","date":"Tue, 23 Jun 2026 09:33:55 GMT","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding"}
+0|adegloba  | Failed to create order: CustomError
+0|adegloba  |     at CustomError.ApiError [as constructor] (/var/www/adegloba/node_modules/@apimatic/core/lib/errors/apiError.js:17:28)
+0|adegloba  |     at new CustomError (/var/www/adegloba/node_modules/@paypal/paypal-server-sdk/dist/cjs/errors/customError.js:14:42)
+0|adegloba  |     at DefaultRequestBuilder.<anonymous> (/var/www/adegloba/node_modules/@apimatic/core/lib/http/requestBuilder.js:686:33)
+0|adegloba  |     at step (/var/www/adegloba/node_modules/tslib/tslib.js:196:27)
+0|adegloba  |     at Object.next (/var/www/adegloba/node_modules/tslib/tslib.js:177:57)
+0|adegloba  |     at fulfilled (/var/www/adegloba/node_modules/tslib/tslib.js:167:62)
+0|adegloba  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+0|adegloba  |   request: {
+0|adegloba  |     method: 'POST',
+0|adegloba  |     url: 'https://api-m.paypal.com/v2/checkout/orders',
+0|adegloba  |     headers: {
+0|adegloba  |       'Content-Type': 'application/json',
+0|adegloba  |       'PayPal-Request-Id': 'order-1782207234151-4x7a2o3n2tk',
+0|adegloba  |       Prefer: 'return=minimal',
+0|adegloba  |       authorization: 'Bearer A21AAN1uy4HhgE8donWzhhdvkQE5GJ7KOrGkeCuixoLbtEcSN_pl7yLBRXQnuPTwWPCZy7ACfsIjgPI3lT3pXw7Zv-KLxwvsA',
+0|adegloba  |       'user-agent': 'PayPal REST API TypeScript SDK, Version: 1.1.0, on OS linux',
+0|adegloba  |       accept: 'application/json'
+0|adegloba  |     },
+0|adegloba  |     body: {
+0|adegloba  |       type: 'text',
+0|adegloba  |       content: '{"intent":"CAPTURE","purchase_units":[{"amount":{"currency_code":"USD","value":"15"}}],"payment_source":{"card":{"name":"BIROL KARAKAYA","number":"5170409492804196","expiry":"2031-04","security_code":"732","billing_address":{"address_line_1":"N/A","address_line_2":"","admin_area_2":"Istanbul","admin_area_1":"TR","postal_code":"34000","country_code":"TR"},"attributes":{"verification":{"method":"SCA_WHEN_REQUIRED"}}}}}'
+0|adegloba  |     }
+0|adegloba  |   },
+0|adegloba  |   statusCode: 422,
+0|adegloba  |   headers: {
+0|adegloba  |     connection: 'keep-alive',
+0|adegloba  |     'content-length': '483',
+0|adegloba  |     'accept-ranges': 'bytes',
+0|adegloba  |     'edge-control': 'max-age=0',
+0|adegloba  |     'set-cookie': 'l7_az=ccg14.slc; Path=/; Domain=paypal.com; Expires=Tue, 23 Jun 2026 10:03:55 GMT; HttpOnly; Secure',
+0|adegloba  |     edge: 'pop_sid2=FRA,server_hostname_sid2=cache-fra-etou8220020',
+0|adegloba  |     'content-type': 'application/json',
+0|adegloba  |     'cache-control': 'max-age=0, no-cache, no-store, must-revalidate',
+0|adegloba  |     via: '1.1 varnish, 1.1 varnish',
+0|adegloba  |     'access-control-expose-headers': 'Server-Timing',
+0|adegloba  |     'paypal-debug-id': 'b127ca83a2e86',
+0|adegloba  |     'x-processed-by': 'sid1, sid2-edge, sid2-edge',
+0|adegloba  |     'server-timing': 'traceparent;desc="00-0000000000000000000b127ca83a2e86-de6295180e36d7cd-01"',
+0|adegloba  |     date: 'Tue, 23 Jun 2026 09:33:55 GMT',
+0|adegloba  |     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
+0|adegloba  |     'x-served-by': 'cache-fra-etou8220020-FRA, cache-fra-etou8220020-FRA, cache-fra-etou8220020-FRA',
+0|adegloba  |     'x-cache': 'MISS, MISS, MISS',
+0|adegloba  |     'x-cache-hits': '0, 0, 0',
+0|adegloba  |     'x-timer': 'S1782207234.397241,VS0,VE836',
+0|adegloba  |     vary: 'Accept-Encoding'
+0|adegloba  |   },
+0|adegloba  |   body: '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"PAYER_CANNOT_PAY","description":"Payer cannot pay for this transaction. Please contact the payer to find other ways to pay for this transaction."}],"message":"The requested action could not be performed, semantically incorrect, or failed business validation.","debug_id":"b127ca83a2e86","links":[{"href":"https://developer.paypal.com/api/rest/reference/orders/v2/errors/#PAYER_CANNOT_PAY","rel":"information_link","method":"GET"}]}',
+0|adegloba  |   result: [Object: null prototype] {
+0|adegloba  |     name: 'UNPROCESSABLE_ENTITY',
+0|adegloba  |     details: [ [Object: null prototype] ],
+0|adegloba  |     message: 'The requested action could not be performed, semantically incorrect, or failed business validation.',
+0|adegloba  |     debug_id: 'b127ca83a2e86',
+0|adegloba  |     links: [ [Object: null prototype] ]
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | 12:33:55 PM [express] POST /api/paypal/create-order 500 in 1092ms :: {"error":"Failed to create order…
+0|adegloba  | 12:34:03 PM [express] GET /api/cart 304 in 6ms :: {"items":[{"id":"128ff619-958d-4597-9bcc-18835394ab…
+0|adegloba  | 12:34:33 PM [express] GET /api/admin/orders 200 in 213ms :: [{"id":"ee81e0cc-2b5a-4be2-9503-6469e9276…
+0|adegloba  | 12:34:33 PM [express] GET /api/admin/me 304 in 1ms :: {"id":"558bac76-0ef0-4df4-bcb3-71cebc30bc1f","r…
+0|adegloba  | 12:34:33 PM [express] GET /api/admin/ships 200 in 2ms :: [{"id":"0f349325-0e28-4a5e-ae8a-e3ec3251fb6d…
+0|adegloba  | 12:34:33 PM [express] GET /api/admin/users 200 in 11ms :: [{"id":"0f939412-3bc0-4efe-b9ac-a2d339c1a36…

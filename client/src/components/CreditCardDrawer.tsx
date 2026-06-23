@@ -106,7 +106,7 @@ export default function CreditCardDrawer({
           expiryYear: "20" + formData.expiryDate.split("/")[1],
           securityCode: formData.cvv,
           name: formData.fullName.trim(),
-          billingAddress: { addressLine1: "N/A", addressLine2: "", city: "Istanbul", state: "TR", postalCode: "34000", countryCode: "TR" },
+          billingAddress: { addressLine1: "1 Main St", addressLine2: "", city: "Istanbul", state: "", postalCode: "34000", countryCode: "TR" },
         },
       };
 
