@@ -69,7 +69,6 @@
     "csv-writer": "^1.6.0",
     "date-fns": "^3.6.0",
     "date-fns-tz": "^3.2.0",
-    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.39.1",
     "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.6.0",

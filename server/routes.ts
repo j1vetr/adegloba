@@ -39,22 +39,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // External partner API key middleware (e.g. sc.lacivertteknoloji.com quota polling)
-  const isExternalApiAuthenticated = (req: any, res: any, next: any) => {
-    const expectedKey = process.env.SHIP_QUOTA_API_KEY;
-    if (!expectedKey) {
-      console.error('SHIP_QUOTA_API_KEY is not configured on the server');
-      return res.status(500).json({ message: 'API key not configured' });
+  // The key is configured by the admin in Site Ayarları (settings table), not via env vars.
+  const isExternalApiAuthenticated = async (req: any, res: any, next: any) => {
+    try {
+      const setting = await storage.getSetting('SHIP_QUOTA_API_KEY');
+      const expectedKey = setting?.value;
+
+      if (!expectedKey) {
+        console.error('SHIP_QUOTA_API_KEY is not configured in Site Ayarları');
+        return res.status(500).json({ message: 'API key not configured' });
+      }
+
+      const authHeader = req.headers['authorization'] as string | undefined;
+      const bearerKey = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+      const providedKey = (req.headers['x-api-key'] as string | undefined) || bearerKey;
+
+      if (!providedKey || providedKey !== expectedKey) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      return next();
+    } catch (error) {
+      console.error('Error validating external API key:', error);
+      return res.status(500).json({ message: 'Failed to validate API key' });
     }
-
-    const authHeader = req.headers['authorization'] as string | undefined;
-    const bearerKey = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
-    const providedKey = (req.headers['x-api-key'] as string | undefined) || bearerKey;
-
-    if (!providedKey || providedKey !== expectedKey) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    return next();
   };
 
   // Auth middleware

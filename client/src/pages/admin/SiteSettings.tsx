@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -12,12 +13,14 @@ import AdminLayout from "@/components/AdminLayout";
 export default function SiteSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showApiKey, setShowApiKey] = useState(false);
   const [settings, setSettings] = useState({
     siteName: 'AdeGloba Starlink System',
     baseUrl: 'https://adegloba.toov.com.tr',
     whatsappNumber: '+447440225375',
     defaultLanguage: 'tr',
     timezone: 'Europe/Istanbul',
+    SHIP_QUOTA_API_KEY: '',
   });
 
   // Load current settings from server
@@ -80,6 +83,7 @@ export default function SiteSettings() {
     whatsappNumber: { key: 'whatsappNumber', category: 'general' },
     defaultLanguage: { key: 'defaultLanguage', category: 'general' },
     timezone: { key: 'timezone', category: 'general' },
+    SHIP_QUOTA_API_KEY: { key: 'SHIP_QUOTA_API_KEY', category: 'integration' },
   };
 
   return (
@@ -204,6 +208,51 @@ export default function SiteSettings() {
                   {updateSettingMutation.isPending ? '💫' : '✓'}
                 </Button>
               </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="glassmorphism border-slate-700 p-6">
+          <h2 className="text-xl font-bold text-white mb-2">Entegrasyon API Anahtarları</h2>
+          <p className="text-sm text-slate-400 mb-6">
+            Dış sistemlerin (örn. gemi kota takip sistemi) API'lerimize erişmesi için kullanılan anahtarlar. Bu anahtarı dış sisteme verirken isteklerinde <code className="text-slate-300">x-api-key</code> header'ında göndermeleri gerektiğini belirtin.
+          </p>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="text-slate-300">Gemi Kota API Anahtarı</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={settings.SHIP_QUOTA_API_KEY}
+                    onChange={(e) => setSettings({ ...settings, SHIP_QUOTA_API_KEY: e.target.value })}
+                    className="glassmorphism border-slate-600 text-white pr-10"
+                    placeholder="Gemi kota API anahtarını girin"
+                    data-testid="ship-quota-api-key-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    tabIndex={-1}
+                  >
+                    {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <Button
+                  onClick={() => handleSaveSetting('SHIP_QUOTA_API_KEY', settings.SHIP_QUOTA_API_KEY, 'integration')}
+                  disabled={updateSettingMutation.isPending}
+                  size="sm"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  data-testid="save-ship-quota-api-key"
+                >
+                  {updateSettingMutation.isPending ? '💫' : '✓'}
+                </Button>
+              </div>
+              <p className="text-sm text-slate-400">
+                GET /api/external/ship-quotas adresine erişim için gereken anahtar. Boş bırakılırsa bu adres devre dışı kalır (401/500 döner).
+              </p>
             </div>
           </div>
         </Card>
