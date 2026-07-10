@@ -74,7 +74,7 @@ import {
   type InsertGiftCampaign,
   type GiftCampaignLog,
 } from "@shared/schema";
-import { getDaysRemainingIstanbul, isExpiredIstanbul, getEndOfMonthIstanbul } from './utils/dateUtils';
+import { getDaysRemainingIstanbul, isExpiredIstanbul, getEndOfMonthIstanbul, getStartOfMonthIstanbul } from './utils/dateUtils';
 import { db } from "./db";
 import { eq, and, desc, sql, isNull, isNotNull, gte, lte, or, gt, lt } from "drizzle-orm";
 import * as os from 'os';
@@ -133,6 +133,7 @@ export interface IStorage {
   createShip(ship: InsertShip): Promise<Ship>;
   updateShip(id: string, ship: Partial<InsertShip>): Promise<Ship | undefined>;
   deleteShip(id: string): Promise<void>;
+  getShipMonthlyQuotaExport(): Promise<Array<{ shipName: string; kitNumber: string | null; totalGb: number }>>;
 
   // Plan operations
   getPlans(): Promise<Plan[]>;
@@ -884,6 +885,30 @@ export class DatabaseStorage implements IStorage {
 
   async deleteShip(id: string): Promise<void> {
     await db.delete(ships).where(eq(ships.id, id));
+  }
+
+  async getShipMonthlyQuotaExport(): Promise<Array<{ shipName: string; kitNumber: string | null; totalGb: number }>> {
+    const monthStart = getStartOfMonthIstanbul(new Date());
+
+    const results = await db
+      .select({
+        shipName: ships.name,
+        kitNumber: ships.kitNumber,
+        totalGb: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid', 'completed') AND ${orders.paidAt} >= ${monthStart} THEN ${plans.dataLimitGb} * ${orderItems.qty} ELSE 0 END), 0)`,
+      })
+      .from(ships)
+      .leftJoin(orderItems, eq(ships.id, orderItems.shipId))
+      .leftJoin(orders, eq(orderItems.orderId, orders.id))
+      .leftJoin(plans, eq(orderItems.planId, plans.id))
+      .where(eq(ships.isActive, true))
+      .groupBy(ships.id, ships.name, ships.kitNumber)
+      .orderBy(ships.name);
+
+    return results.map(r => ({
+      shipName: r.shipName,
+      kitNumber: r.kitNumber ?? null,
+      totalGb: Number(r.totalGb) || 0,
+    }));
   }
 
   // Plan operations

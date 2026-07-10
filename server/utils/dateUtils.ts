@@ -26,6 +26,18 @@ export function getEndOfMonthIstanbul(date: Date): Date {
 }
 
 /**
+ * Calculate the start of the month at 00:00:00 in Europe/Istanbul timezone
+ * @param date - Any date within the target month
+ * @returns Date object (in UTC) representing the first moment of that month in Istanbul timezone
+ */
+export function getStartOfMonthIstanbul(date: Date): Date {
+  const istanbulDate = toZonedTime(date, ISTANBUL_TIMEZONE);
+  const startOfMonthIstanbul = new Date(istanbulDate.getFullYear(), istanbulDate.getMonth(), 1, 0, 0, 0, 0);
+
+  return fromZonedTime(startOfMonthIstanbul, ISTANBUL_TIMEZONE);
+}
+
+/**
  * Check if a package/order is expired based on current Istanbul time
  * @param expiresAt - The expiry date (should be end of month)
  * @returns true if expired, false if still active
