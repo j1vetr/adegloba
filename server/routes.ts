@@ -38,6 +38,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(401).json({ message: 'Unauthorized' });
   };
 
+  // External partner API key middleware (e.g. sc.lacivertteknoloji.com quota polling)
+  const isExternalApiAuthenticated = (req: any, res: any, next: any) => {
+    const expectedKey = process.env.SHIP_QUOTA_API_KEY;
+    if (!expectedKey) {
+      console.error('SHIP_QUOTA_API_KEY is not configured on the server');
+      return res.status(500).json({ message: 'API key not configured' });
+    }
+
+    const authHeader = req.headers['authorization'] as string | undefined;
+    const bearerKey = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+    const providedKey = (req.headers['x-api-key'] as string | undefined) || bearerKey;
+
+    if (!providedKey || providedKey !== expectedKey) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    return next();
+  };
+
   // Auth middleware
   await setupAuth(app);
 
@@ -324,6 +343,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching ship:", error);
       res.status(500).json({ message: "Failed to fetch ship" });
+    }
+  });
+
+  // External partner endpoint: monthly ship data quota export (for sc.lacivertteknoloji.com)
+  app.get('/api/external/ship-quotas', isExternalApiAuthenticated, async (req, res) => {
+    try {
+      const now = new Date();
+      const period = now.toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' }).slice(0, 7); // YYYY-MM
+      const shipQuotas = await storage.getShipMonthlyQuotaExport();
+
+      res.json({
+        generatedAt: now.toISOString(),
+        period,
+        ships: shipQuotas.map(s => ({
+          shipName: s.shipName,
+          kitNumber: s.kitNumber,
+          totalGb: s.totalGb,
+        })),
+      });
+    } catch (error) {
+      console.error("Error fetching ship quota export:", error);
+      res.status(500).json({ message: "Failed to fetch ship quota export" });
     }
   });
 
