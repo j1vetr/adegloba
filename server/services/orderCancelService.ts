@@ -1,7 +1,7 @@
 import { DatabaseStorage } from '../storage';
 import { db } from '../db';
 import { orders } from '@shared/schema';
-import { eq, and, lt } from 'drizzle-orm';
+import { eq, and, lt, isNull } from 'drizzle-orm';
 
 export class OrderCancelService {
   private storage: DatabaseStorage;
@@ -12,20 +12,23 @@ export class OrderCancelService {
   }
 
   /**
-   * Cancels pending orders that are older than 10 minutes
+   * Cancels pending orders that are older than 30 minutes AND have no PayPal order ID.
+   * Orders with a paypalOrderId set are already in-flight at PayPal — never auto-cancel those.
    */
   async cancelExpiredPendingOrders(): Promise<number> {
     try {
-      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000); // 30 minutes ago
       
-      // Find pending orders older than 10 minutes
+      // Find pending orders older than 30 minutes that have no PayPal order ID attached yet.
+      // If paypalOrderId is set, the payment is in-flight or completed — do NOT cancel.
       const expiredOrders = await db
         .select()
         .from(orders)
         .where(
           and(
             eq(orders.status, 'pending'),
-            lt(orders.createdAt, tenMinutesAgo)
+            lt(orders.createdAt, thirtyMinutesAgo),
+            isNull(orders.paypalOrderId)
           )
         );
 
@@ -43,7 +46,8 @@ export class OrderCancelService {
         .where(
           and(
             eq(orders.status, 'pending'),
-            lt(orders.createdAt, tenMinutesAgo)
+            lt(orders.createdAt, thirtyMinutesAgo),
+            isNull(orders.paypalOrderId)
           )
         );
 

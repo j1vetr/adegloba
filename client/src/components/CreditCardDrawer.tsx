@@ -116,6 +116,12 @@ export default function CreditCardDrawer({
       if (!createRes.ok) throw new Error((await createRes.json()).message || "Order creation failed");
       const createData = await createRes.json();
 
+      // Immediately register the PayPal order ID in our DB so the auto-cancel service
+      // knows payment is in-flight and will not cancel this order during slow 3DS flows.
+      fetch("/api/cart/register-paypal-order", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paypalOrderId: createData.id }),
+      }).catch(() => { /* non-critical — complete-payment handles recovery anyway */ });
+
       toast({ title: c.processingCard, description: c.processingCardDesc });
       await new Promise((r) => setTimeout(r, 2000));
 

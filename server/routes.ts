@@ -892,6 +892,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Early registration of PayPal order ID — called immediately after PayPal order is created,
+  // before the user even completes checkout. Prevents auto-cancel from firing during slow 3DS/OTP flows.
+  app.post('/api/cart/register-paypal-order', async (req: any, res) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    try {
+      const { paypalOrderId } = req.body;
+      if (!paypalOrderId) return res.status(400).json({ message: 'paypalOrderId required' });
+
+      const userId = req.session.userId;
+      const userOrders = await storage.getUserOrders(userId);
+      const pendingOrder = userOrders.find(o => o.status === 'pending' && !o.paypalOrderId);
+      if (!pendingOrder) return res.status(404).json({ message: 'No pending order to register' });
+
+      await storage.updateOrder(pendingOrder.id, { paypalOrderId });
+      console.log(`🔗 Registered PayPal order ${paypalOrderId} on DB order ${pendingOrder.id} — auto-cancel will now skip it`);
+      res.json({ success: true, orderId: pendingOrder.id });
+    } catch (error) {
+      console.error('Error registering PayPal order:', error);
+      res.status(500).json({ message: 'Failed to register PayPal order' });
+    }
+  });
+
   // Complete payment for cart-based order - WITH STRICT VALIDATION
   app.post('/api/cart/complete-payment', async (req: any, res) => {
     if (!req.session || !req.session.userId) {
@@ -994,10 +1018,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Find existing pending order for this user instead of creating new one
       const pendingOrders = await storage.getUserOrders(userId);
-      const pendingOrder = pendingOrders.find(order => order.status === 'pending');
+      let pendingOrder = pendingOrders.find(order => order.status === 'pending');
       
       if (!pendingOrder) {
-        return res.status(400).json({ message: 'No pending order found. Please restart checkout process.' });
+        // Recovery path: auto-cancel service may have fired during a slow PayPal checkout
+        // (mobile 3DS, bank OTP, etc.). If PayPal confirms COMPLETED, reactivate the order.
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        const recentlyCancelledOrder = pendingOrders
+          .filter(o => o.status === 'cancelled' && o.createdAt && new Date(o.createdAt) > oneHourAgo && !o.paypalOrderId)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+        
+        if (recentlyCancelledOrder) {
+          // We already re-verified PayPal COMPLETED status above — safe to reactivate
+          console.log(`🔄 Recovery: Order ${recentlyCancelledOrder.id} was auto-cancelled during PayPal checkout. Reactivating — PayPal capture is COMPLETED.`);
+          await storage.updateOrder(recentlyCancelledOrder.id, { status: 'pending' });
+          pendingOrder = { ...recentlyCancelledOrder, status: 'pending' };
+          await storage.createSystemLog({
+            category: 'payment',
+            action: 'order_recovery_reactivated',
+            entityType: 'order',
+            entityId: recentlyCancelledOrder.id,
+            details: { reason: 'Auto-cancelled during PayPal checkout; reactivated after COMPLETED capture verification', paypalOrderId },
+            ipAddress: req.ip || '',
+            userAgent: req.headers['user-agent'] || '',
+          });
+        } else {
+          return res.status(400).json({ message: 'No pending order found. Please restart checkout process.' });
+        }
       }
 
       // Update the existing order with PayPal order ID
