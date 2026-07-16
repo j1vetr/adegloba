@@ -3876,6 +3876,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin endpoint to fix specific incomplete paid order
+  // Force-complete a paid order that has no credentials assigned yet.
+  // Use this for orders stuck in status=paid with no credentials (different from fix-incomplete).
+  app.post('/api/admin/orders/:orderId/force-complete', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const order = await storage.getOrder(orderId);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      const paypalOrderId = order.paypalOrderId || 'manual-recovery';
+      console.log(`🔧 Admin force-complete: order ${orderId}, paypalOrderId=${paypalOrderId}`);
+
+      const result = await orderService.processPaymentCompletion(orderId, paypalOrderId);
+
+      if (result.success) {
+        await storage.createSystemLog({
+          category: 'payment',
+          action: 'admin_force_complete',
+          entityType: 'order',
+          entityId: orderId,
+          details: { paypalOrderId, credentialsAssigned: result.assignedCredentials?.length ?? 0 },
+          ipAddress: req.ip || '',
+          userAgent: req.headers['user-agent'] || 'Admin',
+        });
+        res.json({ success: true, message: `Order completed — ${result.assignedCredentials?.length ?? 0} credentials assigned`, ...result });
+      } else {
+        res.status(400).json({ success: false, message: result.message || 'Failed to complete order' });
+      }
+    } catch (error) {
+      console.error(`Error force-completing order ${req.params.orderId}:`, error);
+      res.status(500).json({ success: false, message: `Failed: ${error.message}` });
+    }
+  });
+
   app.post('/api/admin/orders/:orderId/fix-incomplete', isAdminAuthenticated, async (req, res) => {
     try {
       const { orderId } = req.params;
@@ -4132,7 +4165,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         res.status(200).json({ status: 'order_approved', orderId: order.id });
-        
+
+      } else if (event.event_type === 'PAYMENT.CAPTURE.REFUNDED') {
+        const refund = event.resource;
+        // PayPal refund events carry the original capture ID, not the order ID directly.
+        // The links array contains a rel='up' link pointing to the capture, from which we can
+        // derive the order. We do a best-effort lookup via supplementary_data or custom_id.
+        const relatedOrderId = refund.supplementary_data?.related_ids?.order_id
+          || refund.custom_id
+          || null;
+
+        console.log(`💸 [REFUNDED] PayPal refund received — refundId=${refund.id}, amount=${refund.amount?.currency_code} ${refund.amount?.value}, relatedOrderId=${relatedOrderId}`);
+
+        if (relatedOrderId) {
+          const matchingOrders = await storage.getOrdersByPaypalOrderId(relatedOrderId);
+          if (matchingOrders.length > 0) {
+            const dbOrder = matchingOrders[0];
+            await storage.updateOrder(dbOrder.id, { status: 'cancelled' });
+            await storage.createSystemLog({
+              category: 'payment',
+              action: 'webhook_payment_refunded',
+              entityType: 'order',
+              entityId: dbOrder.id,
+              details: {
+                refundId: refund.id,
+                amount: `${refund.amount?.currency_code} ${refund.amount?.value}`,
+                paypalOrderId: relatedOrderId,
+                environment,
+              },
+              ipAddress: req.ip || req.connection.remoteAddress,
+              userAgent: 'PayPal-Webhook',
+            });
+            console.log(`🔄 Order ${dbOrder.id} marked cancelled due to PayPal refund ${refund.id}`);
+            return res.status(200).json({ status: 'refund_processed', orderId: dbOrder.id, refundId: refund.id });
+          }
+        }
+
+        // Could not find matching DB order — log and return 200 so PayPal stops retrying
+        await storage.createSystemLog({
+          category: 'payment',
+          action: 'webhook_refund_unmatched',
+          entityType: 'webhook',
+          entityId: refund.id,
+          details: { refundId: refund.id, amount: `${refund.amount?.currency_code} ${refund.amount?.value}`, relatedOrderId, environment },
+          ipAddress: req.ip || req.connection.remoteAddress,
+          userAgent: 'PayPal-Webhook',
+        });
+        return res.status(200).json({ status: 'refund_unmatched', refundId: refund.id });
+
       } else {
         // Handle other webhook events
         console.log(`ℹ️ Unhandled webhook event: ${event.event_type}`);

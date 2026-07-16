@@ -1,0 +1,305 @@
+PM2        | 2026-06-13T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-13T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-14T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-14T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-15T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-15T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-16T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-16T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-17T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-17T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-18T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-18T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-19T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-19T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-20T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-20T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-21T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-21T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-22T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-22T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-23T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-23T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-24T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-24T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-25T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-25T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-26T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-26T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-27T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-27T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-28T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-28T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.1
+PM2        | 2026-06-29T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-29T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-06-30T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-06-30T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-01T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-01T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-02T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-02T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-03T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-03T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-04T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-04T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-05T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-05T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-06T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-06T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-07T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-07T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-08T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-08T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-09T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-09T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-10T10:27:15: PM2 log: Stopping app:adegloba id:0
+PM2        | 2026-07-10T10:27:15: PM2 log: App [adegloba:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-07-10T10:27:15: PM2 log: pid=1025 msg=process killed
+PM2        | 2026-07-10T10:27:15: PM2 log: App [adegloba:0] starting in -fork mode-
+PM2        | 2026-07-10T10:27:15: PM2 log: App [adegloba:0] online
+PM2        | 2026-07-10T10:28:33: PM2 log: Stopping app:adegloba id:0
+PM2        | 2026-07-10T10:28:33: PM2 log: App [adegloba:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-07-10T10:28:33: PM2 log: pid=408561 msg=process killed
+PM2        | 2026-07-10T10:28:33: PM2 log: App [adegloba:0] starting in -fork mode-
+PM2        | 2026-07-10T10:28:33: PM2 log: App [adegloba:0] online
+PM2        | 2026-07-10T10:38:53: PM2 log: Stopping app:adegloba id:0
+PM2        | 2026-07-10T10:38:53: PM2 log: App [adegloba:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-07-10T10:38:53: PM2 log: pid=408614 msg=process killed
+PM2        | 2026-07-10T10:38:53: PM2 log: App [adegloba:0] starting in -fork mode-
+PM2        | 2026-07-10T10:38:53: PM2 log: App [adegloba:0] online
+PM2        | 2026-07-10T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-10T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-11T14:16:37: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-11T14:16:37: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-12T22:11:06: PM2 log: ===============================================================================
+PM2        | 2026-07-12T22:11:06: PM2 log: --- New PM2 Daemon started ----------------------------------------------------
+PM2        | 2026-07-12T22:11:06: PM2 log: Time                 : Sun Jul 12 2026 22:11:06 GMT+0300 (GMT+03:00)
+PM2        | 2026-07-12T22:11:06: PM2 log: PM2 version          : 6.0.8
+PM2        | 2026-07-12T22:11:06: PM2 log: Node.js version      : 20.19.4
+PM2        | 2026-07-12T22:11:06: PM2 log: Current arch         : x64
+PM2        | 2026-07-12T22:11:06: PM2 log: PM2 home             : /root/.pm2
+PM2        | 2026-07-12T22:11:06: PM2 log: PM2 PID file         : /root/.pm2/pm2.pid
+PM2        | 2026-07-12T22:11:06: PM2 log: RPC socket file      : /root/.pm2/rpc.sock
+PM2        | 2026-07-12T22:11:06: PM2 log: BUS socket file      : /root/.pm2/pub.sock
+PM2        | 2026-07-12T22:11:06: PM2 log: Application log path : /root/.pm2/logs
+PM2        | 2026-07-12T22:11:06: PM2 log: Worker Interval      : 30000
+PM2        | 2026-07-12T22:11:06: PM2 log: Process dump file    : /root/.pm2/dump.pm2
+PM2        | 2026-07-12T22:11:06: PM2 log: Concurrent actions   : 2
+PM2        | 2026-07-12T22:11:06: PM2 log: SIGTERM timeout      : 1600
+PM2        | 2026-07-12T22:11:06: PM2 log: Runtime Binary       : /usr/bin/node
+PM2        | 2026-07-12T22:11:06: PM2 log: ===============================================================================
+PM2        | 2026-07-12T22:11:06: PM2 log: App [adegloba:0] starting in -fork mode-
+PM2        | 2026-07-12T22:11:06: PM2 log: App [adegloba:0] online
+PM2        | 2026-07-13T22:06:38: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-13T22:06:38: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-14T22:06:38: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-14T22:06:38: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-15T22:06:38: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-15T22:06:38: PM2 log: [PM2] Upgrade to version 7.0.3
+PM2        | 2026-07-16T22:06:38: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2026-07-16T22:06:38: PM2 log: [PM2] Upgrade to version 7.0.3
+
+/root/.pm2/logs/adegloba-error.log last 100 lines:
+0|adegloba |   seller_protection: { status: 'NOT_ELIGIBLE' },
+0|adegloba |   seller_receivable_breakdown: {
+0|adegloba |     gross_amount: { currency_code: 'USD', value: '28.00' },
+0|adegloba |     paypal_fee: { currency_code: 'USD', value: '1.19' },
+0|adegloba |     net_amount: { currency_code: 'USD', value: '26.81' }
+0|adegloba |   },
+0|adegloba |   links: [
+0|adegloba |     {
+0|adegloba |       href: 'https://api.paypal.com/v2/payments/captures/01D04254MT849601D',
+0|adegloba |       rel: 'self',
+0|adegloba |       method: 'GET'
+0|adegloba |     },
+0|adegloba |     {
+0|adegloba |       href: 'https://api.paypal.com/v2/checkout/orders/9KK51540EJ681204R',
+0|adegloba |       rel: 'up',
+0|adegloba |       method: 'GET'
+0|adegloba |     }
+0|adegloba |   ],
+0|adegloba |   create_time: '2026-07-16T06:11:34Z',
+0|adegloba |   update_time: '2026-07-16T06:11:34Z',
+0|adegloba |   network_transaction_reference: { id: 'MCW3AB1JE', date: '0716', network: 'MASTERCARD' },
+0|adegloba |   processor_response: { avs_code: 'S', cvv_code: 'D', response_code: '5120' }
+0|adegloba | }
+0|adegloba | ❌ WhatsApp API error for 995598766969: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 905462817928: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 905308616785: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ PayPal Capture DECLINED despite HTTP 201: {
+0|adegloba |   id: '3X214131AB223353W',
+0|adegloba |   status: 'DECLINED',
+0|adegloba |   amount: { currency_code: 'USD', value: '28.00' },
+0|adegloba |   final_capture: true,
+0|adegloba |   seller_protection: { status: 'NOT_ELIGIBLE' },
+0|adegloba |   seller_receivable_breakdown: {
+0|adegloba |     gross_amount: { currency_code: 'USD', value: '28.00' },
+0|adegloba |     paypal_fee: { currency_code: 'USD', value: '1.19' },
+0|adegloba |     net_amount: { currency_code: 'USD', value: '26.81' }
+0|adegloba |   },
+0|adegloba |   links: [
+0|adegloba |     {
+0|adegloba |       href: 'https://api.paypal.com/v2/payments/captures/3X214131AB223353W',
+0|adegloba |       rel: 'self',
+0|adegloba |       method: 'GET'
+0|adegloba |     },
+0|adegloba |     {
+0|adegloba |       href: 'https://api.paypal.com/v2/checkout/orders/8FW95914TT221540G',
+0|adegloba |       rel: 'up',
+0|adegloba |       method: 'GET'
+0|adegloba |     }
+0|adegloba |   ],
+0|adegloba |   create_time: '2026-07-16T08:45:22Z',
+0|adegloba |   update_time: '2026-07-16T08:45:22Z',
+0|adegloba |   network_transaction_reference: { id: 'MNWBXKUUF', date: '0716', network: 'MASTERCARD' },
+0|adegloba |   processor_response: { avs_code: 'S', cvv_code: 'M', response_code: '5120' }
+0|adegloba | }
+0|adegloba | ❌ WhatsApp API error for 994506673901: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 905537614975: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 905537614975: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ PayPal Capture DECLINED despite HTTP 201: {
+0|adegloba |   id: '6CL7613212654383A',
+0|adegloba |   status: 'DECLINED',
+0|adegloba |   amount: { currency_code: 'USD', value: '28.00' },
+0|adegloba |   final_capture: true,
+0|adegloba |   seller_protection: { status: 'NOT_ELIGIBLE' },
+0|adegloba |   seller_receivable_breakdown: {
+0|adegloba |     gross_amount: { currency_code: 'USD', value: '28.00' },
+0|adegloba |     paypal_fee: { currency_code: 'USD', value: '1.19' },
+0|adegloba |     net_amount: { currency_code: 'USD', value: '26.81' }
+0|adegloba |   },
+0|adegloba |   links: [
+0|adegloba |     {
+0|adegloba |       href: 'https://api.paypal.com/v2/payments/captures/6CL7613212654383A',
+0|adegloba |       rel: 'self',
+0|adegloba |       method: 'GET'
+0|adegloba |     },
+0|adegloba |     {
+0|adegloba |       href: 'https://api.paypal.com/v2/checkout/orders/2W970605BH2959325',
+0|adegloba |       rel: 'up',
+0|adegloba |       method: 'GET'
+0|adegloba |     }
+0|adegloba |   ],
+0|adegloba |   create_time: '2026-07-16T12:22:41Z',
+0|adegloba |   update_time: '2026-07-16T12:22:41Z',
+0|adegloba |   network_transaction_reference: { id: 'MDSODC9UQ', date: '0716', network: 'MASTERCARD' },
+0|adegloba |   processor_response: {
+0|adegloba |     avs_code: 'S',
+0|adegloba |     cvv_code: 'D',
+0|adegloba |     response_code: '9100',
+0|adegloba |     payment_advice_code: '02'
+0|adegloba |   }
+0|adegloba | }
+0|adegloba | ❌ WhatsApp API error for 905534410196: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 994558720723: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 905343354929: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 995598766969: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 905334317739: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 995598766969: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 995598766969: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 995593554755: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 918667493677: HTTP 400 { status: false, message: 'Device is stopped.' }
+0|adegloba | ❌ WhatsApp API error for 994773471947: HTTP 400 { status: false, message: 'Device is stopped.' }
+
+/root/.pm2/logs/adegloba-out.log last 100 lines:
+0|adegloba |       net_amount: [Object],
+0|adegloba |       total_refunded_amount: [Object]
+0|adegloba |     },
+0|adegloba |     status: 'COMPLETED',
+0|adegloba |     create_time: '2026-07-16T11:51:06-07:00',
+0|adegloba |     update_time: '2026-07-16T11:51:06-07:00',
+0|adegloba |     payer: {
+0|adegloba |       email_address: 'starlink@adegloba.space',
+0|adegloba |       merchant_id: 'U7YXXEN63ELEC'
+0|adegloba |     },
+0|adegloba |     links: [ [Object], [Object] ]
+0|adegloba |   },
+0|adegloba |   links: [
+0|adegloba |     {
+0|adegloba |       href: 'https://api.paypal.com/v1/notifications/webhooks-events/WH-3XD74464FV3050016-4MA85139DV562341W',
+0|adegloba |       rel: 'self',
+0|adegloba |       method: 'GET'
+0|adegloba |     },
+0|adegloba |     {
+0|adegloba |       href: 'https://api.paypal.com/v1/notifications/webhooks-events/WH-3XD74464FV3050016-4MA85139DV562341W/resend',
+0|adegloba |       rel: 'resend',
+0|adegloba |       method: 'POST'
+0|adegloba |     }
+0|adegloba |   ]
+0|adegloba | }
+0|adegloba | 🌍 PayPal Environment: PRODUCTION
+0|adegloba | 🔗 Webhook URL from DB: https://ads.adegloba.space/api/paypal/webhook
+0|adegloba | 📧 Event Type: PAYMENT.CAPTURE.REFUNDED
+0|adegloba | ℹ️ Unhandled webhook event: PAYMENT.CAPTURE.REFUNDED
+0|adegloba | 9:51:19 PM [express] POST /api/paypal/webhook 200 in 15ms :: {"status":"ignored","eventType":"PAYMEN…
+0|adegloba | 🔔 [2026-07-16T18:51:43.616Z] PayPal webhook received: {
+0|adegloba |   id: 'WH-6UJ24081A8749440T-5CE32570K5407894P',
+0|adegloba |   event_version: '1.0',
+0|adegloba |   create_time: '2026-07-16T18:51:36.817Z',
+0|adegloba |   resource_type: 'refund',
+0|adegloba |   resource_version: '2.0',
+0|adegloba |   event_type: 'PAYMENT.CAPTURE.REFUNDED',
+0|adegloba |   summary: 'A $ 15.0 USD capture payment was refunded',
+0|adegloba |   resource: {
+0|adegloba |     id: '9HV96677781121914',
+0|adegloba |     amount: { currency_code: 'USD', value: '15.00' },
+0|adegloba |     seller_payable_breakdown: {
+0|adegloba |       gross_amount: [Object],
+0|adegloba |       paypal_fee: [Object],
+0|adegloba |       net_amount: [Object],
+0|adegloba |       total_refunded_amount: [Object]
+0|adegloba |     },
+0|adegloba |     status: 'COMPLETED',
+0|adegloba |     create_time: '2026-07-16T11:51:32-07:00',
+0|adegloba |     update_time: '2026-07-16T11:51:32-07:00',
+0|adegloba |     payer: {
+0|adegloba |       email_address: 'starlink@adegloba.space',
+0|adegloba |       merchant_id: 'U7YXXEN63ELEC'
+0|adegloba |     },
+0|adegloba |     links: [ [Object], [Object] ]
+0|adegloba |   },
+0|adegloba |   links: [
+0|adegloba |     {
+0|adegloba |       href: 'https://api.paypal.com/v1/notifications/webhooks-events/WH-6UJ24081A8749440T-5CE32570K5407894P',
+0|adegloba |       rel: 'self',
+0|adegloba |       method: 'GET'
+0|adegloba |     },
+0|adegloba |     {
+0|adegloba |       href: 'https://api.paypal.com/v1/notifications/webhooks-events/WH-6UJ24081A8749440T-5CE32570K5407894P/resend',
+0|adegloba |       rel: 'resend',
+0|adegloba |       method: 'POST'
+0|adegloba |     }
+0|adegloba |   ]
+0|adegloba | }
+0|adegloba | 🌍 PayPal Environment: PRODUCTION
+0|adegloba | 🔗 Webhook URL from DB: https://ads.adegloba.space/api/paypal/webhook
+0|adegloba | 📧 Event Type: PAYMENT.CAPTURE.REFUNDED
+0|adegloba | ℹ️ Unhandled webhook event: PAYMENT.CAPTURE.REFUNDED
+0|adegloba | 9:51:43 PM [express] POST /api/paypal/webhook 200 in 21ms :: {"status":"ignored","eventType":"PAYMEN…
+0|adegloba | 🔄 Order auto-cancel: No expired pending orders found
+0|adegloba | 🔄 Order auto-cancel: No expired pending orders found
+0|adegloba | 9:58:49 PM [express] GET /api/admin/tickets 304 in 9ms :: [{"id":"a02267c0-9ba9-4f69-a365-f4f8cda566…
+0|adegloba | 9:58:49 PM [express] GET /api/admin/tickets/eef7d069-f46c-4ca8-a0ab-96a4d7571568/messages 304 in 11m…
+0|adegloba | 9:59:09 PM [express] GET /api/admin/tickets/eef7d069-f46c-4ca8-a0ab-96a4d7571568/messages 304 in 9ms…
+0|adegloba | 9:59:14 PM [express] POST /api/admin/tickets/eef7d069-f46c-4ca8-a0ab-96a4d7571568/messages 201 in 5m…
+0|adegloba | 9:59:14 PM [express] GET /api/admin/tickets/eef7d069-f46c-4ca8-a0ab-96a4d7571568/messages 200 in 12m…
+0|adegloba | 9:59:14 PM [express] GET /api/admin/tickets 200 in 10ms :: [{"id":"eef7d069-f46c-4ca8-a0ab-96a4d7571…
+0|adegloba | 9:59:14 PM [express] GET /api/admin/tickets/eef7d069-f46c-4ca8-a0ab-96a4d7571568/messages 304 in 8ms…
+0|adegloba | 9:59:16 PM [express] GET /api/admin/me 304 in 4ms :: {"id":"558bac76-0ef0-4df4-bcb3-71cebc30bc1f","r…
+0|adegloba | 9:59:16 PM [express] GET /api/admin/users-with-stats 304 in 45ms :: [{"id":"f97c9c64-9040-47aa-9958-…
+0|adegloba | 🔄 Order auto-cancel: No expired pending orders found
+0|adegloba | 🗑️  Running log cleanup - deleting logs older than 2026-07-09T19:06:40.119Z
+0|adegloba | 🗑️  Log cleanup completed - deleted 8 old log entries
+0|adegloba | 🧹 Running enhanced order cleanup...
+0|adegloba | Found 3 incomplete paid orders
+0|adegloba | 🔧 Found 3 incomplete paid orders during cleanup
+0|adegloba | Found 3 incomplete paid orders
+0|adegloba | 🔧 Processing 3 incomplete paid orders...
+0|adegloba | ❌ Failed to fix order f7cfcca2-82f8-496f-9e65-35074476abcf: Order f7cfcca2-82f8-496f-9e65-35074476abcf has no assigned credentials. Use processPaymentCompletion instead.
+0|adegloba | ❌ Failed to fix order ead068e3-0de8-4b44-84fd-346837af52dd: Order ead068e3-0de8-4b44-84fd-346837af52dd has no assigned credentials. Use processPaymentCompletion instead.
+0|adegloba | ❌ Failed to fix order 80c55c33-7ff7-4d05-a828-9e8d073f26fe: Order 80c55c33-7ff7-4d05-a828-9e8d073f26fe has no assigned credentials. Use processPaymentCompletion instead.
+0|adegloba | 🔧 Batch completion: 0/3 orders fixed
+0|adegloba | 🔧 Cleanup fixed 0/3 incomplete orders
+0|adegloba | 🔄 Order auto-cancel: No expired pending orders found
+0|adegloba | 10:07:51 PM [express] GET /api/admin/tickets 304 in 11ms :: [{"id":"eef7d069-f46c-4ca8-a0ab-96a4d7571…
+
