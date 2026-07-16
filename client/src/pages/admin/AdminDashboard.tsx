@@ -62,10 +62,13 @@ const fmt = (d?: string) => {
 };
 
 const STATUS: Record<string, { label: string; dot: string }> = {
-  pending:   { label: 'Bekliyor',    dot: 'bg-amber-400' },
-  paid:      { label: 'Ödendi',      dot: 'bg-blue-400'  },
-  completed: { label: 'Tamamlandı',  dot: 'bg-green-400' },
-  cancelled: { label: 'İptal',       dot: 'bg-red-400'   },
+  pending:   { label: 'Bekliyor',      dot: 'bg-amber-400' },
+  paid:      { label: 'Ödendi',        dot: 'bg-blue-400'  },
+  completed: { label: 'Tamamlandı',    dot: 'bg-green-400' },
+  cancelled: { label: 'İptal',         dot: 'bg-red-400'   },
+  refunded:  { label: 'İade Edildi',   dot: 'bg-sky-400'   },
+  failed:    { label: 'Başarısız',     dot: 'bg-rose-600'  },
+  expired:   { label: 'Süresi Doldu',  dot: 'bg-slate-400' },
 };
 
 const AVATAR_COLORS = [

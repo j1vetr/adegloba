@@ -71,6 +71,14 @@ export default function Gecmis() {
               userOrders.map((order: any) => {
                 const isPaid = !!order.paidAt;
                 const isCancelled = order.status === "cancelled";
+                const isRefunded = order.status === "refunded";
+                const statusChip = isRefunded
+                  ? { cls: "chip-warning", label: "İade Edildi" }
+                  : isCancelled
+                  ? { cls: "chip-danger", label: "İptal" }
+                  : isPaid
+                  ? { cls: "chip-success", label: "Ödendi" }
+                  : { cls: "chip-warning", label: "Beklemede" };
                 return (
                   <div key={order.id} className="user-card p-4" data-testid={`order-card-${order.id}`}>
                     <div className="flex items-center justify-between mb-3">
@@ -91,8 +99,8 @@ export default function Gecmis() {
                         {order.orderType !== 'gift' && (
                           <span className="text-slate-900 font-bold text-sm">{fmtPrice(order.totalUsd)}</span>
                         )}
-                        <span className={`chip ${isCancelled ? "chip-danger" : isPaid ? "chip-success" : "chip-warning"}`}>
-                          {isCancelled ? "İptal" : isPaid ? "Ödendi" : "Beklemede"}
+                        <span className={`chip ${statusChip.cls}`}>
+                          {statusChip.label}
                         </span>
                       </div>
                     </div>

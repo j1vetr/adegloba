@@ -359,6 +359,8 @@ function UserDetails({ user, onBack }: UserDetailsProps) {
       'paid': { color: 'bg-green-600', text: 'Ödendi' },
       'expired': { color: 'bg-red-600', text: 'Süresi Doldu' },
       'cancelled': { color: 'bg-gray-600', text: 'İptal' },
+      'refunded': { color: 'bg-blue-600', text: 'İade Edildi' },
+      'failed': { color: 'bg-red-800', text: 'Başarısız' },
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;

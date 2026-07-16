@@ -1424,7 +1424,7 @@ export class DatabaseStorage implements IStorage {
   async updateOrderStatus(orderId: string, status: string): Promise<void> {
     await db
       .update(orders)
-      .set({ status: status as 'pending' | 'paid' | 'expired' | 'cancelled' })
+      .set({ status: status as 'pending' | 'paid' | 'expired' | 'cancelled' | 'refunded' | 'failed' })
       .where(eq(orders.id, orderId));
   }
 

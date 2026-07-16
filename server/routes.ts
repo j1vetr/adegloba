@@ -4181,7 +4181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const matchingOrders = await storage.getOrdersByPaypalOrderId(relatedOrderId);
           if (matchingOrders.length > 0) {
             const dbOrder = matchingOrders[0];
-            await storage.updateOrder(dbOrder.id, { status: 'cancelled' });
+            await storage.updateOrder(dbOrder.id, { status: 'refunded' });
             await storage.createSystemLog({
               category: 'payment',
               action: 'webhook_payment_refunded',
@@ -4196,7 +4196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ipAddress: req.ip || req.connection.remoteAddress,
               userAgent: 'PayPal-Webhook',
             });
-            console.log(`🔄 Order ${dbOrder.id} marked cancelled due to PayPal refund ${refund.id}`);
+            console.log(`💸 Order ${dbOrder.id} marked refunded due to PayPal refund ${refund.id}`);
             return res.status(200).json({ status: 'refund_processed', orderId: dbOrder.id, refundId: refund.id });
           }
         }
