@@ -298,6 +298,8 @@ export default function PayPalButton({
           }
         } catch (error) {
           console.error('Payment capture error:', error);
+          isProcessingRef.current = false;
+          setIsLoading(false);
           toast({
             title: "Ödeme Hatası",
             description: error instanceof Error ? error.message : "Ödeme tamamlanamadı",
@@ -315,6 +317,7 @@ export default function PayPalButton({
 
       onError: (err: any) => {
         console.error('PayPal v6 error:', err);
+        isProcessingRef.current = false;
         setIsLoading(false);
 
         let errorMessage = "Ödeme işlemi sırasında bir hata oluştu.";
@@ -348,6 +351,7 @@ export default function PayPalButton({
       },
 
       onCancel: () => {
+        isProcessingRef.current = false;
         setIsLoading(false);
         toast({
           title: "Ödeme İptal Edildi",

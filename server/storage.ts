@@ -380,7 +380,10 @@ export interface IStorage {
     status?: string;
     paypalOrderId?: string;
     userId?: string;
-  }): Promise<{ events: PaymentEvent[]; total: number }>;
+    username?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<{ events: (PaymentEvent & { username?: string | null })[]; total: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3951,20 +3954,40 @@ export class DatabaseStorage implements IStorage {
     status?: string;
     paypalOrderId?: string;
     userId?: string;
-  }): Promise<{ events: PaymentEvent[]; total: number }> {
-    const { page = 1, pageSize = 50, eventType, status, paypalOrderId, userId } = options ?? {};
+    username?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<{ events: (PaymentEvent & { username?: string | null })[]; total: number }> {
+    const { page = 1, pageSize = 50, eventType, status, paypalOrderId, userId, startDate, endDate } = options ?? {};
     const offset = (page - 1) * pageSize;
 
-    const conditions = [];
+    const conditions: any[] = [];
     if (eventType) conditions.push(eq(paymentEvents.eventType, eventType));
     if (status) conditions.push(eq(paymentEvents.status, status));
     if (paypalOrderId) conditions.push(eq(paymentEvents.paypalOrderId, paypalOrderId));
     if (userId) conditions.push(eq(paymentEvents.userId, userId));
+    if (startDate) conditions.push(gte(paymentEvents.createdAt, startDate));
+    if (endDate) conditions.push(lte(paymentEvents.createdAt, endDate));
+
+    // Username filter — resolve userId first if username filter provided
+    if (options?.username) {
+      const matchedUsers = await db.select({ id: users.id })
+        .from(users)
+        .where(sql`${users.username} ILIKE ${'%' + options.username + '%'}`);
+      if (matchedUsers.length === 0) return { events: [], total: 0 };
+      const matchedIds = matchedUsers.map(u => u.id);
+      conditions.push(sql`${paymentEvents.userId} = ANY(${matchedIds})`);
+    }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [rows, countRows] = await Promise.all([
-      db.select().from(paymentEvents)
+      db.select({
+        event: paymentEvents,
+        username: users.username,
+      })
+        .from(paymentEvents)
+        .leftJoin(users, eq(paymentEvents.userId, users.id))
         .where(whereClause)
         .orderBy(desc(paymentEvents.createdAt))
         .limit(pageSize)
@@ -3972,7 +3995,8 @@ export class DatabaseStorage implements IStorage {
       db.select({ count: sql<number>`count(*)::int` }).from(paymentEvents).where(whereClause),
     ]);
 
-    return { events: rows, total: countRows[0]?.count ?? 0 };
+    const events = rows.map(r => ({ ...r.event, username: r.username ?? null }));
+    return { events, total: countRows[0]?.count ?? 0 };
   }
 }
 

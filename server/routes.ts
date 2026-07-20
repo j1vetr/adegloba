@@ -201,7 +201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create PayPal order
-  app.post('/api/paypal/create-order', async (req, res) => {
+  app.post('/api/paypal/create-order', async (req: any, res) => {
+    const t0 = Date.now();
     try {
       const { amount, currency } = req.body;
       
@@ -221,6 +222,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Log create_order attempt
+      storage.createPaymentEvent({
+        eventType: 'create_order',
+        userId: req.session?.userId || null,
+        amountUsd: amount,
+        status: 'ok',
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+        metadata: { currency },
+      }).catch(() => {});
+
       // Temporarily set environment variables from database for PayPal SDK
       const originalClientId = process.env.PAYPAL_CLIENT_ID;
       const originalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
@@ -237,14 +249,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (originalClientId) process.env.PAYPAL_CLIENT_ID = originalClientId;
         if (originalClientSecret) process.env.PAYPAL_CLIENT_SECRET = originalClientSecret;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("PayPal order creation error:", error);
+      storage.createPaymentEvent({
+        eventType: 'create_order',
+        userId: req.session?.userId || null,
+        status: 'error',
+        errorMessage: error?.message || String(error),
+        durationMs: Date.now() - t0,
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+      }).catch(() => {});
       res.status(500).json({ message: "Failed to create PayPal order" });
     }
   });
 
   // Capture PayPal order
-  app.post('/api/paypal/capture-order', async (req, res) => {
+  app.post('/api/paypal/capture-order', async (req: any, res) => {
+    const t0 = Date.now();
     try {
       const { orderId } = req.body;
       
@@ -264,6 +286,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Log capture attempt
+      storage.createPaymentEvent({
+        eventType: 'capture_attempt',
+        paypalOrderId: orderId,
+        userId: req.session?.userId || null,
+        status: 'ok',
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+      }).catch(() => {});
+
       // Temporarily set environment variables from database for PayPal SDK
       const originalClientId = process.env.PAYPAL_CLIENT_ID;
       const originalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
@@ -281,8 +313,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (originalClientId) process.env.PAYPAL_CLIENT_ID = originalClientId;
         if (originalClientSecret) process.env.PAYPAL_CLIENT_SECRET = originalClientSecret;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("PayPal capture error:", error);
+      storage.createPaymentEvent({
+        eventType: 'capture_failed',
+        paypalOrderId: req.body?.orderId || null,
+        userId: req.session?.userId || null,
+        status: 'error',
+        errorMessage: error?.message || String(error),
+        durationMs: Date.now() - t0,
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+      }).catch(() => {});
       res.status(500).json({ message: "Failed to capture PayPal payment" });
     }
   });
@@ -593,10 +635,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
+
+    const t0 = Date.now();
     
     try {
       const { orderId } = req.params;
       const { paypalOrderId } = req.body;
+      const userId = req.session.userId;
+
+      // ── IDEMPOTENCY GUARD ─────────────────────────────────────────────
+      if (paypalOrderId && paypalOrderId !== 'manual-payment') {
+        const existing = await storage.getOrdersByPaypalOrderId(paypalOrderId);
+        const alreadyPaid = existing.find(o => o.status === 'paid');
+        if (alreadyPaid) {
+          console.log(`🔁 IDEMPOTENCY: PayPal order ${paypalOrderId} already paid. Returning cached result.`);
+          storage.createPaymentEvent({
+            eventType: 'idempotency_block',
+            paypalOrderId,
+            dbOrderId: alreadyPaid.id,
+            userId,
+            status: 'blocked',
+            durationMs: Date.now() - t0,
+            ipAddress: req.ip || '',
+            userAgent: req.headers['user-agent'] || '',
+            metadata: { route: '/api/orders/:orderId/complete', reason: 'paypalOrderId already paid' },
+          }).catch(() => {});
+          return res.json({
+            order: alreadyPaid,
+            assignedCredentials: [],
+            success: true,
+            message: 'Order already completed',
+          });
+        }
+      }
+
+      // Log attempt
+      storage.createPaymentEvent({
+        eventType: 'complete_payment',
+        paypalOrderId: paypalOrderId || null,
+        dbOrderId: orderId,
+        userId,
+        status: 'ok',
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+        metadata: { route: '/api/orders/:orderId/complete' },
+      }).catch(() => {});
 
       // Use atomic payment processing for consistency
       const result = await orderService.processPaymentCompletion(orderId, paypalOrderId);
@@ -604,7 +687,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (result.success) {
         // Update user's monthly loyalty data based on purchased GB
         try {
-          const userId = req.session.userId;
           const order = result.order;
           
           // Calculate total GB from order items
@@ -623,8 +705,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } catch (loyaltyError) {
           console.error('Error updating loyalty:', loyaltyError);
-          // Don't fail the order if loyalty update fails
         }
+
+        storage.createPaymentEvent({
+          eventType: 'complete_success',
+          paypalOrderId: paypalOrderId || null,
+          dbOrderId: orderId,
+          userId,
+          status: 'ok',
+          durationMs: Date.now() - t0,
+          ipAddress: req.ip || '',
+          userAgent: req.headers['user-agent'] || '',
+          metadata: { route: '/api/orders/:orderId/complete', credentialCount: result.assignedCredentials?.length ?? 0 },
+        }).catch(() => {});
         
         res.json({ 
           order: result.order,
@@ -633,10 +726,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'Order completed and credentials assigned'
         });
       } else {
+        storage.createPaymentEvent({
+          eventType: 'complete_failed',
+          paypalOrderId: paypalOrderId || null,
+          dbOrderId: orderId,
+          userId,
+          status: 'error',
+          errorMessage: 'processPaymentCompletion returned success=false',
+          durationMs: Date.now() - t0,
+          ipAddress: req.ip || '',
+          userAgent: req.headers['user-agent'] || '',
+        }).catch(() => {});
         res.status(400).json({ message: 'Failed to complete order' });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error completing order:", error);
+      storage.createPaymentEvent({
+        eventType: 'complete_failed',
+        paypalOrderId: req.body?.paypalOrderId || null,
+        dbOrderId: req.params?.orderId || null,
+        userId: req.session?.userId || null,
+        status: 'error',
+        errorMessage: error?.message || String(error),
+        durationMs: Date.now() - t0,
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+      }).catch(() => {});
       res.status(400).json({ message: error.message || "Failed to complete order" });
     }
   });
@@ -5173,6 +5288,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const status = req.query.status as string | undefined;
       const paypalOrderId = req.query.paypalOrderId as string | undefined;
       const userId = req.query.userId as string | undefined;
+      const username = req.query.username as string | undefined;
+      const startDateStr = req.query.startDate as string | undefined;
+      const endDateStr = req.query.endDate as string | undefined;
+
+      const startDate = startDateStr ? new Date(startDateStr) : undefined;
+      const endDate = endDateStr ? new Date(endDateStr + 'T23:59:59.999Z') : undefined;
 
       const result = await storage.getPaymentEvents({
         page,
@@ -5181,6 +5302,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: status || undefined,
         paypalOrderId: paypalOrderId || undefined,
         userId: userId || undefined,
+        username: username || undefined,
+        startDate,
+        endDate,
       });
 
       res.json(result);
