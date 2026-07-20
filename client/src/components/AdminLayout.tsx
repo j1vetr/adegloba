@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Ship, Package, Gift, ShoppingCart, Users,
   Settings, Menu, X, LogOut, ChevronRight, HelpCircle, FileText,
   Key, Mail, BarChart3, Bell, PackageCheck, Activity, TrendingUp,
-  Send, Database, Globe
+  Send, Database, Globe, CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -64,6 +64,7 @@ const NAV = [
       { name: 'Genel Ayarlar',       href: '/admin/settings',         icon: Settings },
       { name: 'DB Yedekleme',        href: '/admin/database-backup',  icon: Database },
       { name: 'Sistem Logları',      href: '/admin/logs',             icon: FileText },
+      { name: 'Ödeme Olayları',      href: '/admin/payment-events',   icon: CreditCard },
     ],
   },
 ];

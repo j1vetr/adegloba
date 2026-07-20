@@ -922,11 +922,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
+    const routeStart = Date.now();
+
     try {
       const userId = req.session.userId;
       const { paypalOrderId, couponCode } = req.body;
 
       console.log(`🔒 STRICT VALIDATION: Complete payment request for PayPal Order: ${paypalOrderId}`);
+
+      // ── IDEMPOTENCY GUARD ──────────────────────────────────────────────
+      // If this PayPal Order ID was already captured and stored, return
+      // the existing result immediately without re-processing.
+      if (paypalOrderId && paypalOrderId !== 'manual-payment') {
+        const existingOrders = await storage.getOrdersByPaypalOrderId(paypalOrderId);
+        const alreadyPaid = existingOrders.find(o => o.status === 'paid');
+        if (alreadyPaid) {
+          console.log(`🔁 IDEMPOTENCY: PayPal order ${paypalOrderId} already paid (DB order ${alreadyPaid.id}). Returning cached result.`);
+          await storage.createPaymentEvent({
+            eventType: 'idempotency_block',
+            paypalOrderId,
+            dbOrderId: alreadyPaid.id,
+            userId,
+            status: 'blocked',
+            durationMs: Date.now() - routeStart,
+            ipAddress: req.ip || '',
+            userAgent: req.headers['user-agent'] || '',
+            metadata: { reason: 'paypalOrderId already paid' },
+          });
+          return res.json({
+            id: alreadyPaid.id,
+            orderId: alreadyPaid.id,
+            success: true,
+            message: 'Order already completed',
+          });
+        }
+      }
+
+      // Log attempt
+      await storage.createPaymentEvent({
+        eventType: 'complete_payment',
+        paypalOrderId: paypalOrderId || null,
+        userId,
+        status: 'ok',
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+      });
 
       // KESIN KONTROL: PayPal Order ID'yi backend'de re-verify et
       if (paypalOrderId && paypalOrderId !== 'manual-payment') {
@@ -1073,6 +1113,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Clear cart after successful order creation and credential assignment
       await storage.clearCart(userId);
 
+      // Log success event
+      await storage.createPaymentEvent({
+        eventType: 'complete_success',
+        paypalOrderId: paypalOrderId || null,
+        dbOrderId: pendingOrder.id,
+        userId,
+        amountUsd: String(total.toFixed(2)),
+        status: 'ok',
+        durationMs: Date.now() - routeStart,
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+        metadata: { credentialCount: result.assignedCredentials?.length ?? 0 },
+      });
+
       res.json({ 
         id: pendingOrder.id, 
         orderId: pendingOrder.id,
@@ -1082,6 +1136,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error completing payment from cart:", error);
+      // Log failure event (fire-and-forget)
+      const userId = req.session?.userId;
+      const { paypalOrderId } = req.body || {};
+      storage.createPaymentEvent({
+        eventType: 'complete_failed',
+        paypalOrderId: paypalOrderId || null,
+        userId: userId || null,
+        status: 'error',
+        errorMessage: error?.message || String(error),
+        durationMs: Date.now() - routeStart,
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+      }).catch(() => {});
       res.status(500).json({ message: "Failed to complete payment" });
     }
   });
@@ -5095,6 +5162,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.dismissGiftBanner(userId, req.params.campaignId);
       res.json({ success: true });
     } catch (e) { res.status(500).json({ message: 'Failed' }); }
+  });
+
+  // ── Payment Events admin API ──────────────────────────────────────────
+  app.get('/api/admin/payment-events', isAdminAuthenticated, async (req, res) => {
+    try {
+      const page = parseInt(String(req.query.page || '1'), 10);
+      const pageSize = Math.min(parseInt(String(req.query.pageSize || '50'), 10), 200);
+      const eventType = req.query.eventType as string | undefined;
+      const status = req.query.status as string | undefined;
+      const paypalOrderId = req.query.paypalOrderId as string | undefined;
+      const userId = req.query.userId as string | undefined;
+
+      const result = await storage.getPaymentEvents({
+        page,
+        pageSize,
+        eventType: eventType || undefined,
+        status: status || undefined,
+        paypalOrderId: paypalOrderId || undefined,
+        userId: userId || undefined,
+      });
+
+      res.json(result);
+    } catch (e: any) {
+      console.error('Error fetching payment events:', e);
+      res.status(500).json({ message: 'Failed to fetch payment events' });
+    }
   });
 
   // Run startup check after a short delay

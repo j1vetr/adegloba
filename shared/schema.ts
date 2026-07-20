@@ -880,3 +880,28 @@ export const insertFavoritePlanSchema = createInsertSchema(favoritePlans).omit({
 // Types
 export type InsertFavoritePlan = z.infer<typeof insertFavoritePlanSchema>;
 export type FavoritePlan = typeof favoritePlans.$inferSelect;
+
+// ═══════════════ PAYMENT EVENTS ═══════════════
+export const paymentEvents = pgTable("payment_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventType: varchar("event_type").notNull(), // 'create_order' | 'capture_attempt' | 'capture_success' | 'capture_failed' | 'complete_payment' | 'complete_success' | 'complete_failed' | 'idempotency_block'
+  paypalOrderId: varchar("paypal_order_id"),
+  dbOrderId: varchar("db_order_id"),
+  userId: varchar("user_id"),
+  amountUsd: decimal("amount_usd", { precision: 10, scale: 2 }),
+  status: varchar("status").notNull().default('ok'), // 'ok' | 'error' | 'blocked'
+  errorMessage: text("error_message"),
+  durationMs: integer("duration_ms"),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_payment_events_paypal_order").on(table.paypalOrderId),
+  index("idx_payment_events_user").on(table.userId),
+  index("idx_payment_events_created").on(table.createdAt),
+]);
+
+export const insertPaymentEventSchema = createInsertSchema(paymentEvents).omit({ id: true, createdAt: true });
+export type InsertPaymentEvent = z.infer<typeof insertPaymentEventSchema>;
+export type PaymentEvent = typeof paymentEvents.$inferSelect;

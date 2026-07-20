@@ -370,7 +370,13 @@ export default function PayPalButton({
     }
   }, [amount, currency, couponCode, orderId, sdkReady, setupPaymentSession]);
 
+  const isProcessingRef = useRef(false);
+
   const handlePayPalClick = async () => {
+    if (isProcessingRef.current) {
+      return;
+    }
+
     if (!sdkReady || !paymentSessionRef.current) {
       toast({
         title: "PayPal Hazır Değil",
@@ -380,12 +386,14 @@ export default function PayPalButton({
       return;
     }
 
+    isProcessingRef.current = true;
     setIsLoading(true);
 
     try {
       await paymentSessionRef.current.start();
     } catch (error) {
       console.error('PayPal v6 session start error:', error);
+      isProcessingRef.current = false;
       setIsLoading(false);
       toast({
         title: "PayPal Başlatma Hatası",

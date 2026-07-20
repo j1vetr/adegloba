@@ -73,6 +73,9 @@ import {
   type GiftCampaign,
   type InsertGiftCampaign,
   type GiftCampaignLog,
+  paymentEvents,
+  type PaymentEvent,
+  type InsertPaymentEvent,
 } from "@shared/schema";
 import { getDaysRemainingIstanbul, isExpiredIstanbul, getEndOfMonthIstanbul, getStartOfMonthIstanbul } from './utils/dateUtils';
 import { db } from "./db";
@@ -367,6 +370,17 @@ export interface IStorage {
   executeGiftCampaign(campaignId: string, adminUserId: string): Promise<{ recipientCount: number; giftOrders: string[] }>;
   getPendingGiftBanners(userId: string): Promise<(GiftCampaignLog & { campaign: GiftCampaign })[]>;
   dismissGiftBanner(userId: string, campaignId: string): Promise<void>;
+
+  // Payment event operations
+  createPaymentEvent(event: InsertPaymentEvent): Promise<PaymentEvent>;
+  getPaymentEvents(options?: {
+    page?: number;
+    pageSize?: number;
+    eventType?: string;
+    status?: string;
+    paypalOrderId?: string;
+    userId?: string;
+  }): Promise<{ events: PaymentEvent[]; total: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3922,6 +3936,43 @@ export class DatabaseStorage implements IStorage {
         eq(giftCampaignLogs.userId, userId),
         eq(giftCampaignLogs.campaignId, campaignId)
       ));
+  }
+
+  // Payment event operations
+  async createPaymentEvent(event: InsertPaymentEvent): Promise<PaymentEvent> {
+    const [row] = await db.insert(paymentEvents).values(event).returning();
+    return row;
+  }
+
+  async getPaymentEvents(options?: {
+    page?: number;
+    pageSize?: number;
+    eventType?: string;
+    status?: string;
+    paypalOrderId?: string;
+    userId?: string;
+  }): Promise<{ events: PaymentEvent[]; total: number }> {
+    const { page = 1, pageSize = 50, eventType, status, paypalOrderId, userId } = options ?? {};
+    const offset = (page - 1) * pageSize;
+
+    const conditions = [];
+    if (eventType) conditions.push(eq(paymentEvents.eventType, eventType));
+    if (status) conditions.push(eq(paymentEvents.status, status));
+    if (paypalOrderId) conditions.push(eq(paymentEvents.paypalOrderId, paypalOrderId));
+    if (userId) conditions.push(eq(paymentEvents.userId, userId));
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [rows, countRows] = await Promise.all([
+      db.select().from(paymentEvents)
+        .where(whereClause)
+        .orderBy(desc(paymentEvents.createdAt))
+        .limit(pageSize)
+        .offset(offset),
+      db.select({ count: sql<number>`count(*)::int` }).from(paymentEvents).where(whereClause),
+    ]);
+
+    return { events: rows, total: countRows[0]?.count ?? 0 };
   }
 }
 
