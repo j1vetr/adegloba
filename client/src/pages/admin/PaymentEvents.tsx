@@ -9,13 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, RefreshCw, CreditCard, AlertCircle, CheckCircle2, ShieldBan, ChevronDown, ChevronRight } from "lucide-react";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
-  create_order: "Sipariş Oluşturuldu",
-  capture_attempt: "Yakalama Denendi",
-  capture_failed: "Yakalama Başarısız",
-  complete_payment: "Ödeme Başlatıldı",
-  complete_success: "Ödeme Başarılı",
-  complete_failed: "Ödeme Başarısız",
-  idempotency_block: "Çift Ödeme Engellendi",
+  order_create_request: "Sipariş Talebi",
+  order_create_success: "Sipariş Oluşturuldu",
+  order_create_failed: "Sipariş Oluşturulamadı",
+  capture_request: "Ödeme Yakalama Talebi",
+  capture_success: "Ödeme Yakalandı",
+  capture_failed: "Ödeme Yakalanamadı",
+  complete_request: "Tamamlama Talebi",
+  complete_success: "Ödeme Tamamlandı",
+  complete_failed: "Tamamlama Başarısız",
+  duplicate_attempt_blocked: "Çift Ödeme Engellendi",
 };
 
 const STATUS_BADGE: Record<string, { label: string; className: string; icon: any }> = {
@@ -146,7 +149,7 @@ export default function PaymentEvents() {
                 <SelectContent>
                   <SelectItem value="all">Tümü</SelectItem>
                   {Object.entries(EVENT_TYPE_LABELS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                    <SelectItem key={k} value={k}>{v} ({k})</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

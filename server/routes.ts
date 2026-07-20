@@ -222,9 +222,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Log create_order attempt
+      // Log request attempt
       storage.createPaymentEvent({
-        eventType: 'create_order',
+        eventType: 'order_create_request',
         userId: req.session?.userId || null,
         amountUsd: amount,
         status: 'ok',
@@ -232,6 +232,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userAgent: req.headers['user-agent'] || '',
         metadata: { currency },
       }).catch(() => {});
+
+      // Intercept res.json to capture outcome (createPaypalOrder writes res directly)
+      let capturedCode = 200;
+      const origStatus = res.status.bind(res);
+      const origJson = res.json.bind(res);
+      (res as any).status = (code: number) => { capturedCode = code; return origStatus(code); };
+      (res as any).json = (body: any) => {
+        res.status = origStatus;
+        res.json = origJson;
+        const isOk = capturedCode < 400;
+        storage.createPaymentEvent({
+          eventType: isOk ? 'order_create_success' : 'order_create_failed',
+          paypalOrderId: body?.id || null,
+          userId: req.session?.userId || null,
+          amountUsd: amount,
+          status: isOk ? 'ok' : 'error',
+          errorMessage: !isOk ? (body?.message || body?.error || null) : null,
+          durationMs: Date.now() - t0,
+          ipAddress: req.ip || '',
+          userAgent: req.headers['user-agent'] || '',
+        }).catch(() => {});
+        return origJson(body);
+      };
 
       // Temporarily set environment variables from database for PayPal SDK
       const originalClientId = process.env.PAYPAL_CLIENT_ID;
@@ -252,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("PayPal order creation error:", error);
       storage.createPaymentEvent({
-        eventType: 'create_order',
+        eventType: 'order_create_failed',
         userId: req.session?.userId || null,
         status: 'error',
         errorMessage: error?.message || String(error),
@@ -286,15 +309,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Log capture attempt
+      // Log capture request
       storage.createPaymentEvent({
-        eventType: 'capture_attempt',
+        eventType: 'capture_request',
         paypalOrderId: orderId,
         userId: req.session?.userId || null,
         status: 'ok',
         ipAddress: req.ip || '',
         userAgent: req.headers['user-agent'] || '',
       }).catch(() => {});
+
+      // Intercept res.json to capture outcome (capturePaypalOrder writes res directly)
+      let captureCapturedCode = 200;
+      const captureOrigStatus = res.status.bind(res);
+      const captureOrigJson = res.json.bind(res);
+      (res as any).status = (code: number) => { captureCapturedCode = code; return captureOrigStatus(code); };
+      (res as any).json = (body: any) => {
+        res.status = captureOrigStatus;
+        res.json = captureOrigJson;
+        const isOk = captureCapturedCode < 400;
+        storage.createPaymentEvent({
+          eventType: isOk ? 'capture_success' : 'capture_failed',
+          paypalOrderId: orderId,
+          userId: req.session?.userId || null,
+          status: isOk ? 'ok' : 'error',
+          errorMessage: !isOk ? (body?.message || body?.error || null) : null,
+          durationMs: Date.now() - t0,
+          ipAddress: req.ip || '',
+          userAgent: req.headers['user-agent'] || '',
+          metadata: isOk ? { captureStatus: body?.status } : undefined,
+        }).catch(() => {});
+        return captureOrigJson(body);
+      };
 
       // Temporarily set environment variables from database for PayPal SDK
       const originalClientId = process.env.PAYPAL_CLIENT_ID;
@@ -650,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (alreadyPaid) {
           console.log(`🔁 IDEMPOTENCY: PayPal order ${paypalOrderId} already paid. Returning cached result.`);
           storage.createPaymentEvent({
-            eventType: 'idempotency_block',
+            eventType: 'duplicate_attempt_blocked',
             paypalOrderId,
             dbOrderId: alreadyPaid.id,
             userId,
@@ -671,7 +717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Log attempt
       storage.createPaymentEvent({
-        eventType: 'complete_payment',
+        eventType: 'complete_request',
         paypalOrderId: paypalOrderId || null,
         dbOrderId: orderId,
         userId,
@@ -1054,7 +1100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (alreadyPaid) {
           console.log(`🔁 IDEMPOTENCY: PayPal order ${paypalOrderId} already paid (DB order ${alreadyPaid.id}). Returning cached result.`);
           await storage.createPaymentEvent({
-            eventType: 'idempotency_block',
+            eventType: 'duplicate_attempt_blocked',
             paypalOrderId,
             dbOrderId: alreadyPaid.id,
             userId,
@@ -1075,7 +1121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Log attempt
       await storage.createPaymentEvent({
-        eventType: 'complete_payment',
+        eventType: 'complete_request',
         paypalOrderId: paypalOrderId || null,
         userId,
         status: 'ok',

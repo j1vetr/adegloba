@@ -115,8 +115,8 @@ export class OrderService {
   }> {
     try {
       return await db.transaction(async (tx) => {
-        // 1. Get and validate order
-        const [order] = await tx.select().from(orders).where(eq(orders.id, orderId));
+        // 1. Get and validate order — FOR UPDATE serialises concurrent requests on the same order row
+        const [order] = await tx.select().from(orders).where(eq(orders.id, orderId)).for('update');
         
         if (!order) {
           throw new Error("Order not found");
