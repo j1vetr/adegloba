@@ -104,15 +104,8 @@ export async function createBackup(): Promise<BackupMeta> {
   return { filename, size: stats.size, createdAt: payload.createdAt, rowCount: totalRows, version: '2.0' };
 }
 
-export async function restoreBackup(filename: string): Promise<{ tablesRestored: number; rowsRestored: number }> {
-  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-    throw new Error('Geçersiz dosya adı');
-  }
-
-  const filePath = path.join(BACKUPS_DIR, filename);
-  const content  = await fs.promises.readFile(filePath, 'utf-8');
-  const backup   = JSON.parse(content);
-
+// Core restore logic — accepts already-parsed backup payload
+export async function restoreFromData(backup: any): Promise<{ tablesRestored: number; rowsRestored: number }> {
   if (!backup.tables || !backup.version) {
     throw new Error('Geçersiz yedek dosyası formatı (version/tables eksik)');
   }
@@ -132,7 +125,6 @@ export async function restoreBackup(filename: string): Promise<{ tablesRestored:
   let tablesRestored = 0;
   let rowsRestored   = 0;
 
-  // Insert in forward dependency order
   for (const key of TABLE_ORDER) {
     const rows = backup.tables[key];
     if (!rows || rows.length === 0) { tablesRestored++; continue; }
@@ -148,6 +140,18 @@ export async function restoreBackup(filename: string): Promise<{ tablesRestored:
   }
 
   return { tablesRestored, rowsRestored };
+}
+
+export async function restoreBackup(filename: string): Promise<{ tablesRestored: number; rowsRestored: number }> {
+  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    throw new Error('Geçersiz dosya adı');
+  }
+
+  const filePath = path.join(BACKUPS_DIR, filename);
+  const content  = await fs.promises.readFile(filePath, 'utf-8');
+  const backup   = JSON.parse(content);
+
+  return restoreFromData(backup);
 }
 
 export async function listBackups(): Promise<BackupMeta[]> {

@@ -4808,11 +4808,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
         return res.status(400).json({ message: 'Geçersiz dosya adı' });
       }
-      const filePath = require('path').resolve('./backups', filename);
+      const filePath = `${process.cwd()}/backups/${filename}`;
       res.download(filePath, filename);
     } catch (error) {
       console.error('Download backup error:', error);
       res.status(500).json({ message: 'İndirme başarısız: ' + (error as Error).message });
+    }
+  });
+
+  // Dışarıdan JSON yedek yükleyerek geri yükle
+  app.post('/api/admin/database/restore-upload', isAdminAuthenticated, async (req, res) => {
+    try {
+      const backup = req.body;
+      if (!backup || !backup.tables || !backup.version) {
+        return res.status(400).json({ message: 'Geçersiz yedek formatı — version ve tables alanları zorunlu' });
+      }
+      const { restoreFromData } = await import('./dbBackup');
+      const result = await restoreFromData(backup);
+      res.json({ success: true, ...result });
+    } catch (error) {
+      console.error('Restore-upload error:', error);
+      res.status(500).json({ message: 'Geri yükleme başarısız: ' + (error as Error).message });
     }
   });
 

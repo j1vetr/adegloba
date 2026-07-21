@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
 import { apiRequest } from "@/lib/queryClient";
@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Database, Download, Trash2, RotateCcw, Plus,
   Shield, Clock, HardDrive, Rows3, AlertTriangle,
-  CheckCircle2, Info, Mail,
+  CheckCircle2, Info, Mail, Upload, FileJson,
 } from "lucide-react";
 
 interface BackupMeta {
@@ -34,12 +34,27 @@ const fmtDate = (iso: string) => {
 
 const isJson = (f: string) => f.endsWith(".json");
 
+interface UploadedBackup {
+  raw:      any;
+  filename: string;
+  size:     number;
+  rowCount?: number;
+  version?:  string;
+  createdAt?: string;
+}
+
 export default function DatabaseBackup() {
   const { toast }  = useToast();
   const qc         = useQueryClient();
   const [confirmRestore, setConfirmRestore] = useState<string | null>(null);
   const [confirmDelete,  setConfirmDelete]  = useState<string | null>(null);
   const [sendingEmail, setSendingEmail]     = useState(false);
+
+  // Upload-restore state
+  const fileInputRef                          = useRef<HTMLInputElement>(null);
+  const [uploadedBackup, setUploadedBackup]   = useState<UploadedBackup | null>(null);
+  const [uploadError,    setUploadError]      = useState<string | null>(null);
+  const [confirmUpload,  setConfirmUpload]    = useState(false);
 
   // ── Queries ──────────────────────────────────────────────────────────────
   const { data: backups = [], isLoading } = useQuery<BackupMeta[]>({
@@ -87,6 +102,59 @@ export default function DatabaseBackup() {
     },
   });
 
+  // Upload-restore mutation
+  const uploadRestoreMutation = useMutation({
+    mutationFn: (backup: any) =>
+      apiRequest("POST", "/api/admin/database/restore-upload", backup),
+    onSuccess: (data: any) => {
+      qc.invalidateQueries({ queryKey: ["/api/admin/database/backups"] });
+      toast({
+        title: "Geri Yükleme Tamamlandı",
+        description: `${data.tablesRestored} tablo, ${data.rowsRestored?.toLocaleString()} satır geri yüklendi.`,
+      });
+      setConfirmUpload(false);
+      setUploadedBackup(null);
+    },
+    onError: (e: any) => {
+      toast({ title: "Geri Yükleme Hatası", description: e.message, variant: "destructive" });
+      setConfirmUpload(false);
+    },
+  });
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError(null);
+    setUploadedBackup(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".json")) {
+      setUploadError("Yalnızca .json dosyaları desteklenir");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target?.result as string);
+        if (!parsed.tables || !parsed.version) {
+          setUploadError("Geçersiz yedek formatı — bu dosya AdeGloba yedeği değil");
+          return;
+        }
+        setUploadedBackup({
+          raw:       parsed,
+          filename:  file.name,
+          size:      file.size,
+          rowCount:  parsed.rowCount,
+          version:   parsed.version,
+          createdAt: parsed.createdAt,
+        });
+      } catch {
+        setUploadError("JSON ayrıştırma hatası — dosya bozuk olabilir");
+      }
+    };
+    reader.readAsText(file);
+    // reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
   const handleEmailBackup = async () => {
     setSendingEmail(true);
     try {
@@ -103,7 +171,7 @@ export default function DatabaseBackup() {
     window.open(`/api/admin/database/backups/${encodeURIComponent(filename)}`, "_blank");
   };
 
-  const isBusy = createMutation.isPending || restoreMutation.isPending || deleteMutation.isPending;
+  const isBusy = createMutation.isPending || restoreMutation.isPending || deleteMutation.isPending || uploadRestoreMutation.isPending;
 
   return (
     <AdminLayout title="DB Yedekleme">
@@ -267,6 +335,98 @@ export default function DatabaseBackup() {
           )}
         </div>
 
+        {/* ── Dışarıdan JSON Yükle ── */}
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-800">
+            <Upload className="h-4 w-4 text-cyan-400" />
+            <p className="text-white font-semibold text-sm">Dışarıdan Yedek Yükle</p>
+            <span className="ml-auto text-[11px] text-slate-600">Bilgisayarınızdaki .json yedek dosyasını seçin</span>
+          </div>
+          <div className="p-5">
+            {/* Drop zone */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed border-slate-700 hover:border-cyan-600/50 hover:bg-cyan-500/3 cursor-pointer transition-all group"
+            >
+              <FileJson className="h-9 w-9 text-slate-600 group-hover:text-cyan-500/70 transition-colors" />
+              <div className="text-center">
+                <p className="text-slate-400 text-sm font-medium group-hover:text-slate-300 transition-colors">
+                  JSON yedek dosyası seçmek için tıklayın
+                </p>
+                <p className="text-slate-600 text-xs mt-0.5">Yalnızca AdeGloba formatındaki .json dosyaları kabul edilir</p>
+              </div>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            {/* Hata */}
+            {uploadError && (
+              <div className="mt-3 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-red-500/5 border border-red-500/15">
+                <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                <p className="text-red-300 text-xs">{uploadError}</p>
+              </div>
+            )}
+
+            {/* Dosya önizleme */}
+            {uploadedBackup && (
+              <div className="mt-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0">
+                      <FileJson className="h-4 w-4 text-cyan-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{uploadedBackup.filename}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                        <span className="text-slate-500 text-[11px] flex items-center gap-1">
+                          <HardDrive className="h-3 w-3" />{fmtSize(uploadedBackup.size)}
+                        </span>
+                        {uploadedBackup.rowCount !== undefined && (
+                          <span className="text-slate-500 text-[11px] flex items-center gap-1">
+                            <Rows3 className="h-3 w-3" />{uploadedBackup.rowCount.toLocaleString()} satır
+                          </span>
+                        )}
+                        {uploadedBackup.createdAt && (
+                          <span className="text-slate-500 text-[11px] flex items-center gap-1">
+                            <Clock className="h-3 w-3" />{fmtDate(uploadedBackup.createdAt)}
+                          </span>
+                        )}
+                        {uploadedBackup.version && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-500">
+                            v{uploadedBackup.version}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => { setUploadedBackup(null); setUploadError(null); }}
+                      className="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white border border-slate-700 hover:bg-slate-800 transition-colors"
+                    >
+                      İptal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmUpload(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      Bu Yedekle Geri Yükle
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* ── Bilgi Kutusu ── */}
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 space-y-3">
           <div className="flex items-center gap-2">
@@ -333,6 +493,68 @@ export default function DatabaseBackup() {
                 className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
               >
                 {restoreMutation.isPending
+                  ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Geri Yükleniyor…</>
+                  : <><RotateCcw className="h-4 w-4" /> Evet, Geri Yükle</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Yükleme Geri Yükleme Onay Modalı ══ */}
+      {confirmUpload && uploadedBackup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70" onClick={() => !uploadRestoreMutation.isPending && setConfirmUpload(false)} />
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                <Upload className="h-5 w-5 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-white font-semibold">Yedekten Geri Yükle</p>
+                <p className="text-slate-500 text-sm">Bu işlem geri alınamaz</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-slate-800/60 border border-slate-700 p-3 space-y-2">
+              <div className="flex justify-between items-center">
+                <p className="text-slate-400 text-xs">Dosya</p>
+                <p className="text-white text-sm font-mono truncate max-w-[200px]">{uploadedBackup.filename}</p>
+              </div>
+              {uploadedBackup.rowCount !== undefined && (
+                <div className="flex justify-between items-center">
+                  <p className="text-slate-400 text-xs">Satır sayısı</p>
+                  <p className="text-white text-sm">{uploadedBackup.rowCount.toLocaleString()}</p>
+                </div>
+              )}
+              {uploadedBackup.createdAt && (
+                <div className="flex justify-between items-center">
+                  <p className="text-slate-400 text-xs">Yedek tarihi</p>
+                  <p className="text-white text-sm">{fmtDate(uploadedBackup.createdAt)}</p>
+                </div>
+              )}
+            </div>
+
+            <p className="text-slate-400 text-sm">
+              Mevcut <strong className="text-white">tüm veriler silinecek</strong> ve yüklediğiniz yedekteki verilerle değiştirilecek. Aktif oturumlar sonlanacak.
+            </p>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setConfirmUpload(false)}
+                disabled={uploadRestoreMutation.isPending}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium border border-slate-700 text-slate-300 hover:bg-slate-800 disabled:opacity-40 transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                onClick={() => uploadRestoreMutation.mutate(uploadedBackup.raw)}
+                disabled={uploadRestoreMutation.isPending}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
+              >
+                {uploadRestoreMutation.isPending
                   ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Geri Yükleniyor…</>
                   : <><RotateCcw className="h-4 w-4" /> Evet, Geri Yükle</>}
               </button>
