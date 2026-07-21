@@ -7,9 +7,9 @@ import { tr } from "date-fns/locale";
 import { toZonedTime } from "date-fns-tz";
 import {
   Users, ShoppingCart, Package, DollarSign, Ship,
-  Gift, Key, ArrowRight, HelpCircle, XCircle,
+  Gift, Key, ArrowRight, XCircle,
   TrendingUp, UserPlus, CheckCircle, Clock,
-  BarChart3, Settings, Bell, Send,
+  BarChart3, Settings,
 } from "lucide-react";
 
 interface Stats {
@@ -74,54 +74,18 @@ export default function AdminDashboard() {
   );
 
   const now = toZonedTime(new Date(), "Europe/Istanbul");
-  const pending = stats?.pendingOrders ?? 0;
-  const tickets = stats?.activeTickets ?? 0;
 
   return (
     <AdminLayout title="Dashboard">
       <div className="space-y-6 pb-8">
 
         {/* ── Başlık ── */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Yönetim Paneli</h1>
-            <p className="text-slate-500 text-sm mt-0.5 capitalize">
-              {format(now, "d MMMM yyyy, EEEE", { locale: tr })}
-            </p>
-          </div>
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 text-sm">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Sistem Aktif
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Yönetim Paneli</h1>
+          <p className="text-slate-500 text-sm mt-0.5 capitalize">
+            {format(now, "d MMMM yyyy, EEEE", { locale: tr })}
+          </p>
         </div>
-
-        {/* ── Aksiyon Uyarıları ── */}
-        {!sL && (pending > 0 || tickets > 0) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {pending > 0 && (
-              <Link href="/admin/orders">
-                <div className="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/8 cursor-pointer transition-colors">
-                  <div className="flex items-center gap-3">
-                    <ShoppingCart className="h-4 w-4 text-amber-400 shrink-0" />
-                    <p className="text-amber-200 text-sm"><span className="font-bold">{pending}</span> bekleyen sipariş</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-amber-500 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                </div>
-              </Link>
-            )}
-            {tickets > 0 && (
-              <Link href="/admin/tickets">
-                <div className="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-violet-500/20 bg-violet-500/5 hover:bg-violet-500/8 cursor-pointer transition-colors">
-                  <div className="flex items-center gap-3">
-                    <HelpCircle className="h-4 w-4 text-violet-400 shrink-0" />
-                    <p className="text-violet-200 text-sm"><span className="font-bold">{tickets}</span> açık destek talebi</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-violet-500 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                </div>
-              </Link>
-            )}
-          </div>
-        )}
 
         {/* ── Bu Ay — Ana Metrikler ── */}
         <div>

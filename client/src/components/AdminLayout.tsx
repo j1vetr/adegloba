@@ -15,48 +15,48 @@ interface AdminLayoutProps { children: ReactNode; title: string; }
 
 const NAV_GROUPS = [
   {
-    id: 'islemler', label: 'İşlemler', cols: 2,
+    id: 'islemler', label: 'İşlemler',
     items: [
-      { name: 'Gemiler',       href: '/admin/ships',            icon: Ship         },
-      { name: 'Paketler',      href: '/admin/packages',         icon: Package      },
-      { name: 'Kimlik Havuzu', href: '/admin/credential-pools', icon: Key          },
-      { name: 'Kuponlar',      href: '/admin/coupons',          icon: Gift         },
-      { name: 'Siparişler',    href: '/admin/orders',           icon: ShoppingCart },
-      { name: 'Stok Yönetimi', href: '/admin/stock-management', icon: PackageCheck },
+      { name: 'Gemiler',       href: '/admin/ships',            icon: Ship,         desc: 'Gemi kaydı ve yönetimi'      },
+      { name: 'Paketler',      href: '/admin/packages',         icon: Package,      desc: 'Veri paketi tanımları'        },
+      { name: 'Kimlik Havuzu', href: '/admin/credential-pools', icon: Key,          desc: 'Kullanıcı adı/şifre havuzu'  },
+      { name: 'Kuponlar',      href: '/admin/coupons',          icon: Gift,         desc: 'İndirim kuponu yönetimi'      },
+      { name: 'Siparişler',    href: '/admin/orders',           icon: ShoppingCart, desc: 'Sipariş takibi ve yönetimi'  },
+      { name: 'Stok Yönetimi', href: '/admin/stock-management', icon: PackageCheck, desc: 'Paket stok durumu'            },
     ],
   },
   {
-    id: 'kullanicilar', label: 'Kullanıcılar', cols: 1,
+    id: 'kullanicilar', label: 'Kullanıcılar',
     items: [
-      { name: 'Kullanıcılar',     href: '/admin/users',   icon: Users      },
-      { name: 'Destek Talepleri', href: '/admin/tickets', icon: HelpCircle },
+      { name: 'Kullanıcılar',     href: '/admin/users',   icon: Users,      desc: 'Üye listesi ve profiller'    },
+      { name: 'Destek Talepleri', href: '/admin/tickets', icon: HelpCircle, desc: 'Açık destek taleplerini gör' },
     ],
   },
   {
-    id: 'raporlar', label: 'Raporlar', cols: 2,
+    id: 'raporlar', label: 'Raporlar',
     items: [
-      { name: 'Raporlama',      href: '/admin/reports',           icon: BarChart3  },
-      { name: 'Gemi Analitik',  href: '/admin/ship-analytics',    icon: TrendingUp },
-      { name: 'Mali Raporlar',  href: '/admin/financial-reports', icon: DollarSign },
-      { name: 'E-posta Raporu', href: '/admin/admin-reporting',   icon: Mail       },
+      { name: 'Raporlama',      href: '/admin/reports',           icon: BarChart3,  desc: 'Satış ve gelir raporları'   },
+      { name: 'Gemi Analitik',  href: '/admin/ship-analytics',    icon: TrendingUp, desc: 'Gemi bazlı kullanım analizi' },
+      { name: 'Mali Raporlar',  href: '/admin/financial-reports', icon: DollarSign, desc: 'Detaylı mali tablolar'       },
+      { name: 'E-posta Raporu', href: '/admin/admin-reporting',   icon: Mail,       desc: 'E-posta gönderim istatistikleri' },
     ],
   },
   {
-    id: 'iletisim', label: 'İletişim', cols: 1,
+    id: 'iletisim', label: 'İletişim',
     items: [
-      { name: 'Push Bildirimleri', href: '/admin/push-notifications', icon: Bell },
-      { name: 'E-posta Pazarlama', href: '/admin/email-marketing',    icon: Send },
+      { name: 'Push Bildirimleri', href: '/admin/push-notifications', icon: Bell, desc: 'Anlık bildirim gönder'       },
+      { name: 'E-posta Pazarlama', href: '/admin/email-marketing',    icon: Send, desc: 'Toplu e-posta kampanyaları'  },
     ],
   },
   {
-    id: 'sistem', label: 'Sistem', cols: 2,
+    id: 'sistem', label: 'Sistem',
     items: [
-      { name: 'Site Ayarları',    href: '/admin/site-settings',   icon: Globe     },
-      { name: 'E-posta Ayarları', href: '/admin/email-settings',  icon: Mail      },
-      { name: 'Genel Ayarlar',    href: '/admin/settings',        icon: Settings  },
-      { name: 'DB Yedekleme',     href: '/admin/database-backup', icon: Database  },
-      { name: 'Sistem Logları',   href: '/admin/logs',            icon: FileText  },
-      { name: 'Ödeme Olayları',   href: '/admin/payment-events',  icon: CreditCard},
+      { name: 'Site Ayarları',    href: '/admin/site-settings',   icon: Globe,      desc: 'Genel site yapılandırması'  },
+      { name: 'E-posta Ayarları', href: '/admin/email-settings',  icon: Mail,       desc: 'SMTP ve şablon ayarları'    },
+      { name: 'Genel Ayarlar',    href: '/admin/settings',        icon: Settings,   desc: 'Sistem geneli ayarlar'      },
+      { name: 'DB Yedekleme',     href: '/admin/database-backup', icon: Database,   desc: 'Veritabanı yedek al'        },
+      { name: 'Sistem Logları',   href: '/admin/logs',            icon: FileText,   desc: 'Sunucu log kayıtları'       },
+      { name: 'Ödeme Olayları',   href: '/admin/payment-events',  icon: CreditCard, desc: 'PayPal işlem geçmişi'       },
     ],
   },
 ];
@@ -79,8 +79,9 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     }
   };
 
-  const isActive   = (href: string) => href === '/admin' ? location === '/admin' : location.startsWith(href);
+  const isActive    = (href: string) => href === '/admin' ? location === '/admin' : location.startsWith(href);
   const groupActive = (g: typeof NAV_GROUPS[0]) => g.items.some(i => isActive(i.href));
+  const activeGroup = NAV_GROUPS.find(g => g.id === openMenu) ?? null;
 
   if (isLoading) return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -94,12 +95,9 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-950">
 
-      {/* ── Dropdown backdrop ── */}
+      {/* ── Mega menü backdrop ── */}
       {openMenu && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setOpenMenu(null)}
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
       )}
 
       {/* ════════════ NAVBAR ════════════ */}
@@ -108,12 +106,15 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
 
           {/* Logo */}
           <Link href="/admin">
-            <img src={adeGlobaLogo} alt="AdeGloba" className="h-12 w-auto object-contain cursor-pointer shrink-0" />
+            <img
+              src={adeGlobaLogo}
+              alt="AdeGloba"
+              className="h-12 w-auto object-contain cursor-pointer shrink-0"
+            />
           </Link>
 
-          {/* Desktop nav — ortalanmış */}
-          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
-
+          {/* Desktop nav — ortada */}
+          <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
             <Link href="/admin">
               <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
                 location === '/admin'
@@ -126,46 +127,22 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
             </Link>
 
             {NAV_GROUPS.map(group => {
-              const open = openMenu === group.id;
+              const open   = openMenu === group.id;
               const active = groupActive(group);
               return (
-                <div key={group.id} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setOpenMenu(open ? null : group.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      active || open
-                        ? 'bg-slate-800 text-white'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                    }`}
-                  >
-                    {group.label}
-                    <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {open && (
-                    <div className={`absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 z-50 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60 p-1.5 ${
-                      group.cols === 2 ? 'grid grid-cols-2 gap-px min-w-[272px]' : 'flex flex-col gap-px min-w-[200px]'
-                    }`}>
-                      {group.items.map(item => {
-                        const Icon = item.icon;
-                        const itemActive = isActive(item.href);
-                        return (
-                          <Link key={item.href} href={item.href}>
-                            <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm cursor-pointer transition-colors ${
-                              itemActive
-                                ? 'bg-cyan-500/10 text-cyan-300'
-                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                            }`}>
-                              <Icon className={`h-4 w-4 shrink-0 ${itemActive ? 'text-cyan-400' : 'text-slate-500'}`} />
-                              <span>{item.name}</span>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => setOpenMenu(open ? null : group.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    active || open
+                      ? 'bg-slate-800 text-white'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  {group.label}
+                  <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+                </button>
               );
             })}
           </nav>
@@ -203,6 +180,50 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           </div>
         </div>
       </header>
+
+      {/* ════════════ MEGA MENÜ PANELİ ════════════ */}
+      {activeGroup && (
+        <div className="fixed top-[64px] left-0 right-0 z-50 bg-slate-900 border-b border-slate-800 shadow-2xl shadow-black/60">
+          <div className="max-w-screen-xl mx-auto px-8 py-5">
+            {/* Grup başlığı */}
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-600 mb-3">
+              {activeGroup.label}
+            </p>
+            {/* Öğeler — 2, 3 veya 4 sütun (öğe sayısına göre) */}
+            <div className={`grid gap-1 ${
+              activeGroup.items.length <= 2 ? 'grid-cols-2' :
+              activeGroup.items.length <= 4 ? 'grid-cols-2 sm:grid-cols-4' :
+              'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6'
+            }`}>
+              {activeGroup.items.map(item => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <div className={`group flex flex-col gap-2 p-3.5 rounded-xl cursor-pointer transition-all border ${
+                      active
+                        ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-300'
+                        : 'bg-slate-800/50 border-transparent hover:bg-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
+                    }`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        active ? 'bg-cyan-500/20' : 'bg-slate-700/60 group-hover:bg-slate-700'
+                      }`}>
+                        <Icon className={`h-4 w-4 ${active ? 'text-cyan-400' : 'text-slate-400 group-hover:text-white'}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium leading-tight">{item.name}</p>
+                        <p className={`text-[11px] mt-0.5 leading-tight ${active ? 'text-cyan-400/70' : 'text-slate-600 group-hover:text-slate-500'}`}>
+                          {item.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ════════════ MOBİL MENÜ ════════════ */}
       {mobileOpen && (
