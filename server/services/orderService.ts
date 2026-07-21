@@ -6,7 +6,7 @@ import { emailService } from "../emailService";
 import { getEndOfMonthIstanbul } from "../utils/dateUtils";
 import { db } from "../db";
 import { eq, and, isNull, or } from "drizzle-orm";
-import { orders, orderItems, credentialPools, orderCredentials } from "@shared/schema";
+import { orders, orderItems, credentialPools, orderCredentials, cartItems } from "@shared/schema";
 
 export class OrderService {
   private expiryService: ExpiryService;
@@ -241,6 +241,11 @@ export class OrderService {
             });
           }
         }
+
+        // Clear the user's cart atomically — same transaction guarantees no stale
+        // items remain if anything above fails and the TX rolls back.
+        await tx.delete(cartItems).where(eq(cartItems.userId, order.userId));
+        console.log(`🛒 Cart cleared for user ${order.userId} inside payment transaction`);
 
         console.log(
           `✅ Payment completion processed successfully for order ${orderId}: ${assignedCredentials.length} credentials assigned`

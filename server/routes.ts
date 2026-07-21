@@ -20,6 +20,37 @@ const orderService = new OrderService(storage);
 const couponService = new CouponService(storage);
 const expiryService = new ExpiryService(storage);
 
+// ── PayPal credential mutex ────────────────────────────────────────────────
+// process.env mutations are global — serialise every block that temporarily
+// overwrites PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET so concurrent requests
+// cannot corrupt each other's credentials.
+let _paypalCredLock = Promise.resolve<void>(undefined);
+function withPaypalCredentials<T>(
+  clientId: string,
+  secret: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  const slot = _paypalCredLock.then(async () => {
+    const prev = {
+      id:     process.env.PAYPAL_CLIENT_ID,
+      secret: process.env.PAYPAL_CLIENT_SECRET,
+    };
+    process.env.PAYPAL_CLIENT_ID     = clientId;
+    process.env.PAYPAL_CLIENT_SECRET = secret;
+    try {
+      return await fn();
+    } finally {
+      if (prev.id !== undefined)     process.env.PAYPAL_CLIENT_ID     = prev.id;
+      else                            delete process.env.PAYPAL_CLIENT_ID;
+      if (prev.secret !== undefined)  process.env.PAYPAL_CLIENT_SECRET = prev.secret;
+      else                            delete process.env.PAYPAL_CLIENT_SECRET;
+    }
+  });
+  // Keep the lock chain alive even when the slot rejects
+  _paypalCredLock = slot.then(() => {}, () => {});
+  return slot;
+}
+
 // Helper function to generate slug from ship name
 function generateSlug(name: string): string {
   return name
@@ -246,22 +277,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return origJson(body);
       };
 
-      // Temporarily set environment variables from database for PayPal SDK
-      const originalClientId = process.env.PAYPAL_CLIENT_ID;
-      const originalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
-      
-      process.env.PAYPAL_CLIENT_ID = paypalClientId;
-      process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
-
-      try {
-        // Call PayPal function directly with proper request/response
-        const order = await createPaypalOrder(req, res);
-        return; // Function handles response
-      } finally {
-        // Restore original environment variables
-        if (originalClientId) process.env.PAYPAL_CLIENT_ID = originalClientId;
-        if (originalClientSecret) process.env.PAYPAL_CLIENT_SECRET = originalClientSecret;
-      }
+      await withPaypalCredentials(paypalClientId, paypalSecret, () => createPaypalOrder(req, res));
+      return; // createPaypalOrder already sent the response
     } catch (error: any) {
       console.error("PayPal order creation error:", error);
       storage.createPaymentEvent({
@@ -332,23 +349,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return captureOrigJson(body);
       };
 
-      // Temporarily set environment variables from database for PayPal SDK
-      const originalClientId = process.env.PAYPAL_CLIENT_ID;
-      const originalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
-      
-      process.env.PAYPAL_CLIENT_ID = paypalClientId;
-      process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
-
-      try {
-        // Set orderID in params for PayPal function  
-        req.params = { ...req.params, orderID: orderId };
-        await capturePaypalOrder(req, res);
-        return; // Function handles response
-      } finally {
-        // Restore original environment variables
-        if (originalClientId) process.env.PAYPAL_CLIENT_ID = originalClientId;
-        if (originalClientSecret) process.env.PAYPAL_CLIENT_SECRET = originalClientSecret;
-      }
+      req.params = { ...req.params, orderID: orderId };
+      await withPaypalCredentials(paypalClientId, paypalSecret, () => capturePaypalOrder(req, res));
+      return; // capturePaypalOrder already sent the response
     } catch (error: any) {
       console.error("PayPal capture error:", error);
       storage.createPaymentEvent({
@@ -1129,44 +1132,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const paypalSecret = settings.find(s => s.key === 'paypalClientSecret')?.value;
         
         if (paypalClientId && paypalSecret) {
-          // PayPal client oluştur
-          const originalClientId = process.env.PAYPAL_CLIENT_ID;
-          const originalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
-          
-          process.env.PAYPAL_CLIENT_ID = paypalClientId;
-          process.env.PAYPAL_CLIENT_SECRET = paypalSecret;
-          
-          try {
+          // Verify capture status with PayPal — use mutex to prevent env var race condition
+          let verifyOk = false;
+          let verifyFailStatus: string | undefined;
+
+          await withPaypalCredentials(paypalClientId, paypalSecret, async () => {
             const client = await createPayPalClient();
             const ordersController = new OrdersController(client);
-            
-            // PayPal'dan order detaylarını çek
+
             const { body } = await ordersController.getOrder({ id: paypalOrderId });
             const orderDetails = JSON.parse(String(body));
-            
+
             console.log(`🔍 PayPal Order Status Check:`, {
               orderId: paypalOrderId,
               status: orderDetails.status,
-              captureStatus: orderDetails.purchase_units?.[0]?.payments?.captures?.[0]?.status
+              captureStatus: orderDetails.purchase_units?.[0]?.payments?.captures?.[0]?.status,
             });
-            
-            // KESIN KONTROL: Capture status COMPLETED olmak zorunda
+
             const captureDetails = orderDetails.purchase_units?.[0]?.payments?.captures?.[0];
             if (!captureDetails || captureDetails.status !== 'COMPLETED') {
-              console.error(`❌ PAYMENT REJECTED: Order ${paypalOrderId} capture status is not COMPLETED:`, captureDetails?.status);
-              return res.status(400).json({ 
-                message: 'Payment verification failed - payment was not completed successfully',
-                paypalStatus: captureDetails?.status || 'UNKNOWN',
-                verified: false
-              });
+              console.error(`❌ PAYMENT REJECTED: capture status not COMPLETED:`, captureDetails?.status);
+              verifyFailStatus = captureDetails?.status || 'UNKNOWN';
+            } else {
+              console.log(`✅ PAYMENT VERIFIED: Order ${paypalOrderId} has COMPLETED capture status`);
+              verifyOk = true;
             }
-            
-            console.log(`✅ PAYMENT VERIFIED: Order ${paypalOrderId} has COMPLETED capture status`);
-            
-          } finally {
-            // Restore environment variables
-            if (originalClientId) process.env.PAYPAL_CLIENT_ID = originalClientId;
-            if (originalClientSecret) process.env.PAYPAL_CLIENT_SECRET = originalClientSecret;
+          });
+
+          if (!verifyOk) {
+            return res.status(400).json({
+              message: 'Payment verification failed - payment was not completed successfully',
+              paypalStatus: verifyFailStatus,
+              verified: false,
+            });
           }
         }
       }
@@ -1261,8 +1259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error('Failed to process payment and assign credentials');
       }
 
-      // Clear cart after successful order creation and credential assignment
-      await storage.clearCart(userId);
+      // Cart is cleared atomically inside processPaymentCompletion's DB transaction
 
       // Log success event
       await storage.createPaymentEvent({
