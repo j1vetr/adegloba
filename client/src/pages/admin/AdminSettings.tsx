@@ -146,57 +146,61 @@ export default function AdminSettings({ defaultTab = "genel" as Tab }: { default
   });
 
   // ── Fetch general/integration settings ─────────────────────────────────
-  const { isLoading: loadingGen } = useQuery<SettingRow[]>({
+  const { data: settingsData, isLoading: loadingGen } = useQuery<SettingRow[]>({
     queryKey: ["/api/admin/settings"],
     queryFn: async () => {
       const res = await fetch("/api/admin/settings");
       return res.json();
     },
-    select: (data) => {
-      const obj: Record<string, string> = {};
-      data.forEach(s => { obj[s.key] = s.value; });
-      setGen(prev => ({
-        siteName:        obj.siteName        ?? prev.siteName,
-        baseUrl:         obj.base_url        ?? prev.baseUrl,
-        whatsappNumber:  obj.whatsappNumber  ?? prev.whatsappNumber,
-        supportEmail:    obj.supportEmail    ?? prev.supportEmail,
-        supportPhone:    obj.supportPhone    ?? prev.supportPhone,
-        defaultLanguage: obj.defaultLanguage ?? prev.defaultLanguage,
-        timezone:        obj.timezone        ?? prev.timezone,
-        maintenanceMode: obj.maintenanceMode ?? prev.maintenanceMode,
-      }));
-      setInteg(prev => ({
-        paypalEnvironment:  obj.paypalEnvironment  ?? prev.paypalEnvironment,
-        paypalClientId:     obj.paypalClientId     ?? prev.paypalClientId,
-        paypalClientSecret: obj.paypalClientSecret ?? prev.paypalClientSecret,
-        currency:           obj.currency           ?? prev.currency,
-        SHIP_QUOTA_API_KEY: obj.SHIP_QUOTA_API_KEY ?? prev.SHIP_QUOTA_API_KEY,
-      }));
-      return data;
-    },
   });
 
+  useEffect(() => {
+    if (!settingsData) return;
+    const obj: Record<string, string> = {};
+    settingsData.forEach(s => { obj[s.key] = s.value; });
+    setGen(prev => ({
+      siteName:        obj.siteName        ?? prev.siteName,
+      baseUrl:         obj.base_url        ?? prev.baseUrl,
+      whatsappNumber:  obj.whatsappNumber  ?? prev.whatsappNumber,
+      supportEmail:    obj.supportEmail    ?? prev.supportEmail,
+      supportPhone:    obj.supportPhone    ?? prev.supportPhone,
+      defaultLanguage: obj.defaultLanguage ?? prev.defaultLanguage,
+      timezone:        obj.timezone        ?? prev.timezone,
+      maintenanceMode: obj.maintenanceMode ?? prev.maintenanceMode,
+    }));
+    setInteg(prev => ({
+      paypalEnvironment:  obj.paypalEnvironment  ?? prev.paypalEnvironment,
+      paypalClientId:     obj.paypalClientId     ?? prev.paypalClientId,
+      paypalClientSecret: obj.paypalClientSecret ?? prev.paypalClientSecret,
+      currency:           obj.currency           ?? prev.currency,
+      SHIP_QUOTA_API_KEY: obj.SHIP_QUOTA_API_KEY ?? prev.SHIP_QUOTA_API_KEY,
+    }));
+  }, [settingsData]);
+
   // ── Fetch email settings ────────────────────────────────────────────────
-  const { isLoading: loadingEmail } = useQuery({
+  const { data: emailData, isLoading: loadingEmail } = useQuery({
     queryKey: ["/api/admin/email-settings"],
     queryFn: async () => {
       const res = await fetch("/api/admin/email-settings", { credentials: "include" });
       if (!res.ok) return null;
-      const d = await res.json();
-      setEm(prev => ({
-        fromEmail:  d.from_email  ?? prev.fromEmail,
-        fromName:   d.from_name   ?? prev.fromName,
-        replyTo:    d.reply_to    ?? prev.replyTo,
-        adminEmail: d.admin_email ?? prev.adminEmail,
-        smtpHost:   d.smtp_host   ?? prev.smtpHost,
-        smtpPort:   d.smtp_port   ?? prev.smtpPort,
-        smtpUser:   d.smtp_user   ?? prev.smtpUser,
-        smtpPass:   "",
-        isActive:   d.is_active   ?? prev.isActive,
-      }));
-      return d;
+      return res.json();
     },
   });
+
+  useEffect(() => {
+    if (!emailData) return;
+    setEm(prev => ({
+      fromEmail:  emailData.from_email  ?? prev.fromEmail,
+      fromName:   emailData.from_name   ?? prev.fromName,
+      replyTo:    emailData.reply_to    ?? prev.replyTo,
+      adminEmail: emailData.admin_email ?? prev.adminEmail,
+      smtpHost:   emailData.smtp_host   ?? prev.smtpHost,
+      smtpPort:   emailData.smtp_port   ?? prev.smtpPort,
+      smtpUser:   emailData.smtp_user   ?? prev.smtpUser,
+      smtpPass:   "",
+      isActive:   emailData.is_active   ?? prev.isActive,
+    }));
+  }, [emailData]);
 
   // ── Mutations ───────────────────────────────────────────────────────────
   const saveGenMut = useMutation({
