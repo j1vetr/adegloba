@@ -65,7 +65,9 @@ const SIDEBAR_W = 'w-[240px]';
 
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(NAV_GROUPS.map(g => [g.id, true]))
+  );
   const [location] = useLocation();
   const { user, isLoading } = useAdminAuth();
   const { toast } = useToast();
@@ -177,16 +179,8 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         })}
       </nav>
 
-      {/* Kullanıcı + Çıkış */}
-      <div className="shrink-0 border-t border-slate-800 p-3 space-y-1">
-        <div className="flex items-center gap-2.5 px-3 py-2">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-bold">
-              {user?.username?.charAt(0).toUpperCase() || 'A'}
-            </span>
-          </div>
-          <span className="text-slate-300 text-sm truncate">{user?.username || 'Admin'}</span>
-        </div>
+      {/* Çıkış */}
+      <div className="shrink-0 border-t border-slate-800 p-3">
         <button
           type="button"
           onClick={handleLogout}
