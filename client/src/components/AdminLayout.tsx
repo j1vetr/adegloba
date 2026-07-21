@@ -1,12 +1,11 @@
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useRef, useEffect, ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   LayoutDashboard, Ship, Package, Gift, ShoppingCart, Users,
-  Settings, Menu, X, LogOut, ChevronRight, HelpCircle, FileText,
-  Key, Mail, BarChart3, Bell, PackageCheck, Activity, TrendingUp,
-  Send, Database, Globe, CreditCard
+  Settings, Menu, X, LogOut, ChevronDown, HelpCircle, FileText,
+  Key, Mail, BarChart3, Bell, PackageCheck, TrendingUp,
+  Send, Database, Globe, CreditCard, DollarSign,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -17,237 +16,293 @@ interface AdminLayoutProps {
   title: string;
 }
 
-const NAV = [
+/* ─── Nav yapısı ─── */
+const NAV_GROUPS = [
   {
-    section: null,
+    id: 'islemler',
+    label: 'İşlemler',
+    cols: 2,
     items: [
-      { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+      { name: 'Gemiler',         href: '/admin/ships',            icon: Ship },
+      { name: 'Paketler',        href: '/admin/packages',         icon: Package },
+      { name: 'Kimlik Havuzu',   href: '/admin/credential-pools', icon: Key },
+      { name: 'Kuponlar',        href: '/admin/coupons',          icon: Gift },
+      { name: 'Siparişler',      href: '/admin/orders',           icon: ShoppingCart },
+      { name: 'Stok Yönetimi',   href: '/admin/stock-management', icon: PackageCheck },
     ],
   },
   {
-    section: 'İşlemler',
+    id: 'kullanicilar',
+    label: 'Kullanıcılar',
+    cols: 1,
     items: [
-      { name: 'Gemiler',         href: '/admin/ships',           icon: Ship },
-      { name: 'Paketler',        href: '/admin/packages',        icon: Package },
-      { name: 'Kimlik Havuzu',   href: '/admin/credential-pools',icon: Key },
-      { name: 'Kuponlar',        href: '/admin/coupons',         icon: Gift },
-      { name: 'Siparişler',      href: '/admin/orders',          icon: ShoppingCart },
-      { name: 'Stok Yönetimi',   href: '/admin/stock-management',icon: PackageCheck },
+      { name: 'Kullanıcılar',     href: '/admin/users',   icon: Users },
+      { name: 'Destek Talepleri', href: '/admin/tickets', icon: HelpCircle },
     ],
   },
   {
-    section: 'Kullanıcılar',
+    id: 'raporlar',
+    label: 'Raporlar',
+    cols: 2,
     items: [
-      { name: 'Kullanıcılar',      href: '/admin/users',   icon: Users },
-      { name: 'Destek Talepleri',  href: '/admin/tickets', icon: HelpCircle },
+      { name: 'Raporlama',       href: '/admin/reports',           icon: BarChart3 },
+      { name: 'Gemi Analitik',   href: '/admin/ship-analytics',    icon: TrendingUp },
+      { name: 'Mali Raporlar',   href: '/admin/financial-reports', icon: DollarSign },
+      { name: 'E-posta Raporu',  href: '/admin/admin-reporting',   icon: Mail },
     ],
   },
   {
-    section: 'Raporlar',
-    items: [
-      { name: 'Raporlama',     href: '/admin/reports',         icon: BarChart3 },
-      { name: 'Gemi Analitik', href: '/admin/ship-analytics',  icon: TrendingUp },
-    ],
-  },
-  {
-    section: 'İletişim',
+    id: 'iletisim',
+    label: 'İletişim',
+    cols: 1,
     items: [
       { name: 'Push Bildirimleri', href: '/admin/push-notifications', icon: Bell },
       { name: 'E-posta Pazarlama', href: '/admin/email-marketing',    icon: Send },
     ],
   },
   {
-    section: 'Sistem',
+    id: 'sistem',
+    label: 'Sistem',
+    cols: 2,
     items: [
-      { name: 'Site Ayarları',       href: '/admin/site-settings',    icon: Globe },
-      { name: 'E-posta Ayarları',    href: '/admin/email-settings',   icon: Mail },
-      { name: 'Genel Ayarlar',       href: '/admin/settings',         icon: Settings },
-      { name: 'DB Yedekleme',        href: '/admin/database-backup',  icon: Database },
-      { name: 'Sistem Logları',      href: '/admin/logs',             icon: FileText },
-      { name: 'Ödeme Olayları',      href: '/admin/payment-events',   icon: CreditCard },
+      { name: 'Site Ayarları',    href: '/admin/site-settings',    icon: Globe },
+      { name: 'E-posta Ayarları', href: '/admin/email-settings',   icon: Mail },
+      { name: 'Genel Ayarlar',    href: '/admin/settings',         icon: Settings },
+      { name: 'DB Yedekleme',     href: '/admin/database-backup',  icon: Database },
+      { name: 'Sistem Logları',   href: '/admin/logs',             icon: FileText },
+      { name: 'Ödeme Olayları',   href: '/admin/payment-events',   icon: CreditCard },
     ],
   },
 ];
 
+/* ══════════════════════════════════════════════════════════ */
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [location] = useLocation();
   const { user, isLoading } = useAdminAuth();
   const { toast } = useToast();
+  const navRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setSidebarOpen(false); }, [location]);
+  /* Sayfa değişince menüleri kapat */
+  useEffect(() => {
+    setOpenMenu(null);
+    setMobileOpen(false);
+  }, [location]);
+
+  /* Dışarı tıklayınca dropdown kapat */
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  /* Escape tuşu */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setOpenMenu(null); setMobileOpen(false); }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   const handleLogout = async () => {
     try {
-      await apiRequest('POST', '/api/auth/logout');
-      window.location.href = '/admin/login';
+      await apiRequest('POST', '/api/admin/logout');
+      window.location.href = '/login';
     } catch {
-      toast({ title: 'Hata', description: 'Çıkış yapılırken bir hata oluştu', variant: 'destructive' });
+      toast({ title: 'Hata', description: 'Çıkış yapılırken bir hata oluştu.', variant: 'destructive' });
     }
   };
 
   const isActive = (href: string) =>
     href === '/admin' ? location === '/admin' : location.startsWith(href);
 
-  const currentPage = NAV.flatMap(g => g.items).find(i => isActive(i.href));
+  const isGroupActive = (group: typeof NAV_GROUPS[0]) =>
+    group.items.some(item => isActive(item.href));
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <img src={adeGlobaLogo} alt="AdeGloba" className="h-10 opacity-60 animate-pulse" />
-          <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+          <img src={adeGlobaLogo} alt="AdeGloba" className="h-12 opacity-60 animate-pulse" />
+          <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
   }
 
-  const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-slate-950 border-r border-slate-800/80">
-      {/* Logo */}
-      <div className="h-20 flex items-center justify-between px-5 border-b border-slate-800/80 shrink-0">
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-950">
+
+      {/* ══════════ NAVBAR ══════════ */}
+      <header
+        ref={navRef}
+        className="sticky top-0 z-50 h-[60px] bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80 flex items-center px-4 lg:px-6 gap-4 shrink-0"
+      >
+        {/* Logo */}
         <Link href="/admin">
-          <div className="flex items-center cursor-pointer">
-            <img src={adeGlobaLogo} alt="AdeGloba" className="h-14 w-auto object-contain" />
-          </div>
+          <img
+            src={adeGlobaLogo}
+            alt="AdeGloba"
+            className="h-11 w-auto object-contain cursor-pointer shrink-0"
+          />
         </Link>
-        <button
-          className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          onClick={() => setSidebarOpen(false)}
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
-        {NAV.map((group) => (
-          <div key={group.section ?? 'top'}>
-            {group.section && (
-              <p className="px-3 pt-4 pb-1.5 text-[10px] font-semibold tracking-widest text-slate-600 uppercase">
-                {group.section}
-              </p>
-            )}
-            {group.items.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-              return (
-                <Link key={item.href} href={item.href}>
-                  <div className={`
-                    relative flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer
-                    text-sm font-medium transition-all duration-150 group
-                    ${active
-                      ? 'bg-cyan-500/10 text-cyan-300'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/70'
-                    }
-                  `}>
-                    {active && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-cyan-400 rounded-full" />
-                    )}
-                    <Icon className={`h-4 w-4 shrink-0 transition-colors ${active ? 'text-cyan-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
-                    <span className="truncate">{item.name}</span>
+        {/* ── Desktop nav ── */}
+        <nav className="hidden lg:flex items-center gap-0.5 flex-1 overflow-x-auto">
+
+          {/* Dashboard — direct link */}
+          <Link href="/admin">
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-colors whitespace-nowrap ${
+              location === '/admin'
+                ? 'bg-slate-800 text-white'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}>
+              <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
+              Dashboard
+            </div>
+          </Link>
+
+          {/* Dropdown gruplar */}
+          {NAV_GROUPS.map(group => {
+            const groupActive = isGroupActive(group);
+            const open = openMenu === group.id;
+            return (
+              <div key={group.id} className="relative">
+                <button
+                  onClick={() => setOpenMenu(open ? null : group.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                    groupActive || open
+                      ? 'bg-slate-800 text-white'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                >
+                  {group.label}
+                  <ChevronDown className={`h-3 w-3 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown panel */}
+                {open && (
+                  <div className={`absolute top-full left-0 mt-2 rounded-xl border border-slate-700/80 bg-slate-900 shadow-2xl shadow-black/50 p-1.5 ${
+                    group.cols === 2 ? 'grid grid-cols-2 gap-0.5 min-w-[280px]' : 'flex flex-col gap-0.5 min-w-[190px]'
+                  }`}>
+                    {group.items.map(item => {
+                      const Icon = item.icon;
+                      const active = isActive(item.href);
+                      return (
+                        <Link key={item.href} href={item.href}>
+                          <div className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors ${
+                            active
+                              ? 'bg-cyan-500/10 text-cyan-300'
+                              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                          }`}>
+                            <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-cyan-400' : 'text-slate-500'}`} />
+                            <span className="truncate">{item.name}</span>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
+                )}
+              </div>
+            );
+          })}
+        </nav>
 
-      {/* User footer */}
-      <div className="shrink-0 px-3 py-3 border-t border-slate-800/80">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-slate-900/60 border border-slate-800">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-semibold">
-              {user?.username?.charAt(0).toUpperCase() || 'A'}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-medium truncate">{user?.username || 'Admin'}</p>
-            <p className="text-slate-500 text-[10px]">Sistem Yöneticisi</p>
-          </div>
+        {/* ── Sağ: kullanıcı + çıkış ── */}
+        <div className="hidden lg:flex items-center gap-3 ml-auto shrink-0">
+          <span className="text-slate-500 text-sm select-none">{user?.username || 'Admin'}</span>
           <button
             onClick={handleLogout}
-            title="Çıkış Yap"
-            className="p-1.5 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-colors shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 border border-slate-800/80 hover:border-red-400/20 transition-all"
           >
             <LogOut className="h-3.5 w-3.5" />
+            Çıkış Yap
           </button>
         </div>
-      </div>
-    </div>
-  );
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-slate-950">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+        {/* ── Mobil: sağ taraf ── */}
+        <div className="lg:hidden flex items-center gap-2 ml-auto">
+          <span className="text-slate-500 text-sm">{user?.username || 'Admin'}</span>
+          <button
+            onClick={() => { setMobileOpen(!mobileOpen); setOpenMenu(null); }}
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            aria-label="Menü"
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+      </header>
 
-      {/* Sidebar — Desktop always visible, Mobile drawer */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-56 lg:relative lg:flex lg:w-56 shrink-0
-        transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-        <SidebarContent />
-      </aside>
-
-      {/* Right side */}
-      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-        {/* Topbar */}
-        <header className="h-14 shrink-0 flex items-center justify-between px-4 lg:px-6 bg-slate-950 border-b border-slate-800/80 gap-4">
-          {/* Left */}
-          <div className="flex items-center gap-3 min-w-0">
-            <button
-              className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-
-            {/* Breadcrumb */}
-            <nav className="hidden lg:flex items-center gap-1 text-sm min-w-0">
-              <Link href="/admin">
-                <span className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Yönetim</span>
-              </Link>
-              {currentPage && location !== '/admin' && (
-                <>
-                  <ChevronRight className="h-3.5 w-3.5 text-slate-700 shrink-0" />
-                  <span className="text-slate-200 font-medium truncate">{currentPage.name}</span>
-                </>
-              )}
-            </nav>
-
-            {/* Mobile page title */}
-            <span className="lg:hidden text-white font-semibold text-base truncate">{title}</span>
-          </div>
-
-          {/* Right — page title on desktop + user pill */}
-          <div className="flex items-center gap-3 shrink-0">
-            <h1 className="hidden lg:block text-slate-200 font-semibold text-sm">{title}</h1>
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                <span className="text-white text-[10px] font-semibold">
-                  {user?.username?.charAt(0).toUpperCase() || 'A'}
-                </span>
+      {/* ══════════ MOBİL ÇEKMECE ══════════ */}
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 top-[60px] bg-slate-950 z-40 overflow-y-auto">
+          <div className="p-4">
+            {/* Dashboard */}
+            <Link href="/admin">
+              <div className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium cursor-pointer mb-1 ${
+                location === '/admin'
+                  ? 'bg-cyan-500/10 text-cyan-300'
+                  : 'text-slate-300 hover:bg-slate-800'
+              }`}>
+                <LayoutDashboard className="h-4 w-4 shrink-0" />
+                Dashboard
               </div>
-              <span className="text-slate-300 text-xs">{user?.username || 'Admin'}</span>
+            </Link>
+
+            {/* Gruplar */}
+            {NAV_GROUPS.map(group => (
+              <div key={group.id} className="mt-4">
+                <p className="px-4 pb-1 text-[10px] font-bold tracking-widest text-slate-600 uppercase">
+                  {group.label}
+                </p>
+                <div className="space-y-0.5">
+                  {group.items.map(item => {
+                    const Icon = item.icon;
+                    const active = isActive(item.href);
+                    return (
+                      <Link key={item.href} href={item.href}>
+                        <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm cursor-pointer transition-colors ${
+                          active
+                            ? 'bg-cyan-500/10 text-cyan-300'
+                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}>
+                          <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-cyan-400' : 'text-slate-600'}`} />
+                          {item.name}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* Çıkış */}
+            <div className="mt-6 border-t border-slate-800 pt-4">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-400/10 transition-colors"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                Çıkış Yap
+              </button>
             </div>
           </div>
-        </header>
+        </div>
+      )}
 
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
-      </div>
+      {/* ══════════ İÇERİK ══════════ */}
+      <main className="flex-1">
+        <div className="max-w-7xl mx-auto p-4 lg:p-6">
+          {children}
+        </div>
+      </main>
+
     </div>
   );
 }
