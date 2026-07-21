@@ -9,10 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, RefreshCw, CreditCard, AlertCircle, CheckCircle2, ShieldBan, ChevronDown, ChevronRight } from "lucide-react";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
-  order_create_request: "Sipariş Talebi",
-  order_create_success: "Sipariş Oluşturuldu",
-  order_create_failed: "Sipariş Oluşturulamadı",
-  capture_request: "Ödeme Yakalama Talebi",
+  create_order: "Sipariş Oluşturma",
+  capture_attempt: "Ödeme Yakalama Talebi",
   capture_success: "Ödeme Yakalandı",
   capture_failed: "Ödeme Yakalanamadı",
   complete_request: "Tamamlama Talebi",

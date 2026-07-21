@@ -222,18 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Log request attempt
-      storage.createPaymentEvent({
-        eventType: 'order_create_request',
-        userId: req.session?.userId || null,
-        amountUsd: amount,
-        status: 'ok',
-        ipAddress: req.ip || '',
-        userAgent: req.headers['user-agent'] || '',
-        metadata: { currency },
-      }).catch(() => {});
-
-      // Intercept res.json to capture outcome (createPaypalOrder writes res directly)
+      // Intercept res.json to record create_order outcome (ok/error)
       let capturedCode = 200;
       const origStatus = res.status.bind(res);
       const origJson = res.json.bind(res);
@@ -243,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json = origJson;
         const isOk = capturedCode < 400;
         storage.createPaymentEvent({
-          eventType: isOk ? 'order_create_success' : 'order_create_failed',
+          eventType: 'create_order',
           paypalOrderId: body?.id || null,
           userId: req.session?.userId || null,
           amountUsd: amount,
@@ -252,6 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           durationMs: Date.now() - t0,
           ipAddress: req.ip || '',
           userAgent: req.headers['user-agent'] || '',
+          metadata: { currency },
         }).catch(() => {});
         return origJson(body);
       };
@@ -275,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("PayPal order creation error:", error);
       storage.createPaymentEvent({
-        eventType: 'order_create_failed',
+        eventType: 'create_order',
         userId: req.session?.userId || null,
         status: 'error',
         errorMessage: error?.message || String(error),
@@ -309,9 +299,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Log capture request
+      // Log capture attempt
       storage.createPaymentEvent({
-        eventType: 'capture_request',
+        eventType: 'capture_attempt',
         paypalOrderId: orderId,
         userId: req.session?.userId || null,
         status: 'ok',
