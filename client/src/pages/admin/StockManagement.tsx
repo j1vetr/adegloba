@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   AlertTriangle, CheckCircle2, TrendingDown, Package, Plus,
   Upload, RefreshCw, Search, ArrowUpDown, ArrowUp, ArrowDown,
-  Database, ShieldCheck, Key, ExternalLink, X,
+  Database, ShieldCheck, Key, X,
 } from "lucide-react";
 
 interface StockItem {
@@ -254,10 +254,10 @@ export default function StockManagement() {
     list = [...list].sort((a, b) => {
       let va: any, vb: any;
       switch (sortField) {
-        case "available":  va = a.available; vb = b.available; break;
-        case "total":      va = a.total;     vb = b.total;     break;
-        case "assigned":   va = a.assigned;  vb = b.assigned;  break;
-        case "usage":      va = a.total > 0 ? a.assigned / a.total : 0; vb = b.total > 0 ? b.assigned / b.total : 0; break;
+        case "available":  va = Number(a.available); vb = Number(b.available); break;
+        case "total":      va = Number(a.total);     vb = Number(b.total);     break;
+        case "assigned":   va = Number(a.assigned);  vb = Number(b.assigned);  break;
+        case "usage":      va = Number(a.total) > 0 ? Number(a.assigned) / Number(a.total) : 0; vb = Number(b.total) > 0 ? Number(b.assigned) / Number(b.total) : 0; break;
         case "planName":   va = a.planName;  vb = b.planName;  break;
         case "shipName":   va = a.shipName;  vb = b.shipName;  break;
         default:           va = a.available; vb = b.available;
@@ -273,9 +273,9 @@ export default function StockManagement() {
   const stats = useMemo(() => {
     if (!stockData) return { total: 0, available: 0, assigned: 0, critical: 0 };
     return {
-      total:     stockData.reduce((s, i) => s + i.total, 0),
-      available: stockData.reduce((s, i) => s + i.available, 0),
-      assigned:  stockData.reduce((s, i) => s + i.assigned, 0),
+      total:     stockData.reduce((s, i) => s + Number(i.total), 0),
+      available: stockData.reduce((s, i) => s + Number(i.available), 0),
+      assigned:  stockData.reduce((s, i) => s + Number(i.assigned), 0),
       critical:  stockData.filter(i => i.stockLevel === "critical").length,
     };
   }, [stockData]);
@@ -317,14 +317,6 @@ export default function StockManagement() {
             >
               <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
               Yenile
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => window.location.href = "/admin/credentials"}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white h-8"
-            >
-              <Database className="h-3.5 w-3.5 mr-1.5" />
-              Havuz Yönetimi
             </Button>
           </div>
         </div>
@@ -468,15 +460,6 @@ export default function StockManagement() {
                               className="h-7 w-7 p-0 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10"
                             >
                               <Upload className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              title="Havuzda Gör"
-                              onClick={() => window.location.href = `/admin/credentials?planId=${item.planId}`}
-                              className="h-7 w-7 p-0 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </td>
