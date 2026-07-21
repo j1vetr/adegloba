@@ -4776,203 +4776,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Database Backup & Restore endpoints
+  // ── Database Backup & Restore (JSON-based, Drizzle) ──────────────────────
+
+  // Yeni yedek oluştur
   app.post('/api/admin/database/backup', isAdminAuthenticated, async (req, res) => {
     try {
-      const { spawn } = await import('child_process');
-      const { promisify } = await import('util');
-      const exec = promisify((await import('child_process')).exec);
-      
-      const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
-      const filename = `backup-${timestamp}.sql`;
-      const backupPath = `./backups/${filename}`;
-      
-      // Create backups directory if it doesn't exist
-      const fs = await import('fs');
-      const fsp = fs.promises;
-      await fsp.mkdir('./backups', { recursive: true });
-      
-      // Get database connection details from DATABASE_URL
-      const dbUrl = process.env.DATABASE_URL;
-      if (!dbUrl) {
-        return res.status(500).json({ message: 'DATABASE_URL not configured' });
-      }
-      
-      // Parse DATABASE_URL
-      const url = new URL(dbUrl);
-      const dbHost = url.hostname;
-      const dbPort = url.port || '5432';
-      const dbName = url.pathname.slice(1);
-      const dbUser = url.username;
-      const dbPassword = url.password;
-      
-      // Use pg_dump to create backup
-      const pgDumpCommand = `PGPASSWORD="${dbPassword}" pg_dump -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -F c -f ${backupPath}`;
-      
-      await exec(pgDumpCommand);
-      
-      // Get file stats
-      const stats = await fsp.stat(backupPath);
-      
-      res.json({
-        success: true,
-        filename,
-        size: stats.size,
-        path: backupPath,
-        createdAt: new Date().toISOString()
-      });
+      const { createBackup } = await import('./dbBackup');
+      const meta = await createBackup();
+      res.json({ success: true, ...meta });
     } catch (error) {
       console.error('Backup error:', error);
-      res.status(500).json({ message: 'Backup failed: ' + (error as Error).message });
+      res.status(500).json({ message: 'Yedekleme başarısız: ' + (error as Error).message });
     }
   });
 
+  // Yedek listesi
   app.get('/api/admin/database/backups', isAdminAuthenticated, async (req, res) => {
     try {
-      const fs = await import('fs');
-      const fsp = fs.promises;
-      const path = await import('path');
-      
-      const backupsDir = './backups';
-      
-      try {
-        await fsp.access(backupsDir);
-      } catch {
-        await fsp.mkdir(backupsDir, { recursive: true });
-        return res.json([]);
-      }
-      
-      const files = await fsp.readdir(backupsDir);
-      const backupFiles = files.filter(f => f.endsWith('.sql'));
-      
-      const backups = await Promise.all(
-        backupFiles.map(async (filename) => {
-          const filePath = path.join(backupsDir, filename);
-          const stats = await fsp.stat(filePath);
-          
-          return {
-            filename,
-            size: stats.size,
-            createdAt: stats.mtime.toISOString(),
-            path: filePath
-          };
-        })
-      );
-      
-      backups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
-      res.json(backups);
+      const { listBackups } = await import('./dbBackup');
+      res.json(await listBackups());
     } catch (error) {
-      console.error('Error listing backups:', error);
-      res.status(500).json({ message: 'Failed to list backups' });
+      console.error('List backups error:', error);
+      res.status(500).json({ message: 'Yedek listesi alınamadı: ' + (error as Error).message });
     }
   });
 
+  // Yedek indir
   app.get('/api/admin/database/backups/:filename', isAdminAuthenticated, async (req, res) => {
     try {
       const { filename } = req.params;
-      
-      const path = await import('path');
-      const fs = await import('fs');
-      
-      // Security check - ensure filename doesn't contain path traversal
       if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-        return res.status(400).json({ message: 'Invalid filename' });
+        return res.status(400).json({ message: 'Geçersiz dosya adı' });
       }
-      
-      if (!filename.endsWith('.sql')) {
-        return res.status(400).json({ message: 'Invalid file type' });
-      }
-      
-      const backupsDir = path.resolve('./backups');
-      const backupPath = path.join(backupsDir, filename);
-      
-      // Check if file exists
-      try {
-        await fs.promises.access(backupPath);
-      } catch {
-        return res.status(404).json({ message: 'Backup file not found' });
-      }
-      
-      res.download(backupPath, filename);
+      const filePath = require('path').resolve('./backups', filename);
+      res.download(filePath, filename);
     } catch (error) {
-      console.error('Error downloading backup:', error);
-      res.status(500).json({ message: 'Failed to download backup' });
+      console.error('Download backup error:', error);
+      res.status(500).json({ message: 'İndirme başarısız: ' + (error as Error).message });
     }
   });
 
+  // Geri yükle
   app.post('/api/admin/database/restore', isAdminAuthenticated, async (req, res) => {
     try {
       const { filename } = req.body;
-      
-      if (!filename) {
-        return res.status(400).json({ message: 'Filename required' });
-      }
-      
-      const backupPath = `./backups/${filename}`;
-      const { promisify } = await import('util');
-      const exec = promisify((await import('child_process')).exec);
-      const fs = await import('fs');
-      
-      // Check if backup file exists
-      try {
-        await fs.promises.access(backupPath);
-      } catch {
-        return res.status(404).json({ message: 'Backup file not found' });
-      }
-      
-      // Get database connection details
-      const dbUrl = process.env.DATABASE_URL;
-      if (!dbUrl) {
-        return res.status(500).json({ message: 'DATABASE_URL not configured' });
-      }
-      
-      const url = new URL(dbUrl);
-      const dbHost = url.hostname;
-      const dbPort = url.port || '5432';
-      const dbName = url.pathname.slice(1);
-      const dbUser = url.username;
-      const dbPassword = url.password;
-      
-      // Use pg_restore to restore database
-      const pgRestoreCommand = `PGPASSWORD="${dbPassword}" pg_restore -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -c ${backupPath}`;
-      
-      await exec(pgRestoreCommand);
-      
-      res.json({
-        success: true,
-        message: 'Database restored successfully'
-      });
+      if (!filename) return res.status(400).json({ message: 'Dosya adı gerekli' });
+      const { restoreBackup } = await import('./dbBackup');
+      const result = await restoreBackup(filename);
+      res.json({ success: true, ...result });
     } catch (error) {
       console.error('Restore error:', error);
-      res.status(500).json({ message: 'Restore failed: ' + (error as Error).message });
+      res.status(500).json({ message: 'Geri yükleme başarısız: ' + (error as Error).message });
     }
   });
 
+  // Yedek sil
   app.delete('/api/admin/database/backups/:filename', isAdminAuthenticated, async (req, res) => {
     try {
       const { filename } = req.params;
-      const backupPath = `./backups/${filename}`;
-      
-      const fs = await import('fs');
-      const path = await import('path');
-      
-      // Security check
-      const normalizedPath = path.normalize(backupPath);
-      if (!normalizedPath.startsWith('./backups/')) {
-        return res.status(400).json({ message: 'Invalid filename' });
-      }
-      
-      await fs.promises.unlink(backupPath);
-      
-      res.json({ success: true, message: 'Backup deleted' });
+      const { deleteBackup } = await import('./dbBackup');
+      await deleteBackup(filename);
+      res.json({ success: true });
     } catch (error) {
-      console.error('Error deleting backup:', error);
-      res.status(500).json({ message: 'Failed to delete backup' });
+      console.error('Delete backup error:', error);
+      res.status(500).json({ message: 'Silme başarısız: ' + (error as Error).message });
     }
   });
 
-  // Manual backup trigger (admin only)
+  // E-posta ile yedek gönder (manual trigger)
   app.post('/api/admin/database/backup/send-email', isAdminAuthenticated, async (req, res) => {
     try {
       const { runDatabaseBackupAndEmail } = await import('./backupScheduler');
