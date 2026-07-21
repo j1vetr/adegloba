@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, useRef, ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   LayoutDashboard, Ship, Package, Gift, ShoppingCart, Users,
@@ -67,8 +67,20 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const [location] = useLocation();
   const { user, isLoading } = useAdminAuth();
   const { toast } = useToast();
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { setOpenMenu(null); setMobileOpen(false); }, [location]);
+
+  const openGroup = (id: string) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setOpenMenu(id);
+  };
+  const scheduleClose = () => {
+    closeTimer.current = setTimeout(() => setOpenMenu(null), 120);
+  };
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  };
 
   const handleLogout = async () => {
     try {
@@ -95,32 +107,33 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-950">
 
-      {/* ── Mega menü backdrop ── */}
-      {openMenu && (
-        <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
-      )}
-
       {/* ════════════ NAVBAR ════════════ */}
       <header className="sticky top-0 z-50 bg-slate-950 border-b border-slate-800">
-        <div className="max-w-screen-xl mx-auto flex items-center h-[64px] px-4 lg:px-8">
+        <div className="max-w-screen-xl mx-auto flex items-center h-[80px] px-4 lg:px-8">
 
           {/* Logo */}
           <Link href="/admin">
             <img
               src={adeGlobaLogo}
               alt="AdeGloba"
-              className="h-12 w-auto object-contain cursor-pointer shrink-0"
+              className="h-[60px] w-auto object-contain cursor-pointer shrink-0"
             />
           </Link>
 
           {/* Desktop nav — ortada */}
-          <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
+          <nav
+            className="hidden lg:flex items-center gap-0.5 flex-1 justify-center"
+            onMouseLeave={scheduleClose}
+          >
             <Link href="/admin">
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
-                location === '/admin'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}>
+              <div
+                onMouseEnter={() => { cancelClose(); setOpenMenu(null); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
+                  location === '/admin'
+                    ? 'bg-slate-800 text-white'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
                 <LayoutDashboard className="h-3.5 w-3.5" />
                 Dashboard
               </div>
@@ -133,6 +146,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                 <button
                   key={group.id}
                   type="button"
+                  onMouseEnter={() => openGroup(group.id)}
                   onClick={() => setOpenMenu(open ? null : group.id)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     active || open
@@ -183,7 +197,11 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
 
       {/* ════════════ MEGA MENÜ PANELİ ════════════ */}
       {activeGroup && (
-        <div className="fixed top-[64px] left-0 right-0 z-50 bg-slate-900 border-b border-slate-800 shadow-2xl shadow-black/60">
+        <div
+          className="fixed top-[80px] left-0 right-0 z-50 bg-slate-900 border-b border-slate-800 shadow-2xl shadow-black/60"
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
+        >
           <div className="max-w-screen-xl mx-auto px-8 py-5">
             {/* Grup başlığı */}
             <p className="text-[11px] font-bold uppercase tracking-widest text-slate-600 mb-3">
@@ -227,7 +245,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
 
       {/* ════════════ MOBİL MENÜ ════════════ */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 top-[64px] bg-slate-950 z-40 overflow-y-auto">
+        <div className="lg:hidden fixed inset-0 top-[80px] bg-slate-950 z-40 overflow-y-auto">
           <div className="p-4 pb-8 space-y-1">
             <Link href="/admin">
               <div className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium cursor-pointer ${
