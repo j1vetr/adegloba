@@ -120,9 +120,9 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
             />
           </Link>
 
-          {/* Desktop nav — ortada */}
+          {/* Desktop nav — solda */}
           <nav
-            className="hidden lg:flex items-center gap-0.5 flex-1 justify-center"
+            className="hidden lg:flex items-center gap-0.5 ml-6"
             onMouseLeave={scheduleClose}
           >
             <Link href="/admin">
