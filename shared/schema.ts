@@ -1,6 +1,7 @@
 import { sql, relations } from 'drizzle-orm';
 import {
   index,
+  uniqueIndex,
   jsonb,
   pgTable,
   timestamp,
@@ -178,6 +179,7 @@ export const orders = pgTable("orders", {
   index("idx_orders_user_id").on(table.userId),
   index("idx_orders_ship_id").on(table.shipId),
   index("idx_orders_created_at").on(table.createdAt),
+  uniqueIndex("idx_orders_one_pending_per_user").on(table.userId).where(sql`status = 'pending'`),
 ]);
 
 export const orderItems = pgTable("order_items", {
