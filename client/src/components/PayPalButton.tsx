@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Shield, CheckCircle2 } from "lucide-react";
+import { Loader2, Shield, CheckCircle2, XCircle, Satellite } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PayPalButtonProps {
@@ -19,6 +19,110 @@ declare global {
   }
 }
 
+type ProcessingStep = "idle" | "approved" | "capturing" | "captured" | "completing" | "success" | "error";
+
+const STEPS = [
+  { key: "approved",   label: "PayPal onayı alındı",           activeLabel: "PayPal onayı bekleniyor..." },
+  { key: "capturing",  label: "Para transferi tamamlandı",      activeLabel: "Para transferi yapılıyor..." },
+  { key: "completing", label: "Sipariş hazırlandı",             activeLabel: "Sipariş oluşturuluyor..." },
+  { key: "success",    label: "Paketler etkinleştirildi",       activeLabel: "Paketler etkinleştiriliyor..." },
+] as const;
+
+const STEP_ORDER: ProcessingStep[] = ["approved", "capturing", "captured", "completing", "success"];
+
+function stepIndex(step: ProcessingStep) {
+  return STEP_ORDER.indexOf(step);
+}
+
+function PaymentOverlay({ step, errorMessage }: { step: ProcessingStep; errorMessage?: string }) {
+  if (step === "idle") return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-7 flex flex-col items-center gap-5">
+        {step === "error" ? (
+          <>
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+              <XCircle className="w-8 h-8 text-red-500" />
+            </div>
+            <div className="text-center">
+              <p className="font-bold text-gray-900 text-lg">Ödeme Tamamlanamadı</p>
+              {errorMessage && (
+                <p className="text-sm text-red-500 mt-1">{errorMessage}</p>
+              )}
+              <p className="text-xs text-gray-400 mt-2">Yönlendiriliyorsunuz...</p>
+            </div>
+          </>
+        ) : step === "success" ? (
+          <>
+            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-green-500" />
+            </div>
+            <div className="text-center">
+              <p className="font-bold text-gray-900 text-lg">Ödeme Başarılı!</p>
+              <p className="text-sm text-gray-500 mt-1">Sipariş sayfanıza yönlendiriliyorsunuz...</p>
+            </div>
+            <StepList currentStep={step} />
+          </>
+        ) : (
+          <>
+            <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center">
+              <Satellite className="w-7 h-7 text-blue-600 animate-pulse" />
+            </div>
+            <div className="text-center">
+              <p className="font-bold text-gray-900 text-lg">Ödemeniz İşleniyor</p>
+              <p className="text-xs text-gray-400 mt-1">Lütfen sayfayı kapatmayın</p>
+            </div>
+            <StepList currentStep={step} />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StepList({ currentStep }: { currentStep: ProcessingStep }) {
+  const current = stepIndex(currentStep);
+
+  return (
+    <div className="w-full flex flex-col gap-2.5">
+      {STEPS.map((s, i) => {
+        const done = current > i;
+        const active = current === i;
+
+        return (
+          <div key={s.key} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+            active ? "bg-blue-50 border border-blue-200" :
+            done  ? "bg-green-50 border border-green-200" :
+                    "bg-gray-50 border border-transparent"
+          }`}>
+            <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${
+              active ? "bg-blue-500 text-white" :
+              done  ? "bg-green-500 text-white" :
+                      "bg-gray-200 text-gray-400"
+            }`}>
+              {done ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : active ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                i + 1
+              )}
+            </div>
+            <span className={`text-sm font-medium ${
+              active ? "text-blue-700" :
+              done  ? "text-green-700" :
+                      "text-gray-400"
+            }`}>
+              {active ? s.activeLabel : s.label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function PayPalButton({
   amount,
   currency,
@@ -32,9 +136,12 @@ export default function PayPalButton({
   const [sdkReady, setSdkReady] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [clientToken, setClientToken] = useState<string | null>(null);
+  const [processingStep, setProcessingStep] = useState<ProcessingStep>("idle");
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const sdkInstanceRef = useRef<any>(null);
   const paymentSessionRef = useRef<any>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
+  const isProcessingRef = useRef(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -209,9 +316,14 @@ export default function PayPalButton({
       },
 
       onApprove: async (data: any) => {
+        // Show overlay immediately when popup closes
+        setProcessingStep("approved");
+
         try {
           console.log('PayPal v6 payment approved:', data.orderID);
 
+          // Step 2: Capture
+          setProcessingStep("capturing");
           const captureResponse = await fetch('/api/paypal/capture-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -236,22 +348,13 @@ export default function PayPalButton({
           const captureDetails = captureData.purchase_units?.[0]?.payments?.captures?.[0];
           const captureStatus = captureDetails?.status;
 
-          console.log('PayPal v6 strict validation:', {
-            orderStatus,
-            captureStatus,
-            captureId: captureDetails?.id,
-            processorResponse: captureDetails?.processor_response
-          });
-
           if (captureStatus === 'DECLINED') {
-            throw new Error('Ödeme reddedildi - kart bilgilerini kontrol edin');
+            throw new Error('Ödeme reddedildi — kart bilgilerini kontrol edin');
           }
 
           if (orderStatus === 'COMPLETED' && (!captureDetails || captureStatus === 'COMPLETED')) {
-            toast({
-              title: "Ödeme Kontrol Ediliyor",
-              description: "PayPal ödemesi doğrulandı, işleminiz tamamlanıyor...",
-            });
+            // Step 3: Complete order
+            setProcessingStep("completing");
 
             try {
               const endpoint = orderId
@@ -274,10 +377,9 @@ export default function PayPalButton({
               const completeData = await completeResponse.json();
               console.log('PayPal v6 order completed:', completeData);
 
-              toast({
-                title: "Ödeme Başarılı!",
-                description: "PayPal ödemesi tamamlandı ve paketler etkinleştirildi. Yönlendiriliyorsunuz...",
-              });
+              // Step 4: Success
+              setProcessingStep("success");
+              isProcessingRef.current = false;
 
               const finalOrderId = completeData.order?.id || completeData.orderId || completeData.id || orderId;
               if (onSuccess && finalOrderId) onSuccess(finalOrderId);
@@ -288,7 +390,7 @@ export default function PayPalButton({
 
             } catch (backendError: any) {
               console.error('PayPal v6 backend complete-payment failed:', backendError);
-              throw new Error(`PayPal ödeme işlemi tamamlanamadı: ${backendError.message}`);
+              throw new Error(`Ödeme tamamlanamadı: ${backendError.message}`);
             }
           } else {
             const errorMsg = captureStatus
@@ -300,16 +402,14 @@ export default function PayPalButton({
           console.error('Payment capture error:', error);
           isProcessingRef.current = false;
           setIsLoading(false);
-          toast({
-            title: "Ödeme Hatası",
-            description: error instanceof Error ? error.message : "Ödeme tamamlanamadı",
-            variant: "destructive",
-          });
+          const msg = error instanceof Error ? error.message : "Ödeme tamamlanamadı";
+          setErrorMessage(msg);
+          setProcessingStep("error");
 
-          const environment = settings?.paypal_environment || 'sandbox';
           setTimeout(() => {
-            window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(error instanceof Error ? error.message : 'Payment processing failed')}`;
-          }, 2000);
+            setProcessingStep("idle");
+            window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(msg)}`;
+          }, 3000);
 
           onError?.(error);
         }
@@ -319,6 +419,7 @@ export default function PayPalButton({
         console.error('PayPal v6 error:', err);
         isProcessingRef.current = false;
         setIsLoading(false);
+        setProcessingStep("idle");
 
         let errorMessage = "Ödeme işlemi sırasında bir hata oluştu.";
         let errorReason = 'PayPal processing error';
@@ -353,6 +454,7 @@ export default function PayPalButton({
       onCancel: () => {
         isProcessingRef.current = false;
         setIsLoading(false);
+        setProcessingStep("idle");
         toast({
           title: "Ödeme İptal Edildi",
           description: "PayPal ödemesi iptal edildi.",
@@ -374,12 +476,8 @@ export default function PayPalButton({
     }
   }, [amount, currency, couponCode, orderId, sdkReady, setupPaymentSession]);
 
-  const isProcessingRef = useRef(false);
-
   const handlePayPalClick = async () => {
-    if (isProcessingRef.current) {
-      return;
-    }
+    if (isProcessingRef.current) return;
 
     if (!sdkReady || !paymentSessionRef.current) {
       toast({
@@ -438,50 +536,54 @@ export default function PayPalButton({
   }
 
   return (
-    <div className="space-y-3">
-      <Button
-        onClick={handlePayPalClick}
-        disabled={isLoading || !sdkReady}
-        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-xl text-sm transition-all duration-200 shadow-lg hover:shadow-xl relative overflow-hidden"
-        data-testid="paypal-payment-button"
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            Ödeme İşleniyor...
-          </div>
-        ) : !sdkReady ? (
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            PayPal Yükleniyor...
-          </div>
-        ) : (
-          <div className="flex items-center justify-center">
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a9.159 9.159 0 0 1-.354 1.888c-1.171 5.04-4.484 6.930-8.854 6.930H9.577a.5.5 0 0 0-.496.58l-.466 2.956-.132.84a.318.318 0 0 0 .314.37h2.4a.5.5 0 0 0 .496-.42l.020-.124.382-2.42.025-.134a.5.5 0 0 1 .496-.42h.312c3.634 0 6.479-1.476 7.314-5.738.348-1.781.167-3.27-.784-4.32z"/>
-            </svg>
-            <span className="font-semibold">PayPal ile Ödeme</span>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 animate-pulse"></div>
-      </Button>
+    <>
+      <PaymentOverlay step={processingStep} errorMessage={errorMessage} />
 
-      <div className="flex items-center justify-center space-x-4 text-xs text-slate-400">
-        <div className="flex items-center space-x-1">
-          <Shield className="h-3 w-3" />
-          <span>Güvenli Ödeme</span>
+      <div className="space-y-3">
+        <Button
+          onClick={handlePayPalClick}
+          disabled={isLoading || !sdkReady}
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-xl text-sm transition-all duration-200 shadow-lg hover:shadow-xl relative overflow-hidden"
+          data-testid="paypal-payment-button"
+        >
+          {isLoading ? (
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Ödeme İşleniyor...
+            </div>
+          ) : !sdkReady ? (
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              PayPal Yükleniyor...
+            </div>
+          ) : (
+            <div className="flex items-center justify-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a9.159 9.159 0 0 1-.354 1.888c-1.171 5.04-4.484 6.930-8.854 6.930H9.577a.5.5 0 0 0-.496.58l-.466 2.956-.132.84a.318.318 0 0 0 .314.37h2.4a.5.5 0 0 0 .496-.42l.020-.124.382-2.42.025-.134a.5.5 0 0 1 .496-.42h.312c3.634 0 6.479-1.476 7.314-5.738.348-1.781.167-3.27-.784-4.32z"/>
+              </svg>
+              <span className="font-semibold">PayPal ile Ödeme</span>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 animate-pulse"></div>
+        </Button>
+
+        <div className="flex items-center justify-center space-x-4 text-xs text-slate-400">
+          <div className="flex items-center space-x-1">
+            <Shield className="h-3 w-3" />
+            <span>Güvenli Ödeme</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <CheckCircle2 className="h-3 w-3" />
+            <span>256-bit SSL</span>
+          </div>
         </div>
-        <div className="flex items-center space-x-1">
-          <CheckCircle2 className="h-3 w-3" />
-          <span>256-bit SSL</span>
+
+        <div ref={buttonRef}></div>
+
+        <div className="text-center">
+          <p className="text-xs text-slate-500">Tüm ödemeler 256-bit SSL ile şifrelenir</p>
         </div>
       </div>
-
-      <div ref={buttonRef}></div>
-
-      <div className="text-center">
-        <p className="text-xs text-slate-500">Tüm ödemeler 256-bit SSL ile şifrelenir</p>
-      </div>
-    </div>
+    </>
   );
 }
