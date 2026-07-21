@@ -51,12 +51,10 @@ const NAV_GROUPS = [
   {
     id: 'sistem', label: 'Sistem',
     items: [
-      { name: 'Site Ayarları',    href: '/admin/site-settings',   icon: Globe      },
-      { name: 'E-posta Ayarları', href: '/admin/email-settings',  icon: Mail       },
-      { name: 'Genel Ayarlar',    href: '/admin/settings',        icon: Settings   },
-      { name: 'DB Yedekleme',     href: '/admin/database-backup', icon: Database   },
-      { name: 'Sistem Logları',   href: '/admin/logs',            icon: FileText   },
-      { name: 'Ödeme Olayları',   href: '/admin/payment-events',  icon: CreditCard },
+      { name: 'Ayarlar',        href: '/admin/settings',        icon: Settings   },
+      { name: 'DB Yedekleme',   href: '/admin/database-backup', icon: Database   },
+      { name: 'Sistem Logları', href: '/admin/logs',            icon: FileText   },
+      { name: 'Ödeme Olayları', href: '/admin/payment-events',  icon: CreditCard },
     ],
   },
 ];

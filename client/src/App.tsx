@@ -38,14 +38,14 @@ const CredentialPoolsNew = lazy(() => import("@/pages/admin/CredentialPoolsNew")
 const CouponsManagementNew = lazy(() => import("@/pages/admin/CouponsManagementNew"));
 const OrdersManagement = lazy(() => import("@/pages/admin/OrdersManagement"));
 const UsersManagementNew = lazy(() => import("@/pages/admin/UsersManagementNew"));
-const SettingsManagement = lazy(() => import("@/pages/admin/SettingsManagement"));
-const SiteSettings = lazy(() => import("@/pages/admin/SiteSettings"));
+const AdminSettings = lazy(() => import("@/pages/admin/AdminSettings"));
+const AdminSettingsEmail = lazy(() => import("@/pages/admin/AdminSettings").then(m => ({ default: () => m.default({ defaultTab: "eposta" }) })));
+const AdminSettingsSite = lazy(() => import("@/pages/admin/AdminSettings").then(m => ({ default: () => m.default({ defaultTab: "genel" }) })));
 const Reports = lazy(() => import("@/pages/admin/Reports"));
 const AdminReporting = lazy(() => import("@/pages/admin/AdminReporting"));
 const StockManagement = lazy(() => import("@/pages/admin/StockManagement"));
 const TicketManagement = lazy(() => import("@/pages/admin/TicketManagement"));
 const SystemLogs = lazy(() => import("@/pages/admin/SystemLogs"));
-const EmailSettings = lazy(() => import("@/pages/admin/EmailSettings").then(m => ({ default: m.EmailSettings })));
 const PushNotifications = lazy(() => import("@/pages/admin/PushNotifications"));
 const EmailMarketing = lazy(() => import("@/pages/admin/EmailMarketing"));
 const DatabaseBackup = lazy(() => import("@/pages/admin/DatabaseBackup"));
@@ -139,7 +139,7 @@ function Router() {
       <Route path="/admin/settings">
         <AdminProtectedRoute>
           <Suspense fallback={<LoadingFallback />}>
-            <SettingsManagement />
+            <AdminSettings />
           </Suspense>
         </AdminProtectedRoute>
       </Route>
@@ -147,7 +147,7 @@ function Router() {
       <Route path="/admin/site-settings">
         <AdminProtectedRoute>
           <Suspense fallback={<LoadingFallback />}>
-            <SiteSettings />
+            <AdminSettingsSite />
           </Suspense>
         </AdminProtectedRoute>
       </Route>
@@ -195,7 +195,7 @@ function Router() {
       <Route path="/admin/email-settings">
         <AdminProtectedRoute>
           <Suspense fallback={<LoadingFallback />}>
-            <EmailSettings />
+            <AdminSettingsEmail />
           </Suspense>
         </AdminProtectedRoute>
       </Route>
