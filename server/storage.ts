@@ -313,6 +313,7 @@ export interface IStorage {
     search?: string;
   }): Promise<any[]>;
   deleteOldLogs(cutoffDate: Date): Promise<number>;
+  deleteOldPaymentEvents(cutoffDate: Date): Promise<number>;
 
   // Email operations
   getEmailSettings(): Promise<EmailSetting | null>;
@@ -2264,6 +2265,14 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(systemLogs)
       .where(lt(systemLogs.createdAt, cutoffDate));
+    
+    return result.rowCount || 0;
+  }
+
+  async deleteOldPaymentEvents(cutoffDate: Date): Promise<number> {
+    const result = await db
+      .delete(paymentEvents)
+      .where(lt(paymentEvents.createdAt, cutoffDate));
     
     return result.rowCount || 0;
   }
