@@ -45,7 +45,7 @@ const NAV = [
   {
     section: 'Raporlar',
     items: [
-      { name: 'Raporlama',     href: '/admin/admin-reporting',  icon: BarChart3 },
+      { name: 'Raporlama',     href: '/admin/reports',         icon: BarChart3 },
       { name: 'Gemi Analitik', href: '/admin/ship-analytics',  icon: TrendingUp },
     ],
   },
