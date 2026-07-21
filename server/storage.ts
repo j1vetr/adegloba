@@ -1613,10 +1613,10 @@ export class DatabaseStorage implements IStorage {
         .select({
           shipId: ships.id,
           shipName: ships.name,
-          totalOrders: sql<number>`COUNT(DISTINCT CASE WHEN ${orders.status} = 'paid' THEN ${orders.id} END)`,
-          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'paid' THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
-          totalDataGB: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'paid' THEN ${plans.dataLimitGb} * ${orderItems.qty} ELSE 0 END), 0)`,
-          packagesSold: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'paid' THEN ${orderItems.qty} ELSE 0 END), 0)`
+          totalOrders: sql<number>`COUNT(DISTINCT CASE WHEN ${orders.status} IN ('paid','completed') THEN ${orders.id} END)`,
+          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid','completed') THEN CAST(${orders.totalUsd} AS DECIMAL) ELSE 0 END), 0)`,
+          totalDataGB: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid','completed') THEN ${plans.dataLimitGb} * ${orderItems.qty} ELSE 0 END), 0)`,
+          packagesSold: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('paid','completed') THEN ${orderItems.qty} ELSE 0 END), 0)`
         })
         .from(ships)
         .leftJoin(orders, eq(ships.id, orders.shipId))

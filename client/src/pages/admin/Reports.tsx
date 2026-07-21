@@ -22,10 +22,6 @@ interface ReportRow {
   totalOrders: number; totalRevenue: number;
   totalDataGB: number; packagesSold: number;
 }
-interface PlanRow {
-  planId: string; planName: string; shipName: string;
-  totalSold: number; totalRevenue: number;
-}
 interface InactiveShip {
   shipId: string; shipName: string;
   daysSinceLastOrder: number | null; lastOrderDate: string | null; userCount: number;
@@ -125,10 +121,6 @@ export default function Reports() {
     enabled: range !== "custom" || (!!customStart && !!customEnd),
   });
 
-  const { data: plans = [], isLoading: pL } = useQuery<PlanRow[]>({
-    queryKey: ["/api/admin/financial/package-profitability"],
-  });
-
   const { data: ships = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/ships"],
   });
@@ -148,9 +140,13 @@ export default function Reports() {
     packages: acc.packages + num(r.packagesSold),
   }), { revenue: 0, orders: 0, gb: 0, packages: 0 }), [rows]);
 
-  const topPlans = useMemo(() =>
-    [...plans].sort((a, b) => num(b.totalRevenue) - num(a.totalRevenue)).slice(0, 10),
-  [plans]);
+  const shipShare = useMemo(() => {
+    const withRevenue = rows.filter(r => num(r.totalRevenue) > 0);
+    const max = Math.max(...withRevenue.map(r => num(r.totalRevenue)), 1);
+    return [...withRevenue]
+      .sort((a, b) => num(b.totalRevenue) - num(a.totalRevenue))
+      .map(r => ({ ...r, pct: Math.round((num(r.totalRevenue) / totals.revenue) * 100) || 0, bar: Math.round((num(r.totalRevenue) / max) * 100) }));
+  }, [rows, totals.revenue]);
 
   const handleSort = (f: SortField) => {
     if (sortField === f) setSortDir(d => d === "desc" ? "asc" : "desc");
@@ -373,39 +369,38 @@ export default function Reports() {
             )}
           </div>
 
-          {/* Çok Satan Paketler */}
+          {/* Gemi Gelir Payı */}
           <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
-              <p className="text-sm font-semibold text-white">Çok Satan Paketler</p>
-              <span className="text-xs text-slate-500">Tüm zamanlar</span>
+              <p className="text-sm font-semibold text-white">Gemi Gelir Payı</p>
+              <span className="text-xs text-slate-500">{rangeLabel}</span>
             </div>
-            {pL ? (
-              <div className="p-4 space-y-2">{Array.from({ length: 6 }).map((_, i) => <Sk key={i} w="w-full" h="h-9" />)}</div>
-            ) : topPlans.length === 0 ? (
-              <div className="py-14 text-center text-slate-600 text-sm">Henüz satış yok</div>
+            {rL ? (
+              <div className="p-4 space-y-3">{Array.from({ length: 6 }).map((_, i) => <Sk key={i} w="w-full" h="h-10" />)}</div>
+            ) : shipShare.length === 0 ? (
+              <div className="py-14 text-center">
+                <ShipIcon className="h-8 w-8 text-slate-700 mx-auto mb-2" />
+                <p className="text-slate-600 text-sm">Bu dönemde veri yok</p>
+              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="border-b border-slate-800 bg-slate-800/30">
-                    <tr>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-400">Paket</th>
-                      <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-400">Satış</th>
-                      <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-400">Ciro</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topPlans.map(p => (
-                      <tr key={p.planId} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                        <td className="px-4 py-2.5">
-                          <p className="text-white text-xs font-medium leading-tight">{p.planName}</p>
-                          <p className="text-slate-500 text-[11px] mt-0.5">{p.shipName}</p>
-                        </td>
-                        <td className="px-3 py-2.5 text-right text-slate-300 tabular-nums">{num(p.totalSold)}</td>
-                        <td className="px-3 py-2.5 text-right text-emerald-400 tabular-nums text-xs font-medium">{usd(p.totalRevenue)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="p-3 space-y-1">
+                {shipShare.map(s => (
+                  <div key={s.shipId} className="px-2 py-2 rounded-lg hover:bg-slate-800/40 transition-colors">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <p className="text-white text-xs font-medium truncate min-w-0">{s.shipName}</p>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-emerald-400 text-xs font-mono font-medium">{usd(s.totalRevenue)}</span>
+                        <span className="text-slate-600 text-[11px] w-8 text-right">{s.pct}%</span>
+                      </div>
+                    </div>
+                    <div className="h-1 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-cyan-600 to-emerald-500"
+                        style={{ width: `${s.bar}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
