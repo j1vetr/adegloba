@@ -332,12 +332,12 @@ export default function StockManagement() {
             const Icon = s.icon;
             return (
               <Card key={s.label} className="bg-slate-900/60 border-slate-700 px-4 py-3 flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${s.bg}`}>
+                <div className={`p-2 rounded-lg shrink-0 ${s.bg}`}>
                   <Icon className={`h-4 w-4 ${s.cls}`} />
                 </div>
-                <div>
-                  <p className="text-slate-500 text-xs">{s.label}</p>
-                  <p className={`text-xl font-bold ${s.cls}`}>{s.value}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-slate-500 text-xs truncate">{s.label}</p>
+                  <p className={`text-xl font-bold tabular-nums leading-tight ${s.cls}`}>{s.value.toLocaleString("tr-TR")}</p>
                 </div>
               </Card>
             );
