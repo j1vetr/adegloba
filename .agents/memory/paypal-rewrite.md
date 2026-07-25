@@ -26,6 +26,12 @@ Users were successfully charged (confirmed via PayPal dashboard) but never recei
 - `client/src/components/PayPalButton.tsx` — capture kaldırıldı, dbOrderId eklendi, STEPS güncellendi
 - `client/src/pages/admin/AdminSettings.tsx` — `paypalWebhookId` alanı
 
+## Full End-to-End Audit (session 3)
+Tüm sipariş adımları denetlendi. Sadece 1 gerçek bug bulundu:
+- **Kupon çift kayıt**: `validateCoupon` yalnızca `status='paid'` siparişleri sayar. Checkout'ta `recordCouponUsage` kaydı oluşturulur (sipariş `pending`). `complete-payment` aynı `couponCode` ile yeniden valide edince sipariş hâlâ `pending` → validasyon geçer → ikinci kayıt → kupon kullanım sayısı 2 görünür. Düzeltme: `!pendingOrder.couponId` guard'ı ile, coupon zaten checkout'ta uygulanmışsa re-validate ve re-record atlanır.
+- **Race condition "CRITICAL"**: SAHTE ALARM. `processPaymentCompletion` Phase 1'de `FOR UPDATE` kilidi var (satır 127). Eş zamanlı iki istek serialized, ikincisi `alreadyPaid=true` döner.
+- **Diğer bulgular**: PayPalButton orphan component (Checkout'ta render edilmiyor — CreditCardDrawer kart ödemelerini yapıyor); cart-total vs order-total reporting farkı (minor, gerçek ücret etkilenmiyor); webhook orphan logging (CRITICAL log + admin alert — kabul edilebilir); auto-cancel vs active session (FOR UPDATE + recovery zaten koruyor).
+
 ## Post-Rewrite Fixes (session 2)
 4 ek sorun bulunup düzeltildi:
 1. `complete-payment`: boş/null `paypalOrderId` → 400 veriyordu (ücretsiz sipariş akışını kırıyordu). Düzeltme: `rawPaypalOrderId` normalize edildi → `'manual-payment'`.

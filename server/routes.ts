@@ -1284,13 +1284,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let discount = 0;
       let validatedCoupon: any = null;
 
-      if (couponCode && user?.ship_id) {
+      // Coupon already applied at /api/cart/checkout if pendingOrder.couponId is set.
+      // Re-validating and re-recording in that case would create duplicate coupon_usage rows,
+      // inflating the usage count and breaking single-use / max-uses limits.
+      if (couponCode && user?.ship_id && !pendingOrder.couponId) {
         try {
           const cr = await couponService.validateAndCalculateDiscount(couponCode, cartTotal.subtotal, user.ship_id, userId);
           validatedCoupon = cr.coupon; discount = cr.discount_amount; total = cr.new_total;
         } catch (_) { /* coupon errors must not block a captured payment */ }
       }
-      if (validatedCoupon && discount > 0) {
+      // Use the order's stored total as the canonical charge amount.
+      // If a coupon was applied at checkout, the discounted total is already in pendingOrder.totalUsd.
+      if (pendingOrder.couponId) {
+        total = parseFloat(String(pendingOrder.totalUsd ?? total));
+      }
+      if (validatedCoupon && discount > 0 && !pendingOrder.couponId) {
         couponService.recordCouponUsage(validatedCoupon.id, userId, pendingOrder.id, discount).catch(() => {});
       }
 
