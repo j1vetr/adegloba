@@ -1004,6 +1004,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Cancel any stuck pending orders before creating a new one.
+      // A pending order gets stuck when the user closes the browser mid-checkout or
+      // PayPal fails after our DB row was already created. The unique index
+      // idx_orders_one_pending_per_user would block the new INSERT otherwise.
+      const existingUserOrders = await storage.getUserOrders(userId);
+      const stuckPendingOrders = existingUserOrders.filter(o => o.status === 'pending');
+      for (const stuckOrder of stuckPendingOrders) {
+        console.log(`🧹 Cancelling stuck pending order ${stuckOrder.id} for user ${userId} (paypalOrderId=${stuckOrder.paypalOrderId ?? 'none'})`);
+        await storage.updateOrder(stuckOrder.id, { status: 'cancelled' });
+        await storage.createSystemLog({
+          category: 'payment',
+          action: 'pending_order_auto_cancelled',
+          entityType: 'order',
+          entityId: stuckOrder.id,
+          details: { reason: 'Cancelled by checkout — previous session abandoned', hadPaypalOrderId: !!stuckOrder.paypalOrderId },
+          ipAddress: req.ip || '',
+          userAgent: req.headers['user-agent'] || '',
+        }).catch(() => {});
+      }
+
       // Create order with discount applied
       const orderData = {
         userId,
