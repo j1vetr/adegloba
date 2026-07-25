@@ -8,7 +8,7 @@ interface PayPalButtonProps {
   currency: string;
   intent: string;
   couponCode?: string;
-  orderId?: string;
+  orderId?: string;   // DB order ID — passed for early linking, not routing
   onSuccess?: (orderId: string) => void;
   onError?: (error: any) => void;
 }
@@ -19,16 +19,17 @@ declare global {
   }
 }
 
-type ProcessingStep = "idle" | "approved" | "capturing" | "captured" | "completing" | "success" | "error";
+// Faz 2 simplification: capture now happens server-side inside /api/cart/complete-payment.
+// "capturing" / "captured" frontend steps are removed — the backend does it atomically.
+type ProcessingStep = "idle" | "approved" | "completing" | "success" | "error";
 
 const STEPS = [
-  { key: "approved",   label: "PayPal onayı alındı",           activeLabel: "PayPal onayı bekleniyor..." },
-  { key: "capturing",  label: "Para transferi tamamlandı",      activeLabel: "Para transferi yapılıyor..." },
-  { key: "completing", label: "Sipariş hazırlandı",             activeLabel: "Sipariş oluşturuluyor..." },
-  { key: "success",    label: "Paketler etkinleştirildi",       activeLabel: "Paketler etkinleştiriliyor..." },
+  { key: "approved",   label: "PayPal onayı alındı",          activeLabel: "PayPal onayı bekleniyor..." },
+  { key: "completing", label: "Ödeme ve paket hazırlandı",    activeLabel: "Ödeme işleniyor..." },
+  { key: "success",    label: "Paketler etkinleştirildi",     activeLabel: "Paketler etkinleştiriliyor..." },
 ] as const;
 
-const STEP_ORDER: ProcessingStep[] = ["approved", "capturing", "captured", "completing", "success"];
+const STEP_ORDER: ProcessingStep[] = ["approved", "completing", "success"];
 
 function stepIndex(step: ProcessingStep) {
   return STEP_ORDER.indexOf(step);
@@ -87,19 +88,19 @@ function StepList({ currentStep }: { currentStep: ProcessingStep }) {
   return (
     <div className="w-full flex flex-col gap-2.5">
       {STEPS.map((s, i) => {
-        const done = current > i;
+        const done   = current > i;
         const active = current === i;
 
         return (
           <div key={s.key} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
             active ? "bg-blue-50 border border-blue-200" :
-            done  ? "bg-green-50 border border-green-200" :
-                    "bg-gray-50 border border-transparent"
+            done   ? "bg-green-50 border border-green-200" :
+                     "bg-gray-50 border border-transparent"
           }`}>
             <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${
               active ? "bg-blue-500 text-white" :
-              done  ? "bg-green-500 text-white" :
-                      "bg-gray-200 text-gray-400"
+              done   ? "bg-green-500 text-white" :
+                       "bg-gray-200 text-gray-400"
             }`}>
               {done ? (
                 <CheckCircle2 className="w-4 h-4" />
@@ -111,8 +112,8 @@ function StepList({ currentStep }: { currentStep: ProcessingStep }) {
             </div>
             <span className={`text-sm font-medium ${
               active ? "text-blue-700" :
-              done  ? "text-green-700" :
-                      "text-gray-400"
+              done   ? "text-green-700" :
+                       "text-gray-400"
             }`}>
               {active ? s.activeLabel : s.label}
             </span>
@@ -132,322 +133,187 @@ export default function PayPalButton({
   onSuccess,
   onError
 }: PayPalButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [sdkReady, setSdkReady] = useState(false);
-  const [settings, setSettings] = useState<any>(null);
-  const [clientToken, setClientToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading]           = useState(false);
+  const [sdkReady, setSdkReady]             = useState(false);
+  const [settings, setSettings]             = useState<any>(null);
+  const [clientToken, setClientToken]       = useState<string | null>(null);
   const [processingStep, setProcessingStep] = useState<ProcessingStep>("idle");
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
-  const sdkInstanceRef = useRef<any>(null);
-  const paymentSessionRef = useRef<any>(null);
-  const buttonRef = useRef<HTMLDivElement>(null);
-  const isProcessingRef = useRef(false);
+  const [errorMessage, setErrorMessage]     = useState<string | undefined>();
+  const sdkInstanceRef      = useRef<any>(null);
+  const paymentSessionRef   = useRef<any>(null);
+  const buttonRef           = useRef<HTMLDivElement>(null);
+  const isProcessingRef     = useRef(false);
   const { toast } = useToast();
 
+  // Load PayPal settings
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const response = await fetch('/api/settings/payment');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Invalid response format');
-        }
-        const data = await response.json();
-        setSettings(data);
-      } catch (error) {
-        console.error('Failed to load PayPal settings:', error);
+    fetch('/api/settings/payment')
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => setSettings(data))
+      .catch(err => {
+        console.error('Failed to load PayPal settings:', err);
         setSettings({});
-      }
-    };
-    loadSettings();
+      });
   }, []);
 
+  // Fetch client token
   useEffect(() => {
     if (!settings?.paypal_client_id || settings.paypal_client_id.trim() === '') return;
-
-    const fetchClientToken = async () => {
-      try {
-        const response = await fetch('/api/paypal/setup');
-        if (!response.ok) throw new Error('Failed to get client token');
-        const data = await response.json();
-        if (data.clientToken) {
-          setClientToken(data.clientToken);
-        }
-      } catch (error) {
-        console.error('Failed to fetch client token:', error);
-        toast({
-          title: "PayPal Yapılandırma Hatası",
-          description: "PayPal client token alınamadı. Lütfen ayarları kontrol edin.",
-          variant: "destructive",
-        });
-      }
-    };
-    fetchClientToken();
+    fetch('/api/paypal/setup')
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => { if (data.clientToken) setClientToken(data.clientToken); })
+      .catch(err => {
+        console.error('Failed to fetch client token:', err);
+        toast({ title: "PayPal Yapılandırma Hatası", description: "Client token alınamadı.", variant: "destructive" });
+      });
   }, [settings?.paypal_client_id, toast]);
 
+  // Load PayPal v6 SDK and initialise
   useEffect(() => {
     if (!clientToken || !settings?.paypal_client_id) return;
 
-    const environment = settings.paypal_environment || 'sandbox';
-    const isProduction = environment === 'live' || environment === 'production';
-    const sdkBaseUrl = isProduction
+    const isProduction = (settings.paypal_environment || 'sandbox') === 'live' || settings.paypal_environment === 'production';
+    const sdkBaseUrl   = isProduction
       ? 'https://www.paypal.com/web-sdk/v6/core'
       : 'https://www.sandbox.paypal.com/web-sdk/v6/core';
 
-    const loadV6SDK = async () => {
-      if (window.paypal?.createInstance) {
-        await initializeV6();
-        return;
-      }
-
-      const existingScripts = document.querySelectorAll('script[src*="paypal.com"]');
-      existingScripts.forEach(script => script.remove());
-      delete window.paypal;
-
-      const script = document.createElement('script');
-      script.src = sdkBaseUrl;
-      script.async = true;
-
-      script.onload = async () => {
-        console.log('PayPal v6 SDK loaded');
-        await initializeV6();
-      };
-
-      script.onerror = (error) => {
-        console.error('PayPal v6 SDK load failed:', error);
-        toast({
-          title: "PayPal SDK Hatası",
-          description: "PayPal v6 SDK yüklenemedi.",
-          variant: "destructive",
-        });
-      };
-
-      document.head.appendChild(script);
-    };
-
     const initializeV6 = async () => {
       try {
-        if (!window.paypal?.createInstance) {
-          console.error('PayPal v6 createInstance not available');
-          return;
-        }
-
+        if (!window.paypal?.createInstance) { console.error('PayPal v6 createInstance not available'); return; }
         const sdkInstance = await window.paypal.createInstance({
-          clientToken: clientToken,
-          components: ["paypal-payments"],
-          pageType: "checkout",
-          clientMetadataId: crypto.randomUUID(),
+          clientToken, components: ["paypal-payments"],
+          pageType: "checkout", clientMetadataId: crypto.randomUUID(),
         });
-
         sdkInstanceRef.current = sdkInstance;
-        console.log('PayPal v6 SDK instance created');
 
-        const eligibleMethods = await sdkInstance.findEligibleMethods({
-          currencyCode: currency,
-        });
-
-        if (eligibleMethods.isEligible("paypal")) {
+        const eligible = await sdkInstance.findEligibleMethods({ currencyCode: currency });
+        if (eligible.isEligible("paypal")) {
           setupPaymentSession(sdkInstance);
           setSdkReady(true);
         } else {
-          console.warn('PayPal payment method not eligible');
-          toast({
-            title: "PayPal Kullanılamıyor",
-            description: "PayPal şu an bu para birimi için kullanılamıyor.",
-            variant: "destructive",
-          });
+          toast({ title: "PayPal Kullanılamıyor", description: "Bu para birimi için kullanılamıyor.", variant: "destructive" });
         }
-      } catch (error) {
-        console.error('PayPal v6 initialization error:', error);
-        toast({
-          title: "PayPal Başlatma Hatası",
-          description: "PayPal v6 SDK başlatılamadı. Lütfen sayfayı yenileyin.",
-          variant: "destructive",
-        });
+      } catch (err) {
+        console.error('PayPal v6 init error:', err);
+        toast({ title: "PayPal Başlatma Hatası", description: "Lütfen sayfayı yenileyin.", variant: "destructive" });
       }
     };
 
-    loadV6SDK();
-
-    return () => {
-      paymentSessionRef.current = null;
-      sdkInstanceRef.current = null;
+    const loadV6SDK = async () => {
+      if (window.paypal?.createInstance) { await initializeV6(); return; }
+      document.querySelectorAll('script[src*="paypal.com"]').forEach(s => s.remove());
+      delete window.paypal;
+      const script    = document.createElement('script');
+      script.src      = sdkBaseUrl;
+      script.async    = true;
+      script.onload   = async () => { console.log('PayPal v6 SDK loaded'); await initializeV6(); };
+      script.onerror  = () => toast({ title: "PayPal SDK Hatası", description: "v6 SDK yüklenemedi.", variant: "destructive" });
+      document.head.appendChild(script);
     };
+
+    loadV6SDK();
+    return () => { paymentSessionRef.current = null; sdkInstanceRef.current = null; };
   }, [clientToken, settings?.paypal_client_id, settings?.paypal_environment, currency, toast]);
 
+  // ── Payment session ───────────────────────────────────────────────────────
   const setupPaymentSession = useCallback((sdkInstance: any) => {
     const session = sdkInstance.createPayPalOneTimePaymentSession({
+
+      // Faz 1: Pass dbOrderId so the backend links the PayPal order to our DB
+      // order immediately after creation (early link prevents orphan payments).
       createOrder: async () => {
         try {
-          const createResponse = await fetch('/api/paypal/create-order', {
+          const res = await fetch('/api/paypal/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              amount: parseFloat(amount).toString(),
-              currency: currency,
-              intent: intent.toUpperCase() || 'CAPTURE',
+              amount:   parseFloat(amount).toString(),
+              currency,
+              intent:   intent.toUpperCase() || 'CAPTURE',
+              dbOrderId: orderId || undefined,   // Faz 1 early link
             }),
           });
-
-          if (!createResponse.ok) {
-            const contentType = createResponse.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-              const errorData = await createResponse.json();
-              throw new Error(errorData.message || 'Order creation failed');
-            } else {
-              const errorText = await createResponse.text();
-              throw new Error(`Order creation failed: ${errorText}`);
-            }
+          if (!res.ok) {
+            const err = res.headers.get('content-type')?.includes('application/json')
+              ? (await res.json()).message
+              : await res.text();
+            throw new Error(err || 'Order creation failed');
           }
-
-          const createData = await createResponse.json();
-          console.log('PayPal v6 order created:', createData.id);
-          return createData.id;
-        } catch (error) {
-          console.error('Error creating PayPal order:', error);
-          toast({
-            title: "Sipariş Oluşturma Hatası",
-            description: error instanceof Error ? error.message : "Bilinmeyen hata",
-            variant: "destructive",
-          });
-          throw error;
+          const data = await res.json();
+          console.log('PayPal order created:', data.id);
+          return data.id;
+        } catch (err) {
+          console.error('Error creating PayPal order:', err);
+          toast({ title: "Sipariş Oluşturma Hatası", description: err instanceof Error ? err.message : "Bilinmeyen hata", variant: "destructive" });
+          throw err;
         }
       },
 
+      // Faz 2: Capture + fulfillment happen in one backend call.
+      // Frontend no longer calls /api/paypal/capture-order separately.
       onApprove: async (data: any) => {
-        // Show overlay immediately when popup closes
         setProcessingStep("approved");
-
         try {
-          console.log('PayPal v6 payment approved:', data.orderID);
+          console.log('PayPal payment approved, orderID:', data.orderID);
 
-          // Step 2: Capture
-          setProcessingStep("capturing");
-          const captureResponse = await fetch('/api/paypal/capture-order', {
+          // Single backend call handles: capture → mark paid → assign credentials
+          setProcessingStep("completing");
+          const res = await fetch('/api/cart/complete-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId: data.orderID }),
+            body: JSON.stringify({ paypalOrderId: data.orderID, couponCode: couponCode || '' }),
           });
 
-          if (!captureResponse.ok) {
-            const contentType = captureResponse.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-              const errorData = await captureResponse.json();
-              throw new Error(errorData.message || 'Payment capture failed');
-            } else {
-              const errorText = await captureResponse.text();
-              throw new Error(`Payment capture failed: ${errorText}`);
-            }
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error((errData as any).message || 'Ödeme tamamlanırken hata oluştu');
           }
 
-          const captureData = await captureResponse.json();
-          console.log('PayPal v6 payment captured:', captureData);
+          const result = await res.json();
+          console.log('Payment completed:', result);
 
-          const orderStatus = captureData.status;
-          const captureDetails = captureData.purchase_units?.[0]?.payments?.captures?.[0];
-          const captureStatus = captureDetails?.status;
+          setProcessingStep("success");
+          isProcessingRef.current = false;
 
-          if (captureStatus === 'DECLINED') {
-            throw new Error('Ödeme reddedildi — kart bilgilerini kontrol edin');
-          }
+          const finalOrderId = result.orderId || result.id || orderId;
+          if (onSuccess && finalOrderId) onSuccess(finalOrderId);
 
-          if (orderStatus === 'COMPLETED' && (!captureDetails || captureStatus === 'COMPLETED')) {
-            // Step 3: Complete order
-            setProcessingStep("completing");
+          setTimeout(() => {
+            window.location.href = `/order-success?orderId=${finalOrderId}&amount=${result.totalUsd || amount}`;
+          }, 1500);
 
-            try {
-              const endpoint = orderId
-                ? `/api/orders/${orderId}/complete`
-                : '/api/cart/complete-payment';
-              const completeResponse = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  paypalOrderId: data.orderID,
-                  couponCode: couponCode || ''
-                }),
-              });
-
-              if (!completeResponse.ok) {
-                const errorData = await completeResponse.json();
-                throw new Error(errorData.message || 'Ödeme tamamlanırken hata oluştu');
-              }
-
-              const completeData = await completeResponse.json();
-              console.log('PayPal v6 order completed:', completeData);
-
-              // Step 4: Success
-              setProcessingStep("success");
-              isProcessingRef.current = false;
-
-              const finalOrderId = completeData.order?.id || completeData.orderId || completeData.id || orderId;
-              if (onSuccess && finalOrderId) onSuccess(finalOrderId);
-
-              setTimeout(() => {
-                window.location.href = `/order-success?orderId=${finalOrderId}&amount=${completeData.totalUsd || amount}&paymentId=${captureDetails?.id || captureData.id}`;
-              }, 1500);
-
-            } catch (backendError: any) {
-              console.error('PayPal v6 backend complete-payment failed:', backendError);
-              throw new Error(`Ödeme tamamlanamadı: ${backendError.message}`);
-            }
-          } else {
-            const errorMsg = captureStatus
-              ? `Ödeme tamamlanamadı (${captureStatus})`
-              : 'PayPal ödemesi tamamlanmadı';
-            throw new Error(errorMsg);
-          }
-        } catch (error) {
-          console.error('Payment capture error:', error);
+        } catch (err) {
+          console.error('Payment error:', err);
           isProcessingRef.current = false;
           setIsLoading(false);
-          const msg = error instanceof Error ? error.message : "Ödeme tamamlanamadı";
+          const msg = err instanceof Error ? err.message : "Ödeme tamamlanamadı";
           setErrorMessage(msg);
           setProcessingStep("error");
-
           setTimeout(() => {
             setProcessingStep("idle");
             window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(msg)}`;
           }, 3000);
-
-          onError?.(error);
+          onError?.(err);
         }
       },
 
       onError: (err: any) => {
-        console.error('PayPal v6 error:', err);
+        console.error('PayPal SDK error:', err);
         isProcessingRef.current = false;
         setIsLoading(false);
         setProcessingStep("idle");
 
-        let errorMessage = "Ödeme işlemi sırasında bir hata oluştu.";
-        let errorReason = 'PayPal processing error';
-        const environment = settings?.paypal_environment || 'sandbox';
+        let msg = "Ödeme işlemi sırasında bir hata oluştu.";
+        let reason = 'PayPal processing error';
+        if (err?.name === 'VALIDATION_ERROR')      { msg = "Kart bilgileri geçersiz."; reason = 'Invalid card details'; }
+        else if (err?.name === 'INSTRUMENT_DECLINED') { msg = "Kartınız reddedildi. Farklı bir kart deneyin."; reason = 'Card declined'; }
+        else if (err?.name === 'UNPROCESSABLE_ENTITY') { msg = "Ödeme işlenemiyor. Kart bilgilerinizi kontrol edin."; reason = 'Unprocessable payment'; }
 
-        if (err && typeof err === 'object') {
-          if (err.name === 'VALIDATION_ERROR') {
-            errorMessage = "Kart bilgileri geçersiz. Lütfen doğru bilgilerle tekrar deneyin.";
-            errorReason = 'Invalid card details';
-          } else if (err.name === 'INSTRUMENT_DECLINED') {
-            errorMessage = "Kartınız reddedildi. Farklı bir kart deneyin veya bankanızla iletişime geçin.";
-            errorReason = 'Card declined';
-          } else if (err.name === 'UNPROCESSABLE_ENTITY') {
-            errorMessage = "Ödeme işlenemiyor. Kart bilgilerinizi kontrol edin.";
-            errorReason = 'Unprocessable payment';
-          }
-        }
-
-        toast({
-          title: "PayPal Hatası",
-          description: errorMessage,
-          variant: "destructive",
-        });
-
+        toast({ title: "PayPal Hatası", description: msg, variant: "destructive" });
+        const env = settings?.paypal_environment || 'sandbox';
         setTimeout(() => {
-          window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(errorReason)}&env=${environment}`;
+          window.location.href = `/checkout/cancel?status=failed&amount=${amount}&reason=${encodeURIComponent(reason)}&env=${env}`;
         }, 3000);
-
         onError?.(err);
       },
 
@@ -455,21 +321,17 @@ export default function PayPalButton({
         isProcessingRef.current = false;
         setIsLoading(false);
         setProcessingStep("idle");
-        toast({
-          title: "Ödeme İptal Edildi",
-          description: "PayPal ödemesi iptal edildi.",
-          variant: "default",
-        });
-
+        toast({ title: "Ödeme İptal Edildi", description: "PayPal ödemesi iptal edildi.", variant: "default" });
         setTimeout(() => {
           window.location.href = `/checkout/cancel?status=cancelled&amount=${amount}&reason=User cancelled payment`;
         }, 2000);
-      }
+      },
     });
 
     paymentSessionRef.current = session;
-  }, [amount, currency, couponCode, orderId, toast, onSuccess, onError, settings?.paypal_environment]);
+  }, [amount, currency, intent, couponCode, orderId, toast, onSuccess, onError, settings?.paypal_environment]);
 
+  // Re-create session whenever key props change
   useEffect(() => {
     if (sdkReady && sdkInstanceRef.current) {
       setupPaymentSession(sdkInstanceRef.current);
@@ -478,33 +340,24 @@ export default function PayPalButton({
 
   const handlePayPalClick = async () => {
     if (isProcessingRef.current) return;
-
     if (!sdkReady || !paymentSessionRef.current) {
-      toast({
-        title: "PayPal Hazır Değil",
-        description: "PayPal henüz yüklenemedi. Lütfen bekleyin veya sayfayı yenileyin.",
-        variant: "destructive",
-      });
+      toast({ title: "PayPal Hazır Değil", description: "Lütfen bekleyin veya sayfayı yenileyin.", variant: "destructive" });
       return;
     }
-
     isProcessingRef.current = true;
     setIsLoading(true);
-
     try {
       await paymentSessionRef.current.start();
-    } catch (error) {
-      console.error('PayPal v6 session start error:', error);
+    } catch (err) {
+      console.error('PayPal session start error:', err);
       isProcessingRef.current = false;
       setIsLoading(false);
-      toast({
-        title: "PayPal Başlatma Hatası",
-        description: error instanceof Error ? error.message : "PayPal ödeme penceresi açılamadı",
-        variant: "destructive",
-      });
-      onError?.(error);
+      toast({ title: "PayPal Başlatma Hatası", description: err instanceof Error ? err.message : "Ödeme penceresi açılamadı", variant: "destructive" });
+      onError?.(err);
     }
   };
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   if (!settings) {
     return (
@@ -520,16 +373,12 @@ export default function PayPalButton({
       <div className="w-full p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center">
         <h3 className="text-amber-400 text-lg font-semibold mb-2">PayPal Yapılandırması Gerekli</h3>
         <p className="text-amber-300 text-sm mb-3">
-          PayPal ödemelerini kabul etmek için sandbox veya live PayPal hesabınızdan API anahtarlarını yapılandırmanız gerekiyor.
+          PayPal ödemelerini kabul etmek için Admin Panel → Ayarlar → PayPal Integration bölümünden API anahtarlarını yapılandırın.
         </p>
-        <div className="text-amber-200 text-xs space-y-2">
-          <div className="bg-amber-500/10 p-3 rounded border border-amber-500/20">
-            <p className="font-medium text-amber-300 mb-1">Yapılandırma Adımları:</p>
-            <p>1. Admin Panel → Ayarlar → PayPal Integration</p>
-            <p>2. PayPal Developer Console'dan Client ID alın</p>
-            <p>3. Client Secret anahtarını girin</p>
-            <p>4. Sandbox veya Live environment seçin</p>
-          </div>
+        <div className="bg-amber-500/10 p-3 rounded border border-amber-500/20 text-xs text-amber-200 space-y-1">
+          <p>1. PayPal Developer Console'dan Client ID alın</p>
+          <p>2. Client Secret anahtarını girin</p>
+          <p>3. Sandbox veya Live environment seçin</p>
         </div>
       </div>
     );

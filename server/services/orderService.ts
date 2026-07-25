@@ -105,131 +105,114 @@ export class OrderService {
   }
 
   /**
-   * Atomically process payment completion with credential assignment and package activation
-   * This method ensures all operations happen in a single database transaction for consistency
+   * Process payment completion in two committed phases so a credential-stock
+   * failure never rolls back the "paid" status on an already-captured payment.
+   *
+   * Phase 1 (committed immediately): lock order row, mark paid, clear cart.
+   * Phase 2 (separate TX per plan): assign credentials with FOR UPDATE locks.
+   * If Phase 2 fails the order is already paid — fixIncompletePaidOrders retries.
    */
   async processPaymentCompletion(orderId: string, paypalOrderId: string, paymentDetails?: any): Promise<{
     order: any;
     assignedCredentials: any[];
     success: boolean;
   }> {
-    try {
-      return await db.transaction(async (tx) => {
-        // 1. Get and validate order — FOR UPDATE serialises concurrent requests on the same order row
-        const [order] = await tx.select().from(orders).where(eq(orders.id, orderId)).for('update');
-        
-        if (!order) {
-          throw new Error("Order not found");
-        }
+    const paidAt = new Date();
+    const expiresAt = getEndOfMonthIstanbul(paidAt);
 
-        if (order.status === 'paid') {
-          console.log(`Order ${orderId} already processed as paid`);
-          // Return existing data for idempotency
-          const existingCredentials = await this.storage.getCredentialsForOrder(orderId);
-          return {
-            order,
-            assignedCredentials: existingCredentials,
-            success: true
-          };
-        }
+    // ── PHASE 1: Mark order as paid (commits immediately) ──────────────────
+    let alreadyPaid = false;
+    const updatedOrder = await db.transaction(async (tx) => {
+      const [order] = await tx.select().from(orders)
+        .where(eq(orders.id, orderId)).for('update');
 
-        if (order.status !== 'pending') {
-          throw new Error(`Order status is ${order.status}, expected 'pending'`);
-        }
+      if (!order) throw new Error('Order not found');
 
-        // KESIN KONTROL: PayPal Order ID kontrolü
-        console.log(`🔒 FINAL SAFEGUARD: Verifying payment for order ${orderId} with PayPal Order ID: ${paypalOrderId}`);
-        
-        // Manuel payment değilse PayPal'dan re-verify et
-        if (paypalOrderId && paypalOrderId !== 'manual-payment' && !paypalOrderId.startsWith('MANUAL_')) {
-          // Bu noktada teorik olarak PayPal re-verification yapılabilir
-          // Ancak frontend ve /complete-payment endpoint'te zaten yapıldı
-          // Eğer buraya geldiyse payment verified demektir
-          console.log(`✅ Payment verified for PayPal Order: ${paypalOrderId}`);
-        }
-        
-        // CRITICAL: Order'ın 'failed' durumda olmadığından emin ol
-        if (order.status === 'failed') {
-          throw new Error(`Order ${orderId} is marked as FAILED - cannot assign credentials`);
-        }
+      if (order.status === 'paid') {
+        alreadyPaid = true;
+        return order;
+      }
 
-        const paidAt = new Date();
-        const expiresAt = getEndOfMonthIstanbul(paidAt);
+      if (order.status !== 'pending') {
+        throw new Error(`Order ${orderId} has status '${order.status}', cannot mark paid`);
+      }
 
-        // 2. Update order status to paid
-        const [updatedOrder] = await tx
-          .update(orders)
-          .set({
-            status: 'paid',
-            paypalOrderId,
-            paidAt,
-            expiresAt
-          })
-          .where(eq(orders.id, orderId))
-          .returning();
+      const [updated] = await tx.update(orders)
+        .set({ status: 'paid', paypalOrderId, paidAt, expiresAt })
+        .where(eq(orders.id, orderId))
+        .returning();
 
-        // 3. Update all order items with expiration date
-        await tx
-          .update(orderItems)
-          .set({ expiresAt })
-          .where(eq(orderItems.orderId, orderId));
+      await tx.update(orderItems).set({ expiresAt }).where(eq(orderItems.orderId, orderId));
+      // Clear cart in the same commit so it never stays stale even on later failures
+      await tx.delete(cartItems).where(eq(cartItems.userId, order.userId));
 
-        // 4. Get order items for credential assignment
-        const orderItemsList = await tx
-          .select()
-          .from(orderItems)
-          .where(eq(orderItems.orderId, orderId));
+      console.log(`💳 Order ${orderId} marked PAID, cart cleared`);
+      return updated;
+    });
 
-        const assignedCredentials: any[] = [];
+    // Idempotency: already paid → return existing credentials without re-assigning
+    if (alreadyPaid) {
+      const existingCredentials = await this.storage.getCredentialsForOrder(orderId);
+      return { order: updatedOrder, assignedCredentials: existingCredentials, success: true };
+    }
 
-        // 5. Assign credentials for each order item
-        for (const item of orderItemsList) {
-          console.log(`Assigning ${item.qty} credentials for plan ${item.planId}`);
-          
-          // Get available credentials for this plan with row-level locking
-          const availableCredentials = await tx
-            .select()
-            .from(credentialPools)
-            .where(
-              and(
-                eq(credentialPools.planId, item.planId),
-                eq(credentialPools.isAssigned, false)
-              )
-            )
+    // ── PHASE 2: Assign credentials ────────────────────────────────────────
+    // Each plan item gets its own transaction so a stock failure for one plan
+    // does not roll back assignments already made for other plans.
+    const orderItemsList = await db.select().from(orderItems)
+      .where(eq(orderItems.orderId, orderId));
+    const assignedCredentials: any[] = [];
+
+    for (const item of orderItemsList) {
+      console.log(`Assigning ${item.qty} credentials for plan ${item.planId}`);
+      try {
+        await db.transaction(async (tx) => {
+          const available = await tx.select().from(credentialPools)
+            .where(and(
+              eq(credentialPools.planId, item.planId),
+              eq(credentialPools.isAssigned, false)
+            ))
             .limit(item.qty)
-            .for('update'); // Row-level lock to prevent race conditions
+            .for('update');
 
-          if (availableCredentials.length < item.qty) {
-            throw new Error(
-              `Insufficient credentials for plan ${item.planId}. Need ${item.qty}, available ${availableCredentials.length}`
+          if (available.length < item.qty) {
+            // Order is already PAID — log critical alert for admin, do not throw
+            console.error(
+              `🚨 INSUFFICIENT STOCK: order ${orderId} plan ${item.planId} ` +
+              `needs ${item.qty}, only ${available.length} available. ` +
+              `Order is paid — admin must assign manually.`
             );
+            await this.storage.createSystemLog({
+              category: 'payment_error',
+              action: 'credential_assignment_failed_no_stock',
+              entityType: 'order',
+              entityId: orderId,
+              details: {
+                planId: item.planId, needed: item.qty,
+                available: available.length, paypalOrderId,
+                severity: 'CRITICAL_NEEDS_ADMIN_ACTION'
+              },
+              ipAddress: 'system',
+              userAgent: 'OrderService',
+            }).catch(() => {});
+            return; // non-fatal: fixIncompletePaidOrders will retry
           }
 
-          // Select credentials to assign
-          const credentialsToAssign = availableCredentials.slice(0, item.qty);
+          for (const credential of available) {
+            await tx.update(credentialPools).set({
+              isAssigned: true,
+              assignedToOrderId: orderId,
+              assignedToUserId: updatedOrder.userId,
+              assignedAt: paidAt,
+              updatedAt: new Date(),
+            }).where(eq(credentialPools.id, credential.id));
 
-          for (const credential of credentialsToAssign) {
-            // 6. Update credential pool with assignment
-            await tx
-              .update(credentialPools)
-              .set({
-                isAssigned: true,
-                assignedToOrderId: orderId,
-                assignedToUserId: order.userId,
-                assignedAt: paidAt,
-                updatedAt: new Date()
-              })
-              .where(eq(credentialPools.id, credential.id));
-
-            // 7. Create order credential record
-            await tx
-              .insert(orderCredentials)
-              .values({
-                orderId,
-                credentialId: credential.id,
-                deliveredAt: paidAt,
-                expiresAt
-              });
+            await tx.insert(orderCredentials).values({
+              orderId,
+              credentialId: credential.id,
+              deliveredAt: paidAt,
+              expiresAt,
+            });
 
             assignedCredentials.push({
               id: credential.id,
@@ -237,35 +220,32 @@ export class OrderService {
               password: credential.password,
               planId: credential.planId,
               assignedAt: paidAt,
-              expiresAt
+              expiresAt,
             });
           }
-        }
-
-        // Clear the user's cart atomically — same transaction guarantees no stale
-        // items remain if anything above fails and the TX rolls back.
-        await tx.delete(cartItems).where(eq(cartItems.userId, order.userId));
-        console.log(`🛒 Cart cleared for user ${order.userId} inside payment transaction`);
-
-        console.log(
-          `✅ Payment completion processed successfully for order ${orderId}: ${assignedCredentials.length} credentials assigned`
-        );
-
-        // Send email notifications asynchronously (don't block the payment process)
-        this.sendOrderNotifications(updatedOrder, orderItemsList, assignedCredentials).catch(error => {
-          console.error('📧 Email notification failed for order:', orderId, error);
         });
-
-        return {
-          order: updatedOrder,
-          assignedCredentials,
-          success: true
-        };
-      });
-    } catch (error) {
-      console.error(`❌ Payment completion failed for order ${orderId}:`, error);
-      throw error;
+      } catch (credErr: any) {
+        console.error(`❌ Credential TX error for order ${orderId} plan ${item.planId}:`, credErr);
+        await this.storage.createSystemLog({
+          category: 'payment_error',
+          action: 'credential_assignment_error',
+          entityType: 'order',
+          entityId: orderId,
+          details: { planId: item.planId, error: credErr.message, paypalOrderId },
+          ipAddress: 'system',
+          userAgent: 'OrderService',
+        }).catch(() => {});
+      }
     }
+
+    console.log(`✅ processPaymentCompletion: order ${orderId} — ${assignedCredentials.length} credentials assigned`);
+
+    // Notifications are fire-and-forget; never block the payment response
+    this.sendOrderNotifications(updatedOrder, orderItemsList, assignedCredentials).catch(err => {
+      console.error('📧 Notification failed for order:', orderId, err);
+    });
+
+    return { order: updatedOrder, assignedCredentials, success: true };
   }
 
   /**

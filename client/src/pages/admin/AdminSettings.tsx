@@ -141,6 +141,7 @@ export default function AdminSettings({ defaultTab = "genel" as Tab }: { default
     paypalEnvironment: "sandbox",
     paypalClientId: "",
     paypalClientSecret: "",
+    paypalWebhookId: "",
     currency: "USD",
     SHIP_QUOTA_API_KEY: "",
   });
@@ -172,6 +173,7 @@ export default function AdminSettings({ defaultTab = "genel" as Tab }: { default
       paypalEnvironment:  obj.paypalEnvironment  ?? prev.paypalEnvironment,
       paypalClientId:     obj.paypalClientId     ?? prev.paypalClientId,
       paypalClientSecret: obj.paypalClientSecret ?? prev.paypalClientSecret,
+      paypalWebhookId:    obj.paypalWebhookId    ?? prev.paypalWebhookId,
       currency:           obj.currency           ?? prev.currency,
       SHIP_QUOTA_API_KEY: obj.SHIP_QUOTA_API_KEY ?? prev.SHIP_QUOTA_API_KEY,
     }));
@@ -247,6 +249,7 @@ export default function AdminSettings({ defaultTab = "genel" as Tab }: { default
         { key: "paypalEnvironment",  value: integ.paypalEnvironment,  category: "payment"     },
         { key: "paypalClientId",     value: integ.paypalClientId,     category: "payment"     },
         { key: "paypalClientSecret", value: integ.paypalClientSecret, category: "payment"     },
+        { key: "paypalWebhookId",    value: integ.paypalWebhookId,    category: "payment"     },
         { key: "currency",           value: integ.currency,           category: "payment"     },
         { key: "SHIP_QUOTA_API_KEY", value: integ.SHIP_QUOTA_API_KEY, category: "integration" },
       ];
@@ -618,6 +621,18 @@ export default function AdminSettings({ defaultTab = "genel" as Tab }: { default
                         value={integ.paypalClientSecret}
                         onChange={v => setInteg(prev => ({ ...prev, paypalClientSecret: v }))}
                         placeholder="Değiştirmek için girin"
+                      />
+                    </Field>
+                    <Field
+                      label="Webhook ID"
+                      hint="Admin → PayPal Developer Dashboard → Webhooks bölümünden alın. Canlı modda webhook imzası doğrulaması için zorunludur."
+                    >
+                      <input
+                        type="text"
+                        value={integ.paypalWebhookId}
+                        onChange={e => setInteg(v => ({ ...v, paypalWebhookId: e.target.value }))}
+                        placeholder="WH-XXXXXXXXXXXX"
+                        className={inputCls}
                       />
                     </Field>
                   </div>

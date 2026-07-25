@@ -88,13 +88,14 @@ export async function getClientToken() {
 
 export async function createPaypalOrder(req: Request, res: Response) {
   try {
-    const { amount, currency, intent, paymentMethod, cardDetails } = req.body;
+    const { amount, currency, intent, paymentMethod, cardDetails, dbOrderId } = req.body;
     
     console.log('🔍 PayPal Order Request Debug:', {
       amount,
       currency,
       intent,
       paymentMethod,
+      dbOrderId: dbOrderId || 'none',
       hasCardDetails: !!cardDetails,
       cardNumber: cardDetails?.number ? cardDetails.number.slice(0, 4) + '****' : 'None'
     });
@@ -128,6 +129,9 @@ export async function createPaypalOrder(req: Request, res: Response) {
       intent: intent,
       purchaseUnits: [
         {
+          // custom_id links this PayPal order to our DB order immediately.
+          // The webhook uses it to find the DB order without needing paypalOrderId.
+          ...(dbOrderId ? { customId: dbOrderId } : {}),
           amount: {
             currencyCode: currency,
             value: amount,

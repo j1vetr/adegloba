@@ -1,7 +1,7 @@
 import { DatabaseStorage } from '../storage';
 import { db } from '../db';
 import { orders } from '@shared/schema';
-import { eq, and, lt, isNull } from 'drizzle-orm';
+import { eq, and, lt, isNull, isNotNull } from 'drizzle-orm';
 
 export class OrderCancelService {
   private storage: DatabaseStorage;
@@ -51,29 +51,57 @@ export class OrderCancelService {
           )
         );
 
-      const cancelledCount = result.rowCount || 0;
+      let cancelledCount = result.rowCount || 0;
       
       if (cancelledCount > 0) {
-        console.log(`❌ Order auto-cancel: Cancelled ${cancelledCount} expired pending orders`);
-        
-        // Log the cancellation for each order
+        console.log(`❌ Order auto-cancel: Cancelled ${cancelledCount} expired pending orders (no PayPal link)`);
         for (const order of expiredOrders) {
           await this.storage.createSystemLog({
             category: 'order_processing',
             action: 'auto_cancel_expired',
             entityType: 'order',
             entityId: order.id,
-            details: {
-              orderId: order.id,
-              userId: order.userId,
-              createdAt: order.createdAt,
-              reason: 'Payment not received within 10 minutes',
-              autoCancel: true
-            },
+            details: { orderId: order.id, userId: order.userId, createdAt: order.createdAt, reason: 'Payment not received within 30 minutes', autoCancel: true },
             ipAddress: 'system',
             userAgent: 'OrderCancelService'
           });
         }
+      }
+
+      // ── Cancel stale PayPal-linked orders (>2 hours) ─────────────────────
+      // These are orders where the user opened PayPal but never completed.
+      // After 2 hours the PayPal order token is also expired, so it's safe to cancel.
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      const stalePaypalOrders = await db
+        .select().from(orders)
+        .where(and(
+          eq(orders.status, 'pending'),
+          lt(orders.createdAt, twoHoursAgo),
+          isNotNull(orders.paypalOrderId)
+        ));
+
+      if (stalePaypalOrders.length > 0) {
+        await db.update(orders)
+          .set({ status: 'cancelled' })
+          .where(and(
+            eq(orders.status, 'pending'),
+            lt(orders.createdAt, twoHoursAgo),
+            isNotNull(orders.paypalOrderId)
+          ));
+
+        for (const order of stalePaypalOrders) {
+          await this.storage.createSystemLog({
+            category: 'order_processing',
+            action: 'auto_cancel_stale_paypal',
+            entityType: 'order',
+            entityId: order.id,
+            details: { orderId: order.id, userId: order.userId, paypalOrderId: order.paypalOrderId, reason: 'Stale PayPal payment — 2 hours without completion', autoCancel: true },
+            ipAddress: 'system',
+            userAgent: 'OrderCancelService'
+          });
+        }
+        console.log(`❌ Order auto-cancel: Cancelled ${stalePaypalOrders.length} stale PayPal-linked orders (>2h)`);
+        cancelledCount += stalePaypalOrders.length;
       }
 
       return cancelledCount;
