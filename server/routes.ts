@@ -381,12 +381,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Legacy aliases — kept for backward compat but missing logging/early-link.
+  // New code should use /api/paypal/create-order and /api/paypal/capture-order.
   app.post("/api/paypal/order", async (req, res) => {
+    console.warn("⚠️  /api/paypal/order is a legacy alias — prefer /api/paypal/create-order");
     await createPaypalOrder(req, res);
   });
 
   app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
     await capturePaypalOrder(req, res);
+  });
+
+  // Returns the current user's pending order ID (used for early PayPal order linking)
+  app.get('/api/orders/pending-mine', async (req: any, res) => {
+    if (!req.session?.userId) return res.status(401).json({ message: 'Unauthorized' });
+    try {
+      const userOrders = await storage.getUserOrders(req.session.userId);
+      const pending = userOrders.find(o => o.status === 'pending');
+      if (!pending) return res.status(404).json({ message: 'No pending order' });
+      res.json({ id: pending.id });
+    } catch (err) {
+      res.status(500).json({ message: 'Failed to fetch pending order' });
+    }
   });
 
   // Public routes
@@ -709,8 +725,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: { route: '/api/orders/:orderId/complete' },
       }).catch(() => {});
 
+      // ── VERIFY + CAPTURE (if real PayPal order) ──────────────────────────
+      // Mirrors the logic in /api/cart/complete-payment so this route is safe
+      // to call with APPROVED PayPal orders without a prior separate capture.
+      const effectivePpOid = paypalOrderId && paypalOrderId !== 'manual-payment' ? paypalOrderId : null;
+      if (effectivePpOid) {
+        try {
+          const ppClient = await createPayPalClient();
+          const ppCtrl   = new OrdersController(ppClient);
+          const { body: getBody } = await ppCtrl.getOrder({ id: effectivePpOid });
+          const ppOrder  = JSON.parse(String(getBody));
+          const ppStatus = ppOrder.status;
+          console.log(`🔍 /orders/:id/complete: PayPal ${effectivePpOid} status=${ppStatus}`);
+
+          if (ppStatus === 'APPROVED') {
+            try {
+              const { body: captureBody } = await ppCtrl.captureOrder({ id: effectivePpOid, prefer: 'return=minimal' });
+              const captureRes = JSON.parse(String(captureBody));
+              const capStatus  = captureRes.purchase_units?.[0]?.payments?.captures?.[0]?.status;
+              if (captureRes.status !== 'COMPLETED' || (capStatus && capStatus !== 'COMPLETED')) {
+                return res.status(400).json({ message: `Ödeme tamamlanamadı (${capStatus || captureRes.status})` });
+              }
+              console.log(`✅ /orders/:id/complete captured PayPal ${effectivePpOid}`);
+            } catch (capErr: any) {
+              if (!String(capErr?.body || capErr?.message || '').includes('ORDER_ALREADY_CAPTURED')) throw capErr;
+              console.log(`ℹ️  ORDER_ALREADY_CAPTURED for ${effectivePpOid}`);
+            }
+          } else if (ppStatus !== 'COMPLETED') {
+            return res.status(400).json({ message: `Ödeme geçerli durumda değil (${ppStatus})` });
+          }
+        } catch (ppErr: any) {
+          if (!ppErr?.message?.includes('ORDER_ALREADY_CAPTURED')) {
+            console.error(`PayPal verify error in /orders/:id/complete:`, ppErr);
+            throw ppErr;
+          }
+        }
+      }
+
       // Use atomic payment processing for consistency
-      const result = await orderService.processPaymentCompletion(orderId, paypalOrderId);
+      const result = await orderService.processPaymentCompletion(orderId, paypalOrderId || 'manual-payment');
       
       if (result.success) {
         // Update user's monthly loyalty data based on purchased GB
@@ -1071,11 +1124,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const routeStart = Date.now();
     try {
       const userId = req.session.userId;
-      const { paypalOrderId, couponCode } = req.body;
+      const { paypalOrderId: rawPaypalOrderId, couponCode } = req.body;
 
-      if (!paypalOrderId) {
-        return res.status(400).json({ message: 'paypalOrderId required' });
-      }
+      // Normalise: null/undefined/empty → 'manual-payment' so all downstream
+      // guards on `!== 'manual-payment'` work correctly, including free orders.
+      const paypalOrderId = (rawPaypalOrderId && String(rawPaypalOrderId).trim())
+        ? String(rawPaypalOrderId).trim()
+        : 'manual-payment';
 
       console.log(`💳 complete-payment: user=${userId} paypalOrderId=${paypalOrderId}`);
 

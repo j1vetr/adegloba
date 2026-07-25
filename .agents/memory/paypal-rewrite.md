@@ -26,10 +26,19 @@ Users were successfully charged (confirmed via PayPal dashboard) but never recei
 - `client/src/components/PayPalButton.tsx` — capture kaldırıldı, dbOrderId eklendi, STEPS güncellendi
 - `client/src/pages/admin/AdminSettings.tsx` — `paypalWebhookId` alanı
 
+## Post-Rewrite Fixes (session 2)
+4 ek sorun bulunup düzeltildi:
+1. `complete-payment`: boş/null `paypalOrderId` → 400 veriyordu (ücretsiz sipariş akışını kırıyordu). Düzeltme: `rawPaypalOrderId` normalize edildi → `'manual-payment'`.
+2. `CreditCardDrawer`: ölü `/register-paypal-order` endpoint çağrısı kaldırıldı; `/api/orders/pending-mine` (yeni) ile `dbOrderId` alınıp create-order'a geçildi (Faz 1 erken link kart ödemelerinde de çalışıyor).
+3. `/api/orders/:orderId/complete`: PayPal capture adımı yoktu. APPROVED statüsündeki PayPal siparişler `capture` yapılmadan `paid` işaretlenebilirdi. Tam verify+capture mantığı eklendi (complete-payment ile aynı).
+4. `/api/paypal/order` (eski duplicate route): warning log eklendi, ilerisi için yorum bırakıldı.
+5. `GET /api/orders/pending-mine`: yeni endpoint — kullanıcının bekleyen siparişinin ID'sini döndürür.
+
 ## Kritik Kurallar
 - **Capture ve fulfill asla ayrı client çağrısı olmamalı** — `complete-payment` endpoint her ikisini yapar
 - **processPaymentCompletion idempotent** — zaten paid sipariş mevcut credential'ları döndürür
 - **fixIncompletePaidOrders** — ödendi ama credential atanmadıysa admin panelden retry yapar
 - **paypalWebhookId** admin panelde boş bırakılırsa webhook signature verification atlanır (sandbox için güvenli)
+- **`paypalOrderId` boş string = `'manual-payment'`** — complete-payment ve orders/:id/complete her ikisi de normalleştirir; `!== 'manual-payment'` guard'ları buna göre çalışır
 
 **Why:** Para alındı ama paket teslim edilmedi şikayeti üretimde doğrulandı.
