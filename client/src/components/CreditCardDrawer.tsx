@@ -9,6 +9,7 @@ interface CreditCardDrawerProps {
   onClose: () => void;
   amount: string;
   currency: string;
+  dbOrderId?: string;          // DB order ID from the checkout page (passed directly)
   onSuccess?: (paymentData: any) => void;
   onError?: (error: any) => void;
 }
@@ -18,6 +19,7 @@ export default function CreditCardDrawer({
   onClose,
   amount,
   currency,
+  dbOrderId: propDbOrderId,    // preferred — comes from URL ?orderId= on Checkout page
   onSuccess,
   onError,
 }: CreditCardDrawerProps) {
@@ -110,16 +112,21 @@ export default function CreditCardDrawer({
         },
       };
 
-      // Fetch our pending DB order ID first — used for Faz 1 early linking
-      // (sets custom_id on PayPal order so webhook can find DB order immediately).
-      let dbOrderId: string | undefined;
-      try {
-        const userOrdersRes = await fetch("/api/orders/pending-mine", { credentials: "include" });
-        if (userOrdersRes.ok) {
-          const pending = await userOrdersRes.json();
-          dbOrderId = pending?.id;
-        }
-      } catch (_) { /* non-critical — complete-payment handles recovery anyway */ }
+      // Resolve DB order ID for Faz 1 early linking.
+      // Priority: prop passed from Checkout page (orderId from URL) — always correct,
+      // even if the order is auto-cancelled (processPaymentCompletion reactivates it).
+      // Fallback: ask the API for the current pending order (covers edge cases where
+      // no orderId prop is available, e.g. embedded checkout flows).
+      let dbOrderId: string | undefined = propDbOrderId;
+      if (!dbOrderId) {
+        try {
+          const userOrdersRes = await fetch("/api/orders/pending-mine", { credentials: "include" });
+          if (userOrdersRes.ok) {
+            const pending = await userOrdersRes.json();
+            dbOrderId = pending?.id;
+          }
+        } catch (_) { /* non-critical — complete-payment recovery handles this */ }
+      }
 
       const createRes = await fetch("/api/paypal/create-order", {
         method: "POST", headers: { "Content-Type": "application/json" },

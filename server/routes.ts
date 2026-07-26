@@ -1228,7 +1228,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (paypalOrderId !== 'manual-payment') {
         const byPaypal = await storage.getOrdersByPaypalOrderId(paypalOrderId);
-        pendingOrder = byPaypal.find(o => o.status === 'pending') || null;
+        // Accept pending OR cancelled — cancelled orders can be reactivated by
+        // processPaymentCompletion when payment is confirmed (auto-cancel victim case).
+        pendingOrder = byPaypal.find(o => o.status === 'pending')
+                    || byPaypal.find(o => o.status === 'cancelled')
+                    || null;
       }
 
       if (!pendingOrder) {

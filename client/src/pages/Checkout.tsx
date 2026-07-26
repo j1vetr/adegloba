@@ -332,6 +332,7 @@ export default function Checkout() {
         onClose={() => setCreditCardDrawerOpen(false)}
         amount={finalTotal.toFixed(2)}
         currency="USD"
+        dbOrderId={orderId || undefined}
         onSuccess={(paymentData) => {
           setCreditCardDrawerOpen(false);
           toast({ title: t.checkout.paymentSuccess, description: t.checkout.paymentSuccessCard });
