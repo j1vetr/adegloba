@@ -148,7 +148,8 @@ export default function CreditCardDrawer({
       if (captureData.status === "COMPLETED" && captureDetails?.status === "COMPLETED") {
         toast({ title: c.verifyingPayment, description: c.verifyingPaymentDesc });
         const completeRes = await fetch("/api/cart/complete-payment", {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paypalOrderId: createData.id, couponCode: "" }),
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paypalOrderId: createData.id, couponCode: "", dbOrderId }),
         });
         if (!completeRes.ok) throw new Error((await completeRes.json()).message || c.paymentErrorCardDesc);
         const completeData = await completeRes.json();

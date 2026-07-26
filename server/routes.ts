@@ -1124,7 +1124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const routeStart = Date.now();
     try {
       const userId = req.session.userId;
-      const { paypalOrderId: rawPaypalOrderId, couponCode } = req.body;
+      const { paypalOrderId: rawPaypalOrderId, couponCode, dbOrderId: bodyDbOrderId } = req.body;
 
       // Normalise: null/undefined/empty → 'manual-payment' so all downstream
       // guards on `!== 'manual-payment'` work correctly, including free orders.
@@ -1233,6 +1233,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pendingOrder = byPaypal.find(o => o.status === 'pending')
                     || byPaypal.find(o => o.status === 'cancelled')
                     || null;
+      }
+
+      // ── DIRECT ORDER ID LOOKUP ─────────────────────────────────────────────
+      // CreditCardDrawer passes the DB order ID it already knows (from the
+      // checkout URL or pending-mine call).  Use it as a second-priority lookup
+      // so we find the correct order even when the early link failed.
+      if (!pendingOrder && bodyDbOrderId) {
+        const directOrder = await storage.getOrderById(bodyDbOrderId);
+        if (directOrder && directOrder.userId === userId) {
+          if (directOrder.status === 'pending' || directOrder.status === 'cancelled') {
+            console.log(`🎯 complete-payment: found order directly by bodyDbOrderId=${bodyDbOrderId} (status=${directOrder.status})`);
+            // Write paypalOrderId so webhook & future lookups can find it too
+            if (paypalOrderId !== 'manual-payment' && !directOrder.paypalOrderId) {
+              await storage.updateOrder(directOrder.id, { paypalOrderId });
+            }
+            pendingOrder = { ...directOrder, paypalOrderId: directOrder.paypalOrderId || paypalOrderId };
+          }
+        }
       }
 
       if (!pendingOrder) {

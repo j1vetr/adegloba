@@ -26,6 +26,12 @@ Users were successfully charged (confirmed via PayPal dashboard) but never recei
 - `client/src/components/PayPalButton.tsx` — capture kaldırıldı, dbOrderId eklendi, STEPS güncellendi
 - `client/src/pages/admin/AdminSettings.tsx` — `paypalWebhookId` alanı
 
+## dbOrderId → complete-payment fix (session 5)
+CreditCardDrawer artık `dbOrderId`'yi hem `create-order`'a hem `complete-payment` body'sine gönderiyor.
+Server tarafında `complete-payment`, `bodyDbOrderId` ile direkt sipariş lookup yapıyor (paypalOrderId lookup'tan sonra, userOrders scan'dan önce).
+Böylece erken link başarısız olsa bile (dbOrderId: null → paypalOrderId link yok) complete-payment doğru siparişi bulabiliyor.
+Ayrıca Checkout.tsx artık URL'deki orderId'yi `CreditCardDrawer`'a `dbOrderId` prop olarak geçiriyor.
+
 ## "No pending order found" fix (session 4)
 Hata: Para çekilip sipariş iptal statüsüne düşüyordu.
 Kök neden: Auto-cancel servisi 30 dk `paypalOrderId`'siz siparişi iptal ediyor. Ödeme geç gelince `complete-payment` pending sipariş bulamıyor. Recovery yalnızca `o.paypalOrderId === paypalOrderId` eşleşmesi arıyordu — iptal öncesi link yapılamamışsa null ≠ gerçek ID → recovery de başarısız.
