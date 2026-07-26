@@ -133,8 +133,16 @@ export class OrderService {
         return order;
       }
 
-      if (order.status !== 'pending') {
+      // Allow reactivating auto-cancelled orders when payment is confirmed.
+      // Auto-cancel fires on orders that sat >30 min without a paypalOrderId.
+      // If payment was captured after that window the order status is 'cancelled'
+      // but the money is real — we must still fulfil it.
+      if (order.status !== 'pending' && order.status !== 'cancelled') {
         throw new Error(`Order ${orderId} has status '${order.status}', cannot mark paid`);
+      }
+
+      if (order.status === 'cancelled') {
+        console.log(`🔄 processPaymentCompletion: reactivating auto-cancelled order ${orderId} — payment confirmed`);
       }
 
       const [updated] = await tx.update(orders)

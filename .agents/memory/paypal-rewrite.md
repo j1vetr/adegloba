@@ -26,6 +26,13 @@ Users were successfully charged (confirmed via PayPal dashboard) but never recei
 - `client/src/components/PayPalButton.tsx` — capture kaldırıldı, dbOrderId eklendi, STEPS güncellendi
 - `client/src/pages/admin/AdminSettings.tsx` — `paypalWebhookId` alanı
 
+## "No pending order found" fix (session 4)
+Hata: Para çekilip sipariş iptal statüsüne düşüyordu.
+Kök neden: Auto-cancel servisi 30 dk `paypalOrderId`'siz siparişi iptal ediyor. Ödeme geç gelince `complete-payment` pending sipariş bulamıyor. Recovery yalnızca `o.paypalOrderId === paypalOrderId` eşleşmesi arıyordu — iptal öncesi link yapılamamışsa null ≠ gerçek ID → recovery de başarısız.
+Düzeltmeler:
+1. `complete-payment` recovery: `(o.paypalOrderId === paypalOrderId || !o.paypalOrderId)` — auto-cancel kurbanı sipariş de bulunuyor, bulununca paypalOrderId yazılıyor. Pencere 1h → 2h.
+2. `processPaymentCompletion` Phase 1: `status === 'cancelled'` artık izin veriliyor (reactivation). Webhook da aynı fonksiyonu kullandığı için otomatik düzeltildi.
+
 ## Full End-to-End Audit (session 3)
 Tüm sipariş adımları denetlendi. Sadece 1 gerçek bug bulundu:
 - **Kupon çift kayıt**: `validateCoupon` yalnızca `status='paid'` siparişleri sayar. Checkout'ta `recordCouponUsage` kaydı oluşturulur (sipariş `pending`). `complete-payment` aynı `couponCode` ile yeniden valide edince sipariş hâlâ `pending` → validasyon geçer → ikinci kayıt → kupon kullanım sayısı 2 görünür. Düzeltme: `!pendingOrder.couponId` guard'ı ile, coupon zaten checkout'ta uygulanmışsa re-validate ve re-record atlanır.

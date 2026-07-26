@@ -1244,21 +1244,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (!pendingOrder) {
-          // Recovery: cancelled order that still belongs to this PayPal payment
-          const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+          // Recovery: find a cancelled order that belongs to this PayPal payment.
+          // Two sub-cases:
+          //   (a) paypalOrderId already linked → exact match
+          //   (b) auto-cancel fired before early-link (paypalOrderId was null on the order)
+          //       → match any recently cancelled order without a paypalOrderId
+          // Use a 2-hour window to cover the full auto-cancel timeout.
+          const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
           const recovered = userOrders
-            .filter(o => o.status === 'cancelled' && o.paypalOrderId === paypalOrderId
-                      && o.createdAt && new Date(o.createdAt) > oneHourAgo)
+            .filter(o => o.status === 'cancelled'
+                      && o.createdAt && new Date(o.createdAt) > twoHoursAgo
+                      && (o.paypalOrderId === paypalOrderId   // (a) already linked
+                          || !o.paypalOrderId))               // (b) auto-cancel victim
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
           if (recovered) {
-            console.log(`🔄 Recovery: reactivating cancelled order ${recovered.id} (PayPal COMPLETED)`);
-            await storage.updateOrder(recovered.id, { status: 'pending' });
-            pendingOrder = { ...recovered, status: 'pending' };
+            const recoveryReason = recovered.paypalOrderId
+              ? 'Reactivated — PayPal order already linked'
+              : 'Reactivated — auto-cancelled before early-link; PayPal capture confirmed';
+            console.log(`🔄 Recovery: reactivating cancelled order ${recovered.id} (${recoveryReason})`);
+            // Write paypalOrderId so future lookups and the webhook can find this order
+            await storage.updateOrder(recovered.id, { status: 'pending', paypalOrderId });
+            pendingOrder = { ...recovered, status: 'pending', paypalOrderId };
             storage.createSystemLog({
               category: 'payment', action: 'order_recovery_reactivated', entityType: 'order',
               entityId: recovered.id,
-              details: { reason: 'Reactivated after PayPal capture confirmed', paypalOrderId },
+              details: { reason: recoveryReason, paypalOrderId, hadPaypalOrderId: !!recovered.paypalOrderId },
               ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
             }).catch(() => {});
           }
