@@ -1,0 +1,131 @@
+0|adegloba  | 12:45:32 PM [express] POST /api/cart 400 in 7ms :: {"message":"Sepette zaten bir ürün var. Lütfen önc…
+0|adegloba  | 12:45:40 PM [express] POST /api/cart/checkout 200 in 31ms :: {"id":"45f67001-882a-4306-b43a-eb4e9c511…
+0|adegloba  | 12:45:40 PM [express] GET /api/user/me 200 in 4ms :: {"id":"9bd86dd4-3e6d-4c7e-9ffe-3f23352098a7","us…
+0|adegloba  | 12:45:40 PM [express] GET /api/user/gift-banners 304 in 12ms :: []
+0|adegloba  | 12:45:40 PM [express] GET /api/cart 304 in 18ms :: {"items":[{"id":"c75d1302-b675-4be0-a12e-4d88eef92…
+0|adegloba  | 12:46:02 PM [express] GET /api/orders/pending-mine 200 in 18ms :: {"id":"45f67001-882a-4306-b43a-eb4e…
+0|adegloba  | 🔍 PayPal Order Request Debug: {
+0|adegloba  |   amount: '15',
+0|adegloba  |   currency: 'USD',
+0|adegloba  |   intent: 'CAPTURE',
+0|adegloba  |   paymentMethod: 'CARD',
+0|adegloba  |   dbOrderId: '45f67001-882a-4306-b43a-eb4e9c511009',
+0|adegloba  |   hasCardDetails: true,
+0|adegloba  |   cardNumber: '5168****'
+0|adegloba  | }
+0|adegloba  | 🔧 Adding card paymentSource to PayPal order
+0|adegloba  | 📤 PayPal Order Body: {
+0|adegloba  |   "intent": "CAPTURE",
+0|adegloba  |   "purchaseUnits": [
+0|adegloba  |     {
+0|adegloba  |       "customId": "45f67001-882a-4306-b43a-eb4e9c511009",
+0|adegloba  |       "amount": {
+0|adegloba  |         "currencyCode": "USD",
+0|adegloba  |         "value": "15"
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   ],
+0|adegloba  |   "paymentSource": {
+0|adegloba  |     "card": {
+0|adegloba  |       "number": "5168404405747065",
+0|adegloba  |       "securityCode": "484",
+0|adegloba  |       "expiry": "2030-11",
+0|adegloba  |       "name": "emir simsek",
+0|adegloba  |       "billingAddress": {
+0|adegloba  |         "addressLine1": "1 Main St",
+0|adegloba  |         "addressLine2": "",
+0|adegloba  |         "adminArea2": "Istanbul",
+0|adegloba  |         "adminArea1": "",
+0|adegloba  |         "postalCode": "34000",
+0|adegloba  |         "countryCode": "TR"
+0|adegloba  |       },
+0|adegloba  |       "attributes": {
+0|adegloba  |         "verification": {
+0|adegloba  |           "method": "SCA_WHEN_REQUIRED"
+0|adegloba  |         }
+0|adegloba  |       }
+0|adegloba  |     }
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | info: Request POST https://api-m.paypal.com/v1/oauth2/token
+0|adegloba  | info: Request body {"type":"form","content":[{"key":"grant_type","value":"client_credentials"}]}
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-type":"application/json","server-timing":"**Redacted**","edge-control":"**Redacted**","paypal-debug-id":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","set-cookie":"**Redacted**","via":"1.1 varnish, 1.1 varnish","pragma":"no-cache","edge":"**Redacted**","accept-ranges":"**Redacted**","x-paypal-token-service":"**Redacted**","access-control-expose-headers":"**Redacted**","x-processed-by":"**Redacted**","date":"Mon, 27 Jul 2026 09:46:02 GMT","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | info: Request POST https://api-m.paypal.com/v2/checkout/orders application/json
+0|adegloba  | info: Request body {"type":"text","content":"{\"intent\":\"CAPTURE\",\"purchase_units\":[{\"amount\":{\"currency_code\":\"USD\",\"value\":\"15\"},\"custom_id\":\"45f67001-882a-4306-b43a-eb4e9c511009\"}],\"payment_source\":{\"card\":{\"name\":\"emir simsek\",\"number\":\"5168404405747065\",\"expiry\":\"2030-11\",\"security_code\":\"484\",\"billing_address\":{\"address_line_1\":\"1 Main St\",\"address_line_2\":\"\",\"admin_area_2\":\"Istanbul\",\"admin_area_1\":\"\",\"postal_code\":\"34000\",\"country_code\":\"TR\"},\"attributes\":{\"verification\":{\"method\":\"SCA_WHEN_REQUIRED\"}}}}}"}
+0|adegloba  | info: Response 201 1380 application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-length":"1380","access-control-expose-headers":"**Redacted**","edge-control":"**Redacted**","content-type":"application/json","cache-control":"max-age=0, no-cache, no-store, must-revalidate","via":"1.1 varnish, 1.1 varnish","paypal-debug-id":"**Redacted**","server-timing":"**Redacted**","edge":"**Redacted**","accept-ranges":"**Redacted**","x-processed-by":"**Redacted**","set-cookie":"**Redacted**","date":"Mon, 27 Jul 2026 09:46:05 GMT","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding"}
+0|adegloba  | 12:46:05 PM [express] POST /api/paypal/create-order 201 in 2686ms :: {"id":"43V3582142012014D","statu…
+0|adegloba  | 🔗 Early-linked PayPal 43V3582142012014D → DB order 45f67001-882a-4306-b43a-eb4e9c511009
+0|adegloba  | 🔍 Checking PayPal order status first: 43V3582142012014D
+0|adegloba  | info: Request POST https://api-m.paypal.com/v1/oauth2/token
+0|adegloba  | info: Request body {"type":"form","content":[{"key":"grant_type","value":"client_credentials"}]}
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","access-control-expose-headers":"**Redacted**","set-cookie":"**Redacted**","server-timing":"**Redacted**","x-paypal-token-service":"**Redacted**","via":"1.1 varnish, 1.1 varnish","paypal-debug-id":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","content-type":"application/json","edge":"**Redacted**","pragma":"no-cache","x-processed-by":"**Redacted**","accept-ranges":"**Redacted**","edge-control":"**Redacted**","date":"Mon, 27 Jul 2026 09:46:07 GMT","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | info: Request GET https://api-m.paypal.com/v2/checkout/orders/43V3582142012014D
+0|adegloba  | info: Request body undefined
+0|adegloba  | info: Response 200  application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","edge-control":"**Redacted**","via":"1.1 varnish, 1.1 varnish","server-timing":"**Redacted**","edge":"**Redacted**","accept-ranges":"**Redacted**","set-cookie":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","x-processed-by":"**Redacted**","access-control-expose-headers":"**Redacted**","content-type":"application/json","paypal-debug-id":"**Redacted**","date":"Mon, 27 Jul 2026 09:46:08 GMT","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding","transfer-encoding":"chunked"}
+0|adegloba  | 🔍 Current PayPal Order Status: CREATED
+0|adegloba  | 🔄 Order not captured yet - proceeding with capture
+0|adegloba  | info: Request POST https://api-m.paypal.com/v2/checkout/orders/43V3582142012014D/capture application/json
+0|adegloba  | info: Request body undefined
+0|adegloba  | info: Response 201 1380 application/json
+0|adegloba  | info: Response headers {"connection":"keep-alive","content-length":"1380","edge-control":"**Redacted**","x-processed-by":"**Redacted**","paypal-debug-id":"**Redacted**","via":"1.1 varnish, 1.1 varnish","server-timing":"**Redacted**","accept-ranges":"**Redacted**","access-control-expose-headers":"**Redacted**","content-type":"application/json","edge":"**Redacted**","set-cookie":"**Redacted**","cache-control":"max-age=0, no-cache, no-store, must-revalidate","date":"Mon, 27 Jul 2026 09:46:10 GMT","strict-transport-security":"**Redacted**","x-served-by":"**Redacted**","x-cache":"**Redacted**","x-cache-hits":"**Redacted**","x-timer":"**Redacted**","vary":"Accept-Encoding"}
+0|adegloba  | 🔍 PayPal Capture Response Debug: {
+0|adegloba  |   httpStatusCode: 201,
+0|adegloba  |   status: 'COMPLETED',
+0|adegloba  |   captureStatus: 'DECLINED',
+0|adegloba  |   captureId: '5YC03423DT078761W'
+0|adegloba  | }
+0|adegloba  | ❌ PayPal Capture DECLINED despite HTTP 201: {
+0|adegloba  |   id: '5YC03423DT078761W',
+0|adegloba  |   status: 'DECLINED',
+0|adegloba  |   amount: { currency_code: 'USD', value: '15.00' },
+0|adegloba  |   final_capture: true,
+0|adegloba  |   seller_protection: { status: 'NOT_ELIGIBLE' },
+0|adegloba  |   seller_receivable_breakdown: {
+0|adegloba  |     gross_amount: { currency_code: 'USD', value: '15.00' },
+0|adegloba  |     paypal_fee: { currency_code: 'USD', value: '0.78' },
+0|adegloba  |     net_amount: { currency_code: 'USD', value: '14.22' }
+0|adegloba  |   },
+0|adegloba  |   custom_id: '45f67001-882a-4306-b43a-eb4e9c511009',
+0|adegloba  |   links: [
+0|adegloba  |     {
+0|adegloba  |       href: 'https://api.paypal.com/v2/payments/captures/5YC03423DT078761W',
+0|adegloba  |       rel: 'self',
+0|adegloba  |       method: 'GET'
+0|adegloba  |     },
+0|adegloba  |     {
+0|adegloba  |       href: 'https://api.paypal.com/v2/checkout/orders/43V3582142012014D',
+0|adegloba  |       rel: 'up',
+0|adegloba  |       method: 'GET'
+0|adegloba  |     }
+0|adegloba  |   ],
+0|adegloba  |   create_time: '2026-07-27T09:46:09Z',
+0|adegloba  |   update_time: '2026-07-27T09:46:09Z',
+0|adegloba  |   network_transaction_reference: { id: 'MDSE718N1', date: '0727', network: 'MASTERCARD' },
+0|adegloba  |   processor_response: {
+0|adegloba  |     avs_code: 'S',
+0|adegloba  |     cvv_code: 'M',
+0|adegloba  |     response_code: '9100',
+0|adegloba  |     payment_advice_code: '02'
+0|adegloba  |   }
+0|adegloba  | }
+0|adegloba  | 12:46:10 PM [express] POST /api/paypal/capture-order 400 in 2565ms :: {"id":"43V3582142012014D","stat…
+0|adegloba  | 🔔 [2026-07-27T09:46:14.795Z] PayPal webhook received
+0|adegloba  | 🌍 PayPal env: PRODUCTION | event: PAYMENT.CAPTURE.DECLINED
+0|adegloba  | 🔐 Webhook signature verified
+0|adegloba  | ❌ [DECLINED] paymentId=07790766J8175613S custom_id=45f67001-882a-4306-b43a-eb4e9c511009 paypalOrderId=43V3582142012014D
+0|adegloba  | 💵 Amount: USD 15.00
+0|adegloba  | 🚫 Reason: Unknown
+0|adegloba  | 🔄 Order 45f67001-882a-4306-b43a-eb4e9c511009 marked FAILED (payment declined)
+0|adegloba  | 12:46:15 PM [express] POST /api/paypal/webhook 200 in 616ms :: {"status":"declined_processed","orderI…
+0|adegloba  | 🔔 [2026-07-27T09:46:20.476Z] PayPal webhook received
+0|adegloba  | 🌍 PayPal env: PRODUCTION | event: PAYMENT.CAPTURE.DECLINED
+0|adegloba  | 🔐 Webhook signature verified
+0|adegloba  | ❌ [DECLINED] paymentId=5YC03423DT078761W custom_id=45f67001-882a-4306-b43a-eb4e9c511009 paypalOrderId=43V3582142012014D
+0|adegloba  | 💵 Amount: USD 15.00
+0|adegloba  | 🚫 Reason: Unknown
+0|adegloba  | 🔄 Order 45f67001-882a-4306-b43a-eb4e9c511009 marked FAILED (payment declined)
+0|adegloba  | 12:46:21 PM [express] POST /api/paypal/webhook 200 in 528ms :: {"status":"declined_processed","orderI…
