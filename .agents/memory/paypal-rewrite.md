@@ -26,6 +26,12 @@ Users were successfully charged (confirmed via PayPal dashboard) but never recei
 - `client/src/components/PayPalButton.tsx` — capture kaldırıldı, dbOrderId eklendi, STEPS güncellendi
 - `client/src/pages/admin/AdminSettings.tsx` — `paypalWebhookId` alanı
 
+## CreditCardDrawer 3-katmanlı dbOrderId çözümü (session 6)
+dbOrderId null olduğunda 3. kaynak olarak /api/cart/checkout çağrılıyor.
+Öncelik: (1) propDbOrderId (URL'den), (2) pending-mine API, (3) /api/cart/checkout son çare.
+Böylece kullanıcının hiç pending siparişi olmasa bile para hareketinden önce her zaman bir DB siparişi yaratılıyor.
+dbOrderId: null vakası artık teorik olarak imkânsız (sepet dolu olduğu sürece).
+
 ## dbOrderId → complete-payment fix (session 5)
 CreditCardDrawer artık `dbOrderId`'yi hem `create-order`'a hem `complete-payment` body'sine gönderiyor.
 Server tarafında `complete-payment`, `bodyDbOrderId` ile direkt sipariş lookup yapıyor (paypalOrderId lookup'tan sonra, userOrders scan'dan önce).

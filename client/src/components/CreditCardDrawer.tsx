@@ -113,19 +113,42 @@ export default function CreditCardDrawer({
       };
 
       // Resolve DB order ID for Faz 1 early linking.
-      // Priority: prop passed from Checkout page (orderId from URL) — always correct,
-      // even if the order is auto-cancelled (processPaymentCompletion reactivates it).
-      // Fallback: ask the API for the current pending order (covers edge cases where
-      // no orderId prop is available, e.g. embedded checkout flows).
+      // We try three sources in priority order so there is ALWAYS a DB order
+      // linked to this PayPal order before money moves.
+      //
+      // 1. Prop from Checkout page (orderId from URL) — most reliable; set even
+      //    when the order is cancelled (processPaymentCompletion reactivates it).
+      // 2. /api/orders/pending-mine — fallback for embedded / direct flows.
+      // 3. /api/cart/checkout — last resort: if the user somehow has no pending
+      //    order at all (direct navigation, session edge-case, etc.) we create
+      //    one fresh from their cart right before money moves.  This guarantees
+      //    complete-payment can always find a DB order to fulfil.
       let dbOrderId: string | undefined = propDbOrderId;
+
       if (!dbOrderId) {
         try {
-          const userOrdersRes = await fetch("/api/orders/pending-mine", { credentials: "include" });
-          if (userOrdersRes.ok) {
-            const pending = await userOrdersRes.json();
+          const pendingRes = await fetch("/api/orders/pending-mine", { credentials: "include" });
+          if (pendingRes.ok) {
+            const pending = await pendingRes.json();
             dbOrderId = pending?.id;
           }
-        } catch (_) { /* non-critical — complete-payment recovery handles this */ }
+        } catch (_) { /* ignore — try next source */ }
+      }
+
+      if (!dbOrderId) {
+        try {
+          const checkoutRes = await fetch("/api/cart/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+            credentials: "include",
+          });
+          if (checkoutRes.ok) {
+            const checkoutData = await checkoutRes.json();
+            dbOrderId = checkoutData?.id;
+            console.log("💡 CreditCardDrawer: created fresh pending order", dbOrderId);
+          }
+        } catch (_) { /* non-critical — complete-payment recovery is the final net */ }
       }
 
       const createRes = await fetch("/api/paypal/create-order", {
