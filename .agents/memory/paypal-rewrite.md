@@ -82,6 +82,11 @@ Denetimdeki TÜM açıklar kapatıldı; kod tek modülde toplandı:
 - Curl ile doğrulandı: 401'ler, 403 sahiplik (complete + create-order + idempotency probe), bedava sipariş açığı 400, sahte tutar override, tutar uyuşmazlığı bloğu, CREATED statü reddi. Sipariş hiçbir hatalı yolda paid olmadı.
 - NOT: Üretim kullanıcının kendi VPS'inde (PM2) — düzeltmeler oraya deploy edilene kadar üretimde açıklar durur.
 
+## Sadakat Sistemi Durumu (kullanıcı kararı, Tem 2026)
+GB sayacı her ödemede sessizce veri toplar (processPaymentCompletion içinde) ama `loyalty_discount_percent` HİÇBİR fiyat hesabında kullanılmaz — müşteriye yansıyan indirim yok. Kullanıcı bilinçli olarak "böyle kalsın" dedi.
+**Why:** İleride sistem açılırsa geçmiş veriler hazır olsun; şimdilik fiyatlara dokunulmasın.
+**How to apply:** Sadakat indirimini fiyata uygulayan kod YAZMA — kullanıcı açıkça isteyene kadar sistem kayıt modunda kalacak.
+
 ## Kritik Kurallar
 - **Capture ve fulfill asla ayrı client çağrısı olmamalı** — `complete-payment` endpoint her ikisini yapar
 - **processPaymentCompletion idempotent** — zaten paid sipariş mevcut credential'ları döndürür
