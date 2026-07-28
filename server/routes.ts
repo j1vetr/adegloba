@@ -6,6 +6,7 @@ import { setupAuth, isAuthenticated } from "./standaloneAuth";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault, createPayPalClient } from "./paypal";
 import { OrdersController } from "@paypal/paypal-server-sdk";
 import { OrderService } from "./services/orderService";
+import { PaymentOrchestrator } from "./services/paymentOrchestrator";
 import { CouponService } from "./services/couponService";
 import { ExpiryService } from "./services/expiryService";
 import { LoyaltyService } from "./services/loyaltyService";
@@ -18,6 +19,7 @@ import { createObjectCsvWriter } from 'csv-writer';
 
 const orderService = new OrderService(storage);
 const couponService = new CouponService(storage);
+const paymentOrchestrator = new PaymentOrchestrator(storage, orderService, couponService);
 const expiryService = new ExpiryService(storage);
 
 // createPayPalClient() reads credentials directly from DB each call —
@@ -211,11 +213,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/paypal/create-order', async (req: any, res) => {
     const t0 = Date.now();
     try {
-      const { amount, currency, dbOrderId } = req.body;
-
-      if (!amount || !currency) {
-        return res.status(400).json({ message: 'Amount and currency are required' });
+      // ── AUTH: only logged-in users can start a payment ───────────────────
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
       }
+      const userId = req.session.userId;
+      const { dbOrderId } = req.body;
+
+      // ── SERVER-AUTHORITATIVE AMOUNT ──────────────────────────────────────
+      // A PayPal order may only be created for an existing DB order that
+      // belongs to this user. Amount & currency come from the DB order —
+      // client-supplied values are IGNORED (prevents pay-1-cent tampering).
+      if (!dbOrderId) {
+        return res.status(400).json({ message: 'Sipariş bulunamadı. Lütfen sepetten yeniden deneyin.' });
+      }
+      const dbOrder = await storage.getOrderById(dbOrderId);
+      if (!dbOrder || dbOrder.userId !== userId) {
+        console.error(`🚨 SECURITY: create-order for order ${dbOrderId} rejected (owner mismatch or not found), caller=${userId}`);
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+      // pending = normal; cancelled/failed = retry after auto-cancel or decline
+      if (!['pending', 'cancelled', 'failed'].includes(dbOrder.status)) {
+        return res.status(400).json({ message: `Bu sipariş için ödeme başlatılamaz (durum: ${dbOrder.status})` });
+      }
+      const amount = parseFloat(String(dbOrder.totalUsd)).toFixed(2);
+      const currency = dbOrder.currency || 'USD';
+      req.body.amount = amount;
+      req.body.currency = currency;
+      req.body.intent = req.body.intent || 'CAPTURE';
 
       // Validate PayPal is configured
       const settings = await storage.getSettingsByCategory('payment');
@@ -287,6 +312,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/paypal/capture-order', async (req: any, res) => {
     const t0 = Date.now();
     try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const { orderId } = req.body;
       
       if (!orderId) {
@@ -358,39 +386,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get payment settings (must be before other settings routes)
-  app.get('/api/settings/payment', async (req, res) => {
-    console.log('Payment settings route hit');
+  // Public payment settings — NEVER expose the client secret here.
+  // Only the public client ID and environment are safe for the browser.
+  app.get('/api/settings/payment', async (_req, res) => {
     try {
       const settingsData = await storage.getSettingsByCategory('payment');
-      console.log('Database settings data:', settingsData);
-      
-      const paymentSettings = {
+      return res.json({
         paypal_client_id: settingsData.find(s => s.key === 'paypalClientId')?.value || '',
         paypal_environment: settingsData.find(s => s.key === 'paypalEnvironment')?.value || 'sandbox',
-        paypal_secret: settingsData.find(s => s.key === 'paypalClientSecret')?.value || '',
-      };
-      
-      console.log('Returning payment settings:', paymentSettings);
-      
-      res.setHeader('Content-Type', 'application/json');
-      return res.json(paymentSettings);
+      });
     } catch (error) {
       console.error("Error fetching payment settings:", error);
-      res.setHeader('Content-Type', 'application/json');
       return res.status(500).json({ message: "Failed to fetch payment settings" });
     }
   });
 
-  // Legacy aliases — kept for backward compat but missing logging/early-link.
-  // New code should use /api/paypal/create-order and /api/paypal/capture-order.
-  app.post("/api/paypal/order", async (req, res) => {
-    console.warn("⚠️  /api/paypal/order is a legacy alias — prefer /api/paypal/create-order");
-    await createPaypalOrder(req, res);
-  });
+  // Legacy aliases — retired. They bypassed logging, early-linking and the
+  // server-authoritative amount checks, so they are permanently disabled.
+  app.post("/api/paypal/order", (_req, res) =>
+    res.status(410).json({ message: 'Bu endpoint kaldırıldı. /api/paypal/create-order kullanın.' }));
 
-  app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
-    await capturePaypalOrder(req, res);
-  });
+  app.post("/api/paypal/order/:orderID/capture", (_req, res) =>
+    res.status(410).json({ message: 'Bu endpoint kaldırıldı. /api/paypal/capture-order kullanın.' }));
 
   // Returns the current user's pending order ID (used for early PayPal order linking)
   app.get('/api/orders/pending-mine', async (req: any, res) => {
@@ -679,179 +696,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-
-    const t0 = Date.now();
-    
-    try {
-      const { orderId } = req.params;
-      const { paypalOrderId } = req.body;
-      const userId = req.session.userId;
-
-      // ── IDEMPOTENCY GUARD ─────────────────────────────────────────────
-      if (paypalOrderId && paypalOrderId !== 'manual-payment') {
-        const existing = await storage.getOrdersByPaypalOrderId(paypalOrderId);
-        const alreadyPaid = existing.find(o => o.status === 'paid');
-        if (alreadyPaid) {
-          console.log(`🔁 IDEMPOTENCY: PayPal order ${paypalOrderId} already paid. Returning cached result.`);
-          storage.createPaymentEvent({
-            eventType: 'duplicate_attempt_blocked',
-            paypalOrderId,
-            dbOrderId: alreadyPaid.id,
-            userId,
-            status: 'blocked',
-            durationMs: Date.now() - t0,
-            ipAddress: req.ip || '',
-            userAgent: req.headers['user-agent'] || '',
-            metadata: { route: '/api/orders/:orderId/complete', reason: 'paypalOrderId already paid' },
-          }).catch(() => {});
-          return res.json({
-            order: alreadyPaid,
-            assignedCredentials: [],
-            success: true,
-            message: 'Order already completed',
-          });
-        }
-      }
-
-      // ── OWNERSHIP CHECK ──────────────────────────────────────────────────
-      // The order being completed MUST belong to the session user.
-      const targetOrder = await storage.getOrderById(orderId);
-      if (!targetOrder) {
-        return res.status(404).json({ message: 'Order not found' });
-      }
-      if (targetOrder.userId !== userId) {
-        console.error(`🚨 SECURITY: user ${userId} attempted to complete order ${orderId} owned by ${targetOrder.userId}`);
-        storage.createSystemLog({
-          category: 'security', action: 'order_complete_ownership_violation',
-          entityType: 'order', entityId: orderId,
-          details: { attemptingUserId: userId, ownerUserId: targetOrder.userId },
-          ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-        }).catch(() => {});
-        return res.status(403).json({ message: 'Forbidden' });
-      }
-
-      // Log attempt
-      storage.createPaymentEvent({
-        eventType: 'complete_request',
-        paypalOrderId: paypalOrderId || null,
-        dbOrderId: orderId,
-        userId,
-        status: 'ok',
-        ipAddress: req.ip || '',
-        userAgent: req.headers['user-agent'] || '',
-        metadata: { route: '/api/orders/:orderId/complete' },
-      }).catch(() => {});
-
-      // ── VERIFY + CAPTURE (if real PayPal order) ──────────────────────────
-      // Mirrors the logic in /api/cart/complete-payment so this route is safe
-      // to call with APPROVED PayPal orders without a prior separate capture.
-      const effectivePpOid = paypalOrderId && paypalOrderId !== 'manual-payment' ? paypalOrderId : null;
-      if (effectivePpOid) {
-        try {
-          const ppClient = await createPayPalClient();
-          const ppCtrl   = new OrdersController(ppClient);
-          const { body: getBody } = await ppCtrl.getOrder({ id: effectivePpOid });
-          const ppOrder  = JSON.parse(String(getBody));
-          const ppStatus = ppOrder.status;
-          console.log(`🔍 /orders/:id/complete: PayPal ${effectivePpOid} status=${ppStatus}`);
-
-          if (ppStatus === 'APPROVED') {
-            try {
-              const { body: captureBody } = await ppCtrl.captureOrder({ id: effectivePpOid, prefer: 'return=minimal' });
-              const captureRes = JSON.parse(String(captureBody));
-              const capStatus  = captureRes.purchase_units?.[0]?.payments?.captures?.[0]?.status;
-              if (captureRes.status !== 'COMPLETED' || (capStatus && capStatus !== 'COMPLETED')) {
-                return res.status(400).json({ message: `Ödeme tamamlanamadı (${capStatus || captureRes.status})` });
-              }
-              console.log(`✅ /orders/:id/complete captured PayPal ${effectivePpOid}`);
-            } catch (capErr: any) {
-              if (!String(capErr?.body || capErr?.message || '').includes('ORDER_ALREADY_CAPTURED')) throw capErr;
-              console.log(`ℹ️  ORDER_ALREADY_CAPTURED for ${effectivePpOid}`);
-            }
-          } else if (ppStatus !== 'COMPLETED') {
-            return res.status(400).json({ message: `Ödeme geçerli durumda değil (${ppStatus})` });
-          }
-        } catch (ppErr: any) {
-          if (!ppErr?.message?.includes('ORDER_ALREADY_CAPTURED')) {
-            console.error(`PayPal verify error in /orders/:id/complete:`, ppErr);
-            throw ppErr;
-          }
-        }
-      }
-
-      // Use atomic payment processing for consistency
-      const result = await orderService.processPaymentCompletion(orderId, paypalOrderId || 'manual-payment');
-      
-      if (result.success) {
-        // Update user's monthly loyalty data based on purchased GB
-        try {
-          const order = result.order;
-          
-          // Calculate total GB from order items
-          let totalGb = 0;
-          if (order && order.items) {
-            for (const item of order.items) {
-              if (item.plan && item.plan.dataLimitGb) {
-                totalGb += item.plan.dataLimitGb * (item.quantity || 1);
-              }
-            }
-          }
-          
-          if (totalGb > 0 && userId) {
-            const loyaltyResult = await LoyaltyService.updateUserLoyalty(userId, totalGb);
-            console.log(`Loyalty updated for user ${userId}: +${totalGb}GB, new total: ${loyaltyResult.newTotalGb}GB, discount: ${loyaltyResult.newDiscount}%`);
-          }
-        } catch (loyaltyError) {
-          console.error('Error updating loyalty:', loyaltyError);
-        }
-
-        storage.createPaymentEvent({
-          eventType: 'complete_success',
-          paypalOrderId: paypalOrderId || null,
-          dbOrderId: orderId,
-          userId,
-          status: 'ok',
-          durationMs: Date.now() - t0,
-          ipAddress: req.ip || '',
-          userAgent: req.headers['user-agent'] || '',
-          metadata: { route: '/api/orders/:orderId/complete', credentialCount: result.assignedCredentials?.length ?? 0 },
-        }).catch(() => {});
-        
-        res.json({ 
-          order: result.order,
-          assignedCredentials: result.assignedCredentials,
-          success: true,
-          message: 'Order completed and credentials assigned'
-        });
-      } else {
-        storage.createPaymentEvent({
-          eventType: 'complete_failed',
-          paypalOrderId: paypalOrderId || null,
-          dbOrderId: orderId,
-          userId,
-          status: 'error',
-          errorMessage: 'processPaymentCompletion returned success=false',
-          durationMs: Date.now() - t0,
-          ipAddress: req.ip || '',
-          userAgent: req.headers['user-agent'] || '',
-        }).catch(() => {});
-        res.status(400).json({ message: 'Failed to complete order' });
-      }
-    } catch (error: any) {
-      console.error("Error completing order:", error);
-      storage.createPaymentEvent({
-        eventType: 'complete_failed',
-        paypalOrderId: req.body?.paypalOrderId || null,
-        dbOrderId: req.params?.orderId || null,
-        userId: req.session?.userId || null,
-        status: 'error',
-        errorMessage: error?.message || String(error),
-        durationMs: Date.now() - t0,
-        ipAddress: req.ip || '',
-        userAgent: req.headers['user-agent'] || '',
-      }).catch(() => {});
-      res.status(400).json({ message: error.message || "Failed to complete order" });
-    }
+    const r = await paymentOrchestrator.completePayment({
+      userId: req.session.userId,
+      rawPaypalOrderId: req.body?.paypalOrderId,
+      dbOrderId: req.params.orderId,
+      requireExplicitOrder: true,
+      couponCode: req.body?.couponCode,
+      ip: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      route: '/api/orders/:orderId/complete',
+    });
+    res.status(r.httpStatus).json(r.body);
   });
 
   app.post('/api/coupons/validate', async (req: any, res) => {
@@ -1154,269 +1009,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    const routeStart = Date.now();
-    try {
-      const userId = req.session.userId;
-      const { paypalOrderId: rawPaypalOrderId, couponCode, dbOrderId: bodyDbOrderId } = req.body;
-
-      // Normalise: null/undefined/empty → 'manual-payment' so all downstream
-      // guards on `!== 'manual-payment'` work correctly, including free orders.
-      const paypalOrderId = (rawPaypalOrderId && String(rawPaypalOrderId).trim())
-        ? String(rawPaypalOrderId).trim()
-        : 'manual-payment';
-
-      console.log(`💳 complete-payment: user=${userId} paypalOrderId=${paypalOrderId}`);
-
-      // ── IDEMPOTENCY ─────────────────────────────────────────────────────
-      if (paypalOrderId !== 'manual-payment') {
-        const existing = await storage.getOrdersByPaypalOrderId(paypalOrderId);
-        const alreadyPaid = existing.find(o => o.status === 'paid');
-        if (alreadyPaid) {
-          console.log(`🔁 IDEMPOTENCY: ${paypalOrderId} already paid → DB order ${alreadyPaid.id}`);
-          storage.createPaymentEvent({
-            eventType: 'duplicate_attempt_blocked', paypalOrderId,
-            dbOrderId: alreadyPaid.id, userId, status: 'blocked',
-            durationMs: Date.now() - routeStart,
-            ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-            metadata: { reason: 'paypalOrderId already paid' },
-          }).catch(() => {});
-          return res.json({ id: alreadyPaid.id, orderId: alreadyPaid.id, success: true, message: 'Order already completed' });
-        }
-      }
-
-      // Log attempt
-      storage.createPaymentEvent({
-        eventType: 'complete_request', paypalOrderId, userId, status: 'ok',
-        ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-      }).catch(() => {});
-
-      // ── VERIFY + CAPTURE ─────────────────────────────────────────────────
-      // createPayPalClient() reads credentials from DB — no mutex needed.
-      if (paypalOrderId !== 'manual-payment') {
-        const ppClient = await createPayPalClient();
-        const ppOrders = new OrdersController(ppClient);
-
-        const { body: getBody } = await ppOrders.getOrder({ id: paypalOrderId });
-        const ppOrder = JSON.parse(String(getBody));
-        const ppStatus = ppOrder.status;
-
-        console.log(`🔍 PayPal order ${paypalOrderId} status: ${ppStatus}`);
-
-        if (ppStatus === 'APPROVED') {
-          // Capture the money now
-          storage.createPaymentEvent({
-            eventType: 'capture_attempt', paypalOrderId, userId, status: 'ok',
-            ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-          }).catch(() => {});
-
-          try {
-            const { body: captureBody } = await ppOrders.captureOrder({ id: paypalOrderId, prefer: 'return=minimal' });
-            const captureResult = JSON.parse(String(captureBody));
-            const captureStatus = captureResult.purchase_units?.[0]?.payments?.captures?.[0]?.status;
-
-            if (captureResult.status !== 'COMPLETED' || (captureStatus && captureStatus !== 'COMPLETED')) {
-              storage.createPaymentEvent({
-                eventType: 'capture_failed', paypalOrderId, userId, status: 'error',
-                errorMessage: `${captureResult.status}/${captureStatus}`,
-                durationMs: Date.now() - routeStart,
-                ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-              }).catch(() => {});
-              return res.status(400).json({ message: `Ödeme tamamlanamadı (${captureStatus || captureResult.status})` });
-            }
-
-            storage.createPaymentEvent({
-              eventType: 'capture_success', paypalOrderId, userId, status: 'ok',
-              durationMs: Date.now() - routeStart,
-              ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-              metadata: { captureStatus: captureResult.status },
-            }).catch(() => {});
-            console.log(`✅ PayPal order ${paypalOrderId} captured`);
-
-          } catch (captureErr: any) {
-            const alreadyCaptured = String(captureErr?.body || captureErr?.message || '').includes('ORDER_ALREADY_CAPTURED');
-            if (!alreadyCaptured) {
-              storage.createPaymentEvent({
-                eventType: 'capture_failed', paypalOrderId, userId, status: 'error',
-                errorMessage: captureErr?.message || String(captureErr),
-                durationMs: Date.now() - routeStart,
-                ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-              }).catch(() => {});
-              throw captureErr;
-            }
-            console.log(`ℹ️  ORDER_ALREADY_CAPTURED for ${paypalOrderId} — proceeding to fulfill`);
-          }
-
-        } else if (ppStatus !== 'COMPLETED') {
-          // Neither APPROVED nor already COMPLETED
-          return res.status(400).json({
-            message: `Ödeme geçerli bir durumda değil (PayPal durumu: ${ppStatus})`,
-            paypalStatus: ppStatus, verified: false,
-          });
-        }
-      }
-
-      // ── FIND DB ORDER ────────────────────────────────────────────────────
-      // Primary: by paypalOrderId (set early by /api/paypal/create-order)
-      let pendingOrder: any = null;
-
-      if (paypalOrderId !== 'manual-payment') {
-        const byPaypal = await storage.getOrdersByPaypalOrderId(paypalOrderId);
-        // Accept pending OR cancelled — cancelled orders can be reactivated by
-        // processPaymentCompletion when payment is confirmed (auto-cancel victim case).
-        pendingOrder = byPaypal.find(o => o.status === 'pending')
-                    || byPaypal.find(o => o.status === 'cancelled')
-                    || null;
-      }
-
-      // ── DIRECT ORDER ID LOOKUP ─────────────────────────────────────────────
-      // CreditCardDrawer passes the DB order ID it already knows (from the
-      // checkout URL or pending-mine call).  Use it as a second-priority lookup
-      // so we find the correct order even when the early link failed.
-      if (!pendingOrder && bodyDbOrderId) {
-        const directOrder = await storage.getOrderById(bodyDbOrderId);
-        if (directOrder && directOrder.userId === userId) {
-          if (directOrder.status === 'pending' || directOrder.status === 'cancelled') {
-            console.log(`🎯 complete-payment: found order directly by bodyDbOrderId=${bodyDbOrderId} (status=${directOrder.status})`);
-            // Write paypalOrderId so webhook & future lookups can find it too
-            if (paypalOrderId !== 'manual-payment' && !directOrder.paypalOrderId) {
-              await storage.updateOrder(directOrder.id, { paypalOrderId });
-            }
-            pendingOrder = { ...directOrder, paypalOrderId: directOrder.paypalOrderId || paypalOrderId };
-          }
-        }
-      }
-
-      if (!pendingOrder) {
-        // Fallback: user's current pending order (manual-payment or legacy pre-Faz1 flow)
-        const userOrders = await storage.getUserOrders(userId);
-        const byUser = userOrders.find(o => o.status === 'pending');
-        if (byUser) {
-          pendingOrder = byUser;
-          // Link paypalOrderId if not yet set
-          if (paypalOrderId && paypalOrderId !== 'manual-payment' && !byUser.paypalOrderId) {
-            await storage.updateOrder(byUser.id, { paypalOrderId });
-          }
-        }
-
-        if (!pendingOrder) {
-          // Recovery: find a cancelled order that belongs to this PayPal payment.
-          // (a) paypalOrderId already linked → exact, deterministic match — always safe
-          // (b) auto-cancel fired before early-link (paypalOrderId null on the order)
-          //     → ONLY recover when there is EXACTLY ONE candidate in the window.
-          //       With multiple candidates we cannot know which order this payment
-          //       belongs to; guessing risks fulfilling the wrong order. In that
-          //       case we fail loudly and log CRITICAL for admin resolution.
-          const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-
-          // (a) exact match by paypalOrderId — deterministic
-          const exactMatch = userOrders.find(o =>
-            o.status === 'cancelled' && o.paypalOrderId === paypalOrderId);
-
-          // (b) auto-cancel victims (no paypalOrderId) in window
-          const unlinkKandidaten = userOrders.filter(o =>
-            o.status === 'cancelled'
-            && !o.paypalOrderId
-            && o.createdAt && new Date(o.createdAt) > twoHoursAgo);
-
-          let recovered: any = exactMatch || null;
-          let recoveryReason = 'Reactivated — PayPal order already linked';
-
-          if (!recovered && unlinkKandidaten.length === 1) {
-            recovered = unlinkKandidaten[0];
-            recoveryReason = 'Reactivated — auto-cancelled before early-link; unique candidate, PayPal capture confirmed';
-          } else if (!recovered && unlinkKandidaten.length > 1) {
-            console.error(`🚨 AMBIGUOUS RECOVERY: ${unlinkKandidaten.length} cancelled orders without paypalOrderId for user ${userId} — refusing to guess`);
-            storage.createSystemLog({
-              category: 'payment_error', action: 'ambiguous_recovery_blocked',
-              entityType: 'order', entityId: paypalOrderId,
-              details: {
-                paypalOrderId, candidateOrderIds: unlinkKandidaten.map(o => o.id),
-                severity: 'CRITICAL_NEEDS_ADMIN_ACTION',
-                reason: 'Multiple cancelled orders could match this captured payment — manual resolution required',
-              },
-              ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-            }).catch(() => {});
-          }
-
-          if (recovered) {
-            console.log(`🔄 Recovery: reactivating cancelled order ${recovered.id} (${recoveryReason})`);
-            // Write paypalOrderId so future lookups and the webhook can find this order
-            await storage.updateOrder(recovered.id, { status: 'pending', paypalOrderId });
-            pendingOrder = { ...recovered, status: 'pending', paypalOrderId };
-            storage.createSystemLog({
-              category: 'payment', action: 'order_recovery_reactivated', entityType: 'order',
-              entityId: recovered.id,
-              details: { reason: recoveryReason, paypalOrderId, hadPaypalOrderId: !!recovered.paypalOrderId },
-              ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-            }).catch(() => {});
-          }
-        }
-      }
-
-      if (!pendingOrder) {
-        console.error(`❌ No pending order — user=${userId} paypalOrderId=${paypalOrderId}`);
-        storage.createPaymentEvent({
-          eventType: 'complete_failed', paypalOrderId, userId, status: 'error',
-          errorMessage: 'No pending order found — captured but no DB order',
-          durationMs: Date.now() - routeStart,
-          ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-          metadata: { critical: true },
-        }).catch(() => {});
-        return res.status(400).json({ message: 'Sipariş bulunamadı. Ödemeniz alındı — destek ekibi bilgilendirildi.' });
-      }
-
-      // ── COUPON (non-fatal after capture) ─────────────────────────────────
-      const user = await storage.getUserById(userId);
-      const cartTotal = await storage.getCartTotal(userId);
-      let total = cartTotal?.subtotal ?? parseFloat(String(pendingOrder.totalUsd ?? '0'));
-      let discount = 0;
-      let validatedCoupon: any = null;
-
-      // Coupon already applied at /api/cart/checkout if pendingOrder.couponId is set.
-      // Re-validating and re-recording in that case would create duplicate coupon_usage rows,
-      // inflating the usage count and breaking single-use / max-uses limits.
-      if (couponCode && user?.ship_id && !pendingOrder.couponId) {
-        try {
-          const cr = await couponService.validateAndCalculateDiscount(couponCode, cartTotal.subtotal, user.ship_id, userId);
-          validatedCoupon = cr.coupon; discount = cr.discount_amount; total = cr.new_total;
-        } catch (_) { /* coupon errors must not block a captured payment */ }
-      }
-      // Use the order's stored total as the canonical charge amount.
-      // If a coupon was applied at checkout, the discounted total is already in pendingOrder.totalUsd.
-      if (pendingOrder.couponId) {
-        total = parseFloat(String(pendingOrder.totalUsd ?? total));
-      }
-      if (validatedCoupon && discount > 0 && !pendingOrder.couponId) {
-        couponService.recordCouponUsage(validatedCoupon.id, userId, pendingOrder.id, discount).catch(() => {});
-      }
-
-      // ── PROCESS ───────────────────────────────────────────────────────────
-      const result = await orderService.processPaymentCompletion(pendingOrder.id, paypalOrderId);
-
-      storage.createPaymentEvent({
-        eventType: 'complete_success', paypalOrderId, dbOrderId: pendingOrder.id,
-        userId, amountUsd: String(total.toFixed(2)), status: 'ok',
-        durationMs: Date.now() - routeStart,
-        ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-        metadata: { credentialCount: result.assignedCredentials?.length ?? 0 },
-      }).catch(() => {});
-
-      res.json({ id: pendingOrder.id, orderId: pendingOrder.id, success: true,
-        message: 'Order completed and credentials assigned', totalUsd: total.toFixed(2) });
-
-    } catch (error: any) {
-      console.error("Error completing payment from cart:", error);
-      const uid = req.session?.userId;
-      const ppOid = req.body?.paypalOrderId;
-      storage.createPaymentEvent({
-        eventType: 'complete_failed', paypalOrderId: ppOid || null,
-        userId: uid || null, status: 'error',
-        errorMessage: error?.message || String(error),
-        durationMs: Date.now() - routeStart,
-        ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
-      }).catch(() => {});
-      res.status(500).json({ message: "Ödeme tamamlanamadı. Lütfen destek ekibiyle iletişime geçin." });
-    }
+    const r = await paymentOrchestrator.completePayment({
+      userId: req.session.userId,
+      rawPaypalOrderId: req.body?.paypalOrderId,
+      dbOrderId: req.body?.dbOrderId,
+      couponCode: req.body?.couponCode,
+      ip: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      route: '/api/cart/complete-payment',
+    });
+    res.status(r.httpStatus).json(r.body);
   });
 
   // Favorite plans endpoints

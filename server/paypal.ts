@@ -52,12 +52,14 @@ export async function createPayPalClient() {
       ? Environment.Production 
       : Environment.Sandbox,
     logging: {
-      logLevel: LogLevel.Info,
+      // PCI: never log request bodies (they contain full card number + CVV)
+      // or response headers (they can contain tokens).
+      logLevel: LogLevel.Error,
       logRequest: {
-        logBody: true,
+        logBody: false,
       },
       logResponse: {
-        logHeaders: true,
+        logHeaders: false,
       },
     },
   });
@@ -96,8 +98,7 @@ export async function createPaypalOrder(req: Request, res: Response) {
       intent,
       paymentMethod,
       dbOrderId: dbOrderId || 'none',
-      hasCardDetails: !!cardDetails,
-      cardNumber: cardDetails?.number ? cardDetails.number.slice(0, 4) + '****' : 'None'
+      hasCardDetails: !!cardDetails
     });
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
@@ -166,7 +167,8 @@ export async function createPaypalOrder(req: Request, res: Response) {
       };
     }
 
-    console.log('📤 PayPal Order Body:', JSON.stringify(orderBody, null, 2));
+    // PCI: do NOT log orderBody — it contains the full card number and CVV.
+    console.log(`📤 PayPal order create: intent=${intent} amount=${currency} ${amount} customId=${dbOrderId || 'none'} card=${orderBody.paymentSource ? 'yes' : 'no'}`);
 
     const collect = {
       body: orderBody,

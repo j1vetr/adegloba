@@ -70,14 +70,17 @@ Tüm sipariş adımları denetlendi. Sadece 1 gerçek bug bulundu:
 - **/api/orders/:orderId/complete ownership check**: sipariş session kullanıcısına ait değilse 403 + security log.
 - Reconciliation adayları `createdAt ASC` sıralı (starvation önlenir), tur başına max 20, çağrılar arası 500ms.
 
-## Mimari Denetim Kararı (session 8 — henüz UYGULANMADI, kullanıcı onayı bekliyor)
-Tam akış denetimi yapıldı. Karar önerisi: sıfırdan yazma DEĞİL, tek "payment orchestrator" modülünde konsolidasyon. Doğrulanmış açık bulgular (düzeltilene kadar geçerli):
-- `/api/settings/payment` auth'suz — PayPal client secret'ı herkese dönüyor + console.log'a yazıyor (EN KRİTİK)
-- `manual-payment` yolu: paypalOrderId'siz complete-payment isteği, "toplam 0 mı" kontrolü olmadan pending siparişi ücretsiz teslim ediyor (bedava paket açığı)
-- Tutar doğrulaması yok: create-order client'ın gönderdiği amount'u kullanıyor; complete-payment capture tutarını sipariş toplamıyla karşılaştırmıyor (1 cent öde → tam paket)
-- `/api/paypal/create-order` session/sahiplik kontrolü yok; early-link istediği dbOrderId'ye yazıyor
-- paypal.ts kart numarası+CVV'yi console.log'a ve SDK logBody'ye yazıyor (PCI ihlali)
-- İki tamamlama rotası (~100 satır kopya), loyalty sadece /api/orders/:id/complete'te güncelleniyor (cart akışında atlanıyor)
+## Payment Orchestrator Konsolidasyonu (session 8 — UYGULANDI ve test edildi)
+Denetimdeki TÜM açıklar kapatıldı; kod tek modülde toplandı:
+- `server/services/paymentOrchestrator.ts` — completePayment() tek yetkili: idempotency (sahiplik kontrolü İLK — replay bile başkasının siparişini sızdırmaz, minimal payload döner) → 4 katmanlı sipariş bulma (hepsi sahiplik zorunlu) → manual-payment yalnız toplam ≤ 0 → PayPal getOrder + tutar/para birimi eşleşmesi (uyuşmazlık: `payment_amount_mismatch` CRITICAL log + red) → capture (ORDER_ALREADY_CAPTURED tolere) → kupon (non-fatal, couponId varsa atla) → processPaymentCompletion.
+- İki tamamlama rotası da (~450 satır kopya kod yerine) orkestratöre ince delege; `:orderId/complete` requireExplicitOrder=true (404/403 semantiği).
+- `/api/paypal/create-order`: session + dbOrderId + sahiplik zorunlu; **amount/currency DB siparişinden gelir, client değeri YOK SAYILIR**; status pending/cancelled/failed olmalı (retry akışı korunur).
+- `/api/paypal/capture-order`: session zorunlu. Eski `/api/paypal/order*` rotaları → 410 Gone.
+- `/api/settings/payment`: secret response'tan ve loglardan çıkarıldı (yalnız client_id + environment).
+- `paypal.ts` PCI: SDK logBody/logHeaders=false, LogLevel.Error, order body ve kart no logları silindi.
+- Loyalty artık `processPaymentCompletion` İÇİNDE (plans.dataLimitGb × qty, !alreadyPaid guard'lı, non-fatal) — webhook/reconciliation/admin-resolve dahil her giriş noktası günceller; rotadan kaldırıldı.
+- Curl ile doğrulandı: 401'ler, 403 sahiplik (complete + create-order + idempotency probe), bedava sipariş açığı 400, sahte tutar override, tutar uyuşmazlığı bloğu, CREATED statü reddi. Sipariş hiçbir hatalı yolda paid olmadı.
+- NOT: Üretim kullanıcının kendi VPS'inde (PM2) — düzeltmeler oraya deploy edilene kadar üretimde açıklar durur.
 
 ## Kritik Kurallar
 - **Capture ve fulfill asla ayrı client çağrısı olmamalı** — `complete-payment` endpoint her ikisini yapar

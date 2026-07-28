@@ -5,8 +5,8 @@ import { CouponService } from "./couponService";
 import { emailService } from "../emailService";
 import { getEndOfMonthIstanbul } from "../utils/dateUtils";
 import { db } from "../db";
-import { eq, and, isNull, or } from "drizzle-orm";
-import { orders, orderItems, credentialPools, orderCredentials, cartItems } from "@shared/schema";
+import { eq, and, isNull, or, inArray } from "drizzle-orm";
+import { orders, orderItems, credentialPools, orderCredentials, cartItems, plans } from "@shared/schema";
 
 export class OrderService {
   private expiryService: ExpiryService;
@@ -248,6 +248,27 @@ export class OrderService {
     }
 
     console.log(`✅ processPaymentCompletion: order ${orderId} — ${assignedCredentials.length} credentials assigned`);
+
+    // ── Loyalty (single source of truth) ───────────────────────────────────
+    // Runs here so EVERY entry point (both completion routes, the webhook,
+    // reconciliation, admin resolve) updates loyalty consistently.
+    // Guarded by !alreadyPaid above, so a re-processed order never double-counts.
+    try {
+      const planIds = Array.from(new Set(orderItemsList.map(i => i.planId)));
+      const planRows = planIds.length
+        ? await db.select().from(plans).where(inArray(plans.id, planIds))
+        : [];
+      const gbByPlan = new Map(planRows.map(p => [p.id, p.dataLimitGb || 0]));
+      const totalGb = orderItemsList.reduce(
+        (sum, i) => sum + (gbByPlan.get(i.planId) || 0) * (i.qty || 1), 0);
+      if (totalGb > 0) {
+        const { LoyaltyService } = await import('./loyaltyService');
+        const lr = await LoyaltyService.updateUserLoyalty(updatedOrder.userId, totalGb);
+        console.log(`🏆 Loyalty: +${totalGb}GB for user ${updatedOrder.userId} → total ${lr.newTotalGb}GB, discount ${lr.newDiscount}%`);
+      }
+    } catch (loyaltyErr) {
+      console.error('Loyalty update failed (non-fatal):', loyaltyErr);
+    }
 
     // Notifications are fire-and-forget; never block the payment response
     this.sendOrderNotifications(updatedOrder, orderItemsList, assignedCredentials).catch(err => {
