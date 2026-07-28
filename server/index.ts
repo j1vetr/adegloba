@@ -201,6 +201,13 @@ app.use((req, res, next) => {
   // Start order auto-cancel service
   const orderCancelService = new OrderCancelService(storage);
   orderCancelService.start();
+
+  // Start payment reconciliation service — final safety net that finds
+  // PayPal-captured payments whose orders were never fulfilled and fixes them.
+  const { PaymentReconciliationService } = await import('./services/paymentReconciliationService');
+  const { OrderService } = await import('./services/orderService');
+  const paymentReconciliation = new PaymentReconciliationService(storage, new OrderService(storage));
+  paymentReconciliation.start();
   
   // Start PCI DSS compliance service (90-day inactive account check)
   pciComplianceService.startScheduler();

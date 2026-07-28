@@ -59,6 +59,17 @@ Tüm sipariş adımları denetlendi. Sadece 1 gerçek bug bulundu:
 4. `/api/paypal/order` (eski duplicate route): warning log eklendi, ilerisi için yorum bırakıldı.
 5. `GET /api/orders/pending-mine`: yeni endpoint — kullanıcının bekleyen siparişinin ID'sini döndürür.
 
+## Reconciliation Güvenlik Ağı (session 7)
+"Para çekildi, paket yok" için NİHAİ güvenlik ağı: `PaymentReconciliationService` (server/services/) her 10 dk'da son 48 saatin paypalOrderId'li ama ödenmemiş (pending/cancelled/failed) siparişlerini PayPal'a sorar; PayPal COMPLETED diyorsa `processPaymentCompletion` ile otomatik teslim eder ve `reconciliation_recovered` payment_event yazar. Client akışı nerede koparsa kopsun (create-order 500, capture timeout, kapanan tarayıcı, kaçan webhook) bu yakalar.
+- Kart ödemelerinde (`payment_source.card`) PayPal parayı ORDER CREATE anında çekebilir — create-order 500 dönse bile para gitmiş olabilir. "Failed to create order" + para çekildi vakalarının açıklaması bu.
+- `processPaymentCompletion` artık 'failed' siparişi de reaktive eder (DECLINED webhook sonrası başarılı retry senaryosu).
+
+## Determinizm Kuralları (code review sonrası)
+- **Belirsiz kurtarma YASAK**: complete-payment recovery, paypalOrderId'siz iptal sipariş adayı BİRDEN FAZLAysa tahmin etmez — `ambiguous_recovery_blocked` (CRITICAL) log yazıp durur. Tek aday varsa kurtarır.
+- **/api/cart/checkout in-flight koruması**: <15 dk yaşında PayPal'a bağlı pending sipariş varsa 409 döner, İPTAL ETMEZ (başka sekmedeki aktif ödemeyi öldürmemek için).
+- **/api/orders/:orderId/complete ownership check**: sipariş session kullanıcısına ait değilse 403 + security log.
+- Reconciliation adayları `createdAt ASC` sıralı (starvation önlenir), tur başına max 20, çağrılar arası 500ms.
+
 ## Kritik Kurallar
 - **Capture ve fulfill asla ayrı client çağrısı olmamalı** — `complete-payment` endpoint her ikisini yapar
 - **processPaymentCompletion idempotent** — zaten paid sipariş mevcut credential'ları döndürür

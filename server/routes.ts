@@ -713,6 +713,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // ── OWNERSHIP CHECK ──────────────────────────────────────────────────
+      // The order being completed MUST belong to the session user.
+      const targetOrder = await storage.getOrderById(orderId);
+      if (!targetOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+      if (targetOrder.userId !== userId) {
+        console.error(`🚨 SECURITY: user ${userId} attempted to complete order ${orderId} owned by ${targetOrder.userId}`);
+        storage.createSystemLog({
+          category: 'security', action: 'order_complete_ownership_violation',
+          entityType: 'order', entityId: orderId,
+          details: { attemptingUserId: userId, ownerUserId: targetOrder.userId },
+          ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
+        }).catch(() => {});
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+
       // Log attempt
       storage.createPaymentEvent({
         eventType: 'complete_request',
@@ -1050,8 +1067,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // A pending order gets stuck when the user closes the browser mid-checkout or
       // PayPal fails after our DB row was already created. The unique index
       // idx_orders_one_pending_per_user would block the new INSERT otherwise.
+      //
+      // EXCEPTION: a pending order that is PayPal-linked AND fresh (<15 min) is an
+      // ACTIVE in-flight payment (possibly in another tab). Cancelling it could
+      // kill a payment that is mid-capture. Block this checkout instead.
       const existingUserOrders = await storage.getUserOrders(userId);
       const stuckPendingOrders = existingUserOrders.filter(o => o.status === 'pending');
+
+      const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000);
+      const inFlight = stuckPendingOrders.find(o =>
+        o.paypalOrderId && o.createdAt && new Date(o.createdAt) > fifteenMinAgo);
+      if (inFlight) {
+        console.log(`⛔ Checkout blocked: user ${userId} has in-flight PayPal payment on order ${inFlight.id}`);
+        return res.status(409).json({
+          message: 'Devam eden bir ödemeniz var. Lütfen mevcut ödemeyi tamamlayın veya birkaç dakika sonra tekrar deneyin.',
+          inFlightOrderId: inFlight.id,
+        });
+      }
+
       for (const stuckOrder of stuckPendingOrders) {
         console.log(`🧹 Cancelling stuck pending order ${stuckOrder.id} for user ${userId} (paypalOrderId=${stuckOrder.paypalOrderId ?? 'none'})`);
         await storage.updateOrder(stuckOrder.id, { status: 'cancelled' });
@@ -1267,23 +1300,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (!pendingOrder) {
           // Recovery: find a cancelled order that belongs to this PayPal payment.
-          // Two sub-cases:
-          //   (a) paypalOrderId already linked → exact match
-          //   (b) auto-cancel fired before early-link (paypalOrderId was null on the order)
-          //       → match any recently cancelled order without a paypalOrderId
-          // Use a 2-hour window to cover the full auto-cancel timeout.
+          // (a) paypalOrderId already linked → exact, deterministic match — always safe
+          // (b) auto-cancel fired before early-link (paypalOrderId null on the order)
+          //     → ONLY recover when there is EXACTLY ONE candidate in the window.
+          //       With multiple candidates we cannot know which order this payment
+          //       belongs to; guessing risks fulfilling the wrong order. In that
+          //       case we fail loudly and log CRITICAL for admin resolution.
           const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-          const recovered = userOrders
-            .filter(o => o.status === 'cancelled'
-                      && o.createdAt && new Date(o.createdAt) > twoHoursAgo
-                      && (o.paypalOrderId === paypalOrderId   // (a) already linked
-                          || !o.paypalOrderId))               // (b) auto-cancel victim
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+          // (a) exact match by paypalOrderId — deterministic
+          const exactMatch = userOrders.find(o =>
+            o.status === 'cancelled' && o.paypalOrderId === paypalOrderId);
+
+          // (b) auto-cancel victims (no paypalOrderId) in window
+          const unlinkKandidaten = userOrders.filter(o =>
+            o.status === 'cancelled'
+            && !o.paypalOrderId
+            && o.createdAt && new Date(o.createdAt) > twoHoursAgo);
+
+          let recovered: any = exactMatch || null;
+          let recoveryReason = 'Reactivated — PayPal order already linked';
+
+          if (!recovered && unlinkKandidaten.length === 1) {
+            recovered = unlinkKandidaten[0];
+            recoveryReason = 'Reactivated — auto-cancelled before early-link; unique candidate, PayPal capture confirmed';
+          } else if (!recovered && unlinkKandidaten.length > 1) {
+            console.error(`🚨 AMBIGUOUS RECOVERY: ${unlinkKandidaten.length} cancelled orders without paypalOrderId for user ${userId} — refusing to guess`);
+            storage.createSystemLog({
+              category: 'payment_error', action: 'ambiguous_recovery_blocked',
+              entityType: 'order', entityId: paypalOrderId,
+              details: {
+                paypalOrderId, candidateOrderIds: unlinkKandidaten.map(o => o.id),
+                severity: 'CRITICAL_NEEDS_ADMIN_ACTION',
+                reason: 'Multiple cancelled orders could match this captured payment — manual resolution required',
+              },
+              ipAddress: req.ip || '', userAgent: req.headers['user-agent'] || '',
+            }).catch(() => {});
+          }
 
           if (recovered) {
-            const recoveryReason = recovered.paypalOrderId
-              ? 'Reactivated — PayPal order already linked'
-              : 'Reactivated — auto-cancelled before early-link; PayPal capture confirmed';
             console.log(`🔄 Recovery: reactivating cancelled order ${recovered.id} (${recoveryReason})`);
             // Write paypalOrderId so future lookups and the webhook can find this order
             await storage.updateOrder(recovered.id, { status: 'pending', paypalOrderId });
