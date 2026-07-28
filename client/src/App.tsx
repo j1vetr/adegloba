@@ -53,6 +53,7 @@ const FinancialReports = lazy(() => import("@/pages/admin/FinancialReports"));
 const ShipAnalytics = lazy(() => import("@/pages/admin/ShipAnalytics"));
 const GiftCampaigns = lazy(() => import("@/pages/admin/GiftCampaigns"));
 const PaymentEvents = lazy(() => import("@/pages/admin/PaymentEvents"));
+const UnresolvedPayments = lazy(() => import("@/pages/admin/UnresolvedPayments"));
 
 function LoadingFallback() {
   return (
@@ -244,6 +245,14 @@ function Router() {
         <AdminProtectedRoute>
           <Suspense fallback={<LoadingFallback />}>
             <GiftCampaigns />
+          </Suspense>
+        </AdminProtectedRoute>
+      </Route>
+
+      <Route path="/admin/unresolved-payments">
+        <AdminProtectedRoute>
+          <Suspense fallback={<LoadingFallback />}>
+            <UnresolvedPayments />
           </Suspense>
         </AdminProtectedRoute>
       </Route>

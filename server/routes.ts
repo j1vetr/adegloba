@@ -10,7 +10,7 @@ import { CouponService } from "./services/couponService";
 import { ExpiryService } from "./services/expiryService";
 import { LoyaltyService } from "./services/loyaltyService";
 import { emailService, EmailService } from "./emailService";
-import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema, orders, users } from "@shared/schema";
+import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema, orders, users, systemLogs } from "@shared/schema";
 import { eq, and, desc, gte, lte, sql as sqlExpr } from "drizzle-orm";
 import { z } from "zod";
 import * as XLSX from 'xlsx';
@@ -5359,6 +5359,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e: any) {
       console.error('Error fetching payment events:', e);
       res.status(500).json({ message: 'Failed to fetch payment events' });
+    }
+  });
+
+  // ── Unresolved payments (Çözüm bekleyen ödemeler) ──────────────────────
+  // Lists ambiguous_recovery_blocked + webhook_orphan_payment system logs that
+  // have not yet been resolved by an admin, enriched with candidate orders.
+  app.get('/api/admin/unresolved-payments', isAdminAuthenticated, async (req, res) => {
+    try {
+      const pendingLogs = await db.select().from(systemLogs)
+        .where(sqlExpr`${systemLogs.action} IN ('ambiguous_recovery_blocked', 'webhook_orphan_payment')`)
+        .orderBy(desc(systemLogs.createdAt))
+        .limit(200);
+
+      const resolutionLogs = await db.select().from(systemLogs)
+        .where(eq(systemLogs.action, 'unresolved_payment_resolved'));
+      const resolvedLogIds = new Set(resolutionLogs.map(r => r.entityId));
+
+      const unresolved = pendingLogs.filter(l => !resolvedLogIds.has(l.id));
+
+      const items = await Promise.all(unresolved.map(async (log) => {
+        const details: any = log.details || {};
+        const paypalOrderId: string | null = details.paypalOrderId || null;
+
+        // Gather candidate orders
+        let candidateIds: string[] = Array.isArray(details.candidateOrderIds) ? details.candidateOrderIds : [];
+        if (candidateIds.length === 0 && paypalOrderId) {
+          // Orphan payments: try to find orders linked to this PayPal order
+          const byPaypal = await storage.getOrdersByPaypalOrderId(paypalOrderId).catch(() => []);
+          candidateIds = byPaypal.map((o: any) => o.id);
+        }
+
+        const candidates = (await Promise.all(candidateIds.map(async (id) => {
+          const order = await storage.getOrderById(id).catch(() => undefined);
+          if (!order) return null;
+          const user = await storage.getUserById(order.userId).catch(() => undefined);
+          return {
+            id: order.id,
+            status: order.status,
+            totalUsd: order.totalUsd,
+            createdAt: order.createdAt,
+            user: user ? { id: user.id, username: user.username, email: user.email, fullName: (user as any).full_name || null } : null,
+          };
+        }))).filter(Boolean);
+
+        return {
+          logId: log.id,
+          type: log.action, // 'ambiguous_recovery_blocked' | 'webhook_orphan_payment'
+          createdAt: log.createdAt,
+          paypalOrderId,
+          amount: details.amount || null,
+          paymentId: details.paymentId || null,
+          reason: details.reason || null,
+          candidates,
+        };
+      }));
+
+      res.json({ items });
+    } catch (e: any) {
+      console.error('Error fetching unresolved payments:', e);
+      res.status(500).json({ message: 'Failed to fetch unresolved payments' });
+    }
+  });
+
+  // Admin picks the correct order → fulfill via processPaymentCompletion and
+  // mark the system log resolved.
+  app.post('/api/admin/unresolved-payments/:logId/resolve', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { logId } = req.params;
+      const { orderId } = req.body || {};
+      if (!orderId || typeof orderId !== 'string') {
+        return res.status(400).json({ message: 'orderId is required' });
+      }
+
+      const [log] = await db.select().from(systemLogs).where(eq(systemLogs.id, logId));
+      if (!log || (log.action !== 'ambiguous_recovery_blocked' && log.action !== 'webhook_orphan_payment')) {
+        return res.status(404).json({ message: 'Unresolved payment record not found' });
+      }
+
+      // Guard against double resolution
+      const existing = await db.select().from(systemLogs)
+        .where(and(eq(systemLogs.action, 'unresolved_payment_resolved'), eq(systemLogs.entityId, logId)));
+      if (existing.length > 0) {
+        return res.status(409).json({ message: 'Bu kayıt zaten çözümlenmiş' });
+      }
+
+      const order = await storage.getOrderById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: 'Sipariş bulunamadı' });
+      }
+
+      const details: any = log.details || {};
+      const paypalOrderId: string = details.paypalOrderId || order.paypalOrderId || 'manual-admin-resolution';
+
+      const result = await orderService.processPaymentCompletion(orderId, paypalOrderId);
+
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'unresolved_payment_resolved',
+        adminId: (req.session as any).adminUser.id,
+        entityType: 'system_log',
+        entityId: logId,
+        details: {
+          orderId,
+          paypalOrderId,
+          originalAction: log.action,
+          credentialsAssigned: result.assignedCredentials.length,
+        },
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+      });
+
+      res.json({
+        success: true,
+        orderId,
+        credentialsAssigned: result.assignedCredentials.length,
+      });
+    } catch (e: any) {
+      console.error('Error resolving unresolved payment:', e);
+      res.status(500).json({ message: e?.message || 'Failed to resolve payment' });
     }
   });
 

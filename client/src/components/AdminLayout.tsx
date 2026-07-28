@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Ship, Package, Gift, ShoppingCart, Users,
   Settings, Menu, X, LogOut, ChevronDown, HelpCircle, FileText,
   Key, Mail, BarChart3, Bell, PackageCheck, TrendingUp,
-  Send, Database, Globe, CreditCard, DollarSign,
+  Send, Database, Globe, CreditCard, DollarSign, AlertTriangle,
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { apiRequest } from '@/lib/queryClient';
@@ -55,6 +55,7 @@ const NAV_GROUPS = [
       { name: 'DB Yedekleme',   href: '/admin/database-backup', icon: Database   },
       { name: 'Sistem Logları', href: '/admin/logs',            icon: FileText   },
       { name: 'Ödeme Olayları', href: '/admin/payment-events',  icon: CreditCard },
+      { name: 'Çözüm Bekleyen Ödemeler', href: '/admin/unresolved-payments', icon: AlertTriangle },
     ],
   },
 ];
