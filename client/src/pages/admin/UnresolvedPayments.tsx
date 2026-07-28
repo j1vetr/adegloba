@@ -79,6 +79,29 @@ function ItemCard({ item }: { item: UnresolvedItem }) {
     },
   });
 
+  const dismissMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/unresolved-payments/${item.logId}/dismiss`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.message || "Kaldırma başarısız");
+      return body;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Listeden kaldırıldı",
+        description: "Kayıt manuel çözüldü olarak işaretlendi. Teslimat yapılmadı.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/unresolved-payments"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Hata", description: err.message, variant: "destructive" });
+    },
+  });
+
   const orderIdToResolve = selectedOrderId || manualOrderId.trim();
   const typeInfo = TYPE_LABELS[item.type];
 
@@ -169,9 +192,25 @@ function ItemCard({ item }: { item: UnresolvedItem }) {
         </div>
       )}
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
         <Button
-          disabled={!orderIdToResolve || resolveMutation.isPending}
+          variant="outline"
+          disabled={dismissMutation.isPending || resolveMutation.isPending}
+          onClick={() => {
+            if (window.confirm("Bu kaydı listeden kaldırmak üzeresiniz. Sisteme HİÇBİR teslimat yaptırılmayacak — yalnızca bu ödemeyi zaten manuel olarak çözdüyseniz devam edin. Emin misiniz?")) {
+              dismissMutation.mutate();
+            }
+          }}
+          className="border-slate-600 text-slate-300 hover:bg-slate-800"
+          data-testid={`button-dismiss-${item.logId}`}
+        >
+          {dismissMutation.isPending ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : null}
+          Manuel Çözüldü — Kaldır
+        </Button>
+        <Button
+          disabled={!orderIdToResolve || resolveMutation.isPending || dismissMutation.isPending}
           onClick={() => resolveMutation.mutate(orderIdToResolve)}
           className="bg-emerald-600 hover:bg-emerald-500"
           data-testid={`button-resolve-${item.logId}`}

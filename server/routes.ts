@@ -5083,6 +5083,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin already handled the payment manually (outside the system) →
+  // remove it from the list WITHOUT re-delivering anything.
+  app.post('/api/admin/unresolved-payments/:logId/dismiss', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { logId } = req.params;
+
+      const [log] = await db.select().from(systemLogs).where(eq(systemLogs.id, logId));
+      if (!log || (log.action !== 'ambiguous_recovery_blocked' && log.action !== 'webhook_orphan_payment')) {
+        return res.status(404).json({ message: 'Unresolved payment record not found' });
+      }
+
+      const existing = await db.select().from(systemLogs)
+        .where(and(eq(systemLogs.action, 'unresolved_payment_resolved'), eq(systemLogs.entityId, logId)));
+      if (existing.length > 0) {
+        return res.status(409).json({ message: 'Bu kayıt zaten çözümlenmiş' });
+      }
+
+      await storage.createSystemLog({
+        category: 'admin_action',
+        action: 'unresolved_payment_resolved',
+        adminId: (req.session as any).adminUser.id,
+        entityType: 'system_log',
+        entityId: logId,
+        details: {
+          dismissed: true,
+          manualResolution: true,
+          originalAction: log.action,
+          note: (req.body && typeof req.body.note === 'string') ? req.body.note.slice(0, 500) : null,
+        },
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+      });
+
+      res.json({ success: true, dismissed: true });
+    } catch (e: any) {
+      console.error('Error dismissing unresolved payment:', e);
+      res.status(500).json({ message: e?.message || 'Failed to dismiss payment' });
+    }
+  });
+
   // Run startup check after a short delay
   setTimeout(startupIncompleteOrdersCheck, 5000);
   
