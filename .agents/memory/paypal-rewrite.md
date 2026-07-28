@@ -70,6 +70,15 @@ Tüm sipariş adımları denetlendi. Sadece 1 gerçek bug bulundu:
 - **/api/orders/:orderId/complete ownership check**: sipariş session kullanıcısına ait değilse 403 + security log.
 - Reconciliation adayları `createdAt ASC` sıralı (starvation önlenir), tur başına max 20, çağrılar arası 500ms.
 
+## Mimari Denetim Kararı (session 8 — henüz UYGULANMADI, kullanıcı onayı bekliyor)
+Tam akış denetimi yapıldı. Karar önerisi: sıfırdan yazma DEĞİL, tek "payment orchestrator" modülünde konsolidasyon. Doğrulanmış açık bulgular (düzeltilene kadar geçerli):
+- `/api/settings/payment` auth'suz — PayPal client secret'ı herkese dönüyor + console.log'a yazıyor (EN KRİTİK)
+- `manual-payment` yolu: paypalOrderId'siz complete-payment isteği, "toplam 0 mı" kontrolü olmadan pending siparişi ücretsiz teslim ediyor (bedava paket açığı)
+- Tutar doğrulaması yok: create-order client'ın gönderdiği amount'u kullanıyor; complete-payment capture tutarını sipariş toplamıyla karşılaştırmıyor (1 cent öde → tam paket)
+- `/api/paypal/create-order` session/sahiplik kontrolü yok; early-link istediği dbOrderId'ye yazıyor
+- paypal.ts kart numarası+CVV'yi console.log'a ve SDK logBody'ye yazıyor (PCI ihlali)
+- İki tamamlama rotası (~100 satır kopya), loyalty sadece /api/orders/:id/complete'te güncelleniyor (cart akışında atlanıyor)
+
 ## Kritik Kurallar
 - **Capture ve fulfill asla ayrı client çağrısı olmamalı** — `complete-payment` endpoint her ikisini yapar
 - **processPaymentCompletion idempotent** — zaten paid sipariş mevcut credential'ları döndürür
