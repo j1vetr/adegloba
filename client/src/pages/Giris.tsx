@@ -9,6 +9,25 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import { useLanguage, LanguageSelector } from "@/contexts/LanguageContext";
 import adeGlobaLogo from "@assets/logo-gu-5770B_1777775485509.png";
 
+/**
+ * Return a safe, app-local redirect path from the ?redirect= query param.
+ * Uses the URL constructor so the browser normalises backslash tricks, protocol-
+ * relative URLs, and scheme prefixes before we validate. Only the pathname +
+ * search + hash is returned so window.location.href never leaves this origin.
+ */
+function getSafeRedirect(): string | null {
+  const raw = new URLSearchParams(window.location.search).get("redirect");
+  if (!raw) return null;
+  try {
+    const url = new URL(raw, window.location.origin);
+    // Reject anything that resolves to a different origin (covers //, /\, https:, etc.)
+    if (url.origin !== window.location.origin) return null;
+    return url.pathname + url.search + url.hash;
+  } catch {
+    return null;
+  }
+}
+
 export default function Giris() {
   const [, setLocation] = useLocation();
   const { t } = useLanguage();
@@ -25,7 +44,15 @@ export default function Giris() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && user) setLocation("/panel");
+    if (!authLoading && user) {
+      // Honor a validated local redirect (e.g. returning from 3DS bank page)
+      const redirect = getSafeRedirect();
+      if (redirect) {
+        window.location.href = redirect;
+      } else {
+        setLocation("/panel");
+      }
+    }
   }, [user, authLoading, setLocation]);
 
   useEffect(() => {
@@ -53,7 +80,17 @@ export default function Giris() {
       const data = await res.json();
       if (res.ok && data.success) {
         await queryClient.invalidateQueries({ queryKey: ["/api/user/me"] });
-        setTimeout(() => setLocation(data.requiresPasswordReset ? "/sifre-guncelle" : "/panel"), 100);
+        if (data.requiresPasswordReset) {
+          setTimeout(() => setLocation("/sifre-guncelle"), 100);
+        } else {
+          const redirect = getSafeRedirect();
+          if (redirect) {
+            // Use window.location so query params (e.g. ?resume3ds=1&token=...) are preserved
+            window.location.href = redirect;
+          } else {
+            setTimeout(() => setLocation("/panel"), 100);
+          }
+        }
       } else {
         setError(data.message || t.auth.loginFailed);
       }

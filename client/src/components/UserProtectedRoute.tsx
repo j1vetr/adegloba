@@ -18,8 +18,11 @@ export default function UserProtectedRoute({ children }: UserProtectedRouteProps
   }
 
   if (!user) {
-    // Redirect to login page
-    window.location.href = '/giris';
+    // Preserve the current URL (including query params like ?resume3ds=1&token=...)
+    // so the user can resume exactly where they left off after logging in.
+    const currentPath = window.location.pathname + window.location.search;
+    const redirectTo = currentPath !== '/giris' ? `?redirect=${encodeURIComponent(currentPath)}` : '';
+    window.location.href = `/giris${redirectTo}`;
     return null;
   }
 
