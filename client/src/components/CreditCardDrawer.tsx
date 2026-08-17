@@ -158,6 +158,21 @@ export default function CreditCardDrawer({
       if (!createRes.ok) throw new Error((await createRes.json()).message || "Order creation failed");
       const createData = await createRes.json();
 
+      // ── 3DS / SMS bank verification (PAYER_ACTION_REQUIRED) ─────────────
+      // The bank requires the buyer to complete a challenge on PayPal's page.
+      // Redirect there; PayPal sends the buyer back to /checkout?resume3ds=1
+      // &orderId=...&token=<paypalOrderId>, where Checkout.tsx resumes the
+      // capture + complete-payment flow.
+      if (createData.status === "PAYER_ACTION_REQUIRED") {
+        const payerAction = (createData.links || []).find((l: any) => l.rel === "payer-action");
+        if (payerAction?.href) {
+          toast({ title: c.threeDsRedirect, description: c.threeDsRedirectDesc });
+          setTimeout(() => { window.location.href = payerAction.href; }, 800);
+          return; // keep isProcessing=true until navigation
+        }
+        throw new Error(c.threeDsIncomplete || "Bank verification could not be started");
+      }
+
       toast({ title: c.processingCard, description: c.processingCardDesc });
       await new Promise((r) => setTimeout(r, 2000));
 

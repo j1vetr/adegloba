@@ -85,8 +85,53 @@ export class PaymentReconciliationService {
           const { body } = await ordersController.getOrder({ id: order.paypalOrderId! });
           const ppOrder = JSON.parse(String(body));
 
-          const capture = ppOrder?.purchase_units?.[0]?.payments?.captures?.[0];
-          const moneyCaptured = ppOrder?.status === 'COMPLETED' && capture?.status === 'COMPLETED';
+          let capture = ppOrder?.purchase_units?.[0]?.payments?.captures?.[0];
+          let moneyCaptured = ppOrder?.status === 'COMPLETED' && capture?.status === 'COMPLETED';
+
+          // ── 3DS abandoned-browser recovery ─────────────────────────────
+          // After a bank SMS/3D Secure challenge the PayPal order becomes
+          // APPROVED but is never captured if the buyer's browser closed
+          // before returning to /checkout. Capture it here so the payment
+          // is won back instead of expiring.
+          if (!moneyCaptured && ppOrder?.status === 'APPROVED') {
+            const pu = ppOrder.purchase_units?.[0];
+            const ppAmount = parseFloat(String(pu?.amount?.value ?? 'NaN'));
+            const ppCurrency = String(pu?.amount?.currency_code || '');
+            const orderTotal = parseFloat(String(order.totalUsd ?? '0'));
+            const amountOk = Number.isFinite(ppAmount) && Math.abs(ppAmount - orderTotal) <= 0.011;
+            const currencyOk = ppCurrency === (order.currency || 'USD');
+
+            if (!amountOk || !currencyOk) {
+              console.error(`🚨 Reconciliation: APPROVED PayPal ${order.paypalOrderId} amount mismatch (${ppCurrency} ${ppAmount} vs ${order.currency || 'USD'} ${orderTotal}) — NOT capturing`);
+              await this.storage.createSystemLog({
+                category: 'security', action: 'reconciliation_amount_mismatch',
+                entityType: 'order', entityId: order.id,
+                details: {
+                  paypalOrderId: order.paypalOrderId, paypalAmount: ppAmount, paypalCurrency: ppCurrency,
+                  orderTotal, orderCurrency: order.currency || 'USD',
+                  severity: 'CRITICAL_NEEDS_ADMIN_ACTION',
+                },
+                ipAddress: 'system', userAgent: 'PaymentReconciliationService',
+              });
+              continue;
+            }
+
+            console.log(`🚑 Reconciliation: capturing APPROVED (post-3DS) PayPal order ${order.paypalOrderId} for DB order ${order.id}`);
+            try {
+              const { body: capBody } = await ordersController.captureOrder({ id: order.paypalOrderId!, prefer: 'return=minimal' });
+              const capResult = JSON.parse(String(capBody));
+              capture = capResult?.purchase_units?.[0]?.payments?.captures?.[0];
+              moneyCaptured = capResult?.status === 'COMPLETED' && (!capture || capture.status === 'COMPLETED');
+            } catch (capErr: any) {
+              const capMsg = String(capErr?.body || capErr?.message || capErr);
+              if (capMsg.includes('ORDER_ALREADY_CAPTURED')) {
+                moneyCaptured = true;
+              } else {
+                console.error(`⚠️  Reconciliation: capture of APPROVED order ${order.paypalOrderId} failed:`, capMsg);
+                continue;
+              }
+            }
+          }
 
           if (!moneyCaptured) continue; // not captured — nothing to fix
 

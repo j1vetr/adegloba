@@ -397,6 +397,18 @@ export class PaymentOrchestrator {
         }
         console.log(`ℹ️  ORDER_ALREADY_CAPTURED for ${paypalOrderId} — proceeding to fulfil`);
       }
+    } else if (ppStatus === 'PAYER_ACTION_REQUIRED') {
+      // 3DS/SMS bank verification not completed yet — order stays pending,
+      // the client can send the buyer back to the payer-action link or retry.
+      this.event({
+        eventType: 'complete_failed', paypalOrderId, dbOrderId: order.id, userId,
+        status: 'error', errorMessage: 'PAYER_ACTION_REQUIRED — 3DS verification not completed',
+        durationMs: Date.now() - t0, ipAddress: ip, userAgent, metadata: { route },
+      });
+      return { httpStatus: 400, body: {
+        message: 'Banka doğrulaması (SMS/3D Secure) tamamlanmadı. Siparişiniz bekliyor — lütfen ödemeyi tekrar deneyin.',
+        paypalStatus: ppStatus, payerActionRequired: true, verified: false,
+      }};
     } else if (ppStatus !== 'COMPLETED') {
       return { httpStatus: 400, body: {
         message: `Ödeme geçerli bir durumda değil (PayPal durumu: ${ppStatus})`,

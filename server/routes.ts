@@ -242,6 +242,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.body.currency = currency;
       req.body.intent = req.body.intent || 'CAPTURE';
 
+      // ── 3DS payer-action return URLs (server-derived, never client-supplied) ──
+      // If the bank requires SMS/3D Secure verification, PayPal redirects the
+      // buyer back to returnUrl with ?token=<paypalOrderId>. Checkout.tsx picks
+      // up resume3ds=1 + token and resumes capture + complete-payment.
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      req.body.returnUrl = `${baseUrl}/checkout?orderId=${encodeURIComponent(dbOrderId)}&resume3ds=1`;
+      req.body.cancelUrl = `${baseUrl}/checkout?orderId=${encodeURIComponent(dbOrderId)}&resume3ds=cancel`;
+
       // Validate PayPal is configured
       const settings = await storage.getSettingsByCategory('payment');
       const paypalClientId = settings.find(s => s.key === 'paypalClientId')?.value;

@@ -519,6 +519,12 @@ export interface Translation {
     paymentErrorCardDesc?: string;
     cardHolderLabel?: string;
     declinedMsg?: string;
+    threeDsRedirect?: string;
+    threeDsRedirectDesc?: string;
+    threeDsResuming?: string;
+    threeDsResumingDesc?: string;
+    threeDsIncomplete?: string;
+    threeDsFailedRetry?: string;
   };
 
   // Admin Panel
@@ -1111,7 +1117,13 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       paymentSuccessActivated: "Kredi kartı ödemesi tamamlandı ve paketler etkinleştirildi.",
       paymentErrorCardDesc: "Kart ödemesi işlenirken bir hata oluştu",
       cardHolderLabel: "Kart Üzerindeki Ad",
-      declinedMsg: "Ödeme reddedildi - kart bilgilerini kontrol edin"
+      declinedMsg: "Ödeme reddedildi - kart bilgilerini kontrol edin",
+      threeDsRedirect: "Banka Doğrulaması Gerekli",
+      threeDsRedirectDesc: "Bankanızın SMS/3D Secure doğrulama sayfasına yönlendiriliyorsunuz...",
+      threeDsResuming: "Doğrulama Tamamlandı",
+      threeDsResumingDesc: "Banka doğrulaması alındı, ödemeniz tamamlanıyor...",
+      threeDsIncomplete: "Banka doğrulaması tamamlanmadı. Siparişiniz bekliyor — dilediğinizde tekrar deneyebilirsiniz.",
+      threeDsFailedRetry: "Ödeme tamamlanamadı. Siparişiniz bekliyor — lütfen tekrar deneyin veya farklı bir kart kullanın."
     },
     
     admin: {
@@ -1785,7 +1797,13 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       paymentSuccessActivated: "Card payment completed and packages activated.",
       paymentErrorCardDesc: "An error occurred while processing card payment",
       cardHolderLabel: "Name on Card",
-      declinedMsg: "Payment declined - check your card details"
+      declinedMsg: "Payment declined - check your card details",
+      threeDsRedirect: "Bank Verification Required",
+      threeDsRedirectDesc: "Redirecting you to your bank's SMS/3D Secure verification page...",
+      threeDsResuming: "Verification Complete",
+      threeDsResumingDesc: "Bank verification received, completing your payment...",
+      threeDsIncomplete: "Bank verification was not completed. Your order is still pending — you can try again anytime.",
+      threeDsFailedRetry: "Payment could not be completed. Your order is still pending — please try again or use a different card."
     },
     
     admin: {
@@ -2452,7 +2470,13 @@ export const translations: Record<'tr' | 'en' | 'ru', Translation> = {
       paymentSuccessActivated: "Оплата картой завершена и пакеты активированы.",
       paymentErrorCardDesc: "Произошла ошибка при обработке платежа картой",
       cardHolderLabel: "Имя на карте",
-      declinedMsg: "Платёж отклонён — проверьте данные карты"
+      declinedMsg: "Платёж отклонён — проверьте данные карты",
+      threeDsRedirect: "Требуется подтверждение банка",
+      threeDsRedirectDesc: "Перенаправляем вас на страницу SMS/3D Secure подтверждения вашего банка...",
+      threeDsResuming: "Подтверждение получено",
+      threeDsResumingDesc: "Подтверждение банка получено, завершаем оплату...",
+      threeDsIncomplete: "Подтверждение банка не было завершено. Ваш заказ в ожидании — вы можете повторить попытку.",
+      threeDsFailedRetry: "Не удалось завершить оплату. Ваш заказ в ожидании — попробуйте снова или используйте другую карту."
     },
 
     admin: {

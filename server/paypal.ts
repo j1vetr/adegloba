@@ -162,7 +162,17 @@ export async function createPaypalOrder(req: Request, res: Response) {
             verification: {
               method: "SCA_WHEN_REQUIRED"
             }
-          }
+          },
+          // 3DS payer-action support: when the bank requires SMS/3D Secure
+          // verification, PayPal returns PAYER_ACTION_REQUIRED with a
+          // rel="payer-action" link. The buyer completes the challenge and
+          // is sent back to returnUrl (PayPal appends ?token=<orderId>).
+          ...(req.body.returnUrl && req.body.cancelUrl ? {
+            experienceContext: {
+              returnUrl: req.body.returnUrl,
+              cancelUrl: req.body.cancelUrl,
+            }
+          } : {})
         }
       };
     }
@@ -172,7 +182,9 @@ export async function createPaypalOrder(req: Request, res: Response) {
 
     const collect = {
       body: orderBody,
-      prefer: "return=minimal",
+      // return=representation so the client receives the rel="payer-action"
+      // link when the bank requires a 3DS challenge (PAYER_ACTION_REQUIRED).
+      prefer: "return=representation",
       paypalRequestId: `order-${Date.now()}-${Math.random().toString(36).substring(2)}`,
     };
 
@@ -216,6 +228,20 @@ export async function capturePaypalOrder(req: Request, res: Response) {
       
       console.log('🔍 Current PayPal Order Status:', currentOrderStatus);
       
+      if (currentOrderStatus === 'PAYER_ACTION_REQUIRED') {
+        // 3DS/SMS bank verification is still pending — capturing now would
+        // fail. Tell the client explicitly so it can resume the payer-action.
+        console.log('⏳ Order still PAYER_ACTION_REQUIRED — 3DS not completed');
+        const payerActionLink = (getOrderResponse.links || []).find((l: any) => l.rel === 'payer-action');
+        return res.status(400).json({
+          ...getOrderResponse,
+          status: 'PAYER_ACTION_REQUIRED',
+          payerActionRequired: true,
+          payerActionUrl: payerActionLink?.href || null,
+          error: 'Bank verification (3D Secure) has not been completed yet',
+        });
+      }
+
       if (currentOrderStatus === 'COMPLETED') {
         // Order zaten captured - tekrar capture yapmaya gerek yok
         console.log('✅ Order already captured - using existing order data');

@@ -31,8 +31,12 @@ export default function Checkout() {
   const [couponOpen, setCouponOpen] = useState(false);
   const [creditCardDrawerOpen, setCreditCardDrawerOpen] = useState(false);
 
-  const urlParams = new URLSearchParams(location.split("?")[1] || "");
+  const urlParams = new URLSearchParams(window.location.search || location.split("?")[1] || "");
   const orderId = urlParams.get("orderId");
+  // 3DS return params: PayPal redirects back with ?resume3ds=1&token=<paypalOrderId>
+  const resume3ds = urlParams.get("resume3ds");
+  const paypalToken = urlParams.get("token");
+  const [resuming3ds, setResuming3ds] = useState(resume3ds === "1" && !!paypalToken);
 
   const { data: cartData, isLoading: cartLoading } = useQuery<CartData>({
     queryKey: ["/api/cart"], enabled: !!user && !orderId,
@@ -40,6 +44,56 @@ export default function Checkout() {
   const { data: orderData, isLoading: orderLoading } = useQuery<OrderData>({
     queryKey: [`/api/orders/${orderId}`], enabled: !!orderId && !!user,
   });
+
+  // ── 3DS return: resume capture + complete-payment after bank verification ──
+  useEffect(() => {
+    if (!user) return;
+    const cleanUrl = () => window.history.replaceState({}, "", orderId ? `/checkout?orderId=${orderId}` : "/checkout");
+
+    if (resume3ds === "cancel") {
+      toast({ title: t.checkout.paymentFailed, description: t.checkout.threeDsIncomplete, variant: "destructive" });
+      cleanUrl();
+      return;
+    }
+    if (resume3ds !== "1" || !paypalToken) return;
+
+    (async () => {
+      try {
+        toast({ title: t.checkout.threeDsResuming, description: t.checkout.threeDsResumingDesc });
+        const captureRes = await fetch("/api/paypal/capture-order", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ orderId: paypalToken }),
+        });
+        if (!captureRes.ok) throw new Error((await captureRes.json()).message || t.checkout.threeDsFailedRetry);
+        const captureData = await captureRes.json();
+        const captureDetails = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+        if (captureData.status !== "COMPLETED" || (captureDetails && captureDetails.status !== "COMPLETED")) {
+          throw new Error(captureData.status === "PAYER_ACTION_REQUIRED" ? t.checkout.threeDsIncomplete : t.checkout.threeDsFailedRetry);
+        }
+        const endpoint = orderId ? `/api/orders/${orderId}/complete` : "/api/cart/complete-payment";
+        const completeRes = await fetch(endpoint, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ paypalOrderId: paypalToken, couponCode: "", dbOrderId: orderId || undefined }),
+        });
+        if (!completeRes.ok) throw new Error((await completeRes.json()).message || t.checkout.threeDsFailedRetry);
+        const completeData = await completeRes.json();
+        toast({ title: t.checkout.paymentSuccess, description: t.checkout.paymentSuccessActivated });
+        window.location.href = `/order-success?orderId=${completeData.orderId || completeData.id}&amount=${completeData.totalUsd || ""}`;
+      } catch (err) {
+        console.error("3DS resume error:", err);
+        setResuming3ds(false);
+        cleanUrl();
+        toast({
+          title: t.checkout.paymentFailed,
+          description: err instanceof Error ? err.message : t.checkout.threeDsFailedRetry,
+          variant: "destructive",
+        });
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   useEffect(() => {
     if (orderData?.couponCode && !appliedCoupon) {
@@ -144,6 +198,7 @@ export default function Checkout() {
   useEffect(() => {
     if (!authLoading && !cartLoading && !orderLoading && user) {
       const items = getCurrentItems();
+      if (resuming3ds) return; // don't bounce away while a 3DS payment is being resumed
       if (!orderId && (!cartData || items.length === 0)) {
         setTimeout(() => { window.location.href = "/paketler"; }, 1500);
       }
@@ -151,6 +206,17 @@ export default function Checkout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartData, orderData, orderId, authLoading, cartLoading, orderLoading, user]);
 
+  if (resuming3ds) {
+    return (
+      <UserShell title={t.cart.stepCheckout} hideBottomNav showBack backTo="/sepet">
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-400 mb-3" />
+          <p className="text-slate-700 text-sm font-medium">{t.checkout.threeDsResuming}</p>
+          <p className="text-slate-500 text-xs mt-1">{t.checkout.threeDsResumingDesc}</p>
+        </div>
+      </UserShell>
+    );
+  }
   if (authLoading || cartLoading || orderLoading) {
     return (
       <UserShell title={t.cart.stepCheckout} hideBottomNav showBack backTo="/sepet">
