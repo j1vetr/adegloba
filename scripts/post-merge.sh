@@ -1,4 +1,5 @@
 #!/bin/bash
 set -e
 npm install
-npm run db:push
+# --force: non-interactive; stdin is closed during post-merge runs
+npx drizzle-kit push --force
