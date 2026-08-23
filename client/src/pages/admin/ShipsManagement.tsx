@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Link } from "wouter";
 import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -272,14 +273,20 @@ export default function ShipsManagement() {
               </div>
             )}
           </div>
-          <Button 
-            onClick={openCreateModal} 
-            className="admin-button flex items-center justify-center gap-2 w-full lg:w-auto"
-            data-testid="button-create-ship"
-          >
-            <Plus className="h-5 w-5 flex-shrink-0" />
-            <span className="whitespace-nowrap">Yeni Gemi Ekle</span>
-          </Button>
+          <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+            <Link href="/admin/ships/setup" className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-cyan-300/35 bg-cyan-400/10 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/20">
+              <Ship className="h-4 w-4" />
+              Gemi ve paket sihirbazı
+            </Link>
+            <Button
+              onClick={openCreateModal}
+              className="admin-button flex items-center justify-center gap-2"
+              data-testid="button-create-ship"
+            >
+              <Plus className="h-5 w-5 flex-shrink-0" />
+              <span className="whitespace-nowrap">Yeni Gemi Ekle</span>
+            </Button>
+          </div>
         </div>
 
         {/* Filters and Search */}

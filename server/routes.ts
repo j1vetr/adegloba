@@ -11,7 +11,7 @@ import { CouponService } from "./services/couponService";
 import { ExpiryService } from "./services/expiryService";
 import { LoyaltyService } from "./services/loyaltyService";
 import { emailService, EmailService } from "./emailService";
-import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema, orders, users, systemLogs } from "@shared/schema";
+import { insertShipSchema, insertPlanSchema, insertCouponSchema, insertEmailSettingSchema, orders, users, systemLogs, ships, plans, credentialPools } from "@shared/schema";
 import { eq, and, desc, gte, lte, sql as sqlExpr } from "drizzle-orm";
 import { z } from "zod";
 import * as XLSX from 'xlsx';
@@ -33,6 +33,63 @@ function generateSlug(name: string): string {
     .replace(/[\s_-]+/g, '-') // Replace spaces/underscores with hyphens
     .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 }
+
+const shipSetupWizardSchema = z.object({
+  ship: z.object({
+    name: z.string().trim().min(1, "Gemi adı zorunludur").max(150, "Gemi adı çok uzun"),
+    kitNumber: z.string().trim().max(150, "KIT numarası çok uzun").optional().default(""),
+    isActive: z.boolean().default(true),
+  }),
+  plans: z.array(z.object({
+    clientId: z.string().min(1).max(100),
+    name: z.string().trim().min(1, "Paket adı zorunludur").max(200, "Paket adı çok uzun"),
+    dataLimitGb: z.coerce.number().int().positive("Paket GB miktarı sıfırdan büyük olmalıdır").max(100000),
+    priceUsd: z.coerce.number().positive("Paket fiyatı sıfırdan büyük olmalıdır").max(1000000),
+    isActive: z.boolean().default(true),
+    sortOrder: z.coerce.number().int().min(0).max(10000),
+    credentials: z.array(z.object({
+      username: z.string().trim().min(1, "Kullanıcı adı boş olamaz").max(500),
+      password: z.string().trim().min(1, "Şifre boş olamaz").max(500),
+    })).max(5000, "Bir pakete en fazla 5000 kimlik yüklenebilir"),
+  })).min(1, "En az bir paket eklemelisiniz").max(20, "En fazla 20 paket ekleyebilirsiniz"),
+}).superRefine((data, ctx) => {
+  const clientIds = new Set<string>();
+  let totalCredentials = 0;
+
+  data.plans.forEach((plan, planIndex) => {
+    if (clientIds.has(plan.clientId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["plans", planIndex, "clientId"],
+        message: "Paket kimliği tekrar edemez",
+      });
+    }
+    clientIds.add(plan.clientId);
+
+    const usernames = new Set<string>();
+    plan.credentials.forEach((credential, credentialIndex) => {
+      const normalizedUsername = credential.username.toLocaleLowerCase("tr-TR");
+      if (usernames.has(normalizedUsername)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["plans", planIndex, "credentials", credentialIndex, "username"],
+          message: `${credential.username} kullanıcı adı bu pakette birden fazla kez bulunuyor`,
+        });
+      }
+      usernames.add(normalizedUsername);
+    });
+
+    totalCredentials += plan.credentials.length;
+  });
+
+  if (totalCredentials > 10000) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["plans"],
+      message: "Tek seferde en fazla 10000 kimlik yükleyebilirsiniz",
+    });
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Authentication Middleware
@@ -2536,6 +2593,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating ship:', error);
       res.status(500).json({ message: 'Failed to create ship' });
+    }
+  });
+
+  app.post('/api/admin/ships/setup', isAdminAuthenticated, async (req, res) => {
+    try {
+      const setupData = shipSetupWizardSchema.parse(req.body);
+      const slug = generateSlug(setupData.ship.name);
+
+      if (!slug) {
+        return res.status(400).json({ message: "Gemi adından geçerli bir bağlantı adı üretilemedi" });
+      }
+
+      const setupResult = await db.transaction(async (tx) => {
+        const [createdShip] = await tx
+          .insert(ships)
+          .values({
+            name: setupData.ship.name,
+            slug,
+            kitNumber: setupData.ship.kitNumber || null,
+            isActive: setupData.ship.isActive,
+          })
+          .returning();
+
+        const createdPlans = [];
+        let totalCredentials = 0;
+
+        for (const planData of setupData.plans) {
+          const [createdPlan] = await tx
+            .insert(plans)
+            .values({
+              shipId: createdShip.id,
+              name: planData.name,
+              dataLimitGb: planData.dataLimitGb,
+              priceUsd: planData.priceUsd.toFixed(2),
+              isActive: planData.isActive,
+              sortOrder: planData.sortOrder,
+            })
+            .returning();
+
+          if (planData.credentials.length > 0) {
+            await tx.insert(credentialPools).values(
+              planData.credentials.map((credential) => ({
+                planId: createdPlan.id,
+                username: credential.username,
+                password: credential.password,
+              })),
+            );
+          }
+
+          totalCredentials += planData.credentials.length;
+          createdPlans.push({
+            ...createdPlan,
+            credentialCount: planData.credentials.length,
+          });
+        }
+
+        return {
+          ship: createdShip,
+          plans: createdPlans,
+          totalCredentials,
+        };
+      });
+
+      try {
+        await storage.createSystemLog({
+          category: "admin_action",
+          action: "ship_setup_wizard_completed",
+          adminId: (req.session as any).adminUser.id,
+          entityType: "ship",
+          entityId: setupResult.ship.id,
+          details: {
+            shipName: setupResult.ship.name,
+            planCount: setupResult.plans.length,
+            credentialCount: setupResult.totalCredentials,
+          },
+          ipAddress: req.ip || req.connection.remoteAddress,
+          userAgent: req.get("User-Agent"),
+        });
+      } catch (logError) {
+        console.error("Gemi kurulum işlemi sistem günlüğüne yazılamadı:", logError);
+      }
+
+      return res.status(201).json(setupResult);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.issues[0]?.message || "Girdiğiniz bilgileri kontrol edin",
+          issues: error.issues,
+        });
+      }
+
+      if ((error as { code?: string })?.code === "23505") {
+        return res.status(409).json({
+          message: "Bu gemi adı daha önce kullanılmış",
+        });
+      }
+
+      console.error("Gemi ve paket kurulum sihirbazı hatası:", error);
+      return res.status(500).json({
+        message: "Gemi ve paketler oluşturulamadı. Hiçbir kayıt kaydedilmedi",
+      });
     }
   });
 

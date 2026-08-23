@@ -32,6 +32,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
 const ShipsManagement = lazy(() => import("@/pages/admin/ShipsManagement"));
+const ShipSetupWizard = lazy(() => import("@/pages/admin/ShipSetupWizard"));
 const PackagesManagement = lazy(() => import("@/pages/admin/PackagesManagement"));
 const ShipPackages = lazy(() => import("@/pages/admin/ShipPackages"));
 const CredentialPoolsNew = lazy(() => import("@/pages/admin/CredentialPoolsNew"));
@@ -73,12 +74,20 @@ function Router() {
     <Switch>
       {/* Admin Login Route - always accessible */}
       <Route path="/login" component={Login} />
-      
+
       {/* User Auth Routes - Turkish */}
       <Route path="/kayit" component={Kayit} />
       <Route path="/giris" component={Giris} />
       <Route path="/sifremi-unuttum" component={ForgotPassword} />
       <Route path="/sifre-guncelle" component={SifreGuncelle} />
+
+      <Route path="/admin/ships/setup">
+        <AdminProtectedRoute>
+          <Suspense fallback={<LoadingFallback />}>
+            <ShipSetupWizard />
+          </Suspense>
+        </AdminProtectedRoute>
+      </Route>
       
       {/* Admin Routes - protected with lazy loading */}
       <Route path="/admin">
@@ -88,7 +97,7 @@ function Router() {
           </Suspense>
         </AdminProtectedRoute>
       </Route>
-      
+
       <Route path="/admin/ships">
         <AdminProtectedRoute>
           <Suspense fallback={<LoadingFallback />}>
