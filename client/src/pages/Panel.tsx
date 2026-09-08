@@ -5,7 +5,11 @@ import { Link } from "wouter";
 import {
   Loader2, Package, Clock, Heart, ShoppingCart, Copy, Wifi,
   CalendarDays, History, ChevronRight, HeadphonesIcon, User as UserIcon,
+  ExternalLink, AlertTriangle,
 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 import UserShell from "@/components/UserShell";
 import { FeedbackModal, useFeedbackModal } from "@/components/FeedbackModal";
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +64,11 @@ export default function Panel() {
   const { user, isLoading: authLoading } = useUserAuth() as { user: User & { ship?: Ship }; isLoading: boolean };
   const { t, language } = useLanguage();
   const dateLocale = LANG_LOCALE[language] ?? "tr-TR";
+
+  const [showPortalDialog, setShowPortalDialog] = useState(false);
+
+  const STARLINK_PORTAL_URL =
+    "http://10.0.0.1:8002/index.php?zone=crew_network&redirurl=http%3a%2f%2fwww.msftconnecttest.com%2fredirect/";
 
   const shouldShowFeedback = useFeedbackModal(user?.id);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -163,6 +172,22 @@ export default function Panel() {
             );
           })}
         </div>
+
+        {/* Starlink portal link */}
+        <button
+          onClick={() => setShowPortalDialog(true)}
+          className="w-full user-card flex items-center gap-3 p-4 hover:border-[#FFDD57] active:scale-[0.99] transition text-left"
+          data-testid="button-starlink-portal"
+        >
+          <div className="w-10 h-10 rounded-xl bg-[#FFF6D6] flex items-center justify-center shrink-0">
+            <Wifi className="w-4 h-4 text-[#7C5E00]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-slate-900">Starlink İnternet Paneli</p>
+            <p className="text-xs text-slate-500">Kullanım bilgilerinizi ve bağlantıyı yönetin</p>
+          </div>
+          <ExternalLink className="w-4 h-4 text-slate-400 shrink-0" />
+        </button>
 
         {/* Active packages */}
         <section>
@@ -343,6 +368,43 @@ export default function Panel() {
           </a>
         </Link>
       </div>
+
+      {/* Starlink portal warning dialog */}
+      <Dialog open={showPortalDialog} onOpenChange={setShowPortalDialog}>
+        <DialogContent className="max-w-sm mx-4">
+          <DialogHeader>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+              </div>
+              <DialogTitle className="text-base">Starlink Internet Paneli</DialogTitle>
+            </div>
+            <DialogDescription className="text-sm text-slate-600 leading-relaxed text-left">
+              Açılan sayfada <span className="font-semibold text-slate-900">anlık olarak ağa bağlı olan kullanıcının</span> bilgileri görünür.
+              <br /><br />
+              Kendi kullanıcı adınızla giriş yapmadıysanız önce Starlink paneline giriş yapınız, ardından bu butona basınız.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => setShowPortalDialog(false)}
+              className="flex-1 h-11 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition"
+            >
+              İptal
+            </button>
+            <a
+              href={STARLINK_PORTAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setShowPortalDialog(false)}
+              className="flex-1 h-11 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 text-sm font-semibold flex items-center justify-center gap-2 transition"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Giriş Yaptım, Devam Et
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UserShell>
   );
 }
