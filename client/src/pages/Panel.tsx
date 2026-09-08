@@ -7,9 +7,7 @@ import {
   CalendarDays, History, ChevronRight, HeadphonesIcon, User as UserIcon,
   ExternalLink, AlertTriangle,
 } from "lucide-react";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import UserShell from "@/components/UserShell";
 import { FeedbackModal, useFeedbackModal } from "@/components/FeedbackModal";
 import { useToast } from "@/hooks/use-toast";
@@ -363,26 +361,21 @@ export default function Panel() {
         </Link>
       </div>
 
-      {/* Starlink portal warning dialog */}
-      <Dialog open={showPortalDialog} onOpenChange={setShowPortalDialog}>
-        <DialogContent className="max-w-sm mx-4">
-          <DialogHeader>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-              </div>
-              <DialogTitle className="text-base">Starlink Internet Paneli</DialogTitle>
-            </div>
-            <DialogDescription className="text-sm text-slate-600 leading-relaxed text-left">
-              Açılan sayfada <span className="font-semibold text-slate-900">anlık olarak ağa bağlı olan kullanıcının</span> bilgileri görünür.
-              <br /><br />
-              Kendi kullanıcı adınızla giriş yapmadıysanız önce Starlink paneline giriş yapınız, ardından bu butona basınız.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-2 mt-2">
+      {/* Starlink portal warning sheet */}
+      <BottomSheet
+        open={showPortalDialog}
+        onClose={() => setShowPortalDialog(false)}
+        title={
+          <span className="flex items-center gap-2">
+            <Wifi className="w-4 h-4 text-[#7C5E00]" />
+            Kalan Kullanımını Öğren
+          </span>
+        }
+        footer={
+          <div className="flex gap-3">
             <button
               onClick={() => setShowPortalDialog(false)}
-              className="flex-1 h-11 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition"
+              className="flex-1 h-12 rounded-2xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 active:scale-[0.98] transition"
             >
               İptal
             </button>
@@ -391,14 +384,44 @@ export default function Panel() {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setShowPortalDialog(false)}
-              className="flex-1 h-11 rounded-xl bg-[#FFDD57] hover:brightness-95 text-slate-900 text-sm font-semibold flex items-center justify-center gap-2 transition"
+              className="flex-[2] h-12 rounded-2xl bg-slate-900 hover:bg-slate-700 active:scale-[0.98] text-white text-sm font-semibold flex items-center justify-center gap-2 transition"
             >
               <ExternalLink className="w-4 h-4" />
-              Giriş Yaptım, Devam Et
+              Giriş Yaptım, Panele Git
             </a>
           </div>
-        </DialogContent>
-      </Dialog>
+        }
+      >
+        {/* Icon banner */}
+        <div className="flex flex-col items-center text-center mb-5">
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mb-3">
+            <AlertTriangle className="w-7 h-7 text-amber-500" />
+          </div>
+          <p className="text-slate-900 font-semibold text-base mb-1">Panele girmeden önce</p>
+          <p className="text-slate-500 text-sm">Açılan sayfada, şu an ağa bağlı olan kullanıcının bilgileri görünür.</p>
+        </div>
+
+        {/* Step cards */}
+        <div className="space-y-2">
+          {[
+            {
+              step: "1",
+              text: "Starlink paneli açıldığında kendi kullanıcı adınız ve şifrenizle giriş yapın.",
+            },
+            {
+              step: "2",
+              text: "Giriş yaptıktan sonra kalan veri kullanımınızı ve bağlantı durumunuzu görebilirsiniz.",
+            },
+          ].map(({ step, text }) => (
+            <div key={step} className="flex items-start gap-3 bg-slate-50 rounded-2xl p-3.5 border border-slate-100">
+              <div className="w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                {step}
+              </div>
+              <p className="text-sm text-slate-700 leading-relaxed">{text}</p>
+            </div>
+          ))}
+        </div>
+      </BottomSheet>
     </UserShell>
   );
 }
