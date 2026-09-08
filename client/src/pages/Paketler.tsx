@@ -19,7 +19,8 @@ export default function Paketler() {
   const [addedSheet, setAddedSheet] = useState<{ open: boolean; plan: PlanWithStock | null }>({ open: false, plan: null });
 
   const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
-    queryKey: ["/api/user/ship-plans"], enabled: !!user?.ship_id,
+    queryKey: ["/api/user/ship-plans", user?.ship_id], enabled: !!user?.ship_id,
+    staleTime: 60_000,
   });
   const { data: favorites } = useQuery<(FavoritePlan & { plan: Plan })[]>({
     queryKey: ["/api/favorites"], enabled: !!user,
