@@ -7,7 +7,9 @@ import {
   CalendarDays, History, ChevronRight, HeadphonesIcon, User as UserIcon,
   ExternalLink, AlertTriangle,
 } from "lucide-react";
-import { BottomSheet } from "@/components/ui/BottomSheet";
+import {
+  Dialog, DialogContent, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 import UserShell from "@/components/UserShell";
 import { FeedbackModal, useFeedbackModal } from "@/components/FeedbackModal";
 import { useToast } from "@/hooks/use-toast";
@@ -361,17 +363,30 @@ export default function Panel() {
         </Link>
       </div>
 
-      {/* Starlink portal warning sheet */}
-      <BottomSheet
-        open={showPortalDialog}
-        onClose={() => setShowPortalDialog(false)}
-        title={
-          <span className="flex items-center gap-2">
-            <Wifi className="w-4 h-4 text-[#7C5E00]" />
-            Kalan Kullanımını Öğren
-          </span>
-        }
-        footer={
+      {/* Starlink portal warning dialog */}
+      <Dialog open={showPortalDialog} onOpenChange={setShowPortalDialog}>
+        <DialogContent className="max-w-sm mx-4 rounded-3xl bg-white border-0 shadow-2xl p-6 text-slate-900">
+          {/* Icon banner */}
+          <div className="flex flex-col items-center text-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mb-3">
+              <AlertTriangle className="w-9 h-9 text-amber-500" />
+            </div>
+            <DialogTitle className="text-slate-900 font-semibold text-base mb-1">
+              Panele Girmeden Önce !
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 text-sm leading-relaxed">
+              Açılan sayfada şu an ağa bağlı olan kullanıcının bilgileri görünür.
+            </DialogDescription>
+          </div>
+
+          {/* Info card */}
+          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-5">
+            <p className="text-sm text-slate-700 leading-relaxed">
+              Panele girdikten sonra <span className="font-semibold text-slate-900">kalan veri kullanımınızı</span> ve <span className="font-semibold text-slate-900">bağlantı durumunuzu</span> görebilirsiniz.
+            </p>
+          </div>
+
+          {/* Actions */}
           <div className="flex gap-3">
             <button
               onClick={() => setShowPortalDialog(false)}
@@ -387,41 +402,11 @@ export default function Panel() {
               className="flex-[2] h-12 rounded-2xl bg-slate-900 hover:bg-slate-700 active:scale-[0.98] text-white text-sm font-semibold flex items-center justify-center gap-2 transition"
             >
               <ExternalLink className="w-4 h-4" />
-              Giriş Yaptım, Panele Git
+              Panele Git
             </a>
           </div>
-        }
-      >
-        {/* Icon banner */}
-        <div className="flex flex-col items-center text-center mb-5">
-          <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mb-3">
-            <AlertTriangle className="w-7 h-7 text-amber-500" />
-          </div>
-          <p className="text-slate-900 font-semibold text-base mb-1">Panele girmeden önce</p>
-          <p className="text-slate-500 text-sm">Açılan sayfada, şu an ağa bağlı olan kullanıcının bilgileri görünür.</p>
-        </div>
-
-        {/* Step cards */}
-        <div className="space-y-2">
-          {[
-            {
-              step: "1",
-              text: "Starlink paneli açıldığında kendi kullanıcı adınız ve şifrenizle giriş yapın.",
-            },
-            {
-              step: "2",
-              text: "Giriş yaptıktan sonra kalan veri kullanımınızı ve bağlantı durumunuzu görebilirsiniz.",
-            },
-          ].map(({ step, text }) => (
-            <div key={step} className="flex items-start gap-3 bg-slate-50 rounded-2xl p-3.5 border border-slate-100">
-              <div className="w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                {step}
-              </div>
-              <p className="text-sm text-slate-700 leading-relaxed">{text}</p>
-            </div>
-          ))}
-        </div>
-      </BottomSheet>
+        </DialogContent>
+      </Dialog>
     </UserShell>
   );
 }
