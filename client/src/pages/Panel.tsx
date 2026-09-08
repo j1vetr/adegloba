@@ -173,22 +173,6 @@ export default function Panel() {
           })}
         </div>
 
-        {/* Starlink portal link */}
-        <button
-          onClick={() => setShowPortalDialog(true)}
-          className="w-full user-card flex items-center gap-3 p-4 hover:border-[#FFDD57] active:scale-[0.99] transition text-left"
-          data-testid="button-starlink-portal"
-        >
-          <div className="w-10 h-10 rounded-xl bg-[#FFF6D6] flex items-center justify-center shrink-0">
-            <Wifi className="w-4 h-4 text-[#7C5E00]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-900">Starlink İnternet Paneli</p>
-            <p className="text-xs text-slate-500">Kullanım bilgilerinizi ve bağlantıyı yönetin</p>
-          </div>
-          <ExternalLink className="w-4 h-4 text-slate-400 shrink-0" />
-        </button>
-
         {/* Active packages */}
         <section>
           <div className="flex items-center justify-between mb-2.5 px-1">
@@ -255,7 +239,7 @@ export default function Panel() {
                         <Wifi className="w-3 h-3 text-slate-400" />
                         <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">{t.panel.connectionInfo}</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 gap-2 mb-3">
                         {[
                           { label: t.panel.usernameLabel, val: pkg.username, testId: `copy-username-${pkg.credentialId}` },
                           { label: t.panel.passwordLabel, val: pkg.password, testId: `copy-password-${pkg.credentialId}` },
@@ -269,6 +253,16 @@ export default function Panel() {
                           </div>
                         ))}
                       </div>
+
+                      <button
+                        onClick={() => setShowPortalDialog(true)}
+                        className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-slate-900 hover:bg-slate-700 active:scale-[0.99] text-white text-sm font-semibold transition"
+                        data-testid="button-check-usage"
+                      >
+                        <Wifi className="w-4 h-4" />
+                        Kalan Kullanımını Öğren
+                        <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                      </button>
                     </div>
                   </div>
                 );
