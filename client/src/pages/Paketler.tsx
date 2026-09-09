@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Zap, CreditCard, Heart, Wifi, Shield, Clock, ShoppingCart, Trash2, Check, ArrowRight } from "lucide-react";
+import { Loader2, Zap, CreditCard, Heart, Wifi, Shield, Clock, ShoppingCart, Trash2, Check, ArrowRight, RefreshCw, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
@@ -18,9 +18,11 @@ export default function Paketler() {
   const [cartFullDialog, setCartFullDialog] = useState<{ open: boolean; pendingPlanId: string | null }>({ open: false, pendingPlanId: null });
   const [addedSheet, setAddedSheet] = useState<{ open: boolean; plan: PlanWithStock | null }>({ open: false, plan: null });
 
-  const { data: userShipPlans, isLoading: plansLoading } = useQuery<PlanWithStock[]>({
-    queryKey: ["/api/user/ship-plans", user?.ship_id], enabled: !!user?.ship_id,
+  const { data: userShipPlans, isLoading: plansLoading, isError: plansError, refetch: refetchPlans } = useQuery<PlanWithStock[]>({
+    queryKey: ["/api/user/ship-plans"],
+    enabled: !!user?.ship_id,
     staleTime: 60_000,
+    refetchOnMount: true,
   });
   const { data: favorites } = useQuery<(FavoritePlan & { plan: Plan })[]>({
     queryKey: ["/api/favorites"], enabled: !!user,
@@ -89,10 +91,34 @@ export default function Paketler() {
         </div>
 
         {/* Plans */}
-        {plansLoading ? (
+        {!user?.ship_id ? (
+          <div className="user-card text-center py-12">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-6 h-6 text-amber-500" />
+            </div>
+            <h3 className="text-base font-semibold text-slate-900 mb-1">Gemi atanmamış</h3>
+            <p className="text-slate-500 text-sm mb-1">Hesabınıza henüz bir gemi atanmamış.</p>
+            <p className="text-slate-400 text-xs">Lütfen yöneticiyle iletişime geçin.</p>
+          </div>
+        ) : plansLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
             <span className="ml-3 text-slate-500 text-sm">{t.packages.loadingPackages}</span>
+          </div>
+        ) : plansError ? (
+          <div className="user-card text-center py-12">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-6 h-6 text-rose-500" />
+            </div>
+            <h3 className="text-base font-semibold text-slate-900 mb-1">Paketler yüklenemedi</h3>
+            <p className="text-slate-500 text-sm mb-4">Bağlantı hatası oluştu. Lütfen tekrar deneyin.</p>
+            <button
+              onClick={() => refetchPlans()}
+              className="inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 active:scale-[0.98] transition"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Tekrar Dene
+            </button>
           </div>
         ) : sortedPlans?.length ? (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -155,7 +181,14 @@ export default function Paketler() {
             </div>
             <h3 className="text-base font-semibold text-slate-900 mb-1">{t.packages.noPackagesTitle}</h3>
             <p className="text-slate-500 text-sm mb-1">{t.packages.noPackagesDesc}</p>
-            <p className="text-slate-400 text-xs">{t.packages.contactAdmin}</p>
+            <p className="text-slate-400 text-xs mb-5">{t.packages.contactAdmin}</p>
+            <button
+              onClick={() => refetchPlans()}
+              className="inline-flex items-center gap-2 px-4 h-10 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 active:scale-[0.98] transition"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Yenile
+            </button>
           </div>
         )}
 
