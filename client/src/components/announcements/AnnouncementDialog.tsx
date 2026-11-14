@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import DOMPurify from "dompurify";
-import { ArrowUpRight, BellRing, LoaderCircle, RadioTower } from "lucide-react";
+import { ArrowUpRight, BellRing, LoaderCircle } from "lucide-react";
 import type { Announcement, AnnouncementLanguage } from "@shared/announcement";
 import { useLanguage } from "@/contexts/LanguageContext";
+import adeGlobaLogo from "@assets/logo-gu-5770B_1777775485509.png";
 import {
   Dialog,
   DialogContent,
@@ -88,22 +89,15 @@ export default function AnnouncementDialog({
         }}
       >
         <div className="shrink-0 border-b border-slate-100 bg-[#f4f8fa] px-5 pb-5 pt-6 sm:px-8 sm:pt-8">
-          <div className="mb-5 flex items-start justify-between gap-4 pr-8">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#08384d] text-[#d3eb62]">
-                <RadioTower className="h-5 w-5" strokeWidth={1.8} />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  ADEGLOBA · STARLINK
-                </p>
-                <p className="mt-1 text-sm font-semibold text-slate-800">
-                  {language === "tr" ? "Kullanıcı duyurusu" : "Customer announcement"}
-                </p>
-              </div>
+          <div className="relative mb-5 flex justify-center">
+            <div className="flex flex-col items-center">
+              <img src={adeGlobaLogo} alt="AdeGloba" className="h-12 w-auto object-contain" />
+              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
+                {language === "tr" ? "DUYURU" : "ANNOUNCEMENT"}
+              </p>
             </div>
             {preview && (
-              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <span className="absolute right-0 top-0 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                 Önizleme
               </span>
             )}
