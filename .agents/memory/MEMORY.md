@@ -5,3 +5,4 @@
 - [PayPal 7-Phase Rewrite](paypal-rewrite.md) — full fix for "user charged but no package"; capture+fulfill now one call, two-phase processPaymentCompletion, early DB link, real sig verification.
 - [PayPal 3DS payer-action](paypal-3ds-payer-action.md) — card 3DS challenge redirect/resume flow; create-order needs return=representation; reconciliation captures APPROVED orders.
 - [Customer announcements](customer-announcements.md) — keep nontransactional popups out of payment flows and preserve read history across settings-only changes.
+- [Portable npm downloads](portable-npm-downloads.md) — check lockfile download hosts after dependency installs because this app is also installed on an external server.
