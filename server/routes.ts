@@ -16,6 +16,7 @@ import { eq, and, desc, gte, lte, sql as sqlExpr } from "drizzle-orm";
 import { z } from "zod";
 import * as XLSX from 'xlsx';
 import { createObjectCsvWriter } from 'csv-writer';
+import { registerAnnouncementRoutes } from "./announcementRoutes";
 
 const orderService = new OrderService(storage);
 const couponService = new CouponService(storage);
@@ -99,6 +100,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     return res.status(401).json({ message: 'Unauthorized' });
   };
+
+  registerAnnouncementRoutes(app, storage, isAdminAuthenticated);
 
   // External partner API key middleware (e.g. sc.lacivertteknoloji.com quota polling)
   // The key is configured by the admin in Site Ayarları (settings table), not via env vars.

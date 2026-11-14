@@ -130,6 +130,7 @@ export function setupUserAuth(app: Express) {
       // Automatically log in the user after successful registration
       req.session.userId = user.id;
       req.session.isAuthenticated = true;
+      delete req.session.announcementDismissedVersion;
 
       res.status(201).json({ 
         success: true, 
@@ -234,6 +235,7 @@ export function setupUserAuth(app: Express) {
       // Set session  
       req.session.userId = user.id;
       req.session.isAuthenticated = true;
+      delete req.session.announcementDismissedVersion;
 
       // PCI DSS: Check if password reset is required
       const requiresPasswordReset = user.reset_required || !user.first_login_completed;

@@ -29,7 +29,9 @@ import SifreGuncelle from "@/pages/SifreGuncelle";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UserProtectedRoute from "@/components/UserProtectedRoute";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import AnnouncementPopup from "@/components/announcements/AnnouncementPopup";
 
+const Announcements = lazy(() => import("@/pages/admin/Announcements"));
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
 const ShipsManagement = lazy(() => import("@/pages/admin/ShipsManagement"));
 const ShipSetupWizard = lazy(() => import("@/pages/admin/ShipSetupWizard"));
@@ -150,6 +152,14 @@ function Router() {
         <AdminProtectedRoute>
           <Suspense fallback={<LoadingFallback />}>
             <AdminSettings />
+          </Suspense>
+        </AdminProtectedRoute>
+      </Route>
+
+      <Route path="/admin/announcements">
+        <AdminProtectedRoute>
+          <Suspense fallback={<LoadingFallback />}>
+            <Announcements />
           </Suspense>
         </AdminProtectedRoute>
       </Route>
@@ -351,6 +361,7 @@ function App() {
       <LanguageProvider>
         <TooltipProvider>
           <Router />
+          <AnnouncementPopup />
           <PWAInstallPrompt />
           <Toaster />
         </TooltipProvider>

@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Ship, Package, Gift, ShoppingCart, Users,
   Settings, Menu, X, LogOut, ChevronDown, HelpCircle, FileText,
   Key, Mail, BarChart3, Bell, PackageCheck, TrendingUp,
-  Send, Database, Globe, CreditCard, DollarSign, AlertTriangle,
+  Send, Database, Globe, CreditCard, DollarSign, AlertTriangle, Megaphone,
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { apiRequest } from '@/lib/queryClient';
@@ -44,6 +44,7 @@ const NAV_GROUPS = [
   {
     id: 'iletisim', label: 'İletişim',
     items: [
+      { name: 'Duyuru Paneli', href: '/admin/announcements', icon: Megaphone },
       { name: 'Push Bildirimleri', href: '/admin/push-notifications', icon: Bell },
       { name: 'E-posta Pazarlama', href: '/admin/email-marketing',    icon: Send },
     ],
